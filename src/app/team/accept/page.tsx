@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { CheckCircle2, Loader2, XCircle } from 'lucide-react';
 import { Button } from '@/components/button';
@@ -8,7 +8,7 @@ import axios from 'axios';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-export default function TeamAcceptPage() {
+function TeamAcceptContent() {
   const params = useSearchParams();
   const router = useRouter();
   const memberId = params.get('member_id') || '';
@@ -51,7 +51,6 @@ export default function TeamAcceptPage() {
             <p className="text-gray-600 font-medium">Verifying your invite…</p>
           </>
         )}
-
         {status === 'success' && (
           <>
             <CheckCircle2 className="w-14 h-14 text-green-500 mx-auto" />
@@ -63,24 +62,15 @@ export default function TeamAcceptPage() {
               </p>
             )}
             <div className="flex flex-col gap-2 pt-2">
-              <Button
-                variant="primary"
-                className="w-full"
-                onClick={() => router.push('/login')}
-              >
+              <Button variant="primary" className="w-full" onClick={() => router.push('/login')}>
                 Log In
               </Button>
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => router.push('/signup')}
-              >
+              <Button variant="outline" className="w-full" onClick={() => router.push('/signup')}>
                 Create Account
               </Button>
             </div>
           </>
         )}
-
         {status === 'error' && (
           <>
             <XCircle className="w-14 h-14 text-red-400 mx-auto" />
@@ -93,5 +83,17 @@ export default function TeamAcceptPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function TeamAcceptPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+      </div>
+    }>
+      <TeamAcceptContent />
+    </Suspense>
   );
 }
