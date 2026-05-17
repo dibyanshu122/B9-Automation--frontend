@@ -182,14 +182,14 @@ export function MarketingCta({ variant = 'light' }: { variant?: 'light' | 'dark'
 
   return (
     <section className={`px-4 py-20 sm:px-6 lg:px-8 ${isDark ? 'bg-slate-950' : ''}`}>
-      <div className="mx-auto max-w-5xl overflow-hidden rounded-lg border border-orange-100 bg-gradient-to-br from-orange-500 to-amber-500 p-8 text-white shadow-xl shadow-orange-100 md:p-12">
+      <div className="mx-auto max-w-5xl overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8 text-white shadow-2xl md:p-12">
         <div className="grid gap-8 md:grid-cols-[1.4fr_0.6fr] md:items-center">
           <div>
             <h2 className="text-3xl font-bold md:text-4xl">Turn your knowledge into an AI assistant today.</h2>
-            <p className="mt-3 text-orange-50">Start free, create your first assistant, upload documents, and ask your first question in minutes.</p>
+            <p className="mt-3 text-slate-400">Start free, create your first assistant, upload documents, and ask your first question in minutes.</p>
           </div>
           <Link href="/signup" className="md:justify-self-end">
-            <Button className="w-full bg-white text-primary-600 hover:bg-orange-50 md:w-auto" size="lg">
+            <Button className="w-full bg-cyan-500 text-white hover:bg-cyan-400 md:w-auto shadow-lg shadow-cyan-500/20" size="lg">
               Get Started Free
               <ArrowRight className="h-5 w-5" />
             </Button>
