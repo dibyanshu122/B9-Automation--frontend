@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+# Block dashboard and auth (private routes)
+Disallow: /dashboard/
+Disallow: /login
+Disallow: /signup
+Disallow: /onboarding
+Disallow: /api/
+
+# Sitemap
+Sitemap: https://b9automation.com/sitemap.xml

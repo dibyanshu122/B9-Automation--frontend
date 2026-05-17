@@ -1,0 +1,86 @@
+import type { Metadata } from 'next';
+import './globals.css';
+import { Providers } from './providers';
+
+export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://b9automation.com'),
+  title: {
+    default: 'B9 Automation — WhatsApp, Instagram & Facebook Business AI',
+    template: '%s | B9 Automation',
+  },
+  description:
+    'Automate WhatsApp replies, Instagram DM, and Facebook lead follow-ups with AI. B9 Automation helps Indian businesses reply 24/7, capture leads, and close more sales.',
+  keywords: [
+    'WhatsApp automation India',
+    'Instagram DM automation',
+    'Facebook lead ads automation',
+    'AI chatbot for business',
+    'WhatsApp bot',
+    'lead management India',
+    'B9 Automation',
+    'Meta Business automation',
+    'WhatsApp Business API',
+    'sales automation India',
+  ],
+  authors: [{ name: 'B9 Automation Team' }],
+  creator: 'B9 Automation',
+  openGraph: {
+    type: 'website',
+    siteName: 'B9 Automation',
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'B9 Automation' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    site: '@B9Automation',
+    images: ['/og-image.png'],
+  },
+  icons: {
+    icon: '/logo.svg',
+    apple: '/logo.svg',
+  },
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'B9 Automation',
+  },
+  formatDetection: {
+    telephone: false,
+    email: true,
+    address: true,
+  },
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  viewportFit: 'cover',
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Favicon */}
+        <link rel="icon" href="/logo.svg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="/logo.svg" />
+
+        {/* Theme color */}
+        <meta name="theme-color" content="#f97316" />
+        <meta name="color-scheme" content="light" />
+
+        {/* DNS Prefetch for performance */}
+        <link rel="dns-prefetch" href="https://api.brainai.in" />
+      </head>
+      <body className="font-sans" suppressHydrationWarning>
+        <Providers>{children}</Providers>
+      </body>
+    </html>
+  );
+}
