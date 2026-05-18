@@ -452,15 +452,18 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
     finally { setSending(false); }
   };
 
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const inputCls = 'w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500';
 
   return (
     <AnimatePresence>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
-        transition={{ type: 'spring', stiffness: 280, damping: 30 }}
-        className="fixed right-0 top-0 z-50 h-screen w-full max-w-xl bg-white shadow-2xl flex flex-col">
+        className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+        onClick={onClose}>
+        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+          className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col"
+          onClick={e => e.stopPropagation()}>
 
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 flex-shrink-0">
           <div>
@@ -530,32 +533,54 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
             )}
           </div>
 
-          {/* Template selector */}
+          {/* Template dropdown */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
               Select Template <span className="text-red-500">*</span>
-              <span className="ml-2 text-xs text-amber-600 font-normal">⚠️ Use APPROVED templates for leads outside 24h window</span>
             </label>
-            {loadingTpl ? (
-              <div className="flex items-center gap-2 text-sm text-gray-400"><Loader2 className="w-4 h-4 animate-spin" /> Loading templates…</div>
-            ) : templates.length === 0 ? (
-              <p className="text-sm text-amber-600 bg-amber-50 rounded-xl p-3">No templates found. <a href="/dashboard/templates" className="font-semibold underline">Create templates →</a></p>
-            ) : (
-              <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
-                {templates.map(tpl => (
-                  <button key={tpl.name} onClick={() => onSelect(tpl)}
-                    className={`w-full text-left p-3 rounded-xl border transition ${selected?.name === tpl.name ? 'border-green-500 bg-green-50' : 'border-gray-200 hover:border-gray-300 bg-white'}`}>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-gray-800 truncate">{tpl.name}</span>
-                      <span className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full font-bold ${tpl.status === 'APPROVED' ? 'bg-green-100 text-green-700' : tpl.status === 'PENDING' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-600'}`}>
-                        {tpl.status}
-                      </span>
+            <p className="text-xs text-amber-600 mb-2">⚠️ Use APPROVED templates for leads outside 24h window</p>
+            <div className="relative">
+              {/* Dropdown trigger */}
+              <button type="button" onClick={() => setDropdownOpen(o => !o)}
+                className={`w-full text-left border rounded-xl px-3 py-2.5 text-sm flex items-center justify-between transition focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white ${dropdownOpen ? 'border-orange-400 ring-2 ring-orange-200' : 'border-gray-200 hover:border-gray-400'}`}>
+                {loadingTpl ? (
+                  <span className="flex items-center gap-2 text-gray-400"><Loader2 className="w-4 h-4 animate-spin" /> Loading templates…</span>
+                ) : selected ? (
+                  <span className="flex items-center gap-2 truncate">
+                    <span className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full font-bold ${selected.status === 'APPROVED' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{selected.status}</span>
+                    <span className="font-semibold text-gray-800 truncate">{selected.name}</span>
+                  </span>
+                ) : (
+                  <span className="text-gray-400">Click to choose a template…</span>
+                )}
+                <ChevronRight className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform ${dropdownOpen ? 'rotate-90' : ''}`} />
+              </button>
+
+              {/* Dropdown list */}
+              {dropdownOpen && (
+                <div className="absolute left-0 right-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-xl shadow-lg max-h-56 overflow-y-auto">
+                  {templates.length === 0 ? (
+                    <div className="p-3 text-sm text-amber-600">
+                      No templates found. <a href="/dashboard/templates" className="font-semibold underline" onClick={() => setDropdownOpen(false)}>Create templates →</a>
                     </div>
-                    <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">{tpl.components?.find((c: any) => c.type === 'BODY')?.text || ''}</p>
-                  </button>
-                ))}
-              </div>
-            )}
+                  ) : (
+                    templates.map(tpl => (
+                      <button key={tpl.name} onClick={() => { onSelect(tpl); setDropdownOpen(false); }}
+                        className={`w-full text-left px-3 py-2.5 flex items-center gap-3 hover:bg-gray-50 transition border-b border-gray-50 last:border-0 ${selected?.name === tpl.name ? 'bg-green-50' : ''}`}>
+                        <span className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full font-bold ${tpl.status === 'APPROVED' ? 'bg-green-100 text-green-700' : tpl.status === 'PENDING' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-600'}`}>
+                          {tpl.status}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-gray-800 truncate">{tpl.name}</p>
+                          <p className="text-xs text-gray-400 truncate">{tpl.components?.find((c: any) => c.type === 'BODY')?.text || ''}</p>
+                        </div>
+                        {selected?.name === tpl.name && <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />}
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Template variable inputs */}
@@ -611,6 +636,7 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
             </Button>
           </div>
         </div>
+        </motion.div>
       </motion.div>
     </AnimatePresence>
   );
