@@ -146,9 +146,9 @@ function UnifiedInbox() {
 
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-xl bg-white">
-      <div className="flex h-[580px]">
+      <div className="flex h-[620px]">
         {/* LEFT — Dark Premium Sidebar */}
-        <div className={`flex flex-col bg-slate-950 ${selected ? 'hidden md:flex w-80' : 'flex w-full md:w-80'}`}>
+        <div className={`flex flex-col bg-slate-950 w-72 shrink-0 ${selected ? 'hidden md:flex' : 'flex'}`}>
           {/* Header */}
           <div className="px-5 pt-5 pb-3">
             <div className="flex items-center justify-between">
@@ -163,15 +163,15 @@ function UnifiedInbox() {
               )}
             </div>
             {/* Filter tabs */}
-            <div className="flex gap-1 mt-4">
+            <div className="flex gap-1 mt-3 overflow-x-auto pb-1 scrollbar-hide">
               {(['all', 'whatsapp', 'instagram', 'facebook'] as const).map(ch => (
                 <button key={ch} onClick={() => setFilter(ch)}
-                  className={`rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-all ${
+                  className={`shrink-0 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold transition-all ${
                     filter === ch
                       ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/30'
                       : 'text-slate-400 hover:bg-white/10 hover:text-slate-200'
                   }`}>
-                  {ch === 'all' ? 'All' : <span className="flex items-center gap-1.5"><ChannelIcon channel={ch} size={13} />{CHANNEL_BADGE[ch]?.label}</span>}
+                  {ch === 'all' ? 'All' : <span className="flex items-center gap-1"><ChannelIcon channel={ch} size={12} /><span className="hidden lg:inline">{CHANNEL_BADGE[ch]?.label}</span></span>}
                 </button>
               ))}
             </div>
@@ -252,8 +252,8 @@ function UnifiedInbox() {
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-5 space-y-3"
-              style={{ background: 'radial-gradient(ellipse at top, #f0f9ff 0%, #f8fafc 100%)' }}>
+            <div className="flex-1 overflow-y-auto p-4 space-y-2"
+              style={{ background: '#efeae2' }}>
               {threadLoading ? (
                 <div className="flex justify-center pt-12"><Loader2 className="h-5 w-5 animate-spin text-gray-300" /></div>
               ) : thread.length === 0 ? (
@@ -262,16 +262,21 @@ function UnifiedInbox() {
                   <p className="text-sm text-gray-400">No messages yet</p>
                 </div>
               ) : thread.map(msg => (
-                <div key={msg.id} className={`flex ${msg.direction === 'outbound' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[72%] rounded-2xl px-4 py-2.5 text-sm shadow-sm ${
+                <div key={msg.id} className={`flex items-end gap-2 ${msg.direction === 'outbound' ? 'justify-end' : 'justify-start'}`}>
+                  {msg.direction === 'inbound' && (
+                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-200 text-[10px] font-bold text-gray-600 mb-1">
+                      {selected.sender_name?.[0]?.toUpperCase() || '?'}
+                    </div>
+                  )}
+                  <div className={`max-w-[68%] rounded-2xl px-3.5 py-2 text-sm ${
                     msg.direction === 'outbound'
-                      ? 'bg-slate-900 text-white rounded-br-sm'
-                      : 'bg-white text-gray-900 border border-gray-100 rounded-bl-sm'
+                      ? 'bg-emerald-500 text-white rounded-br-none shadow-md shadow-emerald-100'
+                      : 'bg-white text-gray-900 border border-gray-100 rounded-bl-none shadow-sm'
                   }`}>
-                    <p>{msg.text}</p>
-                    <p className={`text-[10px] mt-0.5 ${msg.direction === 'outbound' ? 'text-primary-200' : 'text-gray-400'}`}>
+                    <p className="leading-relaxed">{msg.text}</p>
+                    <p className={`text-[10px] mt-1 text-right ${msg.direction === 'outbound' ? 'text-emerald-100' : 'text-gray-400'}`}>
                       {timeAgo(msg.created_at)}
-                      {msg.direction === 'outbound' && msg.status === 'sent' && ' ✓✓'}
+                      {msg.direction === 'outbound' && ' ✓✓'}
                     </p>
                   </div>
                 </div>
