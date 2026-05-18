@@ -15,6 +15,7 @@ import {
   Users,
   XCircle,
 } from 'lucide-react';
+
 import { Button } from '@/components/button';
 import { Card } from '@/components/card';
 import { useApi } from '@/hooks/useApi';
@@ -107,6 +108,10 @@ export default function CampaignsPage() {
   const [previewing, setPreviewing] = useState(false);
   const [preview, setPreview] = useState<PreviewResult | null>(null);
   const [sending, setSending] = useState(false);
+  const [msgType, setMsgType] = useState<'text' | 'template'>('text');
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
 
   const load = () => {
     setLoading(true);
@@ -117,6 +122,21 @@ export default function CampaignsPage() {
   };
 
   useEffect(() => { load(); }, []); // eslint-disable-line
+
+  const loadTemplates = () => {
+    setLoadingTemplates(true);
+    get('/api/automation/whatsapp/templates')
+      .then(r => setTemplates(r.data?.templates || []))
+      .catch(() => toast.error('Could not load templates'))
+      .finally(() => setLoadingTemplates(false));
+  };
+
+  const onSelectTemplate = (tpl: any) => {
+    setSelectedTemplate(tpl);
+    // Build preview text from template components
+    const body = tpl.components?.find((c: any) => c.type === 'BODY');
+    if (body?.text) setMessage(body.text);
+  };
 
   const recipientFilter = filter === 'tag' ? `tag:${customTag}` : filter;
 
@@ -225,12 +245,62 @@ export default function CampaignsPage() {
             </div>
           </div>
 
+          {/* Message Type Toggle */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Message Type</label>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setMsgType('text')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${msgType === 'text' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                ✏️ Custom Text
+              </button>
+              <button
+                onClick={() => { setMsgType('template'); loadTemplates(); }}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${msgType === 'template' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                📋 Use Template
+              </button>
+            </div>
+            <p className="text-xs text-amber-600 mt-1.5">
+              ⚠️ For leads older than 24h, only approved Meta templates can be sent
+            </p>
+          </div>
+
+          {/* Template Selector */}
+          {msgType === 'template' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Select Approved Template</label>
+              {loadingTemplates ? (
+                <div className="flex items-center gap-2 text-sm text-gray-400"><Loader2 className="w-4 h-4 animate-spin" /> Loading templates…</div>
+              ) : templates.length === 0 ? (
+                <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-700">
+                  No approved templates found. Go to <strong>Meta Business Suite → WhatsApp Manager → Templates</strong> to create and get approval.
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {templates.map((tpl: any) => (
+                    <button key={tpl.name} onClick={() => onSelectTemplate(tpl)}
+                      className={`w-full text-left p-3 rounded-lg border transition ${selectedTemplate?.name === tpl.name ? 'border-green-500 bg-green-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold text-gray-800">{tpl.name}</span>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${tpl.status === 'APPROVED' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>{tpl.status}</span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-0.5 truncate">
+                        {tpl.components?.find((c: any) => c.type === 'BODY')?.text || ''}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Message <span className="text-gray-400 font-normal">({message.length}/1024 chars)</span>
+              {msgType === 'template' ? 'Template Preview' : 'Message'} <span className="text-gray-400 font-normal">({message.length}/1024 chars)</span>
             </label>
             <textarea
               value={message}
+              readOnly={msgType === 'template'}
               onChange={e => { setMessage(e.target.value.slice(0, 1024)); setPreview(null); }}
               rows={4}
               placeholder="Hi {name}, we have a special offer for you…"
