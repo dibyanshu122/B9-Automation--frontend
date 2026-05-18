@@ -1406,38 +1406,37 @@ export default function TemplatesPage() {
       {/* Fixed-position hover preview — renders outside table, no overlap issues */}
       {hoveredTpl && (() => {
         const t = hoveredTpl;
-        // Clamp to viewport
-        const previewW = 256;
-        const x = Math.min(hoverPos.x, window.innerWidth - previewW - 16);
-        const y = Math.max(8, hoverPos.y - 120);
+        const previewW = 240;
+        const x = Math.min(hoverPos.x + 8, window.innerWidth - previewW - 16);
+        const y = Math.max(8, Math.min(hoverPos.y - 60, window.innerHeight - 280));
         return (
           <div className="fixed z-[9999] pointer-events-none" style={{ left: x, top: y, width: previewW }}>
-            <div className="bg-white border border-gray-200 rounded-2xl shadow-2xl p-3">
-              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-2">WhatsApp Preview</p>
-              <div className="bg-[#e5ddd5] rounded-xl p-2.5">
-                <div className="bg-white rounded-lg rounded-tl-none shadow-sm overflow-hidden">
+            <div className="bg-white border border-gray-200 rounded-xl shadow-xl p-2.5 max-h-72 overflow-hidden">
+              <p className="text-[9px] font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Preview</p>
+              <div className="bg-[#e5ddd5] rounded-lg p-2">
+                <div className="bg-white rounded-md rounded-tl-none shadow-sm overflow-hidden">
                   {t.components?.find((c: any) => c.type === 'HEADER')?.format === 'TEXT' && (
-                    <p className="px-2.5 pt-2 pb-1 text-xs font-bold text-gray-900">{t.components.find((c: any) => c.type === 'HEADER').text}</p>
+                    <p className="px-2 pt-1.5 pb-0.5 text-[11px] font-bold text-gray-900 truncate">{t.components.find((c: any) => c.type === 'HEADER').text}</p>
                   )}
                   {t.components?.find((c: any) => c.type === 'HEADER')?.format === 'IMAGE' && (
-                    <div className="h-14 bg-gray-200 flex items-center justify-center text-xs text-gray-400">🖼️ Image</div>
+                    <div className="h-10 bg-gray-200 flex items-center justify-center text-[10px] text-gray-400">🖼️ Image</div>
                   )}
                   {t.components?.find((c: any) => c.type === 'HEADER')?.format === 'VIDEO' && (
-                    <div className="h-14 bg-gray-900 flex items-center justify-center text-xs text-white">🎬 Video</div>
+                    <div className="h-10 bg-gray-900 flex items-center justify-center text-[10px] text-white">🎬 Video</div>
                   )}
                   {t.components?.find((c: any) => c.type === 'HEADER')?.format === 'DOCUMENT' && (
-                    <div className="h-9 bg-blue-50 flex items-center gap-2 px-2.5 text-xs text-blue-600">📄 Document</div>
+                    <div className="h-7 bg-blue-50 flex items-center gap-1.5 px-2 text-[10px] text-blue-600">📄 Doc</div>
                   )}
                   {getBody(t.components) && (
-                    <p className="px-2.5 py-2 text-[11px] text-gray-800 whitespace-pre-wrap line-clamp-5">{getBody(t.components)}</p>
+                    <p className="px-2 py-1.5 text-[10px] text-gray-800 line-clamp-3 leading-relaxed">{getBody(t.components)}</p>
                   )}
                   {t.components?.find((c: any) => c.type === 'FOOTER')?.text && (
-                    <p className="px-2.5 pb-1.5 text-[10px] text-gray-400">{t.components.find((c: any) => c.type === 'FOOTER').text}</p>
+                    <p className="px-2 pb-1 text-[9px] text-gray-400 truncate">{t.components.find((c: any) => c.type === 'FOOTER').text}</p>
                   )}
-                  <p className="text-right text-[9px] text-gray-300 px-2.5 pb-1">12:00 ✓✓</p>
+                  <p className="text-right text-[8px] text-gray-300 px-2 pb-1">12:00 ✓✓</p>
                 </div>
-                {t.components?.find((c: any) => c.type === 'BUTTONS')?.buttons?.map((b: any, bi: number) => (
-                  <div key={bi} className="mt-1 bg-white rounded-lg py-1 text-[10px] font-semibold text-[#00a5f4] text-center shadow-sm">{b.text}</div>
+                {t.components?.find((c: any) => c.type === 'BUTTONS')?.buttons?.slice(0, 2).map((b: any, bi: number) => (
+                  <div key={bi} className="mt-0.5 bg-white rounded-md py-0.5 text-[9px] font-semibold text-[#00a5f4] text-center">{b.text}</div>
                 ))}
               </div>
             </div>
