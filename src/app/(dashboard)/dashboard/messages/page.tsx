@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Check, Copy, Inbox, KeyRound, Loader2, MessageCircle, Send, Server, ShieldCheck, Smartphone, Webhook, XCircle } from 'lucide-react';
+import { ArrowLeft, Check, Copy, Inbox, KeyRound, Loader2, MessageCircle, MoreVertical, Send, Server, ShieldCheck, Smartphone, Trash2, Webhook, XCircle } from 'lucide-react';
 import { Button } from '@/components/button';
 import { Card } from '@/components/card';
 import { HelpTip } from '@/components/help-tip';
@@ -76,8 +76,30 @@ function UnifiedInbox() {
   const [threadLoading, setThreadLoading] = useState(false);
   const [reply, setReply] = useState('');
   const [sending, setSending] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [leadsMap, setLeadsMap] = useState<Record<string, string>>({});
   const bottomRef = useRef<HTMLDivElement>(null);
   const chatBoxRef = useRef<HTMLDivElement>(null);
+
+  // Fetch leads once to map phone → name
+  useEffect(() => {
+    get('/api/leads?limit=500').then(r => {
+      const map: Record<string, string> = {};
+      (r.data?.leads || r.data || []).forEach((l: any) => {
+        if (l.phone && l.name) {
+          const clean = l.phone.replace(/\D/g, '');
+          map[clean] = l.name;
+          map[l.phone] = l.name;
+        }
+      });
+      setLeadsMap(map);
+    }).catch(() => {});
+  }, []); // eslint-disable-line
+
+  const resolveContactName = (senderId: string): string => {
+    const clean = senderId.replace(/\D/g, '');
+    return leadsMap[senderId] || leadsMap[clean] || leadsMap['+' + clean] || null!;
+  };
 
   const loadInbox = () => {
     get('/api/automation/inbox')
@@ -252,7 +274,7 @@ function UnifiedInbox() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-1">
                       <p className={`text-xs font-semibold truncate ${isSelected ? 'text-cyan-300' : 'text-slate-200'}`}>
-                        {c.sender_name}
+                        {resolveContactName(c.sender_id) || c.sender_name}
                       </p>
                       <p className="shrink-0 text-[10px] text-slate-500">{timeAgo(c.last_time)}</p>
                     </div>
@@ -277,16 +299,67 @@ function UnifiedInbox() {
                 selected.channel === 'instagram' ? 'bg-pink-100 text-pink-600' :
                 'bg-blue-100 text-blue-600'
               }`}>
-                {selected.sender_name?.[0]?.toUpperCase() || CHANNEL_BADGE[selected.channel]?.emoji}
+                {(resolveContactName(selected.sender_id) || selected.sender_name)?.[0]?.toUpperCase() || CHANNEL_BADGE[selected.channel]?.emoji}
               </div>
-              <div className="flex-1">
-                <p className="text-sm font-bold text-gray-900">{selected.sender_name}</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-gray-900 truncate">
+                  {resolveContactName(selected.sender_id) || selected.sender_name}
+                </p>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <ChannelIcon channel={selected.channel} size={12} />
                   <p className="text-[11px] text-gray-400 capitalize">{selected.channel}</p>
                   <span className="h-1 w-1 rounded-full bg-emerald-400 animate-pulse" />
                   <span className="text-[10px] text-emerald-500">Active</span>
                 </div>
+              </div>
+              {/* 3-dot menu */}
+              <div className="relative">
+                <button onClick={e => { e.stopPropagation(); setMenuOpen(o => !o); }}
+                  className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition">
+                  <MoreVertical className="h-5 w-5" />
+                </button>
+                {menuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
+                    <div className="absolute right-0 top-10 z-20 bg-white border border-gray-200 rounded-xl shadow-xl py-1 min-w-[160px]">
+                      <button onClick={async () => {
+                        setMenuOpen(false);
+                        if (!confirm('Delete this entire conversation? This cannot be undone.')) return;
+                        try {
+                          await (get as any)(`/api/automation/inbox/conversation?sender_id=${encodeURIComponent(selected.sender_id)}&channel=${selected.channel}`, { method: 'DELETE' });
+                        } catch {}
+                        // Use delete via fetch directly
+                        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+                        const token = localStorage.getItem('token');
+                        await fetch(`${apiUrl}/api/automation/inbox/conversation?sender_id=${encodeURIComponent(selected.sender_id)}&channel=${selected.channel}`, {
+                          method: 'DELETE',
+                          headers: token ? { Authorization: `Bearer ${token}` } : {},
+                        });
+                        toast.success('Conversation deleted');
+                        setSelected(null);
+                        setThread([]);
+                      }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-red-50 text-red-600 flex items-center gap-2">
+                        <Trash2 className="h-4 w-4" /> Delete Chat
+                      </button>
+                      <button onClick={async () => {
+                        setMenuOpen(false);
+                        if (!confirm(`Block ${resolveContactName(selected.sender_id) || selected.sender_name}? They will not trigger automations.`)) return;
+                        try {
+                          const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+                          const token = localStorage.getItem('token');
+                          await fetch(`${apiUrl}/api/automation/inbox/block?sender_id=${encodeURIComponent(selected.sender_id)}&channel=${selected.channel}`, {
+                            method: 'POST',
+                            headers: token ? { Authorization: `Bearer ${token}` } : {},
+                          });
+                          toast.success('Contact blocked');
+                          setSelected(null);
+                        } catch { toast.error('Block failed'); }
+                      }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 text-gray-700 flex items-center gap-2">
+                        🚫 Block Contact
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
@@ -625,30 +698,7 @@ export default function MessagesPage() {
           </Button>
         </Card>
 
-        <Card className="border-gray-200 shadow-sm" hoverable={false}>
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold text-gray-950">Live Connection Checklist</h2>
-            <HelpTip text="Use secure server-side credentials for live sending." />
-          </div>
-          <div className="mt-5 space-y-3">
-            {['Meta business account', 'Phone number connection', 'Webhook verification', 'Access token security'].map((label) => (
-              <div key={label} className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2">
-                <KeyRound className="h-4 w-4 text-primary-600" />
-                <span className="text-xs font-bold text-gray-800">{label}</span>
-              </div>
-            ))}
-          </div>
-          <div className="mt-5 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-900">
-            <div className="flex items-center gap-2 font-bold">
-              <Server className="h-4 w-4" />
-              Live ready: {setup?.env_ready ? 'Yes' : 'No'}
-            </div>
-            <p className="mt-2">If live connection is not ready, all messages stay as drafts or ready-to-send records.</p>
-          </div>
-        </Card>
-      </section>
-
-      <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+      <section className="grid gap-6 xl:grid-cols-2">
         <Card className="border-gray-200 shadow-sm" hoverable={false}>
           <h2 className="text-xl font-bold text-gray-950">Send Test Message</h2>
           <p className="mt-1 text-sm text-gray-600">Use draft test first. Live test needs PRO plan and a ready Meta connection.</p>
@@ -669,51 +719,24 @@ export default function MessagesPage() {
         </Card>
 
         <Card className="border-gray-200 shadow-sm" hoverable={false}>
-          <h2 className="text-xl font-bold text-gray-950">Latest WhatsApp Drafts</h2>
+          <h2 className="text-xl font-bold text-gray-950">Live Connection Checklist</h2>
           <div className="mt-5 space-y-3">
-            {messages.length === 0 ? (
-              <div className="rounded-xl bg-orange-50 p-5 text-sm text-gray-600">
-                No WhatsApp drafts yet. Run a lead follow-up workflow from Automations.
+            {['Meta business account', 'Phone number connection', 'Webhook verification', 'Access token security'].map((label) => (
+              <div key={label} className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2">
+                <KeyRound className="h-4 w-4 text-primary-600" />
+                <span className="text-xs font-bold text-gray-800">{label}</span>
               </div>
-            ) : (
-              messages.map((message) => (
-                <div key={message.id} className="rounded-xl border border-gray-100 p-4">
-                  <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                    <div className="max-w-3xl">
-                      <div className="mb-2 flex flex-wrap items-center gap-2">
-                        <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-700">{message.channel}</span>
-                        <span className="rounded-full bg-orange-50 px-2 py-1 text-xs font-semibold text-primary-700">{message.status}</span>
-                        {message.recipient && <span className="text-sm text-gray-500">{message.recipient}</span>}
-                        {/* 24-hour window expired warning */}
-                        {(message as any).message_metadata?.window_expired && (
-                          <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-1 text-[10px] font-bold text-amber-700">
-                            ⚠️ 24h window expired — send approved template
-                          </span>
-                        )}
-                      </div>
-                      <p className="whitespace-pre-line text-sm leading-6 text-gray-700">{message.message}</p>
-                      {message.error_message && (
-                        <p className="mt-2 inline-flex items-center gap-1 text-sm text-red-600">
-                          <XCircle className="h-4 w-4" />
-                          {message.error_message}
-                        </p>
-                      )}
-                    </div>
-                    <Button
-                      disabled={!message.recipient || sendingId === message.id || message.status === 'sent'}
-                      onClick={() => sendMessage(message.id)}
-                      className="justify-center"
-                    >
-                      <Send className="h-4 w-4" />
-                      {sendingId === message.id ? 'Sending...' : message.status === 'sent' ? 'Sent' : 'Send'}
-                    </Button>
-                  </div>
-                </div>
-              ))
-            )}
+            ))}
+          </div>
+          <div className="mt-4 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-900">
+            <div className="flex items-center gap-2 font-bold">
+              <Server className="h-4 w-4" />
+              Live ready: {setup?.env_ready ? 'Yes ✓' : 'No — check credentials'}
+            </div>
           </div>
         </Card>
       </section>
+
     </div>
   );
 }
