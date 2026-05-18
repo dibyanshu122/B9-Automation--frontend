@@ -861,25 +861,37 @@ function TemplateLibraryTab({ onUse }: { onUse: (tpl: any) => void }) {
         </div>
       </div>
       <p className="text-xs text-gray-400">{filtered.length} template{filtered.length !== 1 ? 's' : ''} found</p>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.map(tpl => (
-          <div key={tpl.key} className="border border-gray-200 rounded-xl p-4 hover:border-orange-300 hover:shadow-sm transition group">
-            <div className="flex items-start justify-between gap-2 mb-2">
-              <p className="text-sm font-bold text-gray-900 leading-tight">{tpl.name}</p>
-              <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${CAT_STYLE[tpl.category]}`}>{tpl.category.charAt(0) + tpl.category.slice(1).toLowerCase()}</span>
+          <div key={tpl.key} className="bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-md hover:border-orange-300 transition-all flex flex-col overflow-hidden">
+            {/* Card header strip */}
+            <div className={`px-4 pt-4 pb-3 border-b border-gray-100`}>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-bold text-gray-900 leading-tight truncate">{tpl.name}</p>
+                <span className={`shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-full ${CAT_STYLE[tpl.category]}`}>
+                  {tpl.category.charAt(0) + tpl.category.slice(1).toLowerCase()}
+                </span>
+              </div>
             </div>
-            <p className="text-xs text-gray-500 line-clamp-2 mb-3 bg-gray-50 rounded-lg p-2">{tpl.body}</p>
+            {/* Body */}
+            <div className="px-4 py-3 flex-1">
+              <p className="text-xs text-gray-600 line-clamp-3 leading-relaxed">{tpl.body}</p>
+            </div>
+            {/* Buttons preview */}
             {tpl.buttons.length > 0 && (
-              <div className="flex flex-wrap gap-1 mb-3">
+              <div className="px-4 pb-3 flex flex-wrap gap-1.5">
                 {tpl.buttons.map((b: any, i: number) => (
-                  <span key={i} className="text-[10px] border border-blue-200 text-blue-600 px-2 py-0.5 rounded-full">{b.text || b.type}</span>
+                  <span key={i} className="text-[10px] bg-blue-50 border border-blue-200 text-blue-600 px-2.5 py-1 rounded-full font-medium">{b.text || b.type}</span>
                 ))}
               </div>
             )}
-            <button onClick={() => onUse(tpl)}
-              className="w-full py-1.5 text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg hover:bg-orange-50 transition">
-              Use Template →
-            </button>
+            {/* CTA */}
+            <div className="px-4 pb-4">
+              <button onClick={() => onUse(tpl)}
+                className="w-full py-2 text-xs font-bold text-orange-600 bg-orange-50 border border-orange-200 rounded-xl hover:bg-orange-100 transition">
+                Use Template →
+              </button>
+            </div>
           </div>
         ))}
       </div>
@@ -971,16 +983,25 @@ export default function TemplatesPage() {
         <>
           {/* Stats */}
           {!loading && templates.length > 0 && (
-            <div className="grid grid-cols-3 gap-3">
-              {(['APPROVED', 'PENDING', 'REJECTED'] as const).map(s => (
-                <button key={s} onClick={() => setStatusFilter(statusFilter === s ? 'ALL' : s)}
-                  className={`text-left p-3 rounded-xl border transition ${statusFilter === s ? 'ring-2 ring-primary-300' : 'hover:shadow-sm'} ${STATUS_STYLES[s]}`}>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold">{s.charAt(0) + s.slice(1).toLowerCase()}</span>
-                    <span className="text-base font-bold">{templates.filter(t => t.status === s).length}</span>
-                  </div>
-                </button>
-              ))}
+            <div className="flex gap-2 flex-wrap">
+              {(['ALL', 'APPROVED', 'PENDING', 'REJECTED'] as const).map(s => {
+                const count = s === 'ALL' ? templates.length : templates.filter(t => t.status === s).length;
+                const isActive = statusFilter === s;
+                return (
+                  <button key={s} onClick={() => setStatusFilter(s)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium transition ${
+                      isActive
+                        ? s === 'APPROVED' ? 'bg-emerald-600 text-white border-emerald-600'
+                          : s === 'PENDING' ? 'bg-amber-500 text-white border-amber-500'
+                          : s === 'REJECTED' ? 'bg-red-500 text-white border-red-500'
+                          : 'bg-gray-900 text-white border-gray-900'
+                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+                    }`}>
+                    {s.charAt(0) + s.slice(1).toLowerCase()}
+                    <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${isActive ? 'bg-white/20' : 'bg-gray-100 text-gray-500'}`}>{count}</span>
+                  </button>
+                );
+              })}
             </div>
           )}
 
@@ -993,10 +1014,10 @@ export default function TemplatesPage() {
             </div>
           )}
 
-          {/* Grid */}
+          {/* Template list — horizontal strips */}
           {loading ? (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {[1,2,3,4,5,6].map(i => <div key={i} className="h-36 rounded-xl bg-gray-100 animate-pulse" />)}
+            <div className="space-y-2">
+              {[1,2,3,4].map(i => <div key={i} className="h-16 rounded-xl bg-gray-100 animate-pulse" />)}
             </div>
           ) : filtered.length === 0 && !error ? (
             <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-gray-200 py-16 text-center">
@@ -1006,23 +1027,32 @@ export default function TemplatesPage() {
               <Button onClick={() => setShowPicker(true)} className="mt-2 flex items-center gap-2"><Plus className="h-4 w-4" /> Create Template</Button>
             </div>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {filtered.map(t => (
-                <Card key={t.id || t.name} hoverable={false} className="border-gray-200">
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <p className="text-sm font-bold text-gray-900 break-all">{t.name}</p>
-                    <span className={`shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold border ${STATUS_STYLES[t.status] || 'bg-gray-100 text-gray-500 border-gray-200'}`}>
+            <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+              {/* List header */}
+              <div className="grid grid-cols-12 gap-3 px-4 py-2.5 bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                <div className="col-span-3">Name</div>
+                <div className="col-span-2">Status</div>
+                <div className="col-span-2">Category</div>
+                <div className="col-span-1">Language</div>
+                <div className="col-span-4">Body Preview</div>
+              </div>
+              {filtered.map((t, idx) => (
+                <div key={t.id || t.name} className={`grid grid-cols-12 gap-3 px-4 py-3.5 items-center hover:bg-gray-50 transition ${idx !== 0 ? 'border-t border-gray-100' : ''}`}>
+                  <div className="col-span-3">
+                    <p className="text-sm font-semibold text-gray-900 truncate">{t.name}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold border ${STATUS_STYLES[t.status] || 'bg-gray-100 text-gray-500 border-gray-200'}`}>
                       {STATUS_ICONS[t.status]}{t.status}
                     </span>
                   </div>
-                  <div className="flex gap-1.5 mb-3 flex-wrap">
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${CAT_STYLE[t.category] || 'bg-gray-100 text-gray-600'}`}>{t.category}</span>
-                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-500">{t.language}</span>
+                  <div className="col-span-1">
+                    <span className="text-xs text-gray-500">{t.language}</span>
                   </div>
-                  {getBody(t.components) && (
-                    <p className="text-xs text-gray-600 bg-gray-50 rounded-lg p-2 line-clamp-3">{getBody(t.components)}</p>
-                  )}
-                </Card>
+                  <div className="col-span-4">
+                    <p className="text-xs text-gray-500 truncate">{getBody(t.components) || <span className="text-gray-300 italic">No body</span>}</p>
+                  </div>
+                </div>
               ))}
             </div>
           )}
