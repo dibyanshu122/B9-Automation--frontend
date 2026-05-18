@@ -51,8 +51,8 @@ const faqs = [
     a: 'Absolutely. Data is encrypted at rest and in transit using 256-bit encryption. We never train our AI models on your data. Full GDPR, SOC2, and ISO 27001 compliance.',
   },
   {
-    q: 'What happens after the free trial?',
-    a: 'You can upgrade to a paid plan or stay on our free tier with limited queries. No hidden charges, cancel anytime.',
+    q: 'Is there a free plan?',
+    a: 'Yes! Our free plan includes 30 AI queries, 1 assistant, and 50MB storage — forever. Upgrade anytime for more power. No hidden charges, cancel anytime.',
   },
   {
     q: 'Do you offer onboarding or support?',
@@ -362,7 +362,7 @@ export default function HomePage() {
           </motion.div>
 
           <motion.div variants={fadeUp} className="mt-8 flex flex-wrap gap-4 text-sm text-gray-500">
-            {['✓ 14-day free trial', '✓ No credit card', '✓ Setup in 5 mins'].map((b) => (
+            {['✓ Free forever plan', '✓ No credit card', '✓ Setup in 5 mins'].map((b) => (
               <span key={b}>{b}</span>
             ))}
           </motion.div>
@@ -945,7 +945,7 @@ export default function HomePage() {
             </motion.div>
 
             <motion.div variants={fadeUp} className="mt-8 flex flex-wrap gap-6 justify-center text-sm text-gray-600">
-              {['14-day free trial', 'No credit card required', 'Setup in under 5 minutes'].map((badge) => (
+              {['Free forever plan', 'No credit card required', 'Setup in under 5 minutes'].map((badge) => (
                 <span key={badge}>✓ {badge}</span>
               ))}
             </motion.div>
