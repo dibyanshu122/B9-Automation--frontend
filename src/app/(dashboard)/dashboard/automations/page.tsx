@@ -174,6 +174,9 @@ const visibleLibrary: LibraryBlock[] = [
   { type: 'action', title: 'Send WhatsApp', description: 'Send WhatsApp message or approved template to the lead.', config: { tool: 'send_whatsapp_message', recipient: '{{lead.phone}}', message_body: '{{ai.response}}', message_mode: 'text', send_mode: 'draft', language_code: 'en_US' } },
   { type: 'action', title: 'Send WhatsApp Image/Video', description: 'Send a product image, video, PDF, or document to the customer via WhatsApp.', config: { tool: 'send_whatsapp_media', recipient: '{{lead.phone}}', media_type: 'image', media_url: '', caption: '{{ai.response}}', send_mode: 'draft' } },
   { type: 'action', title: 'Send WhatsApp Menu', description: 'Send an interactive list/menu message with up to 10 options for the customer to choose from.', config: { tool: 'send_whatsapp_list_message', recipient: '{{lead.phone}}', body_text: 'Please choose a service:', button_text: 'View Options', send_mode: 'draft', sections: '[{"title":"Services","rows":[{"id":"opt_1","title":"Option 1"},{"id":"opt_2","title":"Option 2"}]}]' } },
+  { type: 'action', title: 'WhatsApp Buttons (3)', description: 'Send up to 3 quick-reply buttons — customer taps to reply instantly.', config: { tool: 'send_whatsapp_buttons', recipient: '{{lead.phone}}', body_text: 'Which option suits you best?', buttons: '[{"id":"btn_0","title":"Option 1"},{"id":"btn_1","title":"Option 2"},{"id":"btn_2","title":"Option 3"}]', send_mode: 'draft' } },
+  { type: 'action', title: 'WhatsApp CTA Button', description: 'Send a call-to-action button that opens a URL or calls a phone number.', config: { tool: 'send_whatsapp_cta', recipient: '{{lead.phone}}', body_text: 'Click below to learn more:', buttons: '[{"type":"url","text":"Visit Website","url":"https://your-site.com"}]', send_mode: 'draft' } },
+  { type: 'action', title: 'WhatsApp Form (Flow)', description: 'Open an interactive Meta WhatsApp Flow — surveys, booking forms, lead capture inside chat.', config: { tool: 'send_whatsapp_meta_flow', recipient: '{{lead.phone}}', flow_id: '', cta_text: 'Fill Form', body_text: 'Please fill in your details below:', send_mode: 'draft' } },
   { type: 'action', title: 'Chat Flow Reply', description: 'Send step-by-step reply from the uploaded conversation flow PDF — with interactive buttons when the flow includes choices.', config: { tool: 'send_whatsapp_flow_message', recipient: '{{lead.phone}}', send_mode: 'draft' } },
   { type: 'action', title: 'Send Instagram DM', description: 'Reply to the Instagram DM with an AI-generated message.', config: { tool: 'send_instagram_dm', recipient: '{{instagram.senderId}}', message_body: '{{ai.response}}', send_mode: 'draft' } },
   { type: 'action', title: 'Send Facebook Message', description: 'Reply to the Facebook Messenger message with an AI response.', config: { tool: 'send_facebook_message', recipient: '{{facebook.senderId}}', message_body: '{{ai.response}}', send_mode: 'draft' } },
@@ -2208,6 +2211,91 @@ function ActionBlockSettings({
           <InputField label="Send to" value={config.recipient || '{{lead.phone}}'} placeholder="{{lead.phone}}" onChange={(v) => onChange('recipient', v)} />
           <SelectField label="Send mode" value={config.send_mode || 'draft'} options={['draft', 'live']} onChange={(v) => onChange('send_mode', v)} />
           <p className="text-[10px] text-violet-500">After catalog is sent, add "Collect Order Form" to collect customer choice, then "Send Payment Link" to accept payment.</p>
+        </div>
+      )}
+
+      {/* ── WhatsApp Buttons (3 quick-reply) ─────────────────────────────── */}
+      {tool === 'send_whatsapp_buttons' && (() => {
+        let btns: {id:string;title:string}[] = [];
+        try { btns = JSON.parse(config.buttons || '[]'); } catch { btns = [{id:'btn_0',title:'Option 1'},{id:'btn_1',title:'Option 2'},{id:'btn_2',title:'Option 3'}]; }
+        return (
+          <div className="space-y-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-bold text-emerald-950">WhatsApp Buttons (max 3) 🔘</p>
+              <span className="rounded-full bg-white px-2 py-1 text-[10px] font-bold uppercase text-emerald-700">{integrationStatusFor('meta')}</span>
+            </div>
+            <InputField label="Message body" value={config.body_text || 'Which option suits you?'} placeholder="Which option suits you?" onChange={(v) => onChange('body_text', v)} />
+            <InputField label="Header text (optional)" value={config.header_text || ''} placeholder="Leave blank for no header" onChange={(v) => onChange('header_text', v)} />
+            <div>
+              <p className="mb-1 text-xs font-bold text-gray-700">Buttons (max 3, max 20 chars each)</p>
+              {btns.slice(0,3).map((b,i) => (
+                <div key={i} className="flex gap-2 mb-1">
+                  <input value={b.title} onChange={e => { const n=[...btns]; n[i]={...n[i],title:e.target.value.slice(0,20)}; onChange('buttons',JSON.stringify(n)); }}
+                    className="input-field text-sm flex-1" placeholder={`Button ${i+1} label`} maxLength={20} />
+                  {btns.length > 1 && <button onClick={() => { const n=btns.filter((_,j)=>j!==i); onChange('buttons',JSON.stringify(n)); }} className="text-red-400 hover:text-red-600 text-xs px-2">✕</button>}
+                </div>
+              ))}
+              {btns.length < 3 && <button onClick={() => { const n=[...btns,{id:`btn_${btns.length}`,title:`Option ${btns.length+1}`}]; onChange('buttons',JSON.stringify(n)); }} className="text-xs text-emerald-600 font-semibold">+ Add button</button>}
+            </div>
+            <InputField label="Send to" value={config.recipient || '{{lead.phone}}'} placeholder="{{lead.phone}}" onChange={(v) => onChange('recipient', v)} />
+            <SelectField label="Send mode" value={config.send_mode || 'draft'} options={['draft', 'live']} onChange={(v) => onChange('send_mode', v)} />
+          </div>
+        );
+      })()}
+
+      {/* ── WhatsApp CTA Button ───────────────────────────────────────────── */}
+      {tool === 'send_whatsapp_cta' && (() => {
+        let btns: {type:string;text:string;url?:string;phone_number?:string}[] = [];
+        try { btns = JSON.parse(config.buttons || '[]'); } catch { btns = [{type:'url',text:'Visit Website',url:'https://'}]; }
+        return (
+          <div className="space-y-3 rounded-xl border border-blue-200 bg-blue-50 p-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-bold text-blue-950">WhatsApp CTA Button 🔗</p>
+              <span className="rounded-full bg-white px-2 py-1 text-[10px] font-bold uppercase text-blue-700">{integrationStatusFor('meta')}</span>
+            </div>
+            <InputField label="Message body" value={config.body_text || 'Click below to continue:'} placeholder="Click below to continue:" onChange={(v) => onChange('body_text', v)} />
+            <div>
+              <p className="mb-1 text-xs font-bold text-gray-700">Buttons (max 2 CTA)</p>
+              {btns.slice(0,2).map((b,i) => (
+                <div key={i} className="space-y-1 mb-2 p-2 bg-white rounded-lg border border-blue-100">
+                  <div className="flex gap-2">
+                    <select value={b.type} onChange={e => { const n=[...btns]; n[i]={...n[i],type:e.target.value}; onChange('buttons',JSON.stringify(n)); }} className="input-field text-xs w-32">
+                      <option value="url">URL</option>
+                      <option value="phone_number">Phone Call</option>
+                    </select>
+                    <input value={b.text} onChange={e => { const n=[...btns]; n[i]={...n[i],text:e.target.value}; onChange('buttons',JSON.stringify(n)); }} className="input-field text-xs flex-1" placeholder="Button label" maxLength={25} />
+                    {btns.length > 1 && <button onClick={() => { const n=btns.filter((_,j)=>j!==i); onChange('buttons',JSON.stringify(n)); }} className="text-red-400 text-xs px-1">✕</button>}
+                  </div>
+                  {b.type === 'url' && <input value={b.url||''} onChange={e => { const n=[...btns]; n[i]={...n[i],url:e.target.value}; onChange('buttons',JSON.stringify(n)); }} className="input-field text-xs" placeholder="https://your-site.com" />}
+                  {b.type === 'phone_number' && <input value={b.phone_number||''} onChange={e => { const n=[...btns]; n[i]={...n[i],phone_number:e.target.value}; onChange('buttons',JSON.stringify(n)); }} className="input-field text-xs" placeholder="+91 98765 43210" />}
+                </div>
+              ))}
+              {btns.length < 2 && <button onClick={() => { const n=[...btns,{type:'url',text:'Click Here',url:'https://'}]; onChange('buttons',JSON.stringify(n)); }} className="text-xs text-blue-600 font-semibold">+ Add button</button>}
+            </div>
+            <InputField label="Send to" value={config.recipient || '{{lead.phone}}'} placeholder="{{lead.phone}}" onChange={(v) => onChange('recipient', v)} />
+            <SelectField label="Send mode" value={config.send_mode || 'draft'} options={['draft', 'live']} onChange={(v) => onChange('send_mode', v)} />
+          </div>
+        );
+      })()}
+
+      {/* ── WhatsApp Form (Meta Flow) ─────────────────────────────────────── */}
+      {tool === 'send_whatsapp_meta_flow' && (
+        <div className="space-y-3 rounded-xl border border-purple-200 bg-purple-50 p-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-bold text-purple-950">WhatsApp Form (Meta Flow) 📋</p>
+            <span className="rounded-full bg-white px-2 py-1 text-[10px] font-bold uppercase text-purple-700">{integrationStatusFor('meta')}</span>
+          </div>
+          <div className="rounded-lg bg-purple-100 px-3 py-2 text-xs text-purple-800">
+            <p className="font-semibold mb-1">What is a WhatsApp Flow?</p>
+            <p>A multi-screen interactive form that opens inside WhatsApp. Use it for: surveys, lead capture, appointment booking, support tickets.</p>
+            <p className="mt-1">Create flows at: <a href="https://business.facebook.com/wa/manage/flows" target="_blank" rel="noreferrer" className="underline font-semibold">Meta Business Suite → Flows</a></p>
+          </div>
+          <InputField label="Flow ID (from Meta)" value={config.flow_id || ''} placeholder="1234567890123456" onChange={(v) => onChange('flow_id', v)} />
+          <InputField label="CTA Button text" value={config.cta_text || 'Fill Form'} placeholder="Fill Form / Book Now / Get Quote" onChange={(v) => onChange('cta_text', v)} />
+          <InputField label="Message body" value={config.body_text || 'Please fill in your details below:'} placeholder="Please fill in your details:" onChange={(v) => onChange('body_text', v)} />
+          <InputField label="Header text (optional)" value={config.header_text || ''} placeholder="Leave blank for no header" onChange={(v) => onChange('header_text', v)} />
+          <InputField label="Send to" value={config.recipient || '{{lead.phone}}'} placeholder="{{lead.phone}}" onChange={(v) => onChange('recipient', v)} />
+          <SelectField label="Send mode" value={config.send_mode || 'draft'} options={['draft', 'live']} onChange={(v) => onChange('send_mode', v)} />
         </div>
       )}
 
