@@ -339,6 +339,8 @@ function CampaignCard({ c, onDetail, onRefresh }: { c: Campaign; onDetail: () =>
 function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: () => void }) {
   const { get, post } = useApi();
 
+  const [sendMode, setSendMode] = useState<'single' | 'bulk'>('bulk');
+  const [singlePhone, setSinglePhone] = useState('');
   const [name, setName] = useState('');
   const [recipientMode, setRecipientMode] = useState<'leads' | 'excel'>('leads');
   const [filter, setFilter] = useState('all');
@@ -417,6 +419,28 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
     }
   };
 
+  const handleSingleSend = async () => {
+    if (!singlePhone.trim()) { toast.error('Phone number required'); return; }
+    if (!selected) { toast.error('Select a template first'); return; }
+    if (vars.some(v => !v.trim())) { toast.error('Fill all template variables'); return; }
+    setSending(true);
+    try {
+      await post('/api/campaigns/send', {
+        name: `Test: ${selected.name}`,
+        message: selected.name,
+        channel: 'whatsapp',
+        msg_type: 'template',
+        template_name: selected.name,
+        language_code: selected.language || 'en_US',
+        template_variables: vars.length ? vars : null,
+        direct_phone: singlePhone.replace(/\s/g, ''),
+      });
+      toast.success(`Template sent to ${singlePhone}`);
+      setSinglePhone(''); onSent();
+    } catch (e: any) { toast.error(e.response?.data?.detail || 'Send failed'); }
+    finally { setSending(false); }
+  };
+
   const handleSend = async (saveAsDraft = false) => {
     if (!name.trim()) { toast.error('Campaign name required'); return; }
     if (!selected) { toast.error('Select a template first'); return; }
@@ -475,14 +499,41 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
 
         <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-5">
 
-          {/* Campaign name */}
+          {/* Single / Bulk toggle */}
+          <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
+            <button onClick={() => setSendMode('single')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-semibold transition ${sendMode === 'single' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+              ⚡ Single Number
+            </button>
+            <button onClick={() => setSendMode('bulk')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-semibold transition ${sendMode === 'bulk' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+              <Users className="w-3.5 h-3.5" /> Bulk Campaign
+            </button>
+          </div>
+
+          {/* Single: just phone input */}
+          {sendMode === 'single' && (
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                WhatsApp Number <span className="text-red-500">*</span>
+                <span className="ml-2 text-xs text-gray-400 font-normal">— for testing templates</span>
+              </label>
+              <input value={singlePhone} onChange={e => setSinglePhone(e.target.value)}
+                placeholder="+91 98765 43210" className={inputCls} />
+              <p className="text-xs text-gray-400 mt-1">Send to a single number directly — great for testing before bulk send</p>
+            </div>
+          )}
+
+          {/* Bulk: campaign name */}
+          {sendMode === 'bulk' && (
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">Campaign Name <span className="text-red-500">*</span></label>
             <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Diwali Offer 2025" className={inputCls} />
           </div>
+          )}
 
-          {/* Recipients source toggle */}
-          <div>
+          {/* Recipients source toggle (bulk only) */}
+          {sendMode === 'bulk' && <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">Recipients</label>
             <div className="flex gap-2 mb-3">
               <button onClick={() => { setRecipientMode('leads'); setPreview(null); }}
@@ -531,7 +582,7 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
                 <p className="text-xs text-gray-400">File should have phone numbers with country code (+91XXXXXXXXXX). One number per row or in any column.</p>
               </div>
             )}
-          </div>
+          </div>}
 
           {/* Template dropdown */}
           <div>
@@ -622,19 +673,27 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
 
         {/* Footer */}
         <div className="px-5 py-4 border-t border-gray-200 flex-shrink-0">
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => handleSend(true)} disabled={sending} className="flex items-center gap-1.5 flex-shrink-0">
-              <FileText className="w-3.5 h-3.5" /> Save Draft
+          {sendMode === 'single' ? (
+            <Button onClick={handleSingleSend} disabled={sending || !selected || !singlePhone.trim()}
+              className="w-full justify-center flex items-center gap-2">
+              {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              Send Template
             </Button>
-            <Button variant="outline" onClick={handlePreview} disabled={previewing} className="flex items-center gap-1.5 flex-shrink-0">
-              {previewing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Users className="w-3.5 h-3.5" />} Preview
-            </Button>
-            <Button onClick={() => handleSend(false)} disabled={sending || (!preview && recipientMode !== 'excel')}
-              className="flex-1 justify-center flex items-center gap-1.5">
-              {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : scheduled ? <Calendar className="w-4 h-4" /> : <Send className="w-4 h-4" />}
-              {scheduled ? 'Schedule' : 'Send Now'}
-            </Button>
-          </div>
+          ) : (
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => handleSend(true)} disabled={sending} className="flex items-center gap-1.5 flex-shrink-0">
+                <FileText className="w-3.5 h-3.5" /> Save Draft
+              </Button>
+              <Button variant="outline" onClick={handlePreview} disabled={previewing} className="flex items-center gap-1.5 flex-shrink-0">
+                {previewing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Users className="w-3.5 h-3.5" />} Preview
+              </Button>
+              <Button onClick={() => handleSend(false)} disabled={sending || (!preview && recipientMode !== 'excel')}
+                className="flex-1 justify-center flex items-center gap-1.5">
+                {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : scheduled ? <Calendar className="w-4 h-4" /> : <Send className="w-4 h-4" />}
+                {scheduled ? 'Schedule' : 'Send Now'}
+              </Button>
+            </div>
+          )}
         </div>
         </motion.div>
       </motion.div>
