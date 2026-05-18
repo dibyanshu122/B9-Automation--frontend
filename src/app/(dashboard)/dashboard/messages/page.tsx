@@ -126,19 +126,38 @@ function UnifiedInbox() {
     if (!reply.trim() || !selected) return;
     setSending(true);
     try {
-      await post('/api/automation/outbound-messages', {
+      // Step 1: Create outbound message
+      const createRes = await post('/api/automation/outbound-messages', {
         channel: selected.channel,
         recipient: selected.sender_id,
         message: reply.trim(),
         provider: 'meta',
         status: 'ready_to_send',
       });
+      const msgId = createRes.data?.id;
+
+      // Step 2: Actually send it via WhatsApp API
+      if (msgId) {
+        try {
+          await post(`/api/automation/outbound-messages/${msgId}/send`, {});
+          toast.success('Message sent ✓');
+        } catch (sendErr: any) {
+          const detail = sendErr?.response?.data?.detail || '';
+          if (detail.includes('paid plan') || detail.includes('upgrade')) {
+            toast.error('Upgrade plan to send live messages');
+          } else {
+            toast('Message saved as draft (WhatsApp not connected)', { icon: '📋' });
+          }
+        }
+      }
+
       setReply('');
+      // Refresh thread
       setTimeout(() => {
         get(`/api/automation/inbox/conversation?sender_id=${encodeURIComponent(selected.sender_id)}&channel=${selected.channel}`)
           .then(res => setThread(res.data?.messages || []));
-      }, 800);
-    } catch { toast.error('Failed to send'); }
+      }, 1000);
+    } catch { toast.error('Failed to send message'); }
     finally { setSending(false); }
   };
 
