@@ -115,49 +115,79 @@ function UnifiedInbox() {
   const filtered = filter === 'all' ? contacts : contacts.filter(c => c.channel === filter);
 
   return (
-    <Card hoverable={false} className="border-slate-200 p-0 overflow-hidden">
-      <div className="flex h-[520px]">
-        {/* LEFT — Contact List */}
-        <div className={`flex flex-col border-r border-gray-100 ${selected ? 'hidden md:flex w-72' : 'flex w-full md:w-72'}`}>
+    <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-xl bg-white">
+      <div className="flex h-[580px]">
+        {/* LEFT — Dark Premium Sidebar */}
+        <div className={`flex flex-col bg-slate-950 ${selected ? 'hidden md:flex w-80' : 'flex w-full md:w-80'}`}>
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-            <div className="flex items-center gap-2">
-              <Inbox className="h-4 w-4 text-slate-500" />
-              <span className="font-bold text-gray-900 text-sm">Inbox</span>
-              <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600">{contacts.length}</span>
+          <div className="px-5 pt-5 pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-500/20">
+                  <Inbox className="h-4 w-4 text-cyan-400" />
+                </div>
+                <span className="font-bold text-white text-sm">Inbox</span>
+              </div>
+              {contacts.length > 0 && (
+                <span className="rounded-full bg-cyan-500 px-2 py-0.5 text-[10px] font-bold text-white">{contacts.length}</span>
+              )}
+            </div>
+            {/* Filter tabs */}
+            <div className="flex gap-1 mt-4">
+              {(['all', 'whatsapp', 'instagram', 'facebook'] as const).map(ch => (
+                <button key={ch} onClick={() => setFilter(ch)}
+                  className={`rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-all ${
+                    filter === ch
+                      ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/30'
+                      : 'text-slate-400 hover:bg-white/10 hover:text-slate-200'
+                  }`}>
+                  {ch === 'all' ? 'All' : CHANNEL_BADGE[ch]?.emoji + ' ' + CHANNEL_BADGE[ch]?.label}
+                </button>
+              ))}
             </div>
           </div>
-          {/* Filter tabs */}
-          <div className="flex gap-1 px-3 py-2 border-b border-gray-50">
-            {(['all', 'whatsapp', 'instagram', 'facebook'] as const).map(ch => (
-              <button key={ch} onClick={() => setFilter(ch)}
-                className={`rounded-full px-2 py-0.5 text-[10px] font-bold transition ${filter === ch ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
-                {ch === 'all' ? 'All' : CHANNEL_BADGE[ch]?.emoji}
-              </button>
-            ))}
-          </div>
+
           {/* Contact rows */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto mt-1 px-2 pb-2 space-y-0.5">
             {loading ? (
-              <div className="space-y-1 p-3">{[1,2,3].map(i => <div key={i} className="h-14 rounded-lg bg-gray-100 animate-pulse" />)}</div>
+              <div className="space-y-1 p-3">
+                {[1,2,3].map(i => <div key={i} className="h-14 rounded-xl bg-white/10 animate-pulse" />)}
+              </div>
             ) : filtered.length === 0 ? (
-              <p className="py-12 text-center text-xs text-gray-400">No messages yet</p>
+              <div className="flex flex-col items-center justify-center h-48 gap-3">
+                <div className="h-14 w-14 rounded-2xl bg-white/5 flex items-center justify-center text-2xl">💬</div>
+                <p className="text-xs text-slate-500 text-center">No messages yet<br/>Connect WhatsApp to get started</p>
+              </div>
             ) : filtered.map(c => {
-              const badge = CHANNEL_BADGE[c.channel] || { emoji: '💬', color: 'bg-gray-100 text-gray-600' };
+              const badge = CHANNEL_BADGE[c.channel] || { emoji: '💬', label: c.channel, color: '' };
               const isSelected = selected?.sender_id === c.sender_id && selected?.channel === c.channel;
               return (
                 <button key={`${c.channel}::${c.sender_id}`}
                   onClick={() => setSelected(c)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 text-left transition hover:bg-gray-50 ${isSelected ? 'bg-primary-50 border-r-2 border-primary-500' : ''}`}>
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-sm font-bold text-gray-600">
-                    {badge.emoji}
+                  className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-all ${
+                    isSelected
+                      ? 'bg-cyan-500/20 ring-1 ring-cyan-500/40'
+                      : 'hover:bg-white/8'
+                  }`}>
+                  {/* Avatar */}
+                  <div className="relative shrink-0">
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-full text-base font-bold ${
+                      c.channel === 'whatsapp' ? 'bg-emerald-500/20 text-emerald-400' :
+                      c.channel === 'instagram' ? 'bg-pink-500/20 text-pink-400' :
+                      'bg-blue-500/20 text-blue-400'
+                    }`}>
+                      {c.sender_name?.[0]?.toUpperCase() || badge.emoji}
+                    </div>
+                    <span className="absolute -bottom-0.5 -right-0.5 text-[10px]">{badge.emoji}</span>
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-1">
-                      <p className="text-xs font-semibold text-gray-900 truncate">{c.sender_name}</p>
-                      <p className="shrink-0 text-[10px] text-gray-400">{timeAgo(c.last_time)}</p>
+                      <p className={`text-xs font-semibold truncate ${isSelected ? 'text-cyan-300' : 'text-slate-200'}`}>
+                        {c.sender_name}
+                      </p>
+                      <p className="shrink-0 text-[10px] text-slate-500">{timeAgo(c.last_time)}</p>
                     </div>
-                    <p className="text-[11px] text-gray-500 truncate">{c.last_text}</p>
+                    <p className="text-[11px] text-slate-500 truncate mt-0.5">{c.last_text}</p>
                   </div>
                 </button>
               );
@@ -167,33 +197,46 @@ function UnifiedInbox() {
 
         {/* RIGHT — Chat Thread */}
         {selected ? (
-          <div className="flex flex-col flex-1 min-w-0">
+          <div className="flex flex-col flex-1 min-w-0 bg-white">
             {/* Chat header */}
-            <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 bg-white">
-              <button onClick={() => setSelected(null)} className="md:hidden p-1 rounded-lg hover:bg-gray-100">
+            <div className="flex items-center gap-3 px-5 py-3.5 border-b border-gray-100 bg-white shadow-sm">
+              <button onClick={() => setSelected(null)} className="md:hidden p-1.5 rounded-lg hover:bg-gray-100">
                 <ArrowLeft className="h-4 w-4" />
               </button>
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-sm">
-                {CHANNEL_BADGE[selected.channel]?.emoji || '💬'}
+              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-base font-bold ${
+                selected.channel === 'whatsapp' ? 'bg-emerald-100 text-emerald-600' :
+                selected.channel === 'instagram' ? 'bg-pink-100 text-pink-600' :
+                'bg-blue-100 text-blue-600'
+              }`}>
+                {selected.sender_name?.[0]?.toUpperCase() || CHANNEL_BADGE[selected.channel]?.emoji}
               </div>
-              <div>
+              <div className="flex-1">
                 <p className="text-sm font-bold text-gray-900">{selected.sender_name}</p>
-                <p className="text-[10px] text-gray-400 capitalize">{selected.channel}</p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="text-[10px]">{CHANNEL_BADGE[selected.channel]?.emoji}</span>
+                  <p className="text-[11px] text-gray-400 capitalize">{selected.channel}</p>
+                  <span className="h-1 w-1 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-[10px] text-emerald-500">Active</span>
+                </div>
               </div>
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-gray-50">
+            <div className="flex-1 overflow-y-auto p-5 space-y-3"
+              style={{ background: 'radial-gradient(ellipse at top, #f0f9ff 0%, #f8fafc 100%)' }}>
               {threadLoading ? (
-                <div className="flex justify-center pt-8"><Loader2 className="h-5 w-5 animate-spin text-gray-400" /></div>
+                <div className="flex justify-center pt-12"><Loader2 className="h-5 w-5 animate-spin text-gray-300" /></div>
               ) : thread.length === 0 ? (
-                <p className="text-center text-xs text-gray-400 pt-8">No messages found</p>
+                <div className="flex flex-col items-center justify-center h-48 gap-2">
+                  <MessageCircle className="h-10 w-10 text-gray-200" />
+                  <p className="text-sm text-gray-400">No messages yet</p>
+                </div>
               ) : thread.map(msg => (
                 <div key={msg.id} className={`flex ${msg.direction === 'outbound' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm ${
+                  <div className={`max-w-[72%] rounded-2xl px-4 py-2.5 text-sm shadow-sm ${
                     msg.direction === 'outbound'
-                      ? 'bg-primary-600 text-white rounded-br-sm'
-                      : 'bg-white text-gray-900 shadow-sm rounded-bl-sm'
+                      ? 'bg-slate-900 text-white rounded-br-sm'
+                      : 'bg-white text-gray-900 border border-gray-100 rounded-bl-sm'
                   }`}>
                     <p>{msg.text}</p>
                     <p className={`text-[10px] mt-0.5 ${msg.direction === 'outbound' ? 'text-primary-200' : 'text-gray-400'}`}>
@@ -207,31 +250,35 @@ function UnifiedInbox() {
             </div>
 
             {/* Reply box */}
-            <div className="flex items-center gap-2 px-4 py-3 border-t border-gray-100 bg-white">
+            <div className="flex items-center gap-3 px-4 py-3.5 border-t border-gray-100 bg-white">
               <input
                 type="text"
                 value={reply}
                 onChange={e => setReply(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendReply()}
-                placeholder={`Reply via ${selected.channel}…`}
-                className="flex-1 rounded-full border border-gray-200 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                placeholder={`Message ${selected.sender_name}…`}
+                className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 focus:bg-white transition"
               />
               <button onClick={sendReply} disabled={sending || !reply.trim()}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-40 transition">
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white hover:bg-slate-700 disabled:opacity-30 transition shadow-md">
                 {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </button>
             </div>
           </div>
         ) : (
-          <div className="hidden md:flex flex-1 items-center justify-center bg-gray-50">
+          <div className="hidden md:flex flex-1 flex-col items-center justify-center gap-4"
+            style={{ background: 'radial-gradient(ellipse at center, #f0f9ff 0%, #f8fafc 100%)' }}>
+            <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-slate-100 text-4xl shadow-inner">
+              💬
+            </div>
             <div className="text-center">
-              <MessageCircle className="h-12 w-12 text-gray-200 mx-auto mb-2" />
-              <p className="text-sm text-gray-400">Select a contact to view conversation</p>
+              <p className="font-semibold text-gray-700">Your conversations</p>
+              <p className="text-sm text-gray-400 mt-1">Select a contact from the left to open chat</p>
             </div>
           </div>
         )}
       </div>
-    </Card>
+    </div>
   );
 }
 
