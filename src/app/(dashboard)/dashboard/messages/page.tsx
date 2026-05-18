@@ -108,15 +108,29 @@ function UnifiedInbox() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { loadInbox(); }, []); // eslint-disable-line
+  useEffect(() => {
+    loadInbox();
+    // Refresh contact list every 10 seconds
+    const interval = setInterval(loadInbox, 10000);
+    return () => clearInterval(interval);
+  }, []); // eslint-disable-line
+
+  const fetchThread = (s: typeof selected) => {
+    if (!s) return;
+    get(`/api/automation/inbox/conversation?sender_id=${encodeURIComponent(s.sender_id)}&channel=${s.channel}`)
+      .then(res => setThread(res.data?.messages || []))
+      .catch(() => {});
+  };
 
   useEffect(() => {
     if (!selected) return;
     setThreadLoading(true);
-    get(`/api/automation/inbox/conversation?sender_id=${encodeURIComponent(selected.sender_id)}&channel=${selected.channel}`)
-      .then(res => setThread(res.data?.messages || []))
-      .catch(() => {})
-      .finally(() => setThreadLoading(false));
+    fetchThread(selected);
+    setThreadLoading(false);
+
+    // Auto-poll every 5 seconds for new incoming messages
+    const interval = setInterval(() => fetchThread(selected), 5000);
+    return () => clearInterval(interval);
   }, [selected]); // eslint-disable-line
 
   useEffect(() => {
