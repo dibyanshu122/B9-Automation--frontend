@@ -102,8 +102,21 @@ export default function BillingPage() {
         description: `${plan.charAt(0) + plan.slice(1).toLowerCase()} Plan — ${billingCycle === 'yearly' ? 'Annual' : 'Monthly'}`,
         image: '/logo.png',
         handler: (_paymentResponse: any) => {
-          toast.success('Payment successful! Receipt sent to ' + billingDetails.email);
-          setTimeout(() => window.location.reload(), 3000);
+          toast.success('Payment successful! Activating your plan…');
+          // Poll until plan updates in DB (webhook takes 2-5 sec)
+          let attempts = 0;
+          const poll = setInterval(async () => {
+            attempts++;
+            try {
+              const res = await get('/api/billing/current-plan');
+              if (res.data?.plan && res.data.plan !== 'FREE' && res.data.plan !== currentPlan?.plan) {
+                clearInterval(poll);
+                toast.success(`🎉 ${res.data.plan} plan activated!`);
+                setTimeout(() => window.location.reload(), 1500);
+              }
+            } catch { /* ignore */ }
+            if (attempts >= 10) { clearInterval(poll); window.location.reload(); }
+          }, 2000);
         },
         prefill: {
           name: billingDetails.name,
