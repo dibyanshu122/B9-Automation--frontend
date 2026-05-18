@@ -360,7 +360,7 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
   useEffect(() => {
     setLoadingTpl(true);
     get('/api/automation/whatsapp/templates')
-      .then(r => setTemplates(r.data?.templates || []))
+      .then(r => setTemplates((r.data?.templates || []).filter((t: any) => t.status === 'APPROVED')))
       .catch(() => toast.error('Could not load templates'))
       .finally(() => setLoadingTpl(false));
   }, []); // eslint-disable-line
