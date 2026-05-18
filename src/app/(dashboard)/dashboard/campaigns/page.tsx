@@ -385,17 +385,30 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
       const phones: string[] = [];
       for (const row of rows) {
         for (const cell of row) {
-          const val = String(cell ?? '').trim().replace(/[\s\-\(\)\.]/g, '');
-          if (/^\+?\d{8,15}$/.test(val)) {
-            phones.push(val.startsWith('+') ? val : val);
+          const val = String(cell ?? '').trim().replace(/[\s\-\(\)\+\.]/g, '');
+          if (!/^\d{8,15}$/.test(val)) continue;
+          let normalized: string;
+          if (val.startsWith('91') && val.length === 12) {
+            normalized = '+' + val;           // 91XXXXXXXXXX → +91XXXXXXXXXX
+          } else if (val.length === 10) {
+            normalized = '+91' + val;          // 10 digit → +91XXXXXXXXXX
+          } else if (val.startsWith('0') && val.length === 11) {
+            normalized = '+91' + val.slice(1); // 0XXXXXXXXXX → +91XXXXXXXXXX
+          } else {
+            normalized = '+' + val;            // other: add + prefix
           }
+          phones.push(normalized);
         }
       }
       const unique = [...new Set(phones)];
+      const dupes = phones.length - unique.length;
       setExcelPhones(unique);
       setParsedCount(unique.length);
       setPreview(null);
-      toast.success(`${unique.length} phone numbers loaded from ${file.name}`);
+      if (dupes > 0)
+        toast.success(`${unique.length} numbers loaded — ${dupes} duplicate${dupes > 1 ? 's' : ''} removed`);
+      else
+        toast.success(`${unique.length} phone numbers loaded from ${file.name}`);
     } catch {
       toast.error('Could not read file. Please use .xlsx or .csv format');
     }
