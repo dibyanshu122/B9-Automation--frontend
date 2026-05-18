@@ -60,7 +60,123 @@ function formatScheduled(iso: string): string {
   });
 }
 
-// ─── Status Bar ───────────────────────────────────────────────────────────────
+// ─── Campaign Table ───────────────────────────────────────────────────────────
+
+function CampaignTable({ campaigns, onDetail, onRefresh }: { campaigns: Campaign[]; onDetail: (name: string) => void; onRefresh: () => void }) {
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+      {/* Blue header */}
+      <div className="grid bg-[#1877F2] text-white text-xs font-semibold px-4 py-3"
+        style={{ gridTemplateColumns: '40px 1fr 100px 110px 80px 110px 36px 50px 50px 36px' }}>
+        <div>Sr</div>
+        <div>Campaign Name</div>
+        <div>Category</div>
+        <div>Created Date</div>
+        <div>Contacts</div>
+        <div>Status</div>
+        <div className="text-center" title="Preview">👁</div>
+        <div className="text-center" title="Sent">✓</div>
+        <div className="text-center text-red-200" title="Failed">⚠</div>
+        <div className="text-center">More</div>
+      </div>
+      {/* Rows */}
+      {campaigns.map((c, i) => (
+        <CampaignRow key={i} idx={i} c={c} onDetail={onDetail} onRefresh={onRefresh} />
+      ))}
+    </div>
+  );
+}
+
+function CampaignRow({ idx, c, onDetail, onRefresh }: { idx: number; c: Campaign; onDetail: (name: string) => void; onRefresh: () => void }) {
+  const { post } = useApi();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [acting, setActing] = useState<string | null>(null);
+  const cfg = STATUS_CONFIG[c.status] || STATUS_CONFIG.completed;
+  const catColor: Record<string, string> = {
+    MARKETING: 'text-violet-700 bg-violet-50', UTILITY: 'text-blue-700 bg-blue-50',
+    AUTHENTICATION: 'text-orange-700 bg-orange-50',
+  };
+
+  const doAction = async (action: string) => {
+    setMenuOpen(false);
+    setActing(action);
+    try {
+      if (action === 'cancel') {
+        if (!confirm('Cancel this campaign?')) return;
+        await post(`/api/campaigns/${encodeURIComponent(c.name)}/cancel`, {});
+        toast.success('Cancelled');
+      } else if (action === 'retry') {
+        const r = await post(`/api/campaigns/${encodeURIComponent(c.name)}/retry-failed`, {});
+        toast.success(`Retrying ${r.data.retrying} messages`);
+      } else if (action === 'send-draft') {
+        const r = await post(`/api/campaigns/${encodeURIComponent(c.name)}/send-draft`, {});
+        toast.success(`Sending to ${r.data.queued} recipients`);
+      }
+      onRefresh();
+    } catch (e: any) { toast.error(e.response?.data?.detail || 'Failed'); }
+    finally { setActing(null); }
+  };
+
+  const msgType = c.msg_type === 'template' ? c.template_name || 'Template' : 'Text';
+  const catKey = c.template_name ? 'MARKETING' : '';
+
+  return (
+    <div className={`relative grid px-4 py-3 items-center text-sm hover:bg-blue-50/30 transition border-t border-gray-100 ${idx % 2 === 1 ? 'bg-gray-50/40' : 'bg-white'}`}
+      style={{ gridTemplateColumns: '40px 1fr 100px 110px 80px 110px 36px 50px 50px 36px' }}>
+      <div className="text-xs text-gray-400 font-medium">{idx + 1}</div>
+      <div className="min-w-0 pr-2">
+        <p className="font-semibold text-gray-900 truncate text-sm">{c.name}</p>
+        <p className="text-[10px] text-gray-400 truncate">{msgType}</p>
+      </div>
+      <div>
+        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${catColor[catKey] || 'bg-gray-100 text-gray-500'}`}>
+          {c.msg_type === 'template' ? 'Template' : 'Text'}
+        </span>
+      </div>
+      <div className="text-xs text-gray-500">{c.created_at ? new Date(c.created_at.endsWith('Z') ? c.created_at : c.created_at + 'Z').toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' }) : '—'}</div>
+      <div className="text-sm font-semibold text-gray-700">{c.total}</div>
+      <div>
+        <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${cfg.color}`}>
+          {cfg.icon}{cfg.label}
+        </span>
+      </div>
+      {/* Preview eye */}
+      <div className="flex justify-center">
+        <button onClick={() => onDetail(c.name)} className="p-1 rounded hover:bg-blue-100 text-gray-400 hover:text-blue-600 transition" title="View Details">
+          <BarChart2 className="w-4 h-4" />
+        </button>
+      </div>
+      {/* Sent ✓ */}
+      <div className="text-center">
+        <span className="text-xs font-bold text-emerald-600">{c.sent}</span>
+      </div>
+      {/* Failed ⚠ */}
+      <div className="text-center">
+        <span className={`text-xs font-bold ${c.failed > 0 ? 'text-red-500' : 'text-gray-300'}`}>{c.failed}</span>
+      </div>
+      {/* More menu */}
+      <div className="relative flex justify-center">
+        <button onClick={() => setMenuOpen(o => !o)} disabled={!!acting}
+          className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition">
+          {acting ? <Loader2 className="w-4 h-4 animate-spin" /> : <span className="text-base leading-none">⋯</span>}
+        </button>
+        {menuOpen && (
+          <>
+            <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
+            <div className="absolute right-0 top-7 z-20 bg-white border border-gray-200 rounded-xl shadow-xl py-1 min-w-[140px]">
+              <button onClick={() => { setMenuOpen(false); onDetail(c.name); }} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-gray-700">📊 View Details</button>
+              {c.status === 'draft' && <button onClick={() => doAction('send-draft')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-emerald-600">▶ Send Draft</button>}
+              {c.failed > 0 && <button onClick={() => doAction('retry')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-blue-600">↩ Retry Failed ({c.failed})</button>}
+              {(c.status === 'sending' || c.status === 'scheduled') && <button onClick={() => doAction('cancel')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-red-500">✕ Cancel</button>}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Status Bar (keep for detail drawer) ──────────────────────────────────────
 
 function StatusBar({ sent, failed, queued, total }: { sent: number; failed: number; queued: number; total: number }) {
   if (!total) return null;
@@ -789,11 +905,7 @@ export default function CampaignsPage() {
           )}
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {filtered.map((c, i) => (
-            <CampaignCard key={i} c={c} onDetail={() => setDetailName(c.name)} onRefresh={load} />
-          ))}
-        </div>
+        <CampaignTable campaigns={filtered} onDetail={setDetailName} onRefresh={load} />
       )}
 
       {/* New campaign panel */}
