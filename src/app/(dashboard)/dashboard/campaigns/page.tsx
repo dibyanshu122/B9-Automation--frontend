@@ -458,11 +458,11 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
   return (
     <AnimatePresence>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+        className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm flex items-start justify-center pt-10 pb-6 px-4 overflow-y-auto"
         onClick={onClose}>
         <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-          className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col"
+          className="bg-white rounded-2xl shadow-2xl w-full max-w-xl flex flex-col"
           onClick={e => e.stopPropagation()}>
 
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 flex-shrink-0">
