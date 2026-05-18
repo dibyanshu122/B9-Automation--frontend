@@ -209,7 +209,7 @@ const samplePrompts: Record<string, string> = {
 };
 
 const providerOptions = {
-  whatsapp: ['meta', 'draft', 'gupshup', 'interakt', 'aisensy'],
+  whatsapp: ['meta', 'draft'],
   email: ['gmail'],
   sheet: ['google_sheets'],
   crm: ['zoho', 'hubspot'],
