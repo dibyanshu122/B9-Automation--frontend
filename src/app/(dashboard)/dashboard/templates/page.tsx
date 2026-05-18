@@ -954,6 +954,47 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
   );
 }
 
+// ─── Deactivate Button ───────────────────────────────────────────────────────
+
+function DeactivateButton({ template, onDone }: { template: any; onDone: () => void }) {
+  const { del } = useApi() as any;
+  const { deleteReq } = (useApi() as any);
+  const { get, post } = useApi();
+  const [loading, setLoading] = useState(false);
+
+  const handleDeactivate = async () => {
+    if (!template.id) { toast.error('Template ID not available'); return; }
+    if (!confirm(`Delete template "${template.name}" from Meta? This cannot be undone.`)) return;
+    setLoading(true);
+    try {
+      // Use DELETE via axios directly
+      const axios = (await import('axios')).default;
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      await axios.delete(
+        `${apiUrl}/api/automation/whatsapp/templates/${template.id}`,
+        {
+          params: { template_name: template.name },
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        }
+      );
+      toast.success(`Template "${template.name}" deleted`);
+      onDone();
+    } catch (e: any) {
+      toast.error(e.response?.data?.detail || 'Could not delete template');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <button onClick={handleDeactivate} disabled={loading}
+      className="opacity-0 group-hover:opacity-100 text-xs font-semibold text-red-500 border border-red-200 rounded-lg px-2 py-1 hover:bg-red-50 transition whitespace-nowrap disabled:opacity-50">
+      {loading ? '…' : 'Delete'}
+    </button>
+  );
+}
+
 // ─── Template Library Tab ─────────────────────────────────────────────────────
 
 function TemplateLibraryTab({ onUse }: { onUse: (tpl: any) => void }) {
@@ -1194,43 +1235,37 @@ export default function TemplatesPage() {
               {filtered.map((t, idx) => (
                 <div key={t.id || t.name} className={`relative grid grid-cols-12 gap-2 px-4 py-3 items-center hover:bg-gray-50 transition group ${idx !== 0 ? 'border-t border-gray-100' : ''}`}>
 
-                  {/* Hover preview popover */}
-                  <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-50 hidden group-hover:block pointer-events-none" style={{ minWidth: 260 }}>
-                    <div className="bg-white border border-gray-200 rounded-2xl shadow-xl p-3">
-                      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Preview</p>
-                      <div className="bg-[#e5ddd5] rounded-xl p-3">
-                        <div className="bg-white rounded-lg rounded-tl-none shadow-sm overflow-hidden max-w-[220px]">
-                          {/* Header */}
+                  {/* Hover preview popover — floats to the right */}
+                  <div className="absolute right-16 top-1/2 -translate-y-1/2 z-50 hidden group-hover:block pointer-events-none" style={{ minWidth: 240 }}>
+                    <div className="bg-white border border-gray-200 rounded-2xl shadow-2xl p-3">
+                      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-2">WhatsApp Preview</p>
+                      <div className="bg-[#e5ddd5] rounded-xl p-2.5">
+                        <div className="bg-white rounded-lg rounded-tl-none shadow-sm overflow-hidden" style={{ maxWidth: 210 }}>
                           {t.components?.find((c: any) => c.type === 'HEADER')?.format === 'TEXT' && (
-                            <p className="px-3 pt-2.5 pb-1 text-xs font-bold text-gray-900">{t.components.find((c: any) => c.type === 'HEADER').text}</p>
+                            <p className="px-2.5 pt-2 pb-1 text-xs font-bold text-gray-900">{t.components.find((c: any) => c.type === 'HEADER').text}</p>
                           )}
                           {t.components?.find((c: any) => c.type === 'HEADER')?.format === 'IMAGE' && (
-                            <div className="h-16 bg-gray-200 flex items-center justify-center text-gray-400 text-xs">🖼️ Image</div>
+                            <div className="h-14 bg-gray-200 flex items-center justify-center text-xs text-gray-400">🖼️ Image</div>
                           )}
                           {t.components?.find((c: any) => c.type === 'HEADER')?.format === 'VIDEO' && (
-                            <div className="h-16 bg-gray-900 flex items-center justify-center text-white text-xs">🎬 Video</div>
+                            <div className="h-14 bg-gray-900 flex items-center justify-center text-xs text-white">🎬 Video</div>
                           )}
                           {t.components?.find((c: any) => c.type === 'HEADER')?.format === 'DOCUMENT' && (
-                            <div className="h-10 bg-blue-50 flex items-center gap-2 px-3 text-xs text-blue-600">📄 Document</div>
+                            <div className="h-9 bg-blue-50 flex items-center gap-2 px-2.5 text-xs text-blue-600">📄 Document</div>
                           )}
-                          {/* Body */}
                           {getBody(t.components) && (
-                            <p className="px-3 py-2 text-xs text-gray-800 whitespace-pre-wrap">{getBody(t.components)}</p>
+                            <p className="px-2.5 py-2 text-[11px] text-gray-800 whitespace-pre-wrap line-clamp-4">{getBody(t.components)}</p>
                           )}
-                          {/* Footer */}
                           {t.components?.find((c: any) => c.type === 'FOOTER')?.text && (
-                            <p className="px-3 pb-2 text-[10px] text-gray-400">{t.components.find((c: any) => c.type === 'FOOTER').text}</p>
+                            <p className="px-2.5 pb-1.5 text-[10px] text-gray-400">{t.components.find((c: any) => c.type === 'FOOTER').text}</p>
                           )}
-                          <p className="text-right text-[9px] text-gray-300 px-3 pb-1">12:00 ✓✓</p>
+                          <p className="text-right text-[9px] text-gray-300 px-2.5 pb-1">12:00 ✓✓</p>
                         </div>
-                        {/* Buttons */}
                         {t.components?.find((c: any) => c.type === 'BUTTONS')?.buttons?.map((b: any, bi: number) => (
-                          <div key={bi} className="mt-1 bg-white rounded-lg py-1.5 text-[10px] font-semibold text-[#00a5f4] text-center shadow-sm max-w-[220px]">{b.text}</div>
+                          <div key={bi} className="mt-1 bg-white rounded-lg py-1 text-[10px] font-semibold text-[#00a5f4] text-center shadow-sm">{b.text}</div>
                         ))}
                       </div>
                     </div>
-                    {/* Arrow */}
-                    <div className="w-3 h-3 bg-white border-r border-b border-gray-200 rotate-45 mx-auto -mt-1.5" />
                   </div>
 
                   <div className="col-span-3 min-w-0">
@@ -1250,11 +1285,12 @@ export default function TemplatesPage() {
                   <div className="col-span-3 min-w-0">
                     <p className="text-xs text-gray-400 truncate">{getBody(t.components) || '—'}</p>
                   </div>
-                  <div className="col-span-1 flex justify-end">
+                  <div className="col-span-1 flex justify-end gap-1">
                     <button onClick={() => editTemplate(t)}
-                      className="opacity-0 group-hover:opacity-100 text-xs font-semibold text-blue-600 border border-blue-200 rounded-lg px-2.5 py-1 hover:bg-blue-50 transition whitespace-nowrap">
+                      className="opacity-0 group-hover:opacity-100 text-xs font-semibold text-blue-600 border border-blue-200 rounded-lg px-2 py-1 hover:bg-blue-50 transition whitespace-nowrap">
                       Edit
                     </button>
+                    <DeactivateButton template={t} onDone={loadTemplates} />
                   </div>
                 </div>
               ))}
