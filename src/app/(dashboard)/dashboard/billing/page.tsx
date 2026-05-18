@@ -5,7 +5,7 @@ import { Card } from '@/components/card';
 import { Button } from '@/components/button';
 import { useApi } from '@/hooks/useApi';
 import { useAuth } from '@/hooks/useAuth';
-import { Check } from 'lucide-react';
+import { Check, X, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { PLANS } from '@/lib/constants';
 import { Invoice } from '@/types';
@@ -29,6 +29,9 @@ export default function BillingPage() {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [showBillingForm, setShowBillingForm] = useState(false);
+  const [pendingPlan, setPendingPlan] = useState<string | null>(null);
+  const [billingDetails, setBillingDetails] = useState({ name: '', email: '', phone: '' });
   const { get, post } = useApi();
   const { user } = useAuth();
 
@@ -56,12 +59,31 @@ export default function BillingPage() {
     }
   };
 
-  const handleUpgrade = async (plan: string) => {
+  const handleUpgrade = (plan: string) => {
+    // Pre-fill from user profile
+    setBillingDetails({
+      name: user?.name || '',
+      email: user?.email || '',
+      phone: '',
+    });
+    setPendingPlan(plan);
+    setShowBillingForm(true);
+  };
+
+  const proceedToPayment = async () => {
+    if (!billingDetails.name.trim() || !billingDetails.email.trim() || !billingDetails.phone.trim()) {
+      toast.error('Please fill all fields');
+      return;
+    }
+    if (!/^\+?[0-9]{10,13}$/.test(billingDetails.phone.replace(/\s/g, ''))) {
+      toast.error('Enter a valid mobile number');
+      return;
+    }
+    setShowBillingForm(false);
+    const plan = pendingPlan!;
     setUpgrading(plan);
     try {
-      const response = await post(`/api/billing/create-order/${plan}`, {
-        billing_cycle: billingCycle,
-      });
+      const response = await post(`/api/billing/create-order/${plan}`, { billing_cycle: billingCycle });
       const { order_id, amount, razorpay_key } = response.data;
 
       try {
@@ -80,17 +102,16 @@ export default function BillingPage() {
         description: `${plan.charAt(0) + plan.slice(1).toLowerCase()} Plan — ${billingCycle === 'yearly' ? 'Annual' : 'Monthly'}`,
         image: '/logo.png',
         handler: (_paymentResponse: any) => {
-          toast.success('Payment successful! Your plan is being activated…');
+          toast.success('Payment successful! Receipt sent to ' + billingDetails.email);
           setTimeout(() => window.location.reload(), 3000);
         },
         prefill: {
-          email: user?.email || '',
-          name: user?.name || '',
+          name: billingDetails.name,
+          email: billingDetails.email,
+          contact: billingDetails.phone,
         },
-        theme: { color: '#f97316' },
-        modal: {
-          ondismiss: () => toast('Payment cancelled.'),
-        },
+        theme: { color: '#111827' },
+        modal: { ondismiss: () => toast('Payment cancelled.') },
       };
 
       const rzp = new (window as any).Razorpay(options);
@@ -338,6 +359,67 @@ export default function BillingPage() {
           </div>
         </Card>
       </div>
+
+      {/* Billing Details Modal */}
+      {showBillingForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">Billing Details</h2>
+                <p className="text-sm text-gray-500 mt-0.5">Receipt will be sent to your email</p>
+              </div>
+              <button onClick={() => setShowBillingForm(false)} className="p-2 rounded-lg hover:bg-gray-100">
+                <X className="w-4 h-4 text-gray-500" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                <input
+                  type="text"
+                  value={billingDetails.name}
+                  onChange={e => setBillingDetails(p => ({ ...p, name: e.target.value }))}
+                  placeholder="Rahul Sharma"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
+                <input
+                  type="email"
+                  value={billingDetails.email}
+                  onChange={e => setBillingDetails(p => ({ ...p, email: e.target.value }))}
+                  placeholder="rahul@company.com"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+                />
+                <p className="text-xs text-gray-400 mt-1">Receipt will be sent here</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Mobile Number *</label>
+                <input
+                  type="tel"
+                  value={billingDetails.phone}
+                  onChange={e => setBillingDetails(p => ({ ...p, phone: e.target.value }))}
+                  placeholder="+91 98765 43210"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 flex gap-3">
+              <Button variant="outline" className="flex-1" onClick={() => setShowBillingForm(false)}>
+                Cancel
+              </Button>
+              <Button className="flex-1 bg-gray-900 hover:bg-gray-700 text-white flex items-center justify-center gap-2" onClick={proceedToPayment}>
+                {upgrading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                Proceed to Pay
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
