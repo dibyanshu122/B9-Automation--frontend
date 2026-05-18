@@ -134,7 +134,7 @@ interface BtnEntry { type: BtnType; text: string; url: string; phone: string; co
 interface CarouselCard { headerFormat: 'IMAGE' | 'VIDEO'; headerUrl: string; body: string; buttons: BtnEntry[] }
 interface FormState {
   name: string; category: string; language: string; templateType: TemplateType;
-  headerType: HeaderType; headerText: string; headerMediaUrl: string;
+  headerType: HeaderType; headerText: string; headerMediaUrl: string; headerMediaHandle: string;
   bodyText: string; examples: string[]; footerText: string; buttons: BtnEntry[];
   carouselCards: CarouselCard[];
   ltoText: string; ltoHasExpiration: boolean; ltoPromoExample: string;
@@ -146,7 +146,7 @@ const EMPTY_BTN: BtnEntry = { type: 'QUICK_REPLY', text: '', url: '', phone: '',
 const EMPTY_CARD: CarouselCard = { headerFormat: 'IMAGE', headerUrl: '', body: '', buttons: [] };
 const EMPTY_FORM: FormState = {
   name: '', category: 'MARKETING', language: 'en_US', templateType: 'standard',
-  headerType: 'NONE', headerText: '', headerMediaUrl: '',
+  headerType: 'NONE', headerText: '', headerMediaUrl: '', headerMediaHandle: '',
   bodyText: '', examples: [], footerText: '', buttons: [],
   carouselCards: [{ ...EMPTY_CARD }, { ...EMPTY_CARD }],
   ltoText: 'Offer expires in', ltoHasExpiration: true, ltoPromoExample: '',
@@ -324,7 +324,7 @@ function CreatePicker({
   return (
     <AnimatePresence>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+        className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-start justify-center overflow-y-auto py-10 px-4"
         onClick={onClose}>
         <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
           className="bg-white rounded-2xl shadow-2xl w-full max-w-md"
@@ -421,7 +421,28 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const handleMediaUpload = async (file: File) => {
+    setUploading(true);
+    // Preview locally while uploading
+    setField('headerMediaUrl', URL.createObjectURL(file));
+    setField('headerMediaHandle', '');
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await post('/api/automation/whatsapp/upload-media', formData);
+      if (res.data?.handle) {
+        setField('headerMediaHandle', res.data.handle);
+        toast.success('Media uploaded to Meta');
+      }
+    } catch {
+      toast.error('Upload failed — you can still enter a sample URL below');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -500,6 +521,7 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
         header_type: form.headerType,
         header_text: form.headerText,
         header_media_url: form.headerMediaUrl,
+        header_media_handle: form.headerMediaHandle,
         body_text: form.bodyText,
         body_variables: form.examples,
         footer_text: form.footerText,
@@ -530,11 +552,11 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
       {isOpen && (
         <>
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm flex items-start justify-center overflow-y-auto py-8 px-4"
             onClick={onClose}>
           <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-            className="relative z-50 w-full max-w-4xl max-h-[92vh] bg-white rounded-2xl shadow-2xl flex flex-col"
+            className="relative z-50 w-full max-w-4xl bg-white rounded-2xl shadow-2xl flex flex-col my-auto"
             onClick={e => e.stopPropagation()}>
 
             {/* Header */}
@@ -770,14 +792,46 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
                         </>
                       )}
                       {(form.headerType === 'IMAGE' || form.headerType === 'VIDEO' || form.headerType === 'DOCUMENT') && (
-                        <>
-                          <input value={form.headerMediaUrl} onChange={e => setField('headerMediaUrl', e.target.value)}
-                            placeholder={`Sample ${form.headerType.toLowerCase()} URL (for Meta approval)`} className={inputCls()} />
-                          <p className="text-xs text-gray-400 mt-1">Actual media is sent at message time, not stored in template</p>
-                        </>
+                        <div className="space-y-3">
+                          {/* Upload button */}
+                          <label className={`flex items-center gap-3 border-2 border-dashed rounded-xl px-4 py-3 cursor-pointer transition ${uploading ? 'border-orange-300 bg-orange-50' : form.headerMediaHandle ? 'border-green-400 bg-green-50' : 'border-gray-200 hover:border-orange-400 hover:bg-orange-50/30'}`}>
+                            <input type="file"
+                              accept={form.headerType === 'IMAGE' ? 'image/*' : form.headerType === 'VIDEO' ? 'video/*' : '*'}
+                              className="hidden"
+                              onChange={e => { const f = e.target.files?.[0]; if (f) handleMediaUpload(f); e.target.value = ''; }}
+                              disabled={uploading}
+                            />
+                            {uploading ? (
+                              <><span className="w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                              <span className="text-sm text-orange-600">Uploading to Meta…</span></>
+                            ) : form.headerMediaHandle ? (
+                              <><span className="text-lg">✅</span>
+                              <div><p className="text-sm font-semibold text-green-700">Uploaded to Meta</p>
+                              <p className="text-xs text-green-600">Handle ready for approval</p></div></>
+                            ) : (
+                              <><span className="text-lg">{form.headerType === 'IMAGE' ? '🖼️' : form.headerType === 'VIDEO' ? '🎬' : '📄'}</span>
+                              <div><p className="text-sm font-semibold text-gray-700">Click to upload {form.headerType.toLowerCase()}</p>
+                              <p className="text-xs text-gray-400">Or enter URL below</p></div></>
+                            )}
+                          </label>
+                          {/* URL fallback */}
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1 font-medium">Or paste a sample URL</p>
+                            <input value={form.headerMediaHandle ? '' : form.headerMediaUrl}
+                              onChange={e => { setField('headerMediaUrl', e.target.value); setField('headerMediaHandle', ''); }}
+                              placeholder={`https://example.com/sample.${form.headerType === 'IMAGE' ? 'jpg' : form.headerType === 'VIDEO' ? 'mp4' : 'pdf'}`}
+                              disabled={!!form.headerMediaHandle}
+                              className={`${inputCls()} disabled:bg-gray-50 disabled:text-gray-400`} />
+                          </div>
+                          <p className="text-xs text-gray-400">Actual media is sent at message time, not stored in the template</p>
+                        </div>
                       )}
                       {form.headerType === 'LOCATION' && (
-                        <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">📍 Location header shows a map pin. Actual coordinates are sent at message time.</p>
+                        <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3 space-y-1">
+                          <p className="text-sm font-semibold text-emerald-800">📍 Location Header</p>
+                          <p className="text-xs text-emerald-700">Shows a "Send Location" pin button in the message. The actual coordinates (latitude, longitude, name, address) are sent at message time when using this template in automations or campaigns.</p>
+                          <p className="text-xs text-gray-500 mt-1">No upload or URL needed for location header.</p>
+                        </div>
                       )}
                     </div>
 
