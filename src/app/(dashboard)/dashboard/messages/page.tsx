@@ -697,6 +697,7 @@ export default function MessagesPage() {
             Save WhatsApp Setup
           </Button>
         </Card>
+      </section>
 
       <section className="grid gap-6 xl:grid-cols-2">
         <Card className="border-gray-200 shadow-sm" hoverable={false}>
