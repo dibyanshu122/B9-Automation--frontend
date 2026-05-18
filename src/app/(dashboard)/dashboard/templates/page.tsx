@@ -310,39 +310,102 @@ function WaPreview({ form }: { form: FormState }) {
 
 // ─── Flow Picker ──────────────────────────────────────────────────────────────
 
-function FlowPicker({ onScratch, onLibrary, onClose }: { onScratch: () => void; onLibrary: () => void; onClose: () => void }) {
+function CreatePicker({
+  onScratch, onEdit, onClose, existingTemplates,
+}: {
+  onScratch: () => void;
+  onEdit: (tpl: any) => void;
+  onClose: () => void;
+  existingTemplates: any[];
+}) {
+  const [mode, setMode] = useState<'choose' | 'existing'>('choose');
+  const getBody = (components: any[]) => components?.find((c: any) => c.type === 'BODY')?.text || '';
+
   return (
     <AnimatePresence>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
         className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
         onClick={onClose}>
         <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-          className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6"
+          className="bg-white rounded-2xl shadow-2xl w-full max-w-md"
           onClick={e => e.stopPropagation()}>
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-lg font-bold text-gray-900">How do you want to start?</h2>
-            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><X className="w-4 h-4" /></button>
-          </div>
-          <div className="space-y-3">
-            <button onClick={onScratch} className="w-full text-left p-4 rounded-xl border-2 border-gray-200 hover:border-orange-400 hover:bg-orange-50 transition group">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">✏️</span>
-                <div>
-                  <p className="font-semibold text-gray-900 group-hover:text-orange-700">From Scratch</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Build your own custom template</p>
-                </div>
-              </div>
-            </button>
-            <button onClick={onLibrary} className="w-full text-left p-4 rounded-xl border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition group">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">📚</span>
-                <div>
-                  <p className="font-semibold text-gray-900 group-hover:text-blue-700">From Template Library</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Start from a pre-built template</p>
-                </div>
-              </div>
+
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+            <div className="flex items-center gap-2">
+              {mode === 'existing' && (
+                <button onClick={() => setMode('choose')} className="p-1 rounded-lg hover:bg-gray-100 text-gray-400">
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+              )}
+              <h2 className="text-base font-bold text-gray-900">
+                {mode === 'choose' ? 'Create Template' : 'Modify Existing Template'}
+              </h2>
+            </div>
+            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">
+              <X className="w-4 h-4" />
             </button>
           </div>
+
+          {/* Choose mode */}
+          {mode === 'choose' && (
+            <div className="p-5 space-y-3">
+              <button onClick={onScratch}
+                className="w-full text-left p-4 rounded-xl border-2 border-gray-200 hover:border-orange-400 hover:bg-orange-50 transition group">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">✏️</span>
+                  <div>
+                    <p className="font-semibold text-gray-900 group-hover:text-orange-700">Create from Scratch</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Build a brand new template</p>
+                  </div>
+                </div>
+              </button>
+              <button onClick={() => setMode('existing')}
+                className="w-full text-left p-4 rounded-xl border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition group">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">✏️📋</span>
+                  <div>
+                    <p className="font-semibold text-gray-900 group-hover:text-blue-700">Modify Existing Template</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Edit and re-submit an already created template</p>
+                  </div>
+                </div>
+              </button>
+            </div>
+          )}
+
+          {/* Existing templates list */}
+          {mode === 'existing' && (
+            <div className="p-5">
+              {existingTemplates.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-400 text-sm">No templates created yet.</p>
+                  <button onClick={onScratch} className="mt-3 text-sm text-orange-600 font-semibold underline">
+                    Create your first template →
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                  {existingTemplates.map(t => (
+                    <button key={t.id || t.name} onClick={() => onEdit(t)}
+                      className="w-full text-left p-3 rounded-xl border border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition group">
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <span className="text-sm font-semibold text-gray-900 truncate">{t.name}</span>
+                        <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                          t.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                          t.status === 'PENDING' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                          'bg-red-50 text-red-600 border-red-200'}`}>
+                          {t.status}
+                        </span>
+                      </div>
+                      {getBody(t.components) && (
+                        <p className="text-xs text-gray-400 line-clamp-2">{getBody(t.components)}</p>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </motion.div>
       </motion.div>
     </AnimatePresence>
@@ -941,6 +1004,7 @@ export default function TemplatesPage() {
   const [error, setError] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'APPROVED' | 'PENDING' | 'REJECTED'>('ALL');
   const [activeTab, setActiveTab] = useState<'mine' | 'library'>('mine');
+  const [showPicker, setShowPicker] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [prefill, setPrefill] = useState<Partial<FormState> | null>(null);
 
@@ -964,6 +1028,7 @@ export default function TemplatesPage() {
   };
 
   const openCreate = (pf?: Partial<FormState>) => {
+    setShowPicker(false);
     setPrefill(pf || null);
     setModalOpen(true);
   };
@@ -990,14 +1055,9 @@ export default function TemplatesPage() {
           <h1 className="text-2xl font-bold text-gray-900">WhatsApp Templates</h1>
           <p className="mt-1 text-sm text-gray-500">Create and manage message templates for your WhatsApp Business account</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setActiveTab('library')} className="flex items-center gap-2 flex-shrink-0 text-sm">
-            Browse Library
-          </Button>
-          <Button onClick={() => openCreate()} className="flex items-center gap-2 flex-shrink-0">
-            <Plus className="h-4 w-4" /> Create Template
-          </Button>
-        </div>
+        <Button onClick={() => setShowPicker(true)} className="flex items-center gap-2 flex-shrink-0">
+          <Plus className="h-4 w-4" /> Create Template
+        </Button>
       </div>
 
       {/* Tabs */}
@@ -1061,7 +1121,7 @@ export default function TemplatesPage() {
               <MessageSquare className="h-10 w-10 text-gray-300" />
               <p className="text-lg font-semibold text-gray-500">No templates yet</p>
               <p className="text-sm text-gray-400">Create your first template and submit for Meta approval.</p>
-              <Button onClick={() => openCreate()} className="mt-2 flex items-center gap-2"><Plus className="h-4 w-4" /> Create Template</Button>
+              <Button onClick={() => setShowPicker(true)} className="mt-2 flex items-center gap-2"><Plus className="h-4 w-4" /> Create Template</Button>
             </div>
           ) : (
             <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
@@ -1106,6 +1166,14 @@ export default function TemplatesPage() {
         </>
       )}
 
+      {showPicker && (
+        <CreatePicker
+          onScratch={() => openCreate()}
+          onEdit={t => openCreate(parseTemplateToForm(t))}
+          onClose={() => setShowPicker(false)}
+          existingTemplates={templates}
+        />
+      )}
       <CreateTemplateModal isOpen={modalOpen} onClose={() => { setModalOpen(false); setPrefill(null); }} onSuccess={handleTemplateCreated} prefill={prefill} />
     </div>
   );
