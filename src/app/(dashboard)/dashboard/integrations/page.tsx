@@ -180,6 +180,13 @@ export default function IntegrationsPage() {
   const [whatsappWebhookUrl, setWhatsappWebhookUrl] = useState('');
   const [whatsappConnected, setWhatsappConnected] = useState(false);
 
+  /* ── Razorpay state ── */
+  const [rzpConnected, setRzpConnected] = useState(false);
+  const [rzpKeyId, setRzpKeyId] = useState('');
+  const [rzpSecret, setRzpSecret] = useState('');
+  const [rzpSaving, setRzpSaving] = useState(false);
+  const [rzpKeyIdMasked, setRzpKeyIdMasked] = useState('');
+
   /* ── Gmail state ── */
   const [gmailOAuthConnected, setGmailOAuthConnected] = useState(false);
   const [gmailSenderEmail, setGmailSenderEmail] = useState('');
@@ -275,7 +282,36 @@ export default function IntegrationsPage() {
     });
   };
 
-  useEffect(() => { refresh(); }, []);
+  useEffect(() => {
+    refresh();
+    get('/api/settings/razorpay').then(r => {
+      setRzpConnected(r.data?.connected || false);
+      setRzpKeyIdMasked(r.data?.key_id_masked || '');
+    }).catch(() => {});
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const saveRazorpay = async () => {
+    if (!rzpKeyId.trim() || !rzpSecret.trim()) {
+      return;
+    }
+    setRzpSaving(true);
+    try {
+      await post('/api/settings/razorpay', { razorpay_key_id: rzpKeyId.trim(), razorpay_key_secret: rzpSecret.trim() });
+      setRzpConnected(true);
+      setRzpKeyIdMasked(rzpKeyId.trim().slice(0, 8) + '••••••••');
+      setRzpKeyId('');
+      setRzpSecret('');
+      toast.success('Razorpay connected! Payment links in automations will use your account.');
+    } catch { toast.error('Failed to save Razorpay keys'); }
+    finally { setRzpSaving(false); }
+  };
+
+  const disconnectRazorpay = async () => {
+    await del('/api/settings/razorpay').catch(() => {});
+    setRzpConnected(false);
+    setRzpKeyIdMasked('');
+    toast.success('Razorpay disconnected');
+  };
 
   /* ── Open setup modal ── */
   const openSetup = (item: IntegrationCatalogItem) => {
@@ -1273,6 +1309,71 @@ export default function IntegrationsPage() {
           </Button>
         </Card>
       </section>
+
+      {/* ── Razorpay Integration Card ── */}
+      <Card className="border-green-100 shadow-sm" hoverable={false}>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-green-50 p-3 ring-1 ring-green-200">
+              <span className="text-xl">💳</span>
+            </div>
+            <div>
+              <h2 className="font-bold text-gray-950">Razorpay — Payment Links</h2>
+              <p className="text-sm text-gray-500">Send payment links to customers via WhatsApp automations. Money goes directly to your Razorpay account.</p>
+            </div>
+          </div>
+          <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${rzpConnected ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+            {rzpConnected ? '✓ Connected' : 'Not connected'}
+          </span>
+        </div>
+
+        {rzpConnected ? (
+          <div className="mt-4 flex items-center justify-between rounded-lg bg-emerald-50 border border-emerald-100 px-4 py-3">
+            <div>
+              <p className="text-sm font-semibold text-emerald-800">Razorpay connected</p>
+              <p className="text-xs text-emerald-600 font-mono mt-0.5">{rzpKeyIdMasked}</p>
+            </div>
+            <Button variant="outline" onClick={disconnectRazorpay} className="text-xs text-red-500 border-red-200 hover:bg-red-50">
+              Disconnect
+            </Button>
+          </div>
+        ) : (
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Key ID <span className="text-gray-400">(starts with rzp_)</span></label>
+              <input
+                type="text"
+                value={rzpKeyId}
+                onChange={e => setRzpKeyId(e.target.value)}
+                placeholder="rzp_live_xxxxxxxxxxxx"
+                className="input-field w-full"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Key Secret</label>
+              <input
+                type="password"
+                value={rzpSecret}
+                onChange={e => setRzpSecret(e.target.value)}
+                placeholder="••••••••••••••••••••"
+                className="input-field w-full"
+              />
+            </div>
+            <div className="sm:col-span-2 flex items-center gap-3">
+              <Button onClick={saveRazorpay} disabled={rzpSaving || !rzpKeyId.trim() || !rzpSecret.trim()} className="flex items-center gap-2">
+                {rzpSaving ? 'Saving…' : '💳 Connect Razorpay'}
+              </Button>
+              <a href="https://dashboard.razorpay.com/app/keys" target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline">
+                Get API keys from Razorpay dashboard →
+              </a>
+            </div>
+          </div>
+        )}
+
+        <p className="mt-3 text-xs text-gray-400">
+          Use <code className="bg-gray-100 px-1 rounded">rzp_test_</code> keys for testing, <code className="bg-gray-100 px-1 rounded">rzp_live_</code> for real payments.
+        </p>
+      </Card>
 
       <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
         <Card className="border-blue-100 shadow-sm" hoverable={false}>
