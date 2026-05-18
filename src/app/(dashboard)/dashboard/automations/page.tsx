@@ -852,7 +852,7 @@ export default function AutomationsPage() {
         <input
           value={workflowName}
           onChange={(e) => setWorkflowName(e.target.value)}
-          className="flex-1 rounded-lg border border-transparent bg-gray-50 px-3 py-1.5 text-sm font-semibold text-gray-900 focus:border-primary-300 focus:bg-white focus:outline-none"
+          className="w-40 min-w-0 rounded-lg border border-transparent bg-gray-50 px-3 py-1.5 text-sm font-semibold text-gray-900 focus:border-primary-300 focus:bg-white focus:outline-none truncate"
         />
         <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-primary-700">
           {industryPack.label}
