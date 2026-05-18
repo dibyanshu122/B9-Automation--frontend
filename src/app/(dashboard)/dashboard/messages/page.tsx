@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
-import { Check, Copy, KeyRound, Send, Server, ShieldCheck, Smartphone, Webhook, XCircle, Inbox, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Check, Copy, Inbox, KeyRound, Loader2, MessageCircle, Send, Server, ShieldCheck, Smartphone, Webhook, XCircle } from 'lucide-react';
 import { Button } from '@/components/button';
 import { Card } from '@/components/card';
 import { HelpTip } from '@/components/help-tip';
@@ -24,68 +24,213 @@ function timeAgo(iso: string) {
   return `${Math.floor(diff / 86400)}d ago`;
 }
 
+interface Contact {
+  sender_id: string;
+  sender_name: string;
+  channel: string;
+  last_text: string;
+  last_time: string;
+  unread: number;
+}
+
 function UnifiedInbox() {
-  const { get } = useApi();
-  const [items, setItems] = useState<any[]>([]);
+  const { get, post } = useApi();
+  const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'whatsapp' | 'instagram' | 'facebook'>('all');
+  const [selected, setSelected] = useState<Contact | null>(null);
+  const [thread, setThread] = useState<any[]>([]);
+  const [threadLoading, setThreadLoading] = useState(false);
+  const [reply, setReply] = useState('');
+  const [sending, setSending] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  const loadInbox = () => {
     get('/api/automation/inbox')
-      .then(res => setItems(res.data?.items || []))
+      .then(res => {
+        const items: any[] = res.data?.items || [];
+        // Group by sender_id + channel
+        const map = new Map<string, Contact>();
+        items.forEach(item => {
+          const key = `${item.channel}::${item.sender_id}`;
+          if (!map.has(key)) {
+            map.set(key, {
+              sender_id: item.sender_id,
+              sender_name: item.sender_name || item.sender_id,
+              channel: item.channel,
+              last_text: item.text || `[${item.message_type}]`,
+              last_time: item.created_at,
+              unread: 1,
+            });
+          } else {
+            const c = map.get(key)!;
+            if (item.created_at > c.last_time) {
+              c.last_text = item.text || `[${item.message_type}]`;
+              c.last_time = item.created_at;
+            }
+            c.unread++;
+          }
+        });
+        setContacts(Array.from(map.values()).sort((a, b) => b.last_time.localeCompare(a.last_time)));
+      })
       .catch(() => toast.error('Failed to load inbox'))
       .finally(() => setLoading(false));
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  };
 
-  const filtered = filter === 'all' ? items : items.filter(i => i.channel === filter);
+  useEffect(() => { loadInbox(); }, []); // eslint-disable-line
+
+  useEffect(() => {
+    if (!selected) return;
+    setThreadLoading(true);
+    get(`/api/automation/inbox/conversation?sender_id=${encodeURIComponent(selected.sender_id)}&channel=${selected.channel}`)
+      .then(res => setThread(res.data?.messages || []))
+      .catch(() => {})
+      .finally(() => setThreadLoading(false));
+  }, [selected]); // eslint-disable-line
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [thread]);
+
+  const sendReply = async () => {
+    if (!reply.trim() || !selected) return;
+    setSending(true);
+    try {
+      await post('/api/automation/outbound-messages', {
+        channel: selected.channel,
+        recipient: selected.sender_id,
+        message: reply.trim(),
+        provider: 'meta',
+        status: 'ready_to_send',
+      });
+      setReply('');
+      setTimeout(() => {
+        get(`/api/automation/inbox/conversation?sender_id=${encodeURIComponent(selected.sender_id)}&channel=${selected.channel}`)
+          .then(res => setThread(res.data?.messages || []));
+      }, 800);
+    } catch { toast.error('Failed to send'); }
+    finally { setSending(false); }
+  };
+
+  const filtered = filter === 'all' ? contacts : contacts.filter(c => c.channel === filter);
 
   return (
-    <Card hoverable={false} className="border-slate-200">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Inbox className="h-5 w-5 text-slate-500" />
-          <h2 className="font-bold text-gray-950">Unified Inbox</h2>
-          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">{items.length}</span>
-        </div>
-        <div className="flex gap-1">
-          {(['all', 'whatsapp', 'instagram', 'facebook'] as const).map(ch => (
-            <button key={ch} onClick={() => setFilter(ch)} className={`rounded-full px-3 py-1 text-xs font-semibold transition ${filter === ch ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
-              {ch === 'all' ? 'All' : CHANNEL_BADGE[ch]?.emoji + ' ' + CHANNEL_BADGE[ch]?.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {loading ? (
-        <div className="space-y-2">
-          {[1,2,3].map(i => <div key={i} className="h-14 rounded-lg bg-gray-100 animate-pulse" />)}
-        </div>
-      ) : filtered.length === 0 ? (
-        <p className="py-8 text-center text-sm text-gray-500">No messages yet. Connect WhatsApp, Instagram, or Facebook to see your inbox here.</p>
-      ) : (
-        <div className="divide-y divide-gray-50 max-h-80 overflow-y-auto">
-          {filtered.map(item => {
-            const badge = CHANNEL_BADGE[item.channel] || { label: item.channel, color: 'bg-gray-100 text-gray-600', emoji: '💬' };
-            return (
-              <div key={item.id} className="flex items-start gap-3 py-3 hover:bg-gray-50 rounded-lg px-2">
-                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 text-base">
-                  {badge.emoji}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold text-gray-900 truncate">{item.sender_name || item.sender_id}</p>
-                    <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${badge.color}`}>{badge.label}</span>
-                    {item.read_at && <span className="text-[10px] text-blue-500">●●</span>}
-                    {item.delivery_status === 'delivered' && !item.read_at && <span className="text-[10px] text-gray-400">✓✓</span>}
+    <Card hoverable={false} className="border-slate-200 p-0 overflow-hidden">
+      <div className="flex h-[520px]">
+        {/* LEFT — Contact List */}
+        <div className={`flex flex-col border-r border-gray-100 ${selected ? 'hidden md:flex w-72' : 'flex w-full md:w-72'}`}>
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+            <div className="flex items-center gap-2">
+              <Inbox className="h-4 w-4 text-slate-500" />
+              <span className="font-bold text-gray-900 text-sm">Inbox</span>
+              <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600">{contacts.length}</span>
+            </div>
+          </div>
+          {/* Filter tabs */}
+          <div className="flex gap-1 px-3 py-2 border-b border-gray-50">
+            {(['all', 'whatsapp', 'instagram', 'facebook'] as const).map(ch => (
+              <button key={ch} onClick={() => setFilter(ch)}
+                className={`rounded-full px-2 py-0.5 text-[10px] font-bold transition ${filter === ch ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+                {ch === 'all' ? 'All' : CHANNEL_BADGE[ch]?.emoji}
+              </button>
+            ))}
+          </div>
+          {/* Contact rows */}
+          <div className="flex-1 overflow-y-auto">
+            {loading ? (
+              <div className="space-y-1 p-3">{[1,2,3].map(i => <div key={i} className="h-14 rounded-lg bg-gray-100 animate-pulse" />)}</div>
+            ) : filtered.length === 0 ? (
+              <p className="py-12 text-center text-xs text-gray-400">No messages yet</p>
+            ) : filtered.map(c => {
+              const badge = CHANNEL_BADGE[c.channel] || { emoji: '💬', color: 'bg-gray-100 text-gray-600' };
+              const isSelected = selected?.sender_id === c.sender_id && selected?.channel === c.channel;
+              return (
+                <button key={`${c.channel}::${c.sender_id}`}
+                  onClick={() => setSelected(c)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 text-left transition hover:bg-gray-50 ${isSelected ? 'bg-primary-50 border-r-2 border-primary-500' : ''}`}>
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-sm font-bold text-gray-600">
+                    {badge.emoji}
                   </div>
-                  <p className="text-xs text-gray-500 truncate">{item.text || `[${item.message_type}]`}</p>
-                </div>
-                <p className="shrink-0 text-[10px] text-gray-400">{timeAgo(item.created_at)}</p>
-              </div>
-            );
-          })}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-1">
+                      <p className="text-xs font-semibold text-gray-900 truncate">{c.sender_name}</p>
+                      <p className="shrink-0 text-[10px] text-gray-400">{timeAgo(c.last_time)}</p>
+                    </div>
+                    <p className="text-[11px] text-gray-500 truncate">{c.last_text}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </div>
-      )}
+
+        {/* RIGHT — Chat Thread */}
+        {selected ? (
+          <div className="flex flex-col flex-1 min-w-0">
+            {/* Chat header */}
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 bg-white">
+              <button onClick={() => setSelected(null)} className="md:hidden p-1 rounded-lg hover:bg-gray-100">
+                <ArrowLeft className="h-4 w-4" />
+              </button>
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-sm">
+                {CHANNEL_BADGE[selected.channel]?.emoji || '💬'}
+              </div>
+              <div>
+                <p className="text-sm font-bold text-gray-900">{selected.sender_name}</p>
+                <p className="text-[10px] text-gray-400 capitalize">{selected.channel}</p>
+              </div>
+            </div>
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-gray-50">
+              {threadLoading ? (
+                <div className="flex justify-center pt-8"><Loader2 className="h-5 w-5 animate-spin text-gray-400" /></div>
+              ) : thread.length === 0 ? (
+                <p className="text-center text-xs text-gray-400 pt-8">No messages found</p>
+              ) : thread.map(msg => (
+                <div key={msg.id} className={`flex ${msg.direction === 'outbound' ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm ${
+                    msg.direction === 'outbound'
+                      ? 'bg-primary-600 text-white rounded-br-sm'
+                      : 'bg-white text-gray-900 shadow-sm rounded-bl-sm'
+                  }`}>
+                    <p>{msg.text}</p>
+                    <p className={`text-[10px] mt-0.5 ${msg.direction === 'outbound' ? 'text-primary-200' : 'text-gray-400'}`}>
+                      {timeAgo(msg.created_at)}
+                      {msg.direction === 'outbound' && msg.status === 'sent' && ' ✓✓'}
+                    </p>
+                  </div>
+                </div>
+              ))}
+              <div ref={bottomRef} />
+            </div>
+
+            {/* Reply box */}
+            <div className="flex items-center gap-2 px-4 py-3 border-t border-gray-100 bg-white">
+              <input
+                type="text"
+                value={reply}
+                onChange={e => setReply(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendReply()}
+                placeholder={`Reply via ${selected.channel}…`}
+                className="flex-1 rounded-full border border-gray-200 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+              <button onClick={sendReply} disabled={sending || !reply.trim()}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-40 transition">
+                {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="hidden md:flex flex-1 items-center justify-center bg-gray-50">
+            <div className="text-center">
+              <MessageCircle className="h-12 w-12 text-gray-200 mx-auto mb-2" />
+              <p className="text-sm text-gray-400">Select a contact to view conversation</p>
+            </div>
+          </div>
+        )}
+      </div>
     </Card>
   );
 }
