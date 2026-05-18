@@ -954,6 +954,104 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
   );
 }
 
+// ─── Full Preview Modal ───────────────────────────────────────────────────────
+
+function TemplatePreviewModal({ template, onClose }: { template: any; onClose: () => void }) {
+  const getComp = (type: string) => template.components?.find((c: any) => c.type === type);
+  const headerComp = getComp('HEADER');
+  const bodyText = getComp('BODY')?.text || '';
+  const footerText = getComp('FOOTER')?.text || '';
+  const buttons = getComp('BUTTONS')?.buttons || [];
+
+  return (
+    <AnimatePresence>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+        onClick={onClose}>
+        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+          className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden"
+          onClick={e => e.stopPropagation()}>
+
+          {/* Modal header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+            <div>
+              <p className="text-sm font-bold text-gray-900">{template.name}</p>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                  template.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700' :
+                  template.status === 'PENDING' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-600'
+                }`}>{template.status}</span>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${CAT_STYLE[template.category] || 'bg-gray-100 text-gray-600'}`}>{template.category}</span>
+                <span className="text-[10px] text-gray-400">{template.language}</span>
+              </div>
+            </div>
+            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><X className="w-4 h-4" /></button>
+          </div>
+
+          {/* WA preview */}
+          <div className="bg-[#e5ddd5] p-5" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d1ccc0' fill-opacity='0.3'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }}>
+            <div className="max-w-[280px] mx-auto">
+              {/* Message bubble */}
+              <div className="bg-white rounded-xl rounded-tl-none shadow-md overflow-hidden">
+                {/* Header */}
+                {headerComp?.format === 'TEXT' && headerComp.text && (
+                  <div className="px-3.5 pt-3 pb-1">
+                    <p className="text-sm font-bold text-gray-900">{headerComp.text}</p>
+                  </div>
+                )}
+                {headerComp?.format === 'IMAGE' && (
+                  <div className="h-40 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                    {headerComp.example?.header_url?.[0]
+                      ? <img src={headerComp.example.header_url[0]} alt="" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display='none'; }} />
+                      : <div className="text-center text-gray-400"><Image className="w-10 h-10 mx-auto mb-1" /><p className="text-xs">Image Header</p></div>
+                    }
+                  </div>
+                )}
+                {headerComp?.format === 'VIDEO' && (
+                  <div className="h-40 bg-gray-900 flex items-center justify-center">
+                    <div className="text-center text-white/60"><span className="text-3xl">🎬</span><p className="text-xs mt-1">Video Header</p></div>
+                  </div>
+                )}
+                {headerComp?.format === 'DOCUMENT' && (
+                  <div className="px-3.5 py-2.5 bg-blue-50 border-b border-blue-100 flex items-center gap-2.5">
+                    <FileText className="w-6 h-6 text-blue-500 flex-shrink-0" />
+                    <p className="text-sm text-blue-700 font-medium truncate">Document</p>
+                  </div>
+                )}
+                {headerComp?.format === 'LOCATION' && (
+                  <div className="h-24 bg-emerald-50 border-b border-emerald-100 flex items-center justify-center gap-2">
+                    <MapPin className="w-6 h-6 text-emerald-600" /><p className="text-sm text-emerald-700 font-medium">Location</p>
+                  </div>
+                )}
+                {/* Body */}
+                {bodyText && (
+                  <div className="px-3.5 py-2.5">
+                    <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">{bodyText}</p>
+                  </div>
+                )}
+                {/* Footer */}
+                {footerText && (
+                  <div className="px-3.5 pb-2">
+                    <p className="text-xs text-gray-400">{footerText}</p>
+                  </div>
+                )}
+                <p className="text-right text-[10px] text-gray-300 px-3.5 pb-2">12:00 PM ✓✓</p>
+              </div>
+              {/* Buttons */}
+              {buttons.map((b: any, i: number) => (
+                <button key={i} className="mt-1.5 w-full bg-white rounded-xl py-2.5 text-sm font-semibold text-[#00a5f4] text-center shadow-sm">
+                  {b.type === 'URL' ? '🔗 ' : b.type === 'PHONE_NUMBER' ? '📞 ' : ''}{b.text}
+                </button>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
 // ─── Deactivate Button ───────────────────────────────────────────────────────
 
 function DeactivateButton({ template, onDone }: { template: any; onDone: () => void }) {
@@ -1105,6 +1203,7 @@ export default function TemplatesPage() {
   const [showPicker, setShowPicker] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [prefill, setPrefill] = useState<Partial<FormState> | null>(null);
+  const [previewTpl, setPreviewTpl] = useState<any>(null);
 
   const loadTemplates = () => {
     setLoading(true);
@@ -1243,8 +1342,8 @@ export default function TemplatesPage() {
                 <div className="col-span-2">Status</div>
                 <div className="col-span-2">Category</div>
                 <div className="col-span-1">Lang</div>
-                <div className="col-span-3">Body Preview</div>
-                <div className="col-span-1"></div>
+                <div className="col-span-2">Body Preview</div>
+                <div className="col-span-2"></div>
               </div>
               {filtered.map((t, idx) => (
                 <div key={t.id || t.name}
@@ -1266,10 +1365,14 @@ export default function TemplatesPage() {
                   <div className="col-span-1">
                     <span className="text-xs text-gray-400">{t.language}</span>
                   </div>
-                  <div className="col-span-3 min-w-0">
+                  <div className="col-span-2 min-w-0">
                     <p className="text-xs text-gray-400 truncate">{getBody(t.components) || '—'}</p>
                   </div>
-                  <div className="col-span-1 flex justify-end gap-1">
+                    <div className="col-span-2 flex justify-end gap-1">
+                    <button onClick={() => setPreviewTpl(t)}
+                      className="opacity-0 group-hover:opacity-100 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg px-2 py-1 hover:bg-gray-50 transition whitespace-nowrap">
+                      Preview
+                    </button>
                     <button onClick={() => editTemplate(t)}
                       className="opacity-0 group-hover:opacity-100 text-xs font-semibold text-blue-600 border border-blue-200 rounded-lg px-2 py-1 hover:bg-blue-50 transition whitespace-nowrap">
                       Edit
@@ -1292,6 +1395,7 @@ export default function TemplatesPage() {
         />
       )}
       <CreateTemplateModal isOpen={modalOpen} onClose={() => { setModalOpen(false); setPrefill(null); }} onSuccess={handleTemplateCreated} prefill={prefill} />
+      {previewTpl && <TemplatePreviewModal template={previewTpl} onClose={() => setPreviewTpl(null)} />}
 
       {/* Fixed-position hover preview — renders outside table, no overlap issues */}
       {hoveredTpl && (() => {
