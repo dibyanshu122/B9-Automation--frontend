@@ -48,6 +48,7 @@ function ChannelIcon({ channel, size = 16 }: { channel: string; size?: number })
 function timeAgo(iso: string) {
   if (!iso) return '';
   const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (diff < 10) return 'just now';
   if (diff < 60) return `${diff}s ago`;
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
@@ -125,39 +126,39 @@ function UnifiedInbox() {
   const sendReply = async () => {
     if (!reply.trim() || !selected) return;
     setSending(true);
+    const msgText = reply.trim();
+    setReply('');
+    // Optimistic UI — show message immediately
+    setThread(prev => [...prev, {
+      id: `temp-${Date.now()}`,
+      direction: 'outbound',
+      text: msgText,
+      created_at: new Date().toISOString(),
+      channel: selected.channel,
+      status: 'sending',
+    }]);
     try {
-      // Step 1: Create outbound message
-      const createRes = await post('/api/automation/outbound-messages', {
+      await post('/api/automation/outbound-messages', {
         channel: selected.channel,
         recipient: selected.sender_id,
-        message: reply.trim(),
+        message: msgText,
         provider: 'meta',
-        status: 'ready_to_send',
+        force_send: true,
       });
-      const msgId = createRes.data?.id;
-
-      // Step 2: Actually send it via WhatsApp API
-      if (msgId) {
-        try {
-          await post(`/api/automation/outbound-messages/${msgId}/send`, {});
-          toast.success('Message sent ✓');
-        } catch (sendErr: any) {
-          const detail = sendErr?.response?.data?.detail || '';
-          if (detail.includes('paid plan') || detail.includes('upgrade')) {
-            toast.error('Upgrade plan to send live messages');
-          } else {
-            toast('Message saved as draft (WhatsApp not connected)', { icon: '📋' });
-          }
-        }
-      }
-
-      setReply('');
-      // Refresh thread
+      toast.success('Sent ✓');
+      // Refresh thread after 1.5s
       setTimeout(() => {
         get(`/api/automation/inbox/conversation?sender_id=${encodeURIComponent(selected.sender_id)}&channel=${selected.channel}`)
           .then(res => setThread(res.data?.messages || []));
-      }, 1000);
-    } catch { toast.error('Failed to send message'); }
+      }, 1500);
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail || '';
+      if (detail.includes('paid plan') || detail.includes('upgrade')) {
+        toast.error('Upgrade to STARTER plan to send live messages');
+      } else {
+        toast('Saved as draft — WhatsApp may not be connected', { icon: '📋' });
+      }
+    }
     finally { setSending(false); }
   };
 
