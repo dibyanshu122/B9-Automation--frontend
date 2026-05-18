@@ -47,7 +47,9 @@ function ChannelIcon({ channel, size = 16 }: { channel: string; size?: number })
 
 function timeAgo(iso: string) {
   if (!iso) return '';
-  const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  // Add 'Z' if missing so browser treats as UTC (server stores UTC without Z)
+  const utcIso = iso.endsWith('Z') || iso.includes('+') ? iso : iso + 'Z';
+  const diff = Math.floor((Date.now() - new Date(utcIso).getTime()) / 1000);
   if (diff < 10) return 'just now';
   if (diff < 60) return `${diff}s ago`;
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
@@ -75,6 +77,7 @@ function UnifiedInbox() {
   const [reply, setReply] = useState('');
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const chatBoxRef = useRef<HTMLDivElement>(null);
 
   const loadInbox = () => {
     get('/api/automation/inbox')
@@ -134,7 +137,9 @@ function UnifiedInbox() {
   }, [selected]); // eslint-disable-line
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (chatBoxRef.current) {
+      chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
+    }
   }, [thread]);
 
   const sendReply = async () => {
@@ -286,7 +291,7 @@ function UnifiedInbox() {
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-2"
+            <div ref={chatBoxRef} className="flex-1 overflow-y-auto p-4 space-y-2"
               style={{ background: '#efeae2' }}>
               {threadLoading ? (
                 <div className="flex justify-center pt-12"><Loader2 className="h-5 w-5 animate-spin text-gray-300" /></div>
