@@ -1,7 +1,10 @@
 'use client';
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { CheckCircle2, Clock, Plus, Trash2, X, XCircle } from 'lucide-react';
+import {
+  CheckCircle2, Clock, FileText, Image, MapPin, MessageSquare,
+  Plus, Search, Trash2, Video, X, XCircle, ChevronLeft, ChevronRight,
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -12,22 +15,22 @@ import { useApi } from '@/hooks/useApi';
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const STATUS_STYLES: Record<string, string> = {
-  APPROVED: 'bg-emerald-50 text-emerald-700',
-  PENDING:  'bg-amber-50 text-amber-700',
-  REJECTED: 'bg-red-50 text-red-700',
-  PAUSED:   'bg-gray-100 text-gray-600',
+  APPROVED: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  PENDING:  'bg-amber-50 text-amber-700 border-amber-200',
+  REJECTED: 'bg-red-50 text-red-700 border-red-200',
+  PAUSED:   'bg-gray-100 text-gray-500 border-gray-200',
 };
 const STATUS_ICONS: Record<string, React.ReactNode> = {
-  APPROVED: <CheckCircle2 className="h-3.5 w-3.5" />,
-  PENDING:  <Clock className="h-3.5 w-3.5" />,
-  REJECTED: <XCircle className="h-3.5 w-3.5" />,
+  APPROVED: <CheckCircle2 className="h-3 w-3" />,
+  PENDING:  <Clock className="h-3 w-3" />,
+  REJECTED: <XCircle className="h-3 w-3" />,
 };
-const CATEGORY_COLORS: Record<string, string> = {
+const CAT_STYLE: Record<string, string> = {
   MARKETING:      'bg-violet-50 text-violet-700',
   UTILITY:        'bg-blue-50 text-blue-700',
   AUTHENTICATION: 'bg-orange-50 text-orange-700',
 };
-const CATEGORY_ACTIVE: Record<string, string> = {
+const CAT_ACTIVE: Record<string, string> = {
   MARKETING:      'bg-violet-600 text-white',
   UTILITY:        'bg-blue-600 text-white',
   AUTHENTICATION: 'bg-orange-500 text-white',
@@ -44,80 +47,258 @@ const LANGUAGES = [
   { code: 'ml',    label: 'Malayalam — മലയാളം' },
   { code: 'pa',    label: 'Punjabi — ਪੰਜਾਬੀ' },
 ];
+const HEADER_TYPES = ['NONE', 'TEXT', 'IMAGE', 'VIDEO', 'DOCUMENT', 'LOCATION'] as const;
+type HeaderType = typeof HEADER_TYPES[number];
+type TemplateType = 'standard' | 'carousel' | 'lto' | 'authentication';
+type BtnType = 'QUICK_REPLY' | 'URL' | 'PHONE_NUMBER' | 'COPY_CODE';
 
-type BtnType = 'QUICK_REPLY' | 'URL' | 'PHONE_NUMBER';
-interface BtnEntry { type: BtnType; text: string; url: string; phone: string }
+// ─── Template Library ─────────────────────────────────────────────────────────
+
+const TEMPLATE_LIBRARY = [
+  { key: 'order_confirmed', category: 'UTILITY', name: 'Order Confirmed', tags: ['ecommerce', 'order'],
+    body: 'Hi {{1}}, your order #{{2}} has been confirmed! Expected delivery: {{3}}.',
+    varLabels: ['Customer name', 'Order number', 'Delivery date'],
+    buttons: [{ type: 'URL', text: 'Track Order', url: 'https://' }] },
+  { key: 'payment_received', category: 'UTILITY', name: 'Payment Received', tags: ['billing', 'payment'],
+    body: 'Hi {{1}}, we received your payment of ₹{{2}} for order #{{3}}. Thank you!',
+    varLabels: ['Customer name', 'Amount', 'Order number'], buttons: [] },
+  { key: 'delivery_update', category: 'UTILITY', name: 'Out for Delivery', tags: ['delivery', 'logistics'],
+    body: 'Hi {{1}}, your order #{{2}} is out for delivery and will arrive today!',
+    varLabels: ['Customer name', 'Order number'], buttons: [] },
+  { key: 'appointment_reminder', category: 'UTILITY', name: 'Appointment Reminder', tags: ['booking', 'reminder'],
+    body: 'Hi {{1}}, reminder: your appointment is on {{2}} at {{3}}. Reply to confirm.',
+    varLabels: ['Name', 'Date', 'Time'],
+    buttons: [{ type: 'QUICK_REPLY', text: 'Confirm' }, { type: 'QUICK_REPLY', text: 'Reschedule' }] },
+  { key: 'invoice_ready', category: 'UTILITY', name: 'Invoice Ready', tags: ['billing', 'invoice'],
+    body: 'Hi {{1}}, your invoice #{{2}} for ₹{{3}} is ready. Due date: {{4}}.',
+    varLabels: ['Name', 'Invoice number', 'Amount', 'Due date'], buttons: [] },
+  { key: 'subscription_expiry', category: 'UTILITY', name: 'Subscription Expiring', tags: ['subscription', 'renewal'],
+    body: 'Hi {{1}}, your {{2}} subscription expires on {{3}}. Renew to avoid interruption.',
+    varLabels: ['Name', 'Plan name', 'Expiry date'],
+    buttons: [{ type: 'URL', text: 'Renew Now', url: 'https://' }] },
+  { key: 'support_ticket', category: 'UTILITY', name: 'Support Ticket Update', tags: ['support', 'helpdesk'],
+    body: 'Hi {{1}}, your support ticket #{{2}} has been updated. Status: {{3}}.',
+    varLabels: ['Name', 'Ticket number', 'Status'], buttons: [] },
+  { key: 'welcome_customer', category: 'MARKETING', name: 'Welcome New Customer', tags: ['welcome', 'onboarding'],
+    body: 'Welcome to {{1}}, {{2}}! 🎉 We are excited to have you. Enjoy {{3}}% off your first order.',
+    varLabels: ['Business name', 'Customer name', 'Discount'],
+    buttons: [{ type: 'URL', text: 'Shop Now', url: 'https://' }] },
+  { key: 'special_offer', category: 'MARKETING', name: 'Special Offer', tags: ['offer', 'discount'],
+    body: 'Hi {{1}}, exclusive offer just for you! Get {{2}}% off on {{3}}. Valid till {{4}}.',
+    varLabels: ['Name', 'Discount %', 'Product', 'Expiry date'],
+    buttons: [{ type: 'URL', text: 'Claim Offer', url: 'https://' }] },
+  { key: 'abandoned_cart', category: 'MARKETING', name: 'Abandoned Cart', tags: ['ecommerce', 'cart'],
+    body: 'Hi {{1}}, you left {{2}} in your cart! Complete your purchase now.',
+    varLabels: ['Name', 'Product name'],
+    buttons: [{ type: 'URL', text: 'Complete Purchase', url: 'https://' }] },
+  { key: 'new_product_launch', category: 'MARKETING', name: 'New Product Launch', tags: ['product', 'launch'],
+    body: 'Hi {{1}}, exciting news! We just launched {{2}}. Be among the first to try it!',
+    varLabels: ['Name', 'Product name'],
+    buttons: [{ type: 'URL', text: 'View Product', url: 'https://' }] },
+  { key: 'lead_followup', category: 'MARKETING', name: 'Lead Follow-up', tags: ['sales', 'lead'],
+    body: 'Hi {{1}}, thanks for your interest in {{2}}! Can we schedule a quick call to discuss?',
+    varLabels: ['Name', 'Product/service'],
+    buttons: [{ type: 'QUICK_REPLY', text: 'Yes, call me' }, { type: 'QUICK_REPLY', text: 'Send info' }] },
+  { key: 'feedback_request', category: 'MARKETING', name: 'Feedback Request', tags: ['review', 'feedback'],
+    body: 'Hi {{1}}, how was your experience with {{2}}? Your feedback helps us improve!',
+    varLabels: ['Name', 'Product/service'],
+    buttons: [{ type: 'URL', text: 'Rate Us', url: 'https://' }] },
+  { key: 'event_invite', category: 'MARKETING', name: 'Event Invitation', tags: ['event', 'invite'],
+    body: 'Hi {{1}}, you are invited to {{2}} on {{3}} at {{4}}. We would love to see you!',
+    varLabels: ['Name', 'Event name', 'Date', 'Location'],
+    buttons: [{ type: 'QUICK_REPLY', text: 'I will attend' }, { type: 'QUICK_REPLY', text: 'Cannot make it' }] },
+  { key: 'referral_program', category: 'MARKETING', name: 'Referral Program', tags: ['referral', 'rewards'],
+    body: 'Hi {{1}}, love {{2}}? Refer a friend and both get {{3}} off! Your code: {{4}}',
+    varLabels: ['Name', 'Business name', 'Discount', 'Referral code'], buttons: [] },
+  { key: 'otp_login', category: 'AUTHENTICATION', name: 'Login OTP', tags: ['otp', 'login'],
+    body: 'Your {{1}} login OTP is {{2}}. Valid for 10 minutes. Do not share this code.',
+    varLabels: ['App name', 'OTP code'], buttons: [] },
+  { key: 'otp_signup', category: 'AUTHENTICATION', name: 'Signup Verification', tags: ['otp', 'signup'],
+    body: 'Welcome to {{1}}! Your verification code is {{2}}. Enter it to activate your account.',
+    varLabels: ['Business name', 'Code'], buttons: [] },
+  { key: 'password_reset', category: 'AUTHENTICATION', name: 'Password Reset', tags: ['otp', 'password'],
+    body: 'Hi {{1}}, your password reset code for {{2}} is {{3}}. Valid for 15 minutes.',
+    varLabels: ['Name', 'App name', 'Code'], buttons: [] },
+  { key: 'payment_otp', category: 'AUTHENTICATION', name: 'Payment OTP', tags: ['otp', 'payment'],
+    body: 'Your OTP for payment of ₹{{1}} to {{2}} is {{3}}. Valid for 5 minutes. Do not share.',
+    varLabels: ['Amount', 'Merchant', 'OTP'], buttons: [] },
+  { key: 'account_alert', category: 'AUTHENTICATION', name: 'Account Security Alert', tags: ['security', 'alert'],
+    body: 'Hi {{1}}, a login was detected on your {{2}} account from a new device on {{3}}. Was this you?',
+    varLabels: ['Name', 'App name', 'Date/time'],
+    buttons: [{ type: 'QUICK_REPLY', text: 'Yes, it was me' }, { type: 'QUICK_REPLY', text: 'No, secure account' }] },
+];
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface BtnEntry { type: BtnType; text: string; url: string; phone: string; codeExample: string }
+interface CarouselCard { headerFormat: 'IMAGE' | 'VIDEO'; headerUrl: string; body: string; buttons: BtnEntry[] }
 interface FormState {
-  name: string;
-  category: string;
-  language: string;
-  headerType: 'NONE' | 'TEXT';
-  headerText: string;
-  bodyText: string;
-  examples: string[];
-  footerText: string;
-  buttons: BtnEntry[];
+  name: string; category: string; language: string; templateType: TemplateType;
+  headerType: HeaderType; headerText: string; headerMediaUrl: string;
+  bodyText: string; examples: string[]; footerText: string; buttons: BtnEntry[];
+  carouselCards: CarouselCard[];
+  ltoText: string; ltoHasExpiration: boolean; ltoPromoExample: string;
+  authOtpType: 'COPY_CODE' | 'ONE_TAP' | 'ZERO_TAP';
+  authSecurityRec: boolean; authExpiryMins: number;
+  authAndroidPkg: string; authSigHash: string;
 }
-
+const EMPTY_BTN: BtnEntry = { type: 'QUICK_REPLY', text: '', url: '', phone: '', codeExample: '' };
+const EMPTY_CARD: CarouselCard = { headerFormat: 'IMAGE', headerUrl: '', body: '', buttons: [] };
 const EMPTY_FORM: FormState = {
-  name: '', category: 'MARKETING', language: 'en_US',
-  headerType: 'NONE', headerText: '',
-  bodyText: '', examples: [],
-  footerText: '', buttons: [],
+  name: '', category: 'MARKETING', language: 'en_US', templateType: 'standard',
+  headerType: 'NONE', headerText: '', headerMediaUrl: '',
+  bodyText: '', examples: [], footerText: '', buttons: [],
+  carouselCards: [{ ...EMPTY_CARD }, { ...EMPTY_CARD }],
+  ltoText: 'Offer expires in', ltoHasExpiration: true, ltoPromoExample: '',
+  authOtpType: 'COPY_CODE', authSecurityRec: true, authExpiryMins: 10,
+  authAndroidPkg: '', authSigHash: '',
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function detectVarCount(text: string): number {
-  const nums = new Set((text.match(/\{\{(\d+)\}\}/g) || []).map(m => m.replace(/\D/g, '')));
-  return nums.size;
+  return new Set((text.match(/\{\{(\d+)\}\}/g) || []).map(m => m.replace(/\D/g, ''))).size;
 }
-
 function applyExamples(text: string, examples: string[]): string {
   return examples.reduce((t, v, i) => t.replace(`{{${i + 1}}}`, v || `{{${i + 1}}}`), text);
 }
+function newBtn(type: BtnType): BtnEntry { return { ...EMPTY_BTN, type }; }
 
-// ─── WhatsApp preview bubble ──────────────────────────────────────────────────
+// ─── WhatsApp Preview ─────────────────────────────────────────────────────────
 
 function WaPreview({ form }: { form: FormState }) {
+  const [cardIdx, setCardIdx] = useState(0);
   const body = applyExamples(form.bodyText, form.examples);
-  const hasContent = form.headerText || body || form.footerText || form.buttons.length > 0;
+
+  if (form.templateType === 'authentication') {
+    return (
+      <div className="sticky top-4">
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Live Preview</p>
+        <div className="bg-[#e5ddd5] rounded-2xl p-4">
+          <div className="bg-white rounded-lg rounded-tl-none shadow-sm p-3 max-w-[260px]">
+            <p className="text-xs text-gray-500 mb-1">🔐 <strong>Authentication Code</strong></p>
+            <p className="text-sm text-gray-800">Your verification code is <strong>123456</strong></p>
+            {form.authSecurityRec && <p className="text-xs text-gray-400 mt-1">For your security, do not share this code.</p>}
+            {form.authExpiryMins > 0 && <p className="text-xs text-gray-400">This code expires in {form.authExpiryMins} minutes.</p>}
+            <p className="text-right text-[10px] text-gray-400 mt-1">12:00 PM ✓✓</p>
+          </div>
+          {form.authOtpType !== 'ZERO_TAP' && (
+            <button className="mt-1 w-full max-w-[260px] bg-white rounded-lg py-2 text-sm font-semibold text-[#00a5f4] text-center shadow-sm">
+              {form.authOtpType === 'ONE_TAP' ? 'Autofill' : 'Copy Code'}
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (form.templateType === 'carousel') {
+    const card = form.carouselCards[cardIdx];
+    return (
+      <div className="sticky top-4">
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Live Preview</p>
+        <div className="bg-[#e5ddd5] rounded-2xl p-4">
+          {body && (
+            <div className="bg-white rounded-lg rounded-tl-none shadow-sm p-3 mb-2 max-w-[260px]">
+              <p className="text-sm text-gray-800">{body}</p>
+            </div>
+          )}
+          <div className="bg-white rounded-xl shadow-sm overflow-hidden max-w-[260px]">
+            <div className={`h-28 flex items-center justify-center ${card?.headerUrl ? '' : 'bg-gray-200'}`}>
+              {card?.headerUrl
+                ? <img src={card.headerUrl} alt="" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display='none'; }} />
+                : <div className="text-gray-400 flex flex-col items-center gap-1">
+                    {card?.headerFormat === 'VIDEO' ? <Video className="w-8 h-8" /> : <Image className="w-8 h-8" />}
+                    <span className="text-xs">{card?.headerFormat || 'IMAGE'}</span>
+                  </div>
+              }
+            </div>
+            {card?.body && <p className="px-3 py-2 text-sm text-gray-800">{card.body}</p>}
+            {(card?.buttons || []).map((b, i) => (
+              <button key={i} className="w-full border-t border-gray-100 py-2 text-sm font-semibold text-[#00a5f4] text-center">{b.text || `Button ${i+1}`}</button>
+            ))}
+          </div>
+          {form.carouselCards.length > 1 && (
+            <div className="flex items-center justify-between mt-2 max-w-[260px]">
+              <button onClick={() => setCardIdx(i => Math.max(0, i-1))} disabled={cardIdx === 0} className="p-1 rounded bg-white/60 disabled:opacity-30"><ChevronLeft className="w-4 h-4" /></button>
+              <span className="text-xs text-gray-500">{cardIdx+1} / {form.carouselCards.length}</span>
+              <button onClick={() => setCardIdx(i => Math.min(form.carouselCards.length-1, i+1))} disabled={cardIdx === form.carouselCards.length-1} className="p-1 rounded bg-white/60 disabled:opacity-30"><ChevronRight className="w-4 h-4" /></button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (form.templateType === 'lto') {
+    return (
+      <div className="sticky top-4">
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Live Preview</p>
+        <div className="bg-[#e5ddd5] rounded-2xl p-4">
+          <div className="bg-white rounded-lg rounded-tl-none shadow-sm overflow-hidden max-w-[260px]">
+            {form.headerMediaUrl && <img src={form.headerMediaUrl} alt="" className="w-full h-28 object-cover" onError={() => {}} />}
+            {body && <p className="px-3 py-2 text-sm text-gray-800">{body}</p>}
+            {form.ltoHasExpiration && (
+              <div className="px-3 py-2 border-t border-dashed border-orange-200 bg-orange-50">
+                <p className="text-xs text-orange-600 font-semibold">🕐 {form.ltoText || 'Offer expires in'}</p>
+                {form.ltoPromoExample && <p className="text-sm font-mono font-bold text-gray-800 mt-0.5">{form.ltoPromoExample}</p>}
+              </div>
+            )}
+            <p className="text-right text-[10px] text-gray-400 px-3 pb-1">12:00 PM ✓✓</p>
+          </div>
+          <button className="mt-1 w-full max-w-[260px] bg-white rounded-lg py-2 text-sm font-semibold text-[#00a5f4] text-center shadow-sm">Copy Code</button>
+        </div>
+      </div>
+    );
+  }
+
+  // Standard preview
+  const hasContent = form.headerText || form.headerMediaUrl || body || form.footerText || form.buttons.length > 0;
   return (
     <div className="sticky top-4">
       <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Live Preview</p>
-      <div className="bg-[#e5ddd5] rounded-2xl p-4 min-h-[200px] flex items-start">
+      <div className="bg-[#e5ddd5] rounded-2xl p-4 min-h-[180px] flex items-start">
         {!hasContent ? (
           <p className="text-xs text-gray-400 m-auto text-center">Fill the form to see preview</p>
         ) : (
-          <div className="max-w-[280px] w-full">
+          <div className="max-w-[260px] w-full">
             <div className="bg-white rounded-lg rounded-tl-none shadow-sm overflow-hidden">
-              {/* header */}
+              {/* Header */}
               {form.headerType === 'TEXT' && form.headerText && (
-                <div className="px-3 pt-3 pb-1">
-                  <p className="text-sm font-bold text-gray-900">{form.headerText}</p>
+                <div className="px-3 pt-3 pb-1"><p className="text-sm font-bold text-gray-900">{form.headerText}</p></div>
+              )}
+              {form.headerType === 'IMAGE' && (
+                <div className="h-28 bg-gray-100 flex items-center justify-center overflow-hidden">
+                  {form.headerMediaUrl
+                    ? <img src={form.headerMediaUrl} alt="" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display='none'; }} />
+                    : <Image className="w-8 h-8 text-gray-300" />}
                 </div>
               )}
-              {/* body */}
-              {body && (
-                <div className="px-3 py-2">
-                  <p className="text-sm text-gray-800 whitespace-pre-wrap">{body}</p>
+              {form.headerType === 'VIDEO' && (
+                <div className="h-28 bg-gray-900 flex items-center justify-center">
+                  <Video className="w-8 h-8 text-white/60" />
+                  {form.headerMediaUrl && <span className="text-xs text-white/40 ml-2">Video</span>}
                 </div>
               )}
-              {/* footer */}
-              {form.footerText && (
-                <div className="px-3 pb-2">
-                  <p className="text-xs text-gray-400">{form.footerText}</p>
+              {form.headerType === 'DOCUMENT' && (
+                <div className="px-3 py-2 bg-blue-50 border-b border-blue-100 flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-blue-500" />
+                  <span className="text-xs text-blue-700 font-medium truncate">{form.headerMediaUrl ? form.headerMediaUrl.split('/').pop() : 'Document.pdf'}</span>
                 </div>
               )}
-              {/* time */}
-              <div className="px-3 pb-1 text-right">
-                <span className="text-[10px] text-gray-400">12:00 PM ✓✓</span>
-              </div>
+              {form.headerType === 'LOCATION' && (
+                <div className="h-24 bg-emerald-50 flex items-center justify-center gap-2 border-b border-emerald-100">
+                  <MapPin className="w-6 h-6 text-emerald-600" />
+                  <span className="text-sm text-emerald-700 font-medium">Location</span>
+                </div>
+              )}
+              {body && <div className="px-3 py-2"><p className="text-sm text-gray-800 whitespace-pre-wrap">{body}</p></div>}
+              {form.footerText && <div className="px-3 pb-2"><p className="text-xs text-gray-400">{form.footerText}</p></div>}
+              <p className="text-right text-[10px] text-gray-400 px-3 pb-1">12:00 PM ✓✓</p>
             </div>
-            {/* buttons */}
             {form.buttons.map((btn, i) => (
               <button key={i} className="mt-1 w-full bg-white rounded-lg py-2 text-sm font-semibold text-[#00a5f4] text-center shadow-sm">
-                {btn.text || `Button ${i + 1}`}
+                {btn.text || `Button ${i+1}`}
               </button>
             ))}
           </div>
@@ -127,12 +308,51 @@ function WaPreview({ form }: { form: FormState }) {
   );
 }
 
+// ─── Flow Picker ──────────────────────────────────────────────────────────────
+
+function FlowPicker({ onScratch, onLibrary, onClose }: { onScratch: () => void; onLibrary: () => void; onClose: () => void }) {
+  return (
+    <AnimatePresence>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+        onClick={onClose}>
+        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+          className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6"
+          onClick={e => e.stopPropagation()}>
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-lg font-bold text-gray-900">How do you want to start?</h2>
+            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><X className="w-4 h-4" /></button>
+          </div>
+          <div className="space-y-3">
+            <button onClick={onScratch} className="w-full text-left p-4 rounded-xl border-2 border-gray-200 hover:border-orange-400 hover:bg-orange-50 transition group">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">✏️</span>
+                <div>
+                  <p className="font-semibold text-gray-900 group-hover:text-orange-700">From Scratch</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Build your own custom template</p>
+                </div>
+              </div>
+            </button>
+            <button onClick={onLibrary} className="w-full text-left p-4 rounded-xl border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition group">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">📚</span>
+                <div>
+                  <p className="font-semibold text-gray-900 group-hover:text-blue-700">From Template Library</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Start from a pre-built template</p>
+                </div>
+              </div>
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
 // ─── Create Template Modal ────────────────────────────────────────────────────
 
-function CreateTemplateModal({ isOpen, onClose, onSuccess }: {
-  isOpen: boolean;
-  onClose: () => void;
-  onSuccess: (tpl: any) => void;
+function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
+  isOpen: boolean; onClose: () => void; onSuccess: (tpl: any) => void; prefill?: Partial<FormState> | null;
 }) {
   const { post } = useApi();
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
@@ -140,314 +360,470 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess }: {
   const [submitting, setSubmitting] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Reset when opened
   useEffect(() => {
-    if (isOpen) { setForm(EMPTY_FORM); setErrors({}); }
-  }, [isOpen]);
+    if (isOpen) {
+      setForm(prefill ? { ...EMPTY_FORM, ...prefill } : EMPTY_FORM);
+      setErrors({});
+    }
+  }, [isOpen, prefill]);
 
-  // Sync variable examples when body changes
+  const setField = <K extends keyof FormState>(k: K, v: FormState[K]) => setForm(f => ({ ...f, [k]: v }));
+
   const setBody = (text: string) => {
     const count = detectVarCount(text);
-    setForm(f => ({
-      ...f,
-      bodyText: text,
-      examples: Array(count).fill('').map((_, i) => f.examples[i] ?? ''),
-    }));
+    setForm(f => ({ ...f, bodyText: text, examples: Array(count).fill('').map((_, i) => f.examples[i] ?? '') }));
   };
-
-  const setField = <K extends keyof FormState>(k: K, v: FormState[K]) =>
-    setForm(f => ({ ...f, [k]: v }));
 
   // Button helpers
-  const addButton = (type: BtnType) => {
-    if (form.buttons.length >= 3) return;
-    setField('buttons', [...form.buttons, { type, text: '', url: '', phone: '' }]);
-  };
-  const updateBtn = (i: number, patch: Partial<BtnEntry>) =>
-    setField('buttons', form.buttons.map((b, idx) => idx === i ? { ...b, ...patch } : b));
-  const removeBtn = (i: number) =>
-    setField('buttons', form.buttons.filter((_, idx) => idx !== i));
+  const addBtn = (type: BtnType) => { if (form.buttons.length < 10) setField('buttons', [...form.buttons, newBtn(type)]); };
+  const updBtn = (i: number, p: Partial<BtnEntry>) => setField('buttons', form.buttons.map((b, idx) => idx === i ? { ...b, ...p } : b));
+  const delBtn = (i: number) => setField('buttons', form.buttons.filter((_, idx) => idx !== i));
+  const hasQR = form.buttons.some(b => b.type === 'QUICK_REPLY');
+  const hasCTA = form.buttons.some(b => b.type !== 'QUICK_REPLY');
 
-  const hasQuickReply = form.buttons.some(b => b.type === 'QUICK_REPLY');
-  const hasCta = form.buttons.some(b => b.type === 'URL' || b.type === 'PHONE_NUMBER');
+  // Carousel card helpers
+  const addCard = () => { if (form.carouselCards.length < 10) setField('carouselCards', [...form.carouselCards, { ...EMPTY_CARD }]); };
+  const delCard = (i: number) => { if (form.carouselCards.length > 2) setField('carouselCards', form.carouselCards.filter((_, idx) => idx !== i)); };
+  const updCard = (i: number, p: Partial<CarouselCard>) => setField('carouselCards', form.carouselCards.map((c, idx) => idx === i ? { ...c, ...p } : c));
+  const addCardBtn = (ci: number, type: BtnType) => {
+    const card = form.carouselCards[ci];
+    if (card.buttons.length < 2) updCard(ci, { buttons: [...card.buttons, newBtn(type)] });
+  };
+  const updCardBtn = (ci: number, bi: number, p: Partial<BtnEntry>) => {
+    const card = form.carouselCards[ci];
+    updCard(ci, { buttons: card.buttons.map((b, idx) => idx === bi ? { ...b, ...p } : b) });
+  };
+  const delCardBtn = (ci: number, bi: number) => {
+    const card = form.carouselCards[ci];
+    updCard(ci, { buttons: card.buttons.filter((_, idx) => idx !== bi) });
+  };
 
   const validate = (): boolean => {
     const e: Record<string, string> = {};
-    if (!form.name.trim()) e.name = 'Template name is required';
+    if (!form.name.trim()) e.name = 'Required';
     else if (!/^[a-z0-9_]+$/.test(form.name)) e.name = 'Only lowercase letters, numbers, underscores';
     if (!form.category) e.category = 'Select a category';
-    if (!form.bodyText.trim()) e.body = 'Body text is required';
-    form.examples.forEach((v, i) => {
-      if (!v.trim()) e[`ex_${i}`] = `Example for {{${i + 1}}} is required`;
-    });
+    if (form.templateType === 'standard' || form.templateType === 'lto') {
+      if (!form.bodyText.trim()) e.body = 'Body text is required';
+      form.examples.forEach((v, i) => { if (!v.trim()) e[`ex_${i}`] = `Required`; });
+    }
+    if (form.templateType === 'carousel') {
+      if (form.carouselCards.length < 2) e.cards = 'Minimum 2 cards required';
+      form.carouselCards.forEach((c, ci) => {
+        if (!c.headerUrl.trim()) e[`card_img_${ci}`] = 'Image URL required';
+        if (!c.body.trim()) e[`card_body_${ci}`] = 'Card body required';
+      });
+    }
+    if (form.templateType === 'lto' && !form.ltoPromoExample.trim()) e.lto_code = 'Sample promo code required';
     form.buttons.forEach((b, i) => {
-      if (!b.text.trim()) e[`btn_text_${i}`] = 'Button label required';
-      if (b.type === 'URL' && !b.url.trim()) e[`btn_url_${i}`] = 'URL required';
-      if (b.type === 'PHONE_NUMBER' && !b.phone.trim()) e[`btn_ph_${i}`] = 'Phone required';
+      if (!b.text.trim()) e[`btn_text_${i}`] = 'Required';
+      if (b.type === 'URL' && !b.url.trim()) e[`btn_url_${i}`] = 'Required';
+      if (b.type === 'PHONE_NUMBER' && !b.phone.trim()) e[`btn_ph_${i}`] = 'Required';
     });
     setErrors(e);
+    if (Object.keys(e).length > 0) scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
     return Object.keys(e).length === 0;
   };
 
   const handleSubmit = async () => {
-    if (!validate()) {
-      scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
+    if (!validate()) return;
     setSubmitting(true);
     try {
       const res = await post('/api/automation/whatsapp/templates', {
         name: form.name,
         language: form.language,
         category: form.category,
+        template_type: form.templateType,
         header_type: form.headerType,
         header_text: form.headerText,
+        header_media_url: form.headerMediaUrl,
         body_text: form.bodyText,
         body_variables: form.examples,
         footer_text: form.footerText,
-        buttons: form.buttons.map(b => ({
-          type: b.type, text: b.text,
-          ...(b.type === 'URL' ? { url: b.url } : {}),
-          ...(b.type === 'PHONE_NUMBER' ? { phone_number: b.phone } : {}),
+        buttons: form.buttons.map(b => ({ type: b.type, text: b.text, url: b.url, phone_number: b.phone, example: b.codeExample || undefined })),
+        carousel_cards: form.carouselCards.map(c => ({
+          header_format: c.headerFormat, header_url: c.headerUrl,
+          body: c.body, buttons: c.buttons.map(b => ({ type: b.type, text: b.text, url: b.url, phone_number: b.phone })),
         })),
+        lto_text: form.ltoText, lto_has_expiration: form.ltoHasExpiration, lto_promo_code_example: form.ltoPromoExample,
+        auth_otp_type: form.authOtpType, auth_add_security_rec: form.authSecurityRec,
+        auth_code_expiry_minutes: form.authExpiryMins, auth_android_package: form.authAndroidPkg, auth_signature_hash: form.authSigHash,
       });
       toast.success('Template submitted for approval — usually takes a few minutes to hours');
       onSuccess(res.data.template);
       onClose();
     } catch (err: any) {
       const detail = err.response?.data?.detail;
-      if (err.response?.status === 422 && detail) toast.error(detail);
+      if (detail) toast.error(detail);
     } finally {
       setSubmitting(false);
     }
   };
 
+  const inputCls = (err?: string) => `w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 ${err ? 'border-red-400' : 'border-gray-200'}`;
+
   return (
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
-            onClick={onClose}
-          />
-          {/* Slide-over panel */}
-          <motion.div
-            initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+          <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
             transition={{ type: 'spring', stiffness: 280, damping: 30 }}
-            className="fixed right-0 top-0 z-50 h-full w-full max-w-4xl bg-white shadow-2xl flex flex-col"
-          >
-            {/* Header bar */}
+            className="fixed right-0 top-0 z-50 h-full w-full max-w-4xl bg-white shadow-2xl flex flex-col">
+
+            {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 flex-shrink-0">
               <div>
                 <h2 className="text-lg font-bold text-gray-900">Create WhatsApp Template</h2>
-                <p className="text-xs text-gray-500 mt-0.5">Submit for Meta approval — usually approved within minutes to 24 hours</p>
+                <p className="text-xs text-gray-500 mt-0.5">Submit for Meta approval — approved within minutes to 24 hours</p>
               </div>
-              <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition">
-                <X className="w-5 h-5" />
-              </button>
+              <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 transition"><X className="w-5 h-5" /></button>
             </div>
 
-            {/* Two-column body */}
-            <div className="flex-1 overflow-hidden flex flex-col lg:flex-row">
+            {/* Body — two columns */}
+            <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden">
               {/* LEFT: Form */}
-              <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6">
+              <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto p-6 space-y-5">
 
-                {/* Template Name */}
+                {/* Template type */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Template Type</label>
+                  <div className="flex gap-2 flex-wrap">
+                    {([
+                      { v: 'standard', label: '📝 Standard' },
+                      { v: 'carousel', label: '🎠 Carousel' },
+                      { v: 'lto', label: '⏰ Limited Time Offer' },
+                      { v: 'authentication', label: '🔐 Authentication' },
+                    ] as const).map(({ v, label }) => (
+                      <button key={v} onClick={() => setField('templateType', v)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition border ${form.templateType === v ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'}`}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Name */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Template Name <span className="text-red-500">*</span></label>
-                  <input
-                    value={form.name}
-                    onChange={e => {
-                      const v = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '_');
-                      setField('name', v);
-                    }}
-                    placeholder="e.g. diwali_offer_2025"
-                    className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 ${errors.name ? 'border-red-400' : 'border-gray-200'}`}
-                  />
-                  <p className="text-xs text-gray-400 mt-1">Lowercase letters, numbers, underscores only. Spaces auto-replaced.</p>
-                  {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
+                  <input value={form.name} onChange={e => setField('name', e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '_'))}
+                    placeholder="e.g. diwali_offer_2025" className={inputCls(errors.name)} />
+                  <p className="text-xs text-gray-400 mt-1">Lowercase, numbers, underscores only</p>
+                  {errors.name && <p className="text-xs text-red-500 mt-0.5">{errors.name}</p>}
                 </div>
 
-                {/* Category */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Category <span className="text-red-500">*</span></label>
-                  <div className="flex gap-2 flex-wrap">
-                    {(['MARKETING', 'UTILITY', 'AUTHENTICATION'] as const).map(cat => (
-                      <button key={cat} onClick={() => setField('category', cat)}
-                        className={`px-4 py-2 rounded-lg text-xs font-bold transition ${form.category === cat ? CATEGORY_ACTIVE[cat] : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
-                        {cat === 'MARKETING' ? '📣 Marketing' : cat === 'UTILITY' ? '🔧 Utility' : '🔐 Authentication'}
-                      </button>
-                    ))}
-                  </div>
-                  <p className="text-xs text-gray-400 mt-1.5">
-                    {form.category === 'MARKETING' && 'Promotions, offers, announcements — higher Meta fee'}
-                    {form.category === 'UTILITY' && 'Order updates, confirmations, reminders — lower Meta fee'}
-                    {form.category === 'AUTHENTICATION' && 'OTP, login codes — lowest Meta fee'}
-                  </p>
-                  {errors.category && <p className="text-xs text-red-500 mt-1">{errors.category}</p>}
-                </div>
-
-                {/* Language */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Language</label>
-                  <select value={form.language} onChange={e => setField('language', e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white">
-                    {LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
-                  </select>
-                </div>
-
-                {/* Header */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Header <span className="text-gray-400 font-normal">(optional)</span></label>
-                  <div className="flex gap-2 mb-3">
-                    {(['NONE', 'TEXT'] as const).map(ht => (
-                      <button key={ht} onClick={() => setField('headerType', ht)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${form.headerType === ht ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
-                        {ht === 'NONE' ? 'None' : '✏️ Text'}
-                      </button>
-                    ))}
-                  </div>
-                  {form.headerType === 'TEXT' && (
-                    <div>
-                      <input value={form.headerText} onChange={e => setField('headerText', e.target.value.slice(0, 60))}
-                        placeholder="Header text (max 60 chars)"
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
-                      <p className="text-xs text-gray-400 mt-1">{form.headerText.length}/60 — No variables allowed in header</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Body */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    Body <span className="text-red-500">*</span>
-                    {detectVarCount(form.bodyText) > 0 && (
-                      <span className="ml-2 inline-flex items-center gap-1 text-[10px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-bold">
-                        {detectVarCount(form.bodyText)} variable{detectVarCount(form.bodyText) > 1 ? 's' : ''}
-                      </span>
-                    )}
-                  </label>
-                  <textarea value={form.bodyText} onChange={e => setBody(e.target.value.slice(0, 1024))}
-                    rows={4} placeholder={`Hi {{1}}, your order {{2}} has been confirmed! 🎉`}
-                    className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none ${errors.body ? 'border-red-400' : 'border-gray-200'}`} />
-                  <p className="text-xs text-gray-400 mt-1">{form.bodyText.length}/1024 — Use <code className="bg-gray-100 px-1 rounded">{`{{1}}`}</code>, <code className="bg-gray-100 px-1 rounded">{`{{2}}`}</code> for variables</p>
-                  {errors.body && <p className="text-xs text-red-500 mt-1">{errors.body}</p>}
-                </div>
-
-                {/* Variable examples */}
-                {form.examples.length > 0 && (
+                {/* Category + Language */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Variable Examples <span className="text-red-500">*</span>
-                      <span className="ml-1 text-xs text-gray-400 font-normal">— required by Meta for approval</span>
-                    </label>
-                    <div className="space-y-2">
-                      {form.examples.map((val, idx) => (
-                        <div key={idx} className="flex items-center gap-3">
-                          <span className="text-xs font-mono bg-orange-50 text-orange-700 border border-orange-200 px-2 py-1 rounded w-14 text-center flex-shrink-0">
-                            {`{{${idx + 1}}}`}
-                          </span>
-                          <input value={val}
-                            onChange={e => setField('examples', form.examples.map((x, i) => i === idx ? e.target.value : x))}
-                            placeholder={`Example value for {{${idx + 1}}}`}
-                            className={`flex-1 border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 ${errors[`ex_${idx}`] ? 'border-red-400' : 'border-gray-200'}`} />
-                        </div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Category <span className="text-red-500">*</span></label>
+                    <div className="flex gap-1.5 flex-wrap">
+                      {(['MARKETING', 'UTILITY', 'AUTHENTICATION'] as const).map(cat => (
+                        <button key={cat} onClick={() => setField('category', cat)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${form.category === cat ? CAT_ACTIVE[cat] : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                          {cat === 'MARKETING' ? '📣' : cat === 'UTILITY' ? '🔧' : '🔐'} {cat.charAt(0) + cat.slice(1).toLowerCase()}
+                        </button>
                       ))}
                     </div>
-                    <p className="text-xs text-gray-400 mt-1.5">Meta uses these to review your template. They won't be sent to customers.</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Language</label>
+                    <select value={form.language} onChange={e => setField('language', e.target.value)}
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white">
+                      {LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                {/* ── AUTHENTICATION form ── */}
+                {form.templateType === 'authentication' && (
+                  <div className="space-y-4 p-4 bg-orange-50 rounded-xl border border-orange-200">
+                    <p className="text-sm font-semibold text-orange-800">🔐 Authentication Template</p>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">OTP Button Type</label>
+                      <div className="flex gap-2 flex-wrap">
+                        {([
+                          { v: 'COPY_CODE', label: 'Copy Code', desc: 'User copies OTP' },
+                          { v: 'ONE_TAP', label: 'One-tap Autofill', desc: 'Auto-fills in your app' },
+                          { v: 'ZERO_TAP', label: 'Zero-tap', desc: 'No button needed' },
+                        ] as const).map(({ v, label, desc }) => (
+                          <button key={v} onClick={() => setField('authOtpType', v)}
+                            className={`text-left px-3 py-2 rounded-lg border text-xs transition ${form.authOtpType === v ? 'border-orange-500 bg-orange-100' : 'border-gray-200 hover:border-gray-300 bg-white'}`}>
+                            <p className="font-semibold">{label}</p>
+                            <p className="text-gray-400">{desc}</p>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                      <input type="checkbox" checked={form.authSecurityRec} onChange={e => setField('authSecurityRec', e.target.checked)} className="rounded" />
+                      Add security recommendation ("Do not share this code")
+                    </label>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Code expiry (minutes) <span className="text-gray-400 font-normal">— 0 = don't show</span></label>
+                      <input type="number" min={0} max={60} value={form.authExpiryMins}
+                        onChange={e => setField('authExpiryMins', parseInt(e.target.value) || 0)}
+                        className="w-32 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                    </div>
+                    {form.authOtpType === 'ONE_TAP' && (
+                      <div className="space-y-2">
+                        <p className="text-xs font-semibold text-gray-600">Android App Details (optional)</p>
+                        <input value={form.authAndroidPkg} onChange={e => setField('authAndroidPkg', e.target.value)}
+                          placeholder="Android package name (e.g. com.yourapp)" className={inputCls()} />
+                        <input value={form.authSigHash} onChange={e => setField('authSigHash', e.target.value)}
+                          placeholder="Signature hash" className={inputCls()} />
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {/* Footer */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Footer <span className="text-gray-400 font-normal">(optional)</span></label>
-                  <input value={form.footerText} onChange={e => setField('footerText', e.target.value.slice(0, 60))}
-                    placeholder="e.g. Reply STOP to unsubscribe"
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
-                  <p className="text-xs text-gray-400 mt-1">{form.footerText.length}/60</p>
-                </div>
-
-                {/* Buttons */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Buttons <span className="text-gray-400 font-normal">(optional, max 3)</span>
-                  </label>
-                  {form.buttons.length > 0 && (
-                    <div className="space-y-3 mb-3">
-                      {form.buttons.map((btn, i) => (
-                        <div key={i} className="border border-gray-200 rounded-lg p-3 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${btn.type === 'QUICK_REPLY' ? 'bg-gray-100 text-gray-600' : btn.type === 'URL' ? 'bg-blue-50 text-blue-700' : 'bg-green-50 text-green-700'}`}>
-                              {btn.type === 'QUICK_REPLY' ? 'Quick Reply' : btn.type === 'URL' ? 'Visit Website' : 'Call Phone'}
-                            </span>
-                            <button onClick={() => removeBtn(i)} className="p-1 rounded hover:bg-red-50 text-gray-400 hover:text-red-500 transition">
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                          <input value={btn.text} onChange={e => updateBtn(i, { text: e.target.value })}
-                            placeholder="Button label (max 25 chars)"
-                            className={`w-full border rounded px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 ${errors[`btn_text_${i}`] ? 'border-red-400' : 'border-gray-200'}`} />
-                          {btn.type === 'URL' && (
-                            <input value={btn.url} onChange={e => updateBtn(i, { url: e.target.value })}
-                              placeholder="https://example.com"
-                              className={`w-full border rounded px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 ${errors[`btn_url_${i}`] ? 'border-red-400' : 'border-gray-200'}`} />
-                          )}
-                          {btn.type === 'PHONE_NUMBER' && (
-                            <input value={btn.phone} onChange={e => updateBtn(i, { phone: e.target.value })}
-                              placeholder="+91 98765 43210"
-                              className={`w-full border rounded px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 ${errors[`btn_ph_${i}`] ? 'border-red-400' : 'border-gray-200'}`} />
-                          )}
-                        </div>
-                      ))}
+                {/* ── CAROUSEL form ── */}
+                {form.templateType === 'carousel' && (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">Intro Message <span className="text-gray-400 font-normal">(optional)</span></label>
+                      <textarea value={form.bodyText} onChange={e => setBody(e.target.value.slice(0, 1024))}
+                        rows={2} placeholder="Check out our latest collection!" className={`${inputCls()} resize-none`} />
                     </div>
-                  )}
-                  {form.buttons.length < 3 && (
-                    <div className="flex gap-2 flex-wrap">
-                      {!hasCta && (
-                        <button onClick={() => addButton('QUICK_REPLY')}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition">
-                          <Plus className="w-3.5 h-3.5" /> Quick Reply
-                        </button>
-                      )}
-                      {!hasQuickReply && (
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <label className="text-sm font-semibold text-gray-700">Cards ({form.carouselCards.length}/10) <span className="text-red-500">*</span></label>
+                        {form.carouselCards.length < 10 && (
+                          <button onClick={addCard} className="text-xs text-orange-600 hover:text-orange-700 font-semibold flex items-center gap-1">
+                            <Plus className="w-3.5 h-3.5" /> Add Card
+                          </button>
+                        )}
+                      </div>
+                      <div className="space-y-4">
+                        {form.carouselCards.map((card, ci) => (
+                          <div key={ci} className="border border-gray-200 rounded-xl p-4 space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-bold text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full">Card {ci + 1}</span>
+                              {form.carouselCards.length > 2 && (
+                                <button onClick={() => delCard(ci)} className="p-1 text-gray-400 hover:text-red-500 transition"><Trash2 className="w-3.5 h-3.5" /></button>
+                              )}
+                            </div>
+                            <div className="flex gap-2 mb-1">
+                              {(['IMAGE', 'VIDEO'] as const).map(f => (
+                                <button key={f} onClick={() => updCard(ci, { headerFormat: f })}
+                                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition border ${card.headerFormat === f ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200'}`}>
+                                  {f === 'IMAGE' ? '🖼️' : '🎬'} {f}
+                                </button>
+                              ))}
+                            </div>
+                            <input value={card.headerUrl} onChange={e => updCard(ci, { headerUrl: e.target.value })}
+                              placeholder={`${card.headerFormat === 'VIDEO' ? 'Video' : 'Image'} URL (sample for Meta approval)`}
+                              className={inputCls(errors[`card_img_${ci}`])} />
+                            {errors[`card_img_${ci}`] && <p className="text-xs text-red-500">{errors[`card_img_${ci}`]}</p>}
+                            <textarea value={card.body} onChange={e => updCard(ci, { body: e.target.value.slice(0, 160) })}
+                              rows={2} placeholder="Card body text" className={`${inputCls(errors[`card_body_${ci}`])} resize-none`} />
+                            {card.buttons.length < 2 && (
+                              <div className="flex gap-1.5 flex-wrap">
+                                <button onClick={() => addCardBtn(ci, 'URL')} className="text-xs border border-gray-200 rounded-lg px-2.5 py-1 hover:bg-gray-50 flex items-center gap-1"><Plus className="w-3 h-3" /> URL</button>
+                                <button onClick={() => addCardBtn(ci, 'QUICK_REPLY')} className="text-xs border border-gray-200 rounded-lg px-2.5 py-1 hover:bg-gray-50 flex items-center gap-1"><Plus className="w-3 h-3" /> Quick Reply</button>
+                              </div>
+                            )}
+                            {card.buttons.map((btn, bi) => (
+                              <div key={bi} className="flex gap-2 items-center">
+                                <input value={btn.text} onChange={e => updCardBtn(ci, bi, { text: e.target.value })}
+                                  placeholder="Button label" className="flex-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-orange-400" />
+                                {btn.type === 'URL' && (
+                                  <input value={btn.url} onChange={e => updCardBtn(ci, bi, { url: e.target.value })}
+                                    placeholder="https://" className="flex-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-orange-400" />
+                                )}
+                                <button onClick={() => delCardBtn(ci, bi)} className="p-1 text-gray-400 hover:text-red-500"><Trash2 className="w-3.5 h-3.5" /></button>
+                              </div>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── LTO form ── */}
+                {form.templateType === 'lto' && (
+                  <div className="space-y-4 p-4 bg-amber-50 rounded-xl border border-amber-200">
+                    <p className="text-sm font-semibold text-amber-800">⏰ Limited Time Offer Template</p>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Header Image URL <span className="text-gray-400">(optional)</span></label>
+                      <input value={form.headerMediaUrl} onChange={e => setField('headerMediaUrl', e.target.value)}
+                        placeholder="https://example.com/offer-banner.jpg" className={inputCls()} />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Body <span className="text-red-500">*</span></label>
+                      <textarea value={form.bodyText} onChange={e => setBody(e.target.value.slice(0, 1024))}
+                        rows={3} placeholder="Get {{1}}% off this Diwali! Use code below before offer expires." className={`${inputCls(errors.body)} resize-none`} />
+                      {errors.body && <p className="text-xs text-red-500 mt-0.5">{errors.body}</p>}
+                    </div>
+                    {form.examples.length > 0 && form.examples.map((val, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <span className="text-xs font-mono bg-amber-100 text-amber-700 px-2 py-1 rounded w-14 text-center flex-shrink-0">{`{{${idx+1}}}`}</span>
+                        <input value={val} onChange={e => setField('examples', form.examples.map((x, i) => i === idx ? e.target.value : x))}
+                          placeholder={`Example for {{${idx+1}}}`} className={inputCls(errors[`ex_${idx}`])} />
+                      </div>
+                    ))}
+                    <div className="flex gap-3 flex-wrap">
+                      <div className="flex-1 min-w-[160px]">
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Offer label text (max 16)</label>
+                        <input value={form.ltoText} onChange={e => setField('ltoText', e.target.value.slice(0, 16))}
+                          placeholder="Offer expires in" className={inputCls()} />
+                      </div>
+                      <div className="flex-1 min-w-[160px]">
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Sample promo code <span className="text-red-500">*</span></label>
+                        <input value={form.ltoPromoExample} onChange={e => setField('ltoPromoExample', e.target.value)}
+                          placeholder="e.g. DIWALI20" className={inputCls(errors.lto_code)} />
+                        {errors.lto_code && <p className="text-xs text-red-500 mt-0.5">{errors.lto_code}</p>}
+                      </div>
+                    </div>
+                    <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                      <input type="checkbox" checked={form.ltoHasExpiration} onChange={e => setField('ltoHasExpiration', e.target.checked)} className="rounded" />
+                      Show expiration countdown in message
+                    </label>
+                  </div>
+                )}
+
+                {/* ── STANDARD form ── */}
+                {form.templateType === 'standard' && (
+                  <div className="space-y-5">
+                    {/* Header */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Header <span className="text-gray-400 font-normal">(optional)</span></label>
+                      <div className="flex gap-1.5 flex-wrap mb-3">
+                        {HEADER_TYPES.map(ht => (
+                          <button key={ht} onClick={() => setField('headerType', ht)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition border ${form.headerType === ht ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'}`}>
+                            {ht === 'NONE' ? 'None' : ht === 'TEXT' ? '✏️ Text' : ht === 'IMAGE' ? '🖼️ Image' : ht === 'VIDEO' ? '🎬 Video' : ht === 'DOCUMENT' ? '📄 Document' : '📍 Location'}
+                          </button>
+                        ))}
+                      </div>
+                      {form.headerType === 'TEXT' && (
                         <>
-                          <button onClick={() => addButton('URL')}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition">
-                            <Plus className="w-3.5 h-3.5" /> Visit Website
-                          </button>
-                          <button onClick={() => addButton('PHONE_NUMBER')}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition">
-                            <Plus className="w-3.5 h-3.5" /> Call Phone
-                          </button>
+                          <input value={form.headerText} onChange={e => setField('headerText', e.target.value.slice(0, 60))}
+                            placeholder="Header text (max 60 chars)" className={inputCls()} />
+                          <p className="text-xs text-gray-400 mt-1">{form.headerText.length}/60 — No variables allowed in header</p>
                         </>
                       )}
+                      {(form.headerType === 'IMAGE' || form.headerType === 'VIDEO' || form.headerType === 'DOCUMENT') && (
+                        <>
+                          <input value={form.headerMediaUrl} onChange={e => setField('headerMediaUrl', e.target.value)}
+                            placeholder={`Sample ${form.headerType.toLowerCase()} URL (for Meta approval)`} className={inputCls()} />
+                          <p className="text-xs text-gray-400 mt-1">Actual media is sent at message time, not stored in template</p>
+                        </>
+                      )}
+                      {form.headerType === 'LOCATION' && (
+                        <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">📍 Location header shows a map pin. Actual coordinates are sent at message time.</p>
+                      )}
                     </div>
-                  )}
-                  {(hasQuickReply || hasCta) && (
-                    <p className="text-xs text-amber-600 mt-1.5">
-                      ⚠️ Quick Reply buttons cannot be mixed with URL/Phone buttons (Meta rule)
-                    </p>
-                  )}
-                </div>
+
+                    {/* Body */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">
+                        Body <span className="text-red-500">*</span>
+                        {detectVarCount(form.bodyText) > 0 && (
+                          <span className="ml-2 text-[10px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-bold">
+                            {detectVarCount(form.bodyText)} variable{detectVarCount(form.bodyText) > 1 ? 's' : ''}
+                          </span>
+                        )}
+                      </label>
+                      <textarea value={form.bodyText} onChange={e => setBody(e.target.value.slice(0, 1024))}
+                        rows={4} placeholder="Hi {{1}}, your order #{{2}} is confirmed! 🎉"
+                        className={`${inputCls(errors.body)} resize-none`} />
+                      <p className="text-xs text-gray-400 mt-1">{form.bodyText.length}/1024 — Use <code className="bg-gray-100 px-1 rounded">{'{{1}}'}</code> for variables</p>
+                      {errors.body && <p className="text-xs text-red-500 mt-0.5">{errors.body}</p>}
+                    </div>
+
+                    {/* Variable examples */}
+                    {form.examples.length > 0 && (
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Variable Examples <span className="text-red-500">*</span>
+                          <span className="ml-1 text-xs text-gray-400 font-normal">Required by Meta for approval</span>
+                        </label>
+                        <div className="space-y-2">
+                          {form.examples.map((val, idx) => (
+                            <div key={idx} className="flex items-center gap-2">
+                              <span className="text-xs font-mono bg-orange-50 text-orange-700 border border-orange-200 px-2 py-1 rounded w-14 text-center flex-shrink-0">{`{{${idx+1}}}`}</span>
+                              <input value={val}
+                                onChange={e => setField('examples', form.examples.map((x, i) => i === idx ? e.target.value : x))}
+                                placeholder={`Example for {{${idx+1}}}`}
+                                className={inputCls(errors[`ex_${idx}`])} />
+                            </div>
+                          ))}
+                        </div>
+                        <p className="text-xs text-gray-400 mt-1.5">Meta uses these to review your template. Not sent to customers.</p>
+                      </div>
+                    )}
+
+                    {/* Footer */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">Footer <span className="text-gray-400 font-normal">(optional)</span></label>
+                      <input value={form.footerText} onChange={e => setField('footerText', e.target.value.slice(0, 60))}
+                        placeholder="e.g. Reply STOP to unsubscribe" className={inputCls()} />
+                      <p className="text-xs text-gray-400 mt-1">{form.footerText.length}/60</p>
+                    </div>
+
+                    {/* Buttons */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Buttons <span className="text-gray-400 font-normal">(optional, max 10 quick reply or 3 CTA)</span></label>
+                      {form.buttons.length > 0 && (
+                        <div className="space-y-2 mb-3">
+                          {form.buttons.map((btn, i) => (
+                            <div key={i} className="border border-gray-200 rounded-xl p-3 space-y-2">
+                              <div className="flex items-center justify-between">
+                                <select value={btn.type} onChange={e => updBtn(i, { type: e.target.value as BtnType })}
+                                  className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white focus:outline-none">
+                                  {!hasCTA && <option value="QUICK_REPLY">Quick Reply</option>}
+                                  {!hasQR && <option value="URL">Visit Website</option>}
+                                  {!hasQR && <option value="PHONE_NUMBER">Call Phone</option>}
+                                  {!hasQR && <option value="COPY_CODE">Copy Code</option>}
+                                </select>
+                                <button onClick={() => delBtn(i)} className="p-1 text-gray-400 hover:text-red-500 transition"><Trash2 className="w-3.5 h-3.5" /></button>
+                              </div>
+                              <input value={btn.text} onChange={e => updBtn(i, { text: e.target.value })}
+                                placeholder="Button label (max 25 chars)" className={inputCls(errors[`btn_text_${i}`])} />
+                              {btn.type === 'URL' && <input value={btn.url} onChange={e => updBtn(i, { url: e.target.value })} placeholder="https://" className={inputCls(errors[`btn_url_${i}`])} />}
+                              {btn.type === 'PHONE_NUMBER' && <input value={btn.phone} onChange={e => updBtn(i, { phone: e.target.value })} placeholder="+91 98765 43210" className={inputCls(errors[`btn_ph_${i}`])} />}
+                              {btn.type === 'COPY_CODE' && <input value={btn.codeExample} onChange={e => updBtn(i, { codeExample: e.target.value })} placeholder="Sample code (e.g. DIWALI20)" className={inputCls()} />}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <div className="flex gap-1.5 flex-wrap">
+                        {!hasCTA && form.buttons.length < 10 && (
+                          <button onClick={() => addBtn('QUICK_REPLY')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition">
+                            <Plus className="w-3.5 h-3.5" /> Quick Reply
+                          </button>
+                        )}
+                        {!hasQR && form.buttons.length < 3 && (
+                          <>
+                            <button onClick={() => addBtn('URL')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition"><Plus className="w-3.5 h-3.5" /> Visit Website</button>
+                            <button onClick={() => addBtn('PHONE_NUMBER')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition"><Plus className="w-3.5 h-3.5" /> Call Phone</button>
+                            <button onClick={() => addBtn('COPY_CODE')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition"><Plus className="w-3.5 h-3.5" /> Copy Code</button>
+                          </>
+                        )}
+                      </div>
+                      {(hasQR || hasCTA) && (
+                        <p className="text-xs text-amber-600 mt-1.5">⚠️ Quick Reply and CTA buttons cannot be mixed (Meta rule)</p>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* RIGHT: Preview */}
-              <div className="hidden lg:block w-80 flex-shrink-0 border-l border-gray-100 p-6 bg-gray-50">
+              <div className="hidden lg:block w-80 flex-shrink-0 border-l border-gray-100 p-6 bg-gray-50 overflow-y-auto">
                 <WaPreview form={form} />
               </div>
             </div>
 
-            {/* Footer bar */}
+            {/* Footer */}
             <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between gap-4 flex-shrink-0 bg-white">
-              <p className="text-xs text-gray-400">Submitted templates go to Meta for review. Status visible on this page.</p>
-              <div className="flex gap-3">
+              <p className="text-xs text-gray-400">Templates go to Meta for review. Status visible on this page after submission.</p>
+              <div className="flex gap-3 flex-shrink-0">
                 <Button variant="outline" onClick={onClose} disabled={submitting}>Cancel</Button>
-                <Button onClick={handleSubmit} disabled={submitting} className="flex items-center gap-2 min-w-[140px] justify-center">
-                  {submitting
-                    ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Submitting…</>
-                    : 'Submit for Approval'}
+                <Button onClick={handleSubmit} disabled={submitting} className="min-w-[160px] justify-center flex items-center gap-2">
+                  {submitting ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Submitting…</> : 'Submit for Approval'}
                 </Button>
               </div>
             </div>
@@ -458,24 +834,78 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess }: {
   );
 }
 
-// ─── Templates Page ───────────────────────────────────────────────────────────
+// ─── Template Library Tab ─────────────────────────────────────────────────────
+
+function TemplateLibraryTab({ onUse }: { onUse: (tpl: any) => void }) {
+  const [search, setSearch] = useState('');
+  const [cat, setCat] = useState('ALL');
+  const filtered = TEMPLATE_LIBRARY.filter(t =>
+    (cat === 'ALL' || t.category === cat) &&
+    (t.name.toLowerCase().includes(search.toLowerCase()) || t.body.toLowerCase().includes(search.toLowerCase()) || t.tags.some(tag => tag.includes(search.toLowerCase())))
+  );
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search templates…"
+            className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+        </div>
+        <div className="flex gap-1.5">
+          {['ALL', 'MARKETING', 'UTILITY', 'AUTHENTICATION'].map(c => (
+            <button key={c} onClick={() => setCat(c)}
+              className={`px-3 py-2 rounded-xl text-xs font-semibold transition ${cat === c ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+              {c === 'ALL' ? 'All' : c.charAt(0) + c.slice(1).toLowerCase()}
+            </button>
+          ))}
+        </div>
+      </div>
+      <p className="text-xs text-gray-400">{filtered.length} template{filtered.length !== 1 ? 's' : ''} found</p>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {filtered.map(tpl => (
+          <div key={tpl.key} className="border border-gray-200 rounded-xl p-4 hover:border-orange-300 hover:shadow-sm transition group">
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <p className="text-sm font-bold text-gray-900 leading-tight">{tpl.name}</p>
+              <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${CAT_STYLE[tpl.category]}`}>{tpl.category.charAt(0) + tpl.category.slice(1).toLowerCase()}</span>
+            </div>
+            <p className="text-xs text-gray-500 line-clamp-2 mb-3 bg-gray-50 rounded-lg p-2">{tpl.body}</p>
+            {tpl.buttons.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-3">
+                {tpl.buttons.map((b: any, i: number) => (
+                  <span key={i} className="text-[10px] border border-blue-200 text-blue-600 px-2 py-0.5 rounded-full">{b.text || b.type}</span>
+                ))}
+              </div>
+            )}
+            <button onClick={() => onUse(tpl)}
+              className="w-full py-1.5 text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg hover:bg-orange-50 transition">
+              Use Template →
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function TemplatesPage() {
   const { get } = useApi();
   const [templates, setTemplates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [filter, setFilter] = useState<'ALL' | 'APPROVED' | 'PENDING' | 'REJECTED'>('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'APPROVED' | 'PENDING' | 'REJECTED'>('ALL');
+  const [activeTab, setActiveTab] = useState<'mine' | 'library'>('mine');
+  const [showPicker, setShowPicker] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [prefill, setPrefill] = useState<Partial<FormState> | null>(null);
 
   const loadTemplates = () => {
     setLoading(true);
     get('/api/automation/whatsapp/templates')
       .then(r => {
         setTemplates(r.data?.templates || []);
-        if (r.data?.error) setError(r.data.error);
-        else if (r.data?.message) setError(r.data.message);
-        else setError('');
+        setError(r.data?.error || r.data?.message || '');
       })
       .catch(() => setError('Could not load templates. Check your WhatsApp connection.'))
       .finally(() => setLoading(false));
@@ -483,109 +913,127 @@ export default function TemplatesPage() {
 
   useEffect(() => { loadTemplates(); }, []); // eslint-disable-line
 
-  const handleTemplateCreated = (newTpl: any) => {
-    setTemplates(prev => [{ ...newTpl, components: [] }, ...prev]);
-    setFilter('ALL');
+  const handleTemplateCreated = (tpl: any) => {
+    setTemplates(prev => [{ ...tpl, components: [] }, ...prev]);
+    setActiveTab('mine');
+    setStatusFilter('ALL');
   };
 
-  const filtered = filter === 'ALL' ? templates : templates.filter(t => t.status === filter);
+  const openFromScratch = () => { setShowPicker(false); setPrefill(null); setModalOpen(true); };
 
-  const getBodyText = (components: any[]) => {
-    const body = components?.find((c: any) => c.type === 'BODY');
-    return body?.text || '';
+  const openFromLibrary = () => { setShowPicker(false); setActiveTab('library'); };
+
+  const useLibraryTemplate = (tpl: any) => {
+    const varCount = detectVarCount(tpl.body);
+    const pf: Partial<FormState> = {
+      category: tpl.category,
+      bodyText: tpl.body,
+      examples: Array(varCount).fill(''),
+      buttons: (tpl.buttons || []).map((b: any) => ({ type: b.type, text: b.text || '', url: b.url || '', phone: '', codeExample: '' })),
+    };
+    setPrefill(pf);
+    setModalOpen(true);
   };
+
+  const filtered = statusFilter === 'ALL' ? templates : templates.filter(t => t.status === statusFilter);
+  const getBody = (components: any[]) => components?.find((c: any) => c.type === 'BODY')?.text || '';
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-3">
+      {/* Page header */}
+      <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">WhatsApp Templates</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Create and manage message templates for your WhatsApp Business account.
-          </p>
+          <h1 className="text-2xl font-bold text-gray-900">WhatsApp Templates</h1>
+          <p className="mt-1 text-sm text-gray-500">Create and manage message templates for your WhatsApp Business account</p>
         </div>
-        <Button onClick={() => setModalOpen(true)} className="flex items-center gap-2 flex-shrink-0">
+        <Button onClick={() => setShowPicker(true)} className="flex items-center gap-2 flex-shrink-0">
           <Plus className="h-4 w-4" /> Create Template
         </Button>
       </div>
 
-      {/* Stats */}
-      {!loading && templates.length > 0 && (
-        <div className="grid grid-cols-3 gap-4">
-          {(['APPROVED', 'PENDING', 'REJECTED'] as const).map(status => (
-            <Card key={status} hoverable
-              className={`cursor-pointer border-gray-200 ${filter === status ? 'ring-2 ring-primary-300' : ''}`}
-              onClick={() => setFilter(filter === status ? 'ALL' : status)}>
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-gray-600">{status.charAt(0) + status.slice(1).toLowerCase()}</p>
-                <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${STATUS_STYLES[status]}`}>
-                  {templates.filter(t => t.status === status).length}
-                </span>
-              </div>
-            </Card>
-          ))}
-        </div>
+      {/* Tabs */}
+      <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">
+        <button onClick={() => setActiveTab('mine')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition ${activeTab === 'mine' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+          My Templates {templates.length > 0 && <span className="ml-1.5 text-xs bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded-full">{templates.length}</span>}
+        </button>
+        <button onClick={() => setActiveTab('library')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition ${activeTab === 'library' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+          Template Library <span className="ml-1.5 text-xs bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded-full">{TEMPLATE_LIBRARY.length}</span>
+        </button>
+      </div>
+
+      {/* Library tab */}
+      {activeTab === 'library' && <TemplateLibraryTab onUse={useLibraryTemplate} />}
+
+      {/* My Templates tab */}
+      {activeTab === 'mine' && (
+        <>
+          {/* Stats */}
+          {!loading && templates.length > 0 && (
+            <div className="grid grid-cols-3 gap-3">
+              {(['APPROVED', 'PENDING', 'REJECTED'] as const).map(s => (
+                <button key={s} onClick={() => setStatusFilter(statusFilter === s ? 'ALL' : s)}
+                  className={`text-left p-3 rounded-xl border transition ${statusFilter === s ? 'ring-2 ring-primary-300' : 'hover:shadow-sm'} ${STATUS_STYLES[s]}`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold">{s.charAt(0) + s.slice(1).toLowerCase()}</span>
+                    <span className="text-base font-bold">{templates.filter(t => t.status === s).length}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Error */}
+          {error && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+              <p className="font-semibold mb-1">Could not load templates</p>
+              <p>{error}</p>
+              <p className="mt-2">Make sure you connected WhatsApp with a valid Business Account ID in <a href="/dashboard/integrations" className="font-semibold underline">Integrations</a>.</p>
+            </div>
+          )}
+
+          {/* Grid */}
+          {loading ? (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {[1,2,3,4,5,6].map(i => <div key={i} className="h-36 rounded-xl bg-gray-100 animate-pulse" />)}
+            </div>
+          ) : filtered.length === 0 && !error ? (
+            <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-gray-200 py-16 text-center">
+              <MessageSquare className="h-10 w-10 text-gray-300" />
+              <p className="text-lg font-semibold text-gray-500">No templates yet</p>
+              <p className="text-sm text-gray-400">Create your first template and submit for Meta approval.</p>
+              <Button onClick={() => setShowPicker(true)} className="mt-2 flex items-center gap-2"><Plus className="h-4 w-4" /> Create Template</Button>
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {filtered.map(t => (
+                <Card key={t.id || t.name} hoverable={false} className="border-gray-200">
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <p className="text-sm font-bold text-gray-900 break-all">{t.name}</p>
+                    <span className={`shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold border ${STATUS_STYLES[t.status] || 'bg-gray-100 text-gray-500 border-gray-200'}`}>
+                      {STATUS_ICONS[t.status]}{t.status}
+                    </span>
+                  </div>
+                  <div className="flex gap-1.5 mb-3 flex-wrap">
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${CAT_STYLE[t.category] || 'bg-gray-100 text-gray-600'}`}>{t.category}</span>
+                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-500">{t.language}</span>
+                  </div>
+                  {getBody(t.components) && (
+                    <p className="text-xs text-gray-600 bg-gray-50 rounded-lg p-2 line-clamp-3">{getBody(t.components)}</p>
+                  )}
+                </Card>
+              ))}
+            </div>
+          )}
+        </>
       )}
 
-      {/* Error */}
-      {error && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-          <p className="font-semibold mb-1">Could not load templates</p>
-          <p>{error}</p>
-          <p className="mt-2">Make sure you have connected WhatsApp with a valid Business Account ID in <a href="/dashboard/integrations" className="font-semibold underline">Integrations</a>.</p>
-        </div>
-      )}
+      {/* Flow picker */}
+      {showPicker && <FlowPicker onScratch={openFromScratch} onLibrary={openFromLibrary} onClose={() => setShowPicker(false)} />}
 
-      {/* Template grid */}
-      {loading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {[1,2,3,4,5,6].map(i => <div key={i} className="h-40 rounded-xl bg-gray-100 animate-pulse" />)}
-        </div>
-      ) : filtered.length === 0 && !error ? (
-        <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-gray-200 py-16 text-center">
-          <div className="w-14 h-14 rounded-full bg-orange-50 flex items-center justify-center">
-            <Plus className="h-7 w-7 text-orange-500" />
-          </div>
-          <p className="text-lg font-semibold text-gray-500">No templates yet</p>
-          <p className="text-sm text-gray-400">Create your first template and submit for Meta approval.</p>
-          <Button onClick={() => setModalOpen(true)} className="mt-2 flex items-center gap-2">
-            <Plus className="h-4 w-4" /> Create Template
-          </Button>
-        </div>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map(t => (
-            <Card key={t.id || t.name} hoverable={false} className="border-gray-200">
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <p className="text-sm font-bold text-gray-900 truncate">{t.name}</p>
-                <span className={`shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${STATUS_STYLES[t.status] || 'bg-gray-100 text-gray-600'}`}>
-                  {STATUS_ICONS[t.status]}
-                  {t.status}
-                </span>
-              </div>
-              <div className="flex gap-2 mb-3">
-                <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${CATEGORY_COLORS[t.category] || 'bg-gray-100 text-gray-600'}`}>
-                  {t.category}
-                </span>
-                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-500">
-                  {t.language}
-                </span>
-              </div>
-              {getBodyText(t.components) && (
-                <p className="text-xs text-gray-600 line-clamp-3 bg-gray-50 rounded-lg p-2">
-                  {getBodyText(t.components)}
-                </p>
-              )}
-            </Card>
-          ))}
-        </div>
-      )}
-
-      <CreateTemplateModal
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onSuccess={handleTemplateCreated}
-      />
+      {/* Create modal */}
+      <CreateTemplateModal isOpen={modalOpen} onClose={() => { setModalOpen(false); setPrefill(null); }} onSuccess={handleTemplateCreated} prefill={prefill} />
     </div>
   );
 }
