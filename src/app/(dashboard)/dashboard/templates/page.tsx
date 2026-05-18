@@ -899,6 +899,39 @@ function TemplateLibraryTab({ onUse }: { onUse: (tpl: any) => void }) {
   );
 }
 
+// ─── Parse existing template into form state ──────────────────────────────────
+
+function parseTemplateToForm(t: any): Partial<FormState> {
+  const comps = t.components || [];
+  const headerComp = comps.find((c: any) => c.type === 'HEADER');
+  const bodyComp = comps.find((c: any) => c.type === 'BODY');
+  const footerComp = comps.find((c: any) => c.type === 'FOOTER');
+  const buttonsComp = comps.find((c: any) => c.type === 'BUTTONS');
+  const bodyText = bodyComp?.text || '';
+  const varCount = detectVarCount(bodyText);
+  let headerType: HeaderType = 'NONE';
+  let headerText = '';
+  let headerMediaUrl = '';
+  if (headerComp) {
+    headerType = (headerComp.format || 'NONE') as HeaderType;
+    if (headerComp.format === 'TEXT') headerText = headerComp.text || '';
+    if (['IMAGE', 'VIDEO', 'DOCUMENT'].includes(headerComp.format || ''))
+      headerMediaUrl = headerComp.example?.header_url?.[0] || '';
+  }
+  const buttons = (buttonsComp?.buttons || []).map((b: any) => ({
+    type: (b.type || 'QUICK_REPLY') as BtnType,
+    text: b.text || '', url: b.url || '',
+    phone: b.phone_number || '', codeExample: b.example?.[0] || '',
+  }));
+  return {
+    name: t.name || '', category: t.category || 'MARKETING',
+    language: t.language || 'en_US',
+    headerType, headerText, headerMediaUrl,
+    bodyText, examples: Array(varCount).fill(''),
+    footerText: footerComp?.text || '', buttons,
+  };
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function TemplatesPage() {
@@ -908,7 +941,6 @@ export default function TemplatesPage() {
   const [error, setError] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'APPROVED' | 'PENDING' | 'REJECTED'>('ALL');
   const [activeTab, setActiveTab] = useState<'mine' | 'library'>('mine');
-  const [showPicker, setShowPicker] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [prefill, setPrefill] = useState<Partial<FormState> | null>(null);
 
@@ -931,21 +963,21 @@ export default function TemplatesPage() {
     setStatusFilter('ALL');
   };
 
-  const openFromScratch = () => { setShowPicker(false); setPrefill(null); setModalOpen(true); };
-
-  const openFromLibrary = () => { setShowPicker(false); setActiveTab('library'); };
+  const openCreate = (pf?: Partial<FormState>) => {
+    setPrefill(pf || null);
+    setModalOpen(true);
+  };
 
   const useLibraryTemplate = (tpl: any) => {
     const varCount = detectVarCount(tpl.body);
-    const pf: Partial<FormState> = {
-      category: tpl.category,
-      bodyText: tpl.body,
+    openCreate({
+      category: tpl.category, bodyText: tpl.body,
       examples: Array(varCount).fill(''),
       buttons: (tpl.buttons || []).map((b: any) => ({ type: b.type, text: b.text || '', url: b.url || '', phone: '', codeExample: '' })),
-    };
-    setPrefill(pf);
-    setModalOpen(true);
+    });
   };
+
+  const editTemplate = (t: any) => { openCreate(parseTemplateToForm(t)); };
 
   const filtered = statusFilter === 'ALL' ? templates : templates.filter(t => t.status === statusFilter);
   const getBody = (components: any[]) => components?.find((c: any) => c.type === 'BODY')?.text || '';
@@ -958,9 +990,14 @@ export default function TemplatesPage() {
           <h1 className="text-2xl font-bold text-gray-900">WhatsApp Templates</h1>
           <p className="mt-1 text-sm text-gray-500">Create and manage message templates for your WhatsApp Business account</p>
         </div>
-        <Button onClick={() => setShowPicker(true)} className="flex items-center gap-2 flex-shrink-0">
-          <Plus className="h-4 w-4" /> Create Template
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setActiveTab('library')} className="flex items-center gap-2 flex-shrink-0 text-sm">
+            Browse Library
+          </Button>
+          <Button onClick={() => openCreate()} className="flex items-center gap-2 flex-shrink-0">
+            <Plus className="h-4 w-4" /> Create Template
+          </Button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -1024,33 +1061,43 @@ export default function TemplatesPage() {
               <MessageSquare className="h-10 w-10 text-gray-300" />
               <p className="text-lg font-semibold text-gray-500">No templates yet</p>
               <p className="text-sm text-gray-400">Create your first template and submit for Meta approval.</p>
-              <Button onClick={() => setShowPicker(true)} className="mt-2 flex items-center gap-2"><Plus className="h-4 w-4" /> Create Template</Button>
+              <Button onClick={() => openCreate()} className="mt-2 flex items-center gap-2"><Plus className="h-4 w-4" /> Create Template</Button>
             </div>
           ) : (
             <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
               {/* List header */}
-              <div className="grid grid-cols-12 gap-3 px-4 py-2.5 bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              <div className="grid grid-cols-12 gap-2 px-4 py-2.5 bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                 <div className="col-span-3">Name</div>
                 <div className="col-span-2">Status</div>
                 <div className="col-span-2">Category</div>
-                <div className="col-span-1">Language</div>
-                <div className="col-span-4">Body Preview</div>
+                <div className="col-span-1">Lang</div>
+                <div className="col-span-3">Body Preview</div>
+                <div className="col-span-1"></div>
               </div>
               {filtered.map((t, idx) => (
-                <div key={t.id || t.name} className={`grid grid-cols-12 gap-3 px-4 py-3.5 items-center hover:bg-gray-50 transition ${idx !== 0 ? 'border-t border-gray-100' : ''}`}>
-                  <div className="col-span-3">
+                <div key={t.id || t.name} className={`grid grid-cols-12 gap-2 px-4 py-3 items-center hover:bg-gray-50 transition group ${idx !== 0 ? 'border-t border-gray-100' : ''}`}>
+                  <div className="col-span-3 min-w-0">
                     <p className="text-sm font-semibold text-gray-900 truncate">{t.name}</p>
                   </div>
                   <div className="col-span-2">
-                    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold border ${STATUS_STYLES[t.status] || 'bg-gray-100 text-gray-500 border-gray-200'}`}>
+                    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold border ${STATUS_STYLES[t.status] || 'bg-gray-100 text-gray-500 border-gray-200'}`}>
                       {STATUS_ICONS[t.status]}{t.status}
                     </span>
                   </div>
-                  <div className="col-span-1">
-                    <span className="text-xs text-gray-500">{t.language}</span>
+                  <div className="col-span-2">
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${CAT_STYLE[t.category] || 'bg-gray-100 text-gray-600'}`}>{t.category}</span>
                   </div>
-                  <div className="col-span-4">
-                    <p className="text-xs text-gray-500 truncate">{getBody(t.components) || <span className="text-gray-300 italic">No body</span>}</p>
+                  <div className="col-span-1">
+                    <span className="text-xs text-gray-400">{t.language}</span>
+                  </div>
+                  <div className="col-span-3 min-w-0">
+                    <p className="text-xs text-gray-400 truncate">{getBody(t.components) || '—'}</p>
+                  </div>
+                  <div className="col-span-1 flex justify-end">
+                    <button onClick={() => editTemplate(t)}
+                      className="opacity-0 group-hover:opacity-100 text-xs font-semibold text-blue-600 border border-blue-200 rounded-lg px-2.5 py-1 hover:bg-blue-50 transition whitespace-nowrap">
+                      Edit
+                    </button>
                   </div>
                 </div>
               ))}
@@ -1059,10 +1106,6 @@ export default function TemplatesPage() {
         </>
       )}
 
-      {/* Flow picker */}
-      {showPicker && <FlowPicker onScratch={openFromScratch} onLibrary={openFromLibrary} onClose={() => setShowPicker(false)} />}
-
-      {/* Create modal */}
       <CreateTemplateModal isOpen={modalOpen} onClose={() => { setModalOpen(false); setPrefill(null); }} onSuccess={handleTemplateCreated} prefill={prefill} />
     </div>
   );

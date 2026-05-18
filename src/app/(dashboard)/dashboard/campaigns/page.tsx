@@ -2,15 +2,14 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  AlertCircle, BarChart2, CheckCircle2, ChevronDown, ChevronRight,
+  AlertCircle, BarChart2, CheckCircle2,
   Clock, Loader2, MessageSquare, Plus, RefreshCw, Send, Users,
-  X, XCircle, Zap, FileText, Calendar, Ban, ChevronLeft,
+  X, XCircle, FileText, Calendar, Ban, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { Button } from '@/components/button';
-import { Card } from '@/components/card';
 import { useApi } from '@/hooks/useApi';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -339,129 +338,118 @@ function CampaignCard({ c, onDetail, onRefresh }: { c: Campaign; onDetail: () =>
 
 function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: () => void }) {
   const { get, post } = useApi();
-  const [tab, setTab] = useState<'quick' | 'bulk'>('quick');
 
-  // Quick Send state
-  const [qPhone, setQPhone] = useState('');
-  const [qTemplates, setQTemplates] = useState<any[]>([]);
-  const [qLoadingTpl, setQLoadingTpl] = useState(false);
-  const [qSelected, setQSelected] = useState<any>(null);
-  const [qVars, setQVars] = useState<string[]>([]);
-  const [qSending, setQSending] = useState(false);
+  const [name, setName] = useState('');
+  const [recipientMode, setRecipientMode] = useState<'leads' | 'excel'>('leads');
+  const [filter, setFilter] = useState('all');
+  const [customTag, setCustomTag] = useState('');
+  const [excelPhones, setExcelPhones] = useState<string[]>([]);
+  const [excelFileName, setExcelFileName] = useState('');
+  const [parsedCount, setParsedCount] = useState(0);
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [loadingTpl, setLoadingTpl] = useState(false);
+  const [selected, setSelected] = useState<any>(null);
+  const [vars, setVars] = useState<string[]>([]);
+  const [scheduled, setScheduled] = useState('');
+  const [previewing, setPreviewing] = useState(false);
+  const [preview, setPreview] = useState<PreviewResult | null>(null);
+  const [sending, setSending] = useState(false);
 
-  // Bulk state
-  const [bName, setBName] = useState('');
-  const [bMessage, setBMessage] = useState('');
-  const [bFilter, setBFilter] = useState('all');
-  const [bCustomTag, setBCustomTag] = useState('');
-  const [bMsgType, setBMsgType] = useState<'text' | 'template'>('text');
-  const [bTemplates, setBTemplates] = useState<any[]>([]);
-  const [bSelected, setBSelected] = useState<any>(null);
-  const [bVars, setBVars] = useState<string[]>([]);
-  const [bLoadingTpl, setBLoadingTpl] = useState(false);
-  const [bScheduled, setBScheduled] = useState('');
-  const [bPreviewing, setBPreviewing] = useState(false);
-  const [bPreview, setBPreview] = useState<PreviewResult | null>(null);
-  const [bSending, setBSending] = useState(false);
-
-  // Load templates for Quick Send
   useEffect(() => {
-    setQLoadingTpl(true);
+    setLoadingTpl(true);
     get('/api/automation/whatsapp/templates')
-      .then(r => setQTemplates((r.data?.templates || []).filter((t: any) => t.status === 'APPROVED')))
-      .catch(() => {})
-      .finally(() => setQLoadingTpl(false));
+      .then(r => setTemplates(r.data?.templates || []))
+      .catch(() => toast.error('Could not load templates'))
+      .finally(() => setLoadingTpl(false));
   }, []); // eslint-disable-line
 
-  const loadBulkTemplates = () => {
-    setBLoadingTpl(true);
-    get('/api/automation/whatsapp/templates')
-      .then(r => setBTemplates(r.data?.templates || []))
-      .catch(() => toast.error('Could not load templates'))
-      .finally(() => setBLoadingTpl(false));
-  };
-
-  const onSelectQ = (tpl: any) => {
-    setQSelected(tpl);
+  const onSelect = (tpl: any) => {
+    setSelected(tpl);
     const bodyText = tpl.components?.find((c: any) => c.type === 'BODY')?.text || '';
     const count = new Set((bodyText.match(/\{\{(\d+)\}\}/g) || []).map((m: string) => m.replace(/\D/g, ''))).size;
-    setQVars(Array(count).fill(''));
+    setVars(Array(count).fill(''));
   };
 
-  const onSelectB = (tpl: any) => {
-    setBSelected(tpl);
-    const bodyText = tpl.components?.find((c: any) => c.type === 'BODY')?.text || '';
-    setBMessage(bodyText);
-    const count = new Set((bodyText.match(/\{\{(\d+)\}\}/g) || []).map((m: string) => m.replace(/\D/g, ''))).size;
-    setBVars(Array(count).fill(''));
-  };
-
-  const handleQuickSend = async () => {
-    if (!qPhone.trim()) { toast.error('Phone number required'); return; }
-    if (!qSelected) { toast.error('Select a template'); return; }
-    if (qVars.some(v => !v.trim())) { toast.error('Fill all template variables'); return; }
-    setQSending(true);
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setExcelFileName(file.name);
     try {
-      await post('/api/campaigns/send', {
-        name: `Quick: ${qSelected.name}`,
-        message: qSelected.name,
-        channel: 'whatsapp',
-        msg_type: 'template',
-        template_name: qSelected.name,
-        language_code: qSelected.language || 'en_US',
-        template_variables: qVars.length ? qVars : null,
-        direct_phone: qPhone.replace(/\s/g, ''),
-      });
-      toast.success(`Template sent to ${qPhone}`);
-      setQPhone(''); setQSelected(null); setQVars([]);
-      onSent();
-    } catch (e: any) { toast.error(e.response?.data?.detail || 'Send failed'); }
-    finally { setQSending(false); }
+      const XLSX = await import('xlsx');
+      const data = await file.arrayBuffer();
+      const wb = XLSX.read(data, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1 }) as any[][];
+      const phones: string[] = [];
+      for (const row of rows) {
+        for (const cell of row) {
+          const val = String(cell ?? '').trim().replace(/[\s\-\(\)\.]/g, '');
+          if (/^\+?\d{8,15}$/.test(val)) {
+            phones.push(val.startsWith('+') ? val : val);
+          }
+        }
+      }
+      const unique = [...new Set(phones)];
+      setExcelPhones(unique);
+      setParsedCount(unique.length);
+      setPreview(null);
+      toast.success(`${unique.length} phone numbers loaded from ${file.name}`);
+    } catch {
+      toast.error('Could not read file. Please use .xlsx or .csv format');
+    }
+    e.target.value = '';
   };
 
-  const recipientFilter = bFilter === 'tag' ? `tag:${bCustomTag}` : bFilter;
+  const recipientFilter = filter === 'tag' ? `tag:${customTag}` : filter;
 
   const handlePreview = async () => {
-    if (bMsgType === 'text' && !bMessage.trim()) { toast.error('Enter a message'); return; }
-    if (bMsgType === 'template' && !bSelected) { toast.error('Select a template'); return; }
-    setBPreviewing(true); setBPreview(null);
-    try {
-      const r = await post('/api/campaigns/preview', { name: bName || 'Preview', message: bMessage || bSelected?.name || '', recipient_filter: recipientFilter });
-      setBPreview(r.data);
-    } catch (e: any) { toast.error(e.response?.data?.detail || 'Preview failed'); }
-    finally { setBPreviewing(false); }
+    if (recipientMode === 'leads') {
+      if (!selected) { toast.error('Select a template first'); return; }
+      setPreviewing(true); setPreview(null);
+      try {
+        const r = await post('/api/campaigns/preview', { name: name || 'Preview', message: selected?.name || '', recipient_filter: recipientFilter });
+        setPreview(r.data);
+      } catch (e: any) { toast.error(e.response?.data?.detail || 'Preview failed'); }
+      finally { setPreviewing(false); }
+    } else {
+      if (!excelPhones.length) { toast.error('Upload an Excel/CSV file first'); return; }
+      setPreview({ total_recipients: excelPhones.length, sample: excelPhones.slice(0, 5).map(p => ({ name: p, phone: p, score: '', tag: '' })) });
+    }
   };
 
-  const handleBulkSend = async (saveAsDraft = false) => {
-    if (!bName.trim()) { toast.error('Campaign name required'); return; }
-    if (bMsgType === 'template' && !bSelected) { toast.error('Select a template'); return; }
-    if (bMsgType === 'text' && !bMessage.trim()) { toast.error('Message required'); return; }
-    if (bVars.some(v => !v.trim()) && bMsgType === 'template') { toast.error('Fill all template variables'); return; }
-    if (!saveAsDraft && (!bPreview || bPreview.total_recipients === 0)) {
-      toast.error('Preview recipients first'); return;
+  const handleSend = async (saveAsDraft = false) => {
+    if (!name.trim()) { toast.error('Campaign name required'); return; }
+    if (!selected) { toast.error('Select a template first'); return; }
+    if (vars.some(v => !v.trim())) { toast.error('Fill all template variables'); return; }
+    if (recipientMode === 'excel' && !excelPhones.length) { toast.error('Upload a file with phone numbers'); return; }
+    if (!saveAsDraft) {
+      const count = recipientMode === 'excel' ? excelPhones.length : preview?.total_recipients;
+      if (!count) { toast.error('Preview recipients first'); return; }
+      if (!confirm(`Send to ${count} recipient${count !== 1 ? 's' : ''}?`)) return;
     }
-    if (!saveAsDraft && !confirm(`Send to ${bPreview!.total_recipients} lead${bPreview!.total_recipients !== 1 ? 's' : ''}?`)) return;
-
-    setBSending(true);
+    setSending(true);
     try {
-      const r = await post('/api/campaigns/send', {
-        name: bName.trim(),
-        message: bMsgType === 'template' ? (bSelected?.name || '') : bMessage.trim(),
-        recipient_filter: recipientFilter,
-        channel: 'whatsapp',
-        scheduled_at: bScheduled || null,
-        msg_type: bMsgType,
-        template_name: bMsgType === 'template' ? bSelected?.name : null,
-        language_code: bMsgType === 'template' ? (bSelected?.language || 'en_US') : 'en_US',
-        template_variables: bMsgType === 'template' && bVars.length ? bVars : null,
+      const payload: any = {
+        name: name.trim(), message: selected?.name || '',
+        channel: 'whatsapp', scheduled_at: scheduled || null,
+        msg_type: 'template', template_name: selected?.name || null,
+        language_code: selected?.language || 'en_US',
+        template_variables: vars.length ? vars : null,
         save_as_draft: saveAsDraft,
-      });
+      };
+      if (recipientMode === 'excel') {
+        payload.phone_list = excelPhones;
+        payload.recipient_filter = 'phone_list';
+      } else {
+        payload.recipient_filter = recipientFilter;
+      }
+      const r = await post('/api/campaigns/send', payload);
       if (saveAsDraft) toast.success('Draft saved');
-      else if (r.data.scheduled_at) toast.success(`Scheduled for ${bPreview?.total_recipients} recipients`);
-      else toast.success(`Sending to ${r.data.recipient_count} recipients`);
+      else if (r.data.scheduled_at) toast.success(`Campaign scheduled for ${r.data.recipient_count} recipients`);
+      else toast.success(`Campaign started — sending to ${r.data.recipient_count} recipients`);
       onClose(); onSent();
     } catch (e: any) { toast.error(e.response?.data?.detail || 'Failed'); }
-    finally { setBSending(false); }
+    finally { setSending(false); }
   };
 
   const inputCls = 'w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500';
@@ -472,196 +460,156 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
         className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
         transition={{ type: 'spring', stiffness: 280, damping: 30 }}
-        className="fixed right-0 top-0 z-50 h-full w-full max-w-xl bg-white shadow-2xl flex flex-col">
+        className="fixed right-0 top-0 z-50 h-screen w-full max-w-xl bg-white shadow-2xl flex flex-col">
 
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 flex-shrink-0">
-          <h2 className="text-lg font-bold text-gray-900">New Campaign</h2>
+          <div>
+            <h2 className="text-lg font-bold text-gray-900">New Campaign</h2>
+            <p className="text-xs text-gray-400 mt-0.5">Select an approved template and send to your leads</p>
+          </div>
           <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 text-gray-400"><X className="w-5 h-5" /></button>
         </div>
 
-        {/* Tab */}
-        <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mx-5 mt-4 flex-shrink-0">
-          <button onClick={() => setTab('quick')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition ${tab === 'quick' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`}>
-            <Zap className="w-3.5 h-3.5" /> Quick Send
-          </button>
-          <button onClick={() => { setTab('bulk'); if (!bTemplates.length) loadBulkTemplates(); }}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition ${tab === 'bulk' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`}>
-            <Users className="w-3.5 h-3.5" /> Bulk Campaign
-          </button>
-        </div>
+        <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-5">
 
-        <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-4">
+          {/* Campaign name */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Campaign Name <span className="text-red-500">*</span></label>
+            <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Diwali Offer 2025" className={inputCls} />
+          </div>
 
-          {/* ── QUICK SEND ── */}
-          {tab === 'quick' && (
-            <>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">WhatsApp Number</label>
-                <input value={qPhone} onChange={e => setQPhone(e.target.value)} placeholder="+91 98765 43210" className={inputCls} />
+          {/* Recipients source toggle */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Recipients</label>
+            <div className="flex gap-2 mb-3">
+              <button onClick={() => { setRecipientMode('leads'); setPreview(null); }}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium border transition ${recipientMode === 'leads' ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'}`}>
+                <Users className="w-3.5 h-3.5" /> From Leads
+              </button>
+              <button onClick={() => { setRecipientMode('excel'); setPreview(null); }}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium border transition ${recipientMode === 'excel' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'}`}>
+                📊 Upload Excel / CSV
+              </button>
+            </div>
+
+            {recipientMode === 'leads' && (
+              <div className="flex gap-2">
+                <select value={filter} onChange={e => { setFilter(e.target.value); setPreview(null); }}
+                  className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white">
+                  {FILTER_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  <option value="tag">By Tag…</option>
+                </select>
+                {filter === 'tag' && (
+                  <input value={customTag} onChange={e => setCustomTag(e.target.value)} placeholder="tag name"
+                    className="w-28 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none" />
+                )}
               </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Select Approved Template</label>
-                {qLoadingTpl ? <div className="flex items-center gap-2 text-sm text-gray-400"><Loader2 className="w-4 h-4 animate-spin" /> Loading…</div>
-                  : qTemplates.length === 0 ? <p className="text-sm text-amber-600 bg-amber-50 rounded-xl p-3">No approved templates. Create in WA Templates section.</p>
-                  : <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {qTemplates.map(tpl => (
-                      <button key={tpl.name} onClick={() => onSelectQ(tpl)}
-                        className={`w-full text-left p-3 rounded-xl border transition ${qSelected?.name === tpl.name ? 'border-green-500 bg-green-50' : 'border-gray-200 hover:border-gray-300'}`}>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-semibold text-gray-800">{tpl.name}</span>
-                          <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-green-100 text-green-700">{tpl.status}</span>
-                        </div>
-                        <p className="text-xs text-gray-400 mt-0.5 truncate">{tpl.components?.find((c: any) => c.type === 'BODY')?.text || ''}</p>
-                      </button>
-                    ))}
-                  </div>
-                }
+            )}
+
+            {recipientMode === 'excel' && (
+              <div className="space-y-2">
+                <label className={`flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl py-6 cursor-pointer transition ${parsedCount > 0 ? 'border-green-400 bg-green-50' : 'border-gray-200 hover:border-orange-400 hover:bg-orange-50/30'}`}>
+                  <input type="file" accept=".xlsx,.xls,.csv" onChange={handleFileUpload} className="hidden" />
+                  {parsedCount > 0 ? (
+                    <>
+                      <span className="text-2xl">✅</span>
+                      <p className="text-sm font-semibold text-green-700">{parsedCount} numbers loaded</p>
+                      <p className="text-xs text-green-600">{excelFileName}</p>
+                      <p className="text-xs text-gray-400">Click to replace file</p>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-2xl">📊</span>
+                      <p className="text-sm font-semibold text-gray-700">Click to upload Excel or CSV</p>
+                      <p className="text-xs text-gray-400">Phone numbers will be extracted automatically</p>
+                    </>
+                  )}
+                </label>
+                <p className="text-xs text-gray-400">File should have phone numbers with country code (+91XXXXXXXXXX). One number per row or in any column.</p>
               </div>
-              {qVars.length > 0 && (
-                <div className="space-y-2">
-                  {qVars.map((v, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <span className="text-xs font-mono bg-orange-50 text-orange-700 border border-orange-200 px-2 py-1 rounded w-14 text-center flex-shrink-0">{`{{${i+1}}}`}</span>
-                      <input value={v} onChange={e => setQVars(qVars.map((x, j) => j === i ? e.target.value : x))}
-                        placeholder={`Value for {{${i+1}}}`} className={inputCls} />
+            )}
+          </div>
+
+          {/* Template selector */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Select Template <span className="text-red-500">*</span>
+              <span className="ml-2 text-xs text-amber-600 font-normal">⚠️ Use APPROVED templates for leads outside 24h window</span>
+            </label>
+            {loadingTpl ? (
+              <div className="flex items-center gap-2 text-sm text-gray-400"><Loader2 className="w-4 h-4 animate-spin" /> Loading templates…</div>
+            ) : templates.length === 0 ? (
+              <p className="text-sm text-amber-600 bg-amber-50 rounded-xl p-3">No templates found. <a href="/dashboard/templates" className="font-semibold underline">Create templates →</a></p>
+            ) : (
+              <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
+                {templates.map(tpl => (
+                  <button key={tpl.name} onClick={() => onSelect(tpl)}
+                    className={`w-full text-left p-3 rounded-xl border transition ${selected?.name === tpl.name ? 'border-green-500 bg-green-50' : 'border-gray-200 hover:border-gray-300 bg-white'}`}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold text-gray-800 truncate">{tpl.name}</span>
+                      <span className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full font-bold ${tpl.status === 'APPROVED' ? 'bg-green-100 text-green-700' : tpl.status === 'PENDING' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-600'}`}>
+                        {tpl.status}
+                      </span>
                     </div>
-                  ))}
+                    <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">{tpl.components?.find((c: any) => c.type === 'BODY')?.text || ''}</p>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Template variable inputs */}
+          {vars.length > 0 && (
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-700">Template Variables <span className="text-red-500">*</span></label>
+              {vars.map((v, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <span className="text-xs font-mono bg-orange-50 text-orange-700 border border-orange-200 px-2 py-1 rounded w-14 text-center flex-shrink-0">{`{{${i+1}}}`}</span>
+                  <input value={v} onChange={e => setVars(vars.map((x, j) => j === i ? e.target.value : x))}
+                    placeholder={`Value for {{${i+1}}}`} className={inputCls} />
                 </div>
-              )}
-            </>
+              ))}
+            </div>
           )}
 
-          {/* ── BULK CAMPAIGN ── */}
-          {tab === 'bulk' && (
-            <>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Campaign Name <span className="text-red-500">*</span></label>
-                  <input value={bName} onChange={e => setBName(e.target.value)} placeholder="e.g. Diwali Offer 2025" className={inputCls} />
-                </div>
-                <div className="col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Recipients</label>
-                  <div className="flex gap-2">
-                    <select value={bFilter} onChange={e => { setBFilter(e.target.value); setBPreview(null); }}
-                      className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white">
-                      {FILTER_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                      <option value="tag">By Tag…</option>
-                    </select>
-                    {bFilter === 'tag' && (
-                      <input value={bCustomTag} onChange={e => setBCustomTag(e.target.value)} placeholder="tag name"
-                        className="w-28 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
-                    )}
-                  </div>
-                </div>
+          {/* Schedule */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Schedule <span className="text-gray-400 font-normal">(optional)</span></label>
+            <input type="datetime-local" value={scheduled} onChange={e => setScheduled(e.target.value)}
+              className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+          </div>
+
+          {/* Preview result */}
+          {preview && (
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-sm">
+              <div className="flex items-center gap-2 font-semibold text-blue-800 mb-2">
+                <Users className="w-4 h-4" /> {preview.total_recipients} recipients
               </div>
-
-              {/* Message type */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Message Type</label>
-                <div className="flex gap-2">
-                  <button onClick={() => setBMsgType('text')}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition border ${bMsgType === 'text' ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'}`}>
-                    ✏️ Custom Text
-                  </button>
-                  <button onClick={() => { setBMsgType('template'); if (!bTemplates.length) loadBulkTemplates(); }}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition border ${bMsgType === 'template' ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'}`}>
-                    📋 Template
-                  </button>
-                </div>
-                <p className="text-xs text-amber-600 mt-1.5">⚠️ For leads outside 24h window, use approved templates only</p>
+              <div className="flex flex-wrap gap-1">
+                {preview.sample.map((s, i) => (
+                  <span key={i} className="text-xs bg-white border border-blue-200 text-blue-700 px-2 py-0.5 rounded-full">{s.name || s.phone}</span>
+                ))}
+                {preview.total_recipients > 5 && <span className="text-xs text-blue-400">+{preview.total_recipients - 5} more</span>}
               </div>
-
-              {bMsgType === 'text' ? (
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Message</label>
-                  <textarea value={bMessage} onChange={e => { setBMessage(e.target.value.slice(0, 1024)); setBPreview(null); }}
-                    rows={3} placeholder="Hi {name}, special offer just for you! 🎉"
-                    className={`${inputCls} resize-none`} />
-                  <p className="text-xs text-gray-400 mt-1">Use <code className="bg-gray-100 px-1 rounded">{'{name}'}</code> to personalise with lead name</p>
-                </div>
-              ) : (
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Select Template</label>
-                  {bLoadingTpl ? <div className="flex items-center gap-2 text-sm text-gray-400"><Loader2 className="w-4 h-4 animate-spin" /> Loading…</div>
-                    : bTemplates.length === 0 ? <p className="text-sm text-amber-600 bg-amber-50 rounded-xl p-3">No templates found.</p>
-                    : <div className="space-y-2 max-h-40 overflow-y-auto">
-                      {bTemplates.map(tpl => (
-                        <button key={tpl.name} onClick={() => onSelectB(tpl)}
-                          className={`w-full text-left p-3 rounded-xl border transition ${bSelected?.name === tpl.name ? 'border-green-500 bg-green-50' : 'border-gray-200 hover:border-gray-300'}`}>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-semibold text-gray-800">{tpl.name}</span>
-                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${tpl.status === 'APPROVED' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>{tpl.status}</span>
-                          </div>
-                          <p className="text-xs text-gray-400 mt-0.5 truncate">{tpl.components?.find((c: any) => c.type === 'BODY')?.text || ''}</p>
-                        </button>
-                      ))}
-                    </div>
-                  }
-                  {bVars.length > 0 && (
-                    <div className="mt-3 space-y-2">
-                      {bVars.map((v, i) => (
-                        <div key={i} className="flex items-center gap-2">
-                          <span className="text-xs font-mono bg-orange-50 text-orange-700 border border-orange-200 px-2 py-1 rounded w-14 text-center flex-shrink-0">{`{{${i+1}}}`}</span>
-                          <input value={v} onChange={e => setBVars(bVars.map((x, j) => j === i ? e.target.value : x))}
-                            placeholder={`Value for {{${i+1}}}`} className={inputCls} />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Schedule */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Schedule <span className="text-gray-400 font-normal">(optional)</span></label>
-                <input type="datetime-local" value={bScheduled} onChange={e => setBScheduled(e.target.value)}
-                  className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
-                <p className="text-xs text-gray-400 mt-1">Leave blank to send immediately</p>
-              </div>
-
-              {/* Preview result */}
-              {bPreview && (
-                <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-sm">
-                  <div className="flex items-center gap-2 font-semibold text-blue-800 mb-2">
-                    <Users className="w-4 h-4" /> {bPreview.total_recipients} recipients matched
-                  </div>
-                  {bPreview.sample.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {bPreview.sample.map((s, i) => (
-                        <span key={i} className="text-xs bg-white border border-blue-200 text-blue-700 px-2 py-0.5 rounded-full">{s.name || s.phone}</span>
-                      ))}
-                      {bPreview.total_recipients > 5 && <span className="text-xs text-blue-400">+{bPreview.total_recipients - 5} more</span>}
-                    </div>
-                  )}
-                  {bPreview.total_recipients === 0 && <p className="text-blue-600">No leads matched. Add phone numbers to leads first.</p>}
-                </div>
-              )}
-            </>
+            </div>
           )}
         </div>
 
         {/* Footer */}
         <div className="px-5 py-4 border-t border-gray-200 flex-shrink-0">
-          {tab === 'quick' ? (
-            <Button onClick={handleQuickSend} disabled={qSending} className="w-full justify-center flex items-center gap-2">
-              {qSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} Send Template
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => handleSend(true)} disabled={sending} className="flex items-center gap-1.5 flex-shrink-0">
+              <FileText className="w-3.5 h-3.5" /> Save Draft
             </Button>
-          ) : (
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => handleBulkSend(true)} disabled={bSending} className="flex items-center gap-1.5 flex-shrink-0">
-                <FileText className="w-3.5 h-3.5" /> Save Draft
-              </Button>
-              <Button variant="outline" onClick={handlePreview} disabled={bPreviewing} className="flex items-center gap-1.5 flex-shrink-0">
-                {bPreviewing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Users className="w-3.5 h-3.5" />} Preview
-              </Button>
-              <Button onClick={() => handleBulkSend(false)} disabled={bSending || !bPreview || bPreview.total_recipients === 0}
-                className="flex-1 justify-center flex items-center gap-1.5">
-                {bSending ? <Loader2 className="w-4 h-4 animate-spin" /> : bScheduled ? <Calendar className="w-4 h-4" /> : <Send className="w-4 h-4" />}
-                {bScheduled ? 'Schedule' : 'Send Now'}
-              </Button>
-            </div>
-          )}
+            <Button variant="outline" onClick={handlePreview} disabled={previewing} className="flex items-center gap-1.5 flex-shrink-0">
+              {previewing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Users className="w-3.5 h-3.5" />} Preview
+            </Button>
+            <Button onClick={() => handleSend(false)} disabled={sending || (!preview && recipientMode !== 'excel')}
+              className="flex-1 justify-center flex items-center gap-1.5">
+              {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : scheduled ? <Calendar className="w-4 h-4" /> : <Send className="w-4 h-4" />}
+              {scheduled ? 'Schedule' : 'Send Now'}
+            </Button>
+          </div>
         </div>
       </motion.div>
     </AnimatePresence>
