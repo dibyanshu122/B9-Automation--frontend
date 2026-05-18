@@ -15,6 +15,36 @@ const CHANNEL_BADGE: Record<string, { label: string; color: string; emoji: strin
   facebook:  { label: 'Facebook',  color: 'bg-blue-50 text-blue-700',        emoji: '📘' },
 };
 
+function ChannelIcon({ channel, size = 16 }: { channel: string; size?: number }) {
+  if (channel === 'whatsapp') return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="12" fill="#25D366"/>
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" fill="white"/>
+    </svg>
+  );
+  if (channel === 'instagram') return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <defs>
+        <linearGradient id="ig" x1="0%" y1="100%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#fd5949"/>
+          <stop offset="50%" stopColor="#d6249f"/>
+          <stop offset="100%" stopColor="#285AEB"/>
+        </linearGradient>
+      </defs>
+      <rect width="24" height="24" rx="6" fill="url(#ig)"/>
+      <circle cx="12" cy="12" r="4" stroke="white" strokeWidth="1.5" fill="none"/>
+      <circle cx="17" cy="7" r="1" fill="white"/>
+    </svg>
+  );
+  if (channel === 'facebook') return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="12" fill="#1877F2"/>
+      <path d="M16 8h-2a1 1 0 00-1 1v2h3l-.5 3H13v7h-3v-7H8v-3h2V9a4 4 0 014-4h2v3z" fill="white"/>
+    </svg>
+  );
+  return <span className="text-sm">💬</span>;
+}
+
 function timeAgo(iso: string) {
   if (!iso) return '';
   const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
@@ -141,7 +171,7 @@ function UnifiedInbox() {
                       ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/30'
                       : 'text-slate-400 hover:bg-white/10 hover:text-slate-200'
                   }`}>
-                  {ch === 'all' ? 'All' : CHANNEL_BADGE[ch]?.emoji + ' ' + CHANNEL_BADGE[ch]?.label}
+                  {ch === 'all' ? 'All' : <span className="flex items-center gap-1.5"><ChannelIcon channel={ch} size={13} />{CHANNEL_BADGE[ch]?.label}</span>}
                 </button>
               ))}
             </div>
@@ -178,7 +208,7 @@ function UnifiedInbox() {
                     }`}>
                       {c.sender_name?.[0]?.toUpperCase() || badge.emoji}
                     </div>
-                    <span className="absolute -bottom-0.5 -right-0.5 text-[10px]">{badge.emoji}</span>
+                    <span className="absolute -bottom-0.5 -right-0.5"><ChannelIcon channel={c.channel} size={14} /></span>
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-1">
@@ -213,7 +243,7 @@ function UnifiedInbox() {
               <div className="flex-1">
                 <p className="text-sm font-bold text-gray-900">{selected.sender_name}</p>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="text-[10px]">{CHANNEL_BADGE[selected.channel]?.emoji}</span>
+                  <ChannelIcon channel={selected.channel} size={12} />
                   <p className="text-[11px] text-gray-400 capitalize">{selected.channel}</p>
                   <span className="h-1 w-1 rounded-full bg-emerald-400 animate-pulse" />
                   <span className="text-[10px] text-emerald-500">Active</span>
