@@ -687,7 +687,7 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
               <Button variant="outline" onClick={handlePreview} disabled={previewing} className="flex items-center gap-1.5 flex-shrink-0">
                 {previewing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Users className="w-3.5 h-3.5" />} Preview
               </Button>
-              <Button onClick={() => handleSend(false)} disabled={sending || (!preview && recipientMode !== 'excel')}
+              <Button onClick={() => handleSend(false)} disabled={sending || (recipientMode === 'leads' && !preview) || (recipientMode === 'excel' && !excelPhones.length)}
                 className="flex-1 justify-center flex items-center gap-1.5">
                 {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : scheduled ? <Calendar className="w-4 h-4" /> : <Send className="w-4 h-4" />}
                 {scheduled ? 'Schedule' : 'Send Now'}
