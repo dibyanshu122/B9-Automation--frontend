@@ -530,10 +530,12 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
       {isOpen && (
         <>
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-          <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
-            transition={{ type: 'spring', stiffness: 280, damping: 30 }}
-            className="fixed right-0 top-0 z-50 h-full w-full max-w-4xl bg-white shadow-2xl flex flex-col">
+            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={onClose}>
+          <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+            className="relative z-50 w-full max-w-4xl max-h-[92vh] bg-white rounded-2xl shadow-2xl flex flex-col"
+            onClick={e => e.stopPropagation()}>
 
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 flex-shrink-0">
@@ -890,6 +892,7 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
                 </Button>
               </div>
             </div>
+          </motion.div>
           </motion.div>
         </>
       )}
