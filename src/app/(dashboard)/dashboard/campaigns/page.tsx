@@ -156,7 +156,7 @@ function CampaignRow({ idx, c, onDetail, onRefresh }: { idx: number; c: Campaign
       </div>
       {/* More menu */}
       <div className="relative flex justify-center">
-        <button onClick={() => setMenuOpen(o => !o)} disabled={!!acting}
+        <button onClick={e => { e.stopPropagation(); setMenuOpen(o => !o); }} disabled={!!acting}
           className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition">
           {acting ? <Loader2 className="w-4 h-4 animate-spin" /> : <span className="text-base leading-none">⋯</span>}
         </button>
@@ -205,7 +205,7 @@ function DetailDrawer({ name, onClose, onRefresh }: { name: string; onClose: () 
     setLoading(true);
     get(`/api/campaigns/detail?name=${encodeURIComponent(name)}&page=${p}`)
       .then(r => { setData(r.data); setPage(p); })
-      .catch(() => toast.error('Failed to load campaign details'))
+      .catch((e: any) => toast.error(e?.response?.data?.detail || 'Failed to load campaign details'))
       .finally(() => setLoading(false));
   };
 
