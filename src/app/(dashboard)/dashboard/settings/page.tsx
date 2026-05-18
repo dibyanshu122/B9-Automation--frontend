@@ -450,9 +450,14 @@ export default function SettingsPage() {
             <p className="mt-1 text-xs text-gray-500">Paste this URL in your Meta App → WhatsApp → Configuration → Webhook URL</p>
           </div>
         </div>
-        <Button variant="secondary" className="mt-5" onClick={saveWhatsappDraftMode} disabled={savingWhatsapp}>
-          {savingWhatsapp ? 'Saving...' : 'Keep Draft Mode'}
-        </Button>
+        <div className="flex gap-3 mt-5">
+          <Button variant="secondary" onClick={saveWhatsappDraftMode} disabled={savingWhatsapp}>
+            {savingWhatsapp ? 'Saving...' : 'Keep Draft Mode'}
+          </Button>
+          <Button onClick={() => window.location.href = '/dashboard/messages'}>
+            Connect WhatsApp →
+          </Button>
+        </div>
       </Card>
 
       {/* AI & BYOK Settings */}
