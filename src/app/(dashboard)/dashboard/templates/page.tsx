@@ -1347,8 +1347,6 @@ export default function TemplatesPage() {
               </div>
               {filtered.map((t, idx) => (
                 <div key={t.id || t.name}
-                  onMouseEnter={e => onRowEnter(e, t)}
-                  onMouseLeave={onRowLeave}
                   className={`grid grid-cols-12 gap-2 px-4 py-3 items-center hover:bg-gray-50 transition group cursor-default ${idx !== 0 ? 'border-t border-gray-100' : ''}`}>
 
                   <div className="col-span-3 min-w-0">
@@ -1369,7 +1367,10 @@ export default function TemplatesPage() {
                     <p className="text-xs text-gray-400 truncate">{getBody(t.components) || '—'}</p>
                   </div>
                     <div className="col-span-2 flex justify-end gap-1">
-                    <button onClick={() => setPreviewTpl(t)}
+                    <button
+                      onClick={() => setPreviewTpl(t)}
+                      onMouseEnter={e => onRowEnter(e, t)}
+                      onMouseLeave={onRowLeave}
                       className="opacity-0 group-hover:opacity-100 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg px-2 py-1 hover:bg-gray-50 transition whitespace-nowrap">
                       Preview
                     </button>
