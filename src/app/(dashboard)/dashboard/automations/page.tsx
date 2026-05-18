@@ -2339,8 +2339,10 @@ function ActionBlockSettings({
 
       {tool === 'book_meeting' && (
         <>
-          <SelectField label="Booking provider" value={config.provider || 'calendly'} options={providerOptions.meeting} onChange={(value) => onChange('provider', value)} />
-          <InputField label="Booking link/event" value={config.booking_link || ''} placeholder="https://calendly.com/your-business/demo" onChange={(value) => onChange('booking_link', value)} />
+          <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-700 mb-2">
+            📋 This node creates a meeting task reminder for your team to follow up manually.
+          </div>
+          <InputField label="Booking link (send to lead)" value={config.booking_link || ''} placeholder="https://calendly.com/your-business/demo" onChange={(value) => onChange('booking_link', value)} />
           <InputField label="Meeting type" value={config.meeting_type || ''} placeholder="demo, site_visit, trial_class" onChange={(value) => onChange('meeting_type', value)} />
           <InputField label="Due in days" value={config.days_from_now || '1'} placeholder="1" onChange={(value) => onChange('days_from_now', value)} />
         </>
