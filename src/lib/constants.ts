@@ -41,7 +41,7 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
       { name: 'Messages', href: '/dashboard/messages', icon: 'Send' },
       { name: 'WA Templates', href: '/dashboard/templates', icon: 'Layout' },
       { name: 'Campaigns', href: '/dashboard/campaigns', icon: 'Megaphone' },
-      { name: 'Auto Replies', href: '/dashboard/auto-replies', icon: 'Zap' },
+      { name: 'Inbox Automation', href: '/dashboard/auto-replies', icon: 'Zap' },
     ],
   },
   {

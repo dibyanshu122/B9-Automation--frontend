@@ -2,8 +2,8 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  Bell, CheckCircle2, Clock, Edit2, Loader2, MessageSquare, Plus,
-  ToggleLeft, ToggleRight, Trash2, X, Zap, UserCheck, PhoneOff, Bot,
+  Bell, CheckCircle2, Clock, Edit2, Image, Info, Loader2, MessageSquare, Plus,
+  ToggleLeft, ToggleRight, Trash2, X, Zap, UserCheck, PhoneOff, Bot, ShieldAlert,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -17,6 +17,8 @@ interface Rule {
   trigger_keywords: string[]; match_exact: boolean; response_text: string | null;
   template_name: string | null; working_hours: Record<string, any>;
   timezone: string; priority: number; created_at: string;
+  media_url?: string | null; media_type?: string | null; media_caption?: string | null;
+  skip_automation_on_welcome?: boolean;
 }
 interface Icebreaker { type?: string; header: string; text: string }
 
@@ -32,6 +34,83 @@ const TABS = [
   { key: 'quick_replies',  label: 'Quick Replies',  icon: <Zap className="w-4 h-4" />,          desc: 'Saved short replies — use ⚡ button in inbox to insert instantly' },
   { key: 'icebreaker',     label: 'Icebreaker',     icon: <Bot className="w-4 h-4" />,          desc: 'Conversation starters on WhatsApp profile' },
 ];
+
+// ─── Tab Info Boxes ───────────────────────────────────────────────────────────
+
+const TAB_INFO: Record<string, { title: string; body: string; tip?: string; color: string; bullets?: string[] }> = {
+  keyword_reply: {
+    title: '⚡ Keyword Reply — Instant FAQ Automation',
+    body: 'When a customer sends a message containing your keywords (e.g. "price", "timing", "location"), the system instantly auto-replies. No agent needed.',
+    bullets: [
+      'Add multiple keywords per rule (comma separated)',
+      'Choose exact match or partial match (contains)',
+      'Attach an image or video along with the reply',
+      'Meta allows unlimited keyword replies within the 24-hour messaging window',
+    ],
+    tip: '💡 Common uses: pricing, store timings, address, demo booking, catalogue link',
+    color: 'orange',
+  },
+  welcome: {
+    title: '👋 Welcome Message — Sent to First-Time Contacts',
+    body: 'When a brand-new contact messages you for the very first time, this rule automatically sends a welcome message. Only 1 welcome rule is allowed per account.',
+    bullets: [
+      'Only sent to NEW contacts — never to returning ones',
+      'Attach an image, video, or document alongside the message',
+      'Enable "Skip automation" to prevent duplicate messages from workflows',
+      'Approved WhatsApp templates can also be used here',
+    ],
+    tip: '⚠️ Meta Rule: Free-form text can only be sent within the first 24 hours. After that, use an approved template.',
+    color: 'blue',
+  },
+  out_of_office: {
+    title: '🕐 Out of Office — Auto-Reply Outside Working Hours',
+    body: 'When someone messages you outside your set working hours (e.g. nights, weekends), this rule automatically replies so they know when you\'ll be available.',
+    bullets: [
+      'Set different hours for each day (Mon–Sun)',
+      'Mark specific days as "Closed" (e.g. Sunday off)',
+      'Set your timezone correctly — use Asia/Kolkata for India',
+      'Use custom text or an approved WhatsApp template',
+    ],
+    tip: '💡 Example: "We\'re available Mon–Sat 9am–6pm IST. Your message has been noted — we\'ll reply shortly!"',
+    color: 'purple',
+  },
+  opt_out: {
+    title: '🚫 Opt Out — Handle STOP Requests (Meta Compliance)',
+    body: 'When a customer sends "STOP" or "UNSUBSCRIBE", this rule automatically tags them as opted-out and sends a confirmation. This is a mandatory Meta compliance requirement.',
+    bullets: [
+      'Default keywords: STOP, UNSUBSCRIBE, OPTOUT — fully customizable',
+      'Opted-out contacts are excluded from future bulk messages',
+      'Customize the confirmation reply message',
+      'Required by Meta policy — ignoring opt-outs can get your number blocked',
+    ],
+    tip: '⚠️ META COMPLIANCE: Honoring opt-out requests is MANDATORY. Messaging opted-out users can result in permanent WhatsApp number ban.',
+    color: 'red',
+  },
+  keyword_alert: {
+    title: '🔔 Keyword Alerts — Get Notified on Important Messages',
+    body: 'When a customer sends a message containing specific keywords (e.g. "complaint", "refund", "urgent"), you receive an instant email alert. No auto-reply is sent to the customer — this is purely an internal notification.',
+    bullets: [
+      'Create multiple alert rules for different teams',
+      'Set a different alert email per rule',
+      'No reply goes to the customer — only an internal notification to you',
+      'Use cases: complaint monitoring, VIP lead detection, escalation alerts',
+    ],
+    tip: '💡 Example: Trigger on "angry", "refund", "cancel" — get alerted instantly so a senior agent can take over.',
+    color: 'yellow',
+  },
+  auto_assign: {
+    title: '👤 Auto Assign — Automatically Route Leads to Teams',
+    body: 'When a customer sends a message matching your keywords, the lead is automatically tagged and assigned to the right team. Perfect for routing enquiries without manual work.',
+    bullets: [
+      'Lead is automatically labeled/assigned on keyword match',
+      'Create separate rules for different teams (Sales, Support, Billing)',
+      'Leave keywords empty to apply to all incoming messages',
+      'Assigned tags can be used to filter and search leads later',
+    ],
+    tip: '💡 Example: "demo" keyword → tag as "Sales" | "complaint" → assign to "Support" team',
+    color: 'green',
+  },
+};
 
 const DAYS = ['mon','tue','wed','thu','fri','sat','sun'];
 const DAY_LABELS: Record<string, string> = { mon:'Mon',tue:'Tue',wed:'Wed',thu:'Thu',fri:'Fri',sat:'Sat',sun:'Sun' };
@@ -54,6 +133,10 @@ function RuleForm({ ruleType, existing, onClose, onSaved }: {
   const [workingHours, setWorkingHours] = useState<any>(existing?.working_hours && Object.keys(existing.working_hours).length > 0 ? existing.working_hours : DEFAULT_HOURS);
   const [timezone, setTimezone] = useState(existing?.timezone || 'Asia/Kolkata');
   const [alertEmail, setAlertEmail] = useState((existing as any)?.alert_email || '');
+  const [mediaUrl, setMediaUrl] = useState(existing?.media_url || '');
+  const [mediaType, setMediaType] = useState(existing?.media_type || 'image');
+  const [mediaCaption, setMediaCaption] = useState(existing?.media_caption || '');
+  const [skipAutomation, setSkipAutomation] = useState(existing?.skip_automation_on_welcome !== false);
   const [saving, setSaving] = useState(false);
 
   const save = async () => {
@@ -67,6 +150,10 @@ function RuleForm({ ruleType, existing, onClose, onSaved }: {
       template_name: templateName.trim() || null,
       working_hours: ruleType === 'out_of_office' ? workingHours : {},
       timezone, alert_email: alertEmail.trim() || null,
+      media_url: mediaUrl.trim() || null,
+      media_type: mediaUrl.trim() ? mediaType : null,
+      media_caption: mediaCaption.trim() || null,
+      skip_automation_on_welcome: skipAutomation,
     };
     try {
       if (existing) await put(`/api/auto-replies/rules/${existing.id}`, payload);
@@ -116,14 +203,55 @@ function RuleForm({ ruleType, existing, onClose, onSaved }: {
             )}
 
             {ruleType !== 'keyword_alert' && ruleType !== 'auto_assign' && ruleType !== 'icebreaker' && (
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Response Message</label>
-                <textarea value={responseText} onChange={e => setResponseText(e.target.value)} rows={3}
-                  placeholder="Hi! Thanks for reaching out. Our pricing starts at ₹999..."
-                  className={`${inputCls} resize-none`} />
-                <p className="text-xs text-gray-400 mt-1">Or use a template instead:</p>
-                <input value={templateName} onChange={e => setTemplateName(e.target.value)}
-                  placeholder="Template name (APPROVED templates only)" className={`${inputCls} mt-1`} />
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Response Message</label>
+                  <textarea value={responseText} onChange={e => setResponseText(e.target.value)} rows={3}
+                    placeholder="Hi! Thanks for reaching out. Our pricing starts at ₹999..."
+                    className={`${inputCls} resize-none`} />
+                  <p className="text-xs text-gray-400 mt-1">Or use an approved WhatsApp template instead:</p>
+                  <input value={templateName} onChange={e => setTemplateName(e.target.value)}
+                    placeholder="Template name (APPROVED templates only)" className={`${inputCls} mt-1`} />
+                </div>
+
+                {/* Media attachment — welcome and keyword_reply */}
+                {['welcome', 'keyword_reply'].includes(ruleType) && (
+                  <div className="border border-gray-200 rounded-xl p-3 space-y-2 bg-gray-50">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Image className="w-4 h-4 text-gray-500" />
+                      <span className="text-sm font-semibold text-gray-700">Attach Media <span className="text-xs font-normal text-gray-400">(optional)</span></span>
+                    </div>
+                    <input value={mediaUrl} onChange={e => setMediaUrl(e.target.value)}
+                      placeholder="https://example.com/image.jpg or video URL"
+                      className={inputCls} />
+                    {mediaUrl && (
+                      <>
+                        <select value={mediaType} onChange={e => setMediaType(e.target.value)}
+                          className={inputCls}>
+                          <option value="image">Image</option>
+                          <option value="video">Video</option>
+                          <option value="document">Document</option>
+                          <option value="audio">Audio</option>
+                        </select>
+                        <input value={mediaCaption} onChange={e => setMediaCaption(e.target.value)}
+                          placeholder="Caption (optional)" className={inputCls} />
+                      </>
+                    )}
+                    <p className="text-[10px] text-gray-400">Media is sent along with the reply message. Image/video requires a publicly accessible URL.</p>
+                  </div>
+                )}
+
+                {/* Automation skip toggle — welcome only */}
+                {ruleType === 'welcome' && (
+                  <div className="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-xl p-3">
+                    <input type="checkbox" id="skipAuto" checked={skipAutomation} onChange={e => setSkipAutomation(e.target.checked)}
+                      className="rounded mt-0.5" />
+                    <label htmlFor="skipAuto" className="text-sm text-blue-800 cursor-pointer">
+                      <span className="font-semibold">Skip automation workflows for new contacts</span>
+                      <p className="text-xs text-blue-600 mt-0.5">When this welcome message sends, automation workflows won't also run — preventing duplicate messages.</p>
+                    </label>
+                  </div>
+                )}
               </div>
             )}
 
@@ -223,7 +351,7 @@ function IcebreakerPanel() {
     <div className="space-y-5">
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
         <p className="font-semibold mb-1">💡 What are Icebreakers?</p>
-        <p>Icebreakers appear as clickable buttons when a customer opens your WhatsApp for the first time. They help customers quickly start a conversation by tapping common questions. Max 5 allowed by Meta.</p>
+        <p>Icebreakers are clickable conversation starters shown when a customer opens your WhatsApp Business profile for the first time. They make it easy for customers to start a chat by tapping a pre-set question. Maximum 5 icebreakers allowed by Meta.</p>
       </div>
       <div className="space-y-3">
         {icebreakers.map((ib, i) => (
@@ -277,7 +405,7 @@ export default function AutoRepliesPage() {
 
   const loadQrs = () => {
     setQrLoading(true);
-    get('/api/quick-replies')
+    get('/api/auto-replies/quick-replies')
       .then(r => setQrs(r.data?.quick_replies || r.data || []))
       .catch(() => {})
       .finally(() => setQrLoading(false));
@@ -292,10 +420,10 @@ export default function AutoRepliesPage() {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
         const token = localStorage.getItem('token');
         const axios = (await import('axios')).default;
-        await axios.put(`${apiUrl}/api/quick-replies/${editingQr.id}`, payload, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+        await axios.put(`${apiUrl}/api/auto-replies/quick-replies/${editingQr.id}`, payload, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
         toast.success('Quick reply updated');
       } else {
-        await post('/api/quick-replies', payload);
+        await post('/api/auto-replies/quick-replies', payload);
         toast.success('Quick reply saved');
       }
       setShowQrForm(false); setEditingQr(null); setQrTitle(''); setQrMessage(''); setQrShortcut('');
@@ -310,7 +438,7 @@ export default function AutoRepliesPage() {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
       const token = localStorage.getItem('token');
       const axios = (await import('axios')).default;
-      await axios.delete(`${apiUrl}/api/quick-replies/${id}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+      await axios.delete(`${apiUrl}/api/auto-replies/quick-replies/${id}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
       toast.success('Deleted'); loadQrs();
     } catch { toast.error('Delete failed'); }
   };
@@ -354,8 +482,10 @@ export default function AutoRepliesPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Auto Replies</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Automate WhatsApp responses — keyword replies, welcome, out of office, and more</p>
+          <h1 className="text-2xl font-bold text-gray-900">Inbox Automation</h1>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Auto-reply rules, welcome messages, out-of-office, opt-out, keyword alerts, auto-assign, quick replies &amp; icebreakers — all in one place
+          </p>
         </div>
       </div>
 
@@ -376,13 +506,62 @@ export default function AutoRepliesPage() {
 
       {/* Tab description + add button */}
       {activeTab !== 'icebreaker' && activeTab !== 'quick_replies' && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-500">{tab.desc}</p>
-          {(!isSingleRule || tabRules.length === 0) && (
-            <Button onClick={() => { setEditingRule(null); setShowForm(true); }} className="flex items-center gap-2">
-              <Plus className="w-4 h-4" /> {isSingleRule ? 'Set Up' : 'Add Rule'}
-            </Button>
+        <div className="space-y-3">
+          {/* Info box */}
+          {TAB_INFO[activeTab] && (() => {
+            const info = TAB_INFO[activeTab];
+            const colors: Record<string, string> = {
+              orange: 'bg-orange-50 border-orange-200 text-orange-900',
+              blue:   'bg-blue-50 border-blue-200 text-blue-900',
+              purple: 'bg-purple-50 border-purple-200 text-purple-900',
+              red:    'bg-red-50 border-red-200 text-red-900',
+              yellow: 'bg-yellow-50 border-yellow-200 text-yellow-900',
+              green:  'bg-green-50 border-green-200 text-green-900',
+            };
+            const tipColors: Record<string, string> = {
+              orange: 'text-orange-700', blue: 'text-blue-700', purple: 'text-purple-700',
+              red: 'text-red-600 font-semibold', yellow: 'text-yellow-700', green: 'text-green-700',
+            };
+            return (
+              <div className={`rounded-xl border p-4 text-sm ${colors[info.color]}`}>
+                <div className="flex items-start gap-2.5">
+                  <Info className="w-4 h-4 mt-0.5 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold mb-1">{info.title}</p>
+                    <p className="text-xs opacity-85 leading-relaxed">{info.body}</p>
+                    {info.bullets && (
+                      <ul className="mt-2 space-y-0.5">
+                        {info.bullets.map((b, i) => (
+                          <li key={i} className="text-xs opacity-80 flex items-start gap-1.5">
+                            <span className="mt-1 w-1 h-1 rounded-full bg-current shrink-0 opacity-60" />
+                            {b}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {info.tip && <p className={`text-xs mt-2 ${tipColors[info.color]}`}>{info.tip}</p>}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Active welcome + skip notice */}
+          {activeTab === 'welcome' && tabRules.some(r => r.is_active && r.skip_automation_on_welcome !== false) && (
+            <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-xs text-amber-800">
+              <ShieldAlert className="w-4 h-4 shrink-0 text-amber-600" />
+              <span><strong>Active:</strong> Automation workflows will be skipped for new contacts — they'll receive only this welcome message.</span>
+            </div>
           )}
+
+          <div className="flex items-center justify-between">
+            <span />
+            {(!isSingleRule || tabRules.length === 0) && (
+              <Button onClick={() => { setEditingRule(null); setShowForm(true); }} className="flex items-center gap-2">
+                <Plus className="w-4 h-4" /> {isSingleRule ? 'Set Up' : 'Add Rule'}
+              </Button>
+            )}
+          </div>
         </div>
       )}
 
@@ -392,8 +571,33 @@ export default function AutoRepliesPage() {
       {/* ── Quick Replies tab ──────────────────────────────────────────────── */}
       {activeTab === 'quick_replies' && (
         <div className="space-y-4">
+          {/* Info box */}
+          <div className="rounded-xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-900">
+            <div className="flex items-start gap-2.5">
+              <Info className="w-4 h-4 mt-0.5 shrink-0" />
+              <div>
+                <p className="font-bold mb-1">⚡ Quick Replies — Save Once, Send Instantly</p>
+                <p className="text-xs opacity-85 leading-relaxed">
+                  Save your most common replies here. In the inbox, click the ⚡ button in the reply box — pick a saved reply — it fills in with one click. No typing needed.
+                </p>
+                <ul className="mt-2 space-y-0.5">
+                  {[
+                    'Save greetings, pricing info, FAQs, follow-up messages',
+                    'Add an optional shortcut command (e.g. /greet, /price)',
+                    'Access via the ⚡ button in the inbox reply box',
+                    'Available to all agents in your workspace',
+                  ].map((b, i) => (
+                    <li key={i} className="text-xs opacity-80 flex items-start gap-1.5">
+                      <span className="mt-1 w-1 h-1 rounded-full bg-current shrink-0 opacity-60" />
+                      {b}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
           <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-500">Inbox ke ⚡ button se select karke instantly bhejo — type karne ki zarurat nahi.</p>
+            <p className="text-sm text-gray-500">Saved replies — click ⚡ in the inbox reply box to insert instantly.</p>
             <Button onClick={() => { setEditingQr(null); setQrTitle(''); setQrMessage(''); setQrShortcut(''); setShowQrForm(true); }}
               className="flex items-center gap-2"><Plus className="w-4 h-4" /> Add Quick Reply</Button>
           </div>
@@ -439,8 +643,8 @@ export default function AutoRepliesPage() {
               <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center text-orange-500">
                 <Zap className="w-5 h-5" />
               </div>
-              <p className="font-semibold text-gray-500">Koi Quick Reply nahi hai abhi</p>
-              <p className="text-sm text-gray-400">Add karo — inbox mein ⚡ button se instantly bhej sakte ho</p>
+              <p className="font-semibold text-gray-500">No quick replies yet</p>
+              <p className="text-sm text-gray-400">Add some — use ⚡ in the inbox reply box to send them instantly</p>
               <Button onClick={() => setShowQrForm(true)} className="mt-1 flex items-center gap-2">
                 <Plus className="w-4 h-4" /> Add First Quick Reply
               </Button>
@@ -512,6 +716,12 @@ export default function AutoRepliesPage() {
                     )}
                     {rule.template_name && (
                       <p className="text-xs text-gray-500 mt-1">📋 Template: <span className="font-medium">{rule.template_name}</span></p>
+                    )}
+                    {rule.media_url && (
+                      <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                        <Image className="w-3 h-3" />
+                        <span className="capitalize">{rule.media_type || 'image'}</span> attached
+                      </p>
                     )}
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
