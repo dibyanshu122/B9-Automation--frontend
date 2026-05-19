@@ -471,7 +471,7 @@ function UnifiedInbox() {
     });
 
   return (
-    <div className="grid h-[calc(100dvh-96px)] min-h-0 min-w-0 grid-cols-1 gap-4 overflow-hidden sm:h-[calc(100dvh-112px)] lg:h-[calc(100dvh-128px)] xl:grid-cols-[320px_minmax(0,1fr)]">
+    <div className="grid h-full min-h-0 min-w-0 grid-cols-1 gap-4 overflow-hidden xl:grid-cols-[320px_minmax(0,1fr)]">
       {/* LEFT — Contacts panel */}
         <div className={`b9-glass flex min-h-0 flex-col overflow-hidden rounded-lg ${selected ? 'hidden xl:flex' : 'flex'}`}>
           {/* Header */}
@@ -1013,16 +1013,40 @@ export default function MessagesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Messages</h1>
-          <p className="mt-1 text-sm text-gray-500">WhatsApp, Instagram & Facebook inbox — all channels in one place.</p>
+    {/* ── Full-height inbox block ── */}
+    <div className="flex flex-col gap-3" style={{ height: 'calc(100dvh - 80px)' }}>
+
+      {/* Section header */}
+      <div className="b9-glass rounded-xl px-5 py-3.5 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/15">
+            <MessageCircle className="h-5 w-5 text-cyan-400" />
+          </div>
+          <div>
+            <h1 className="text-base font-bold text-slate-100 leading-tight">Messages</h1>
+            <p className="text-[11px] text-slate-400">WhatsApp, Instagram &amp; Facebook inbox — all channels in one place.</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {setup?.send_enabled ? (
+            <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-3 py-1 text-[11px] font-semibold text-emerald-400 ring-1 ring-emerald-500/20">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              Live
+            </span>
+          ) : (
+            <span className="flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1 text-[11px] font-semibold text-amber-400 ring-1 ring-amber-500/20">
+              Draft Mode
+            </span>
+          )}
         </div>
       </div>
 
-      {/* Unified Inbox — all channels */}
-      <UnifiedInbox />
+      {/* Inbox — takes remaining height */}
+      <div className="flex-1 min-h-0">
+        <UnifiedInbox />
+      </div>
+
+    </div>{/* end full-height block */}
 
       <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-gray-950 p-6 text-white shadow-xl">
         <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-emerald-500/20 blur-3xl" />
