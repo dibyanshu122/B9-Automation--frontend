@@ -455,7 +455,7 @@ export default function ChatPage() {
         )}
 
         {/* Messages */}
-        <div ref={chatScrollRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4 sm:p-6">
+        <div ref={chatScrollRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4 sm:p-6 b9-chat-area">
           {messages.length === 0 ? (
             <div className="flex min-h-full items-center justify-center py-4">
               <div className="w-full max-w-4xl text-center">

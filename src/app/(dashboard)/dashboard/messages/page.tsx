@@ -654,7 +654,7 @@ function UnifiedInbox() {
             </div>
 
             {/* Messages */}
-            <div ref={chatBoxRef} className="flex-1 overflow-y-auto p-4 space-y-2">
+            <div ref={chatBoxRef} className="flex-1 overflow-y-auto p-4 space-y-2 b9-chat-area">
               {threadLoading ? (
                 <div className="flex justify-center pt-12"><Loader2 className="h-5 w-5 animate-spin text-gray-300" /></div>
               ) : thread.length === 0 ? (
