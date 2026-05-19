@@ -4,6 +4,7 @@ import { Navbar } from '@/components/navbar';
 import { Sidebar } from '@/components/sidebar';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { useAuthStore } from '@/store/authStore';
+import { useUIStore } from '@/store/uiStore';
 import { useApi } from '@/hooks/useApi';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
@@ -16,6 +17,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const { user, token, hasHydrated, logout } = useAuthStore();
+  const { sidebarPinned } = useUIStore();
   const router = useRouter();
   const pathname = usePathname();
   const reduceMotion = useReducedMotion();
@@ -91,7 +93,7 @@ export default function DashboardLayout({
         {/* Single scroll container — body never scrolls, only this main element does */}
         <main
           ref={mainRef}
-          className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden md:ml-72"
+          className={`min-w-0 flex-1 overflow-y-auto overflow-x-hidden transition-all duration-300 ${sidebarPinned ? 'md:ml-72' : 'md:ml-16'}`}
           style={{ scrollbarGutter: 'stable' }}
         >
           <AnimatePresence mode="wait">

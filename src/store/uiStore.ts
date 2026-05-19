@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 
 interface UIState {
   sidebarOpen: boolean;
+  sidebarPinned: boolean;
   darkMode: boolean;
   showMobileMenu: boolean;
   activeTab: string;
@@ -10,6 +11,8 @@ interface UIState {
   openGroups: string[];
 
   setSidebarOpen: (open: boolean) => void;
+  setSidebarPinned: (pinned: boolean) => void;
+  toggleSidebarPinned: () => void;
   setDarkMode: (dark: boolean) => void;
   setShowMobileMenu: (show: boolean) => void;
   setActiveTab: (tab: string) => void;
@@ -24,6 +27,7 @@ export const useUIStore = create<UIState>()(
   persist(
     (set) => ({
       sidebarOpen: true,
+      sidebarPinned: false,
       darkMode: false,
       showMobileMenu: false,
       activeTab: 'dashboard',
@@ -31,6 +35,8 @@ export const useUIStore = create<UIState>()(
       openGroups: [],
 
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
+      setSidebarPinned: (pinned) => set({ sidebarPinned: pinned }),
+      toggleSidebarPinned: () => set((state) => ({ sidebarPinned: !state.sidebarPinned })),
       setDarkMode: (dark) => set({ darkMode: dark }),
       setShowMobileMenu: (show) => set({ showMobileMenu: show }),
       setActiveTab: (tab) => set({ activeTab: tab }),
@@ -46,6 +52,7 @@ export const useUIStore = create<UIState>()(
 
       reset: () => set({
         sidebarOpen: true,
+        sidebarPinned: false,
         darkMode: false,
         showMobileMenu: false,
         activeTab: 'dashboard',

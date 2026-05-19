@@ -179,6 +179,14 @@ export default function IntegrationsPage() {
   const [gsShowFilePicker, setGsShowFilePicker] = useState(false);
   const [whatsappWebhookUrl, setWhatsappWebhookUrl] = useState('');
   const [whatsappConnected, setWhatsappConnected] = useState(false);
+  const [waFlows, setWaFlows] = useState<any[]>([]);
+  const [waFlowsLoading, setWaFlowsLoading] = useState(false);
+  const [waFlowsExpanded, setWaFlowsExpanded] = useState(false);
+  const [newFlowName, setNewFlowName] = useState('');
+  const [newFlowCategory, setNewFlowCategory] = useState('LEAD_GENERATION');
+  const [waBusinessProfile, setWaBusinessProfile] = useState<any>(null);
+  const [bpEditing, setBpEditing] = useState(false);
+  const [bpForm, setBpForm] = useState({ about: '', address: '', description: '', email: '', websites: '', vertical: '' });
 
   /* ── Razorpay state ── */
   const [rzpConnected, setRzpConnected] = useState(false);
@@ -2064,7 +2072,193 @@ export default function IntegrationsPage() {
                     AI Chat
                   </Link>
                 </div>
-              </div>
+
+              {/* ── WhatsApp Flows Management ── */}
+              {whatsappConnected && (
+                <div className="mt-4 rounded-xl border border-purple-200 bg-purple-50 p-4">
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-between"
+                    onClick={() => {
+                      setWaFlowsExpanded(v => !v);
+                      if (!waFlowsExpanded && waFlows.length === 0) {
+                        setWaFlowsLoading(true);
+                        get('/api/automation/whatsapp/flows')
+                          .then(r => setWaFlows(r.data?.data || []))
+                          .catch(() => toast.error('Could not load flows'))
+                          .finally(() => setWaFlowsLoading(false));
+                      }
+                    }}
+                  >
+                    <span className="text-xs font-bold uppercase tracking-wide text-purple-700">WhatsApp Flows (Interactive Forms)</span>
+                    <span className="text-xs text-purple-500">{waFlowsExpanded ? '▲ collapse' : '▼ expand'}</span>
+                  </button>
+
+                  {waFlowsExpanded && (
+                    <div className="mt-3 space-y-3">
+                      <p className="text-xs text-purple-700">Flows are interactive forms that open inside WhatsApp — surveys, lead capture, bookings. Create them here, then use the <strong>WhatsApp Form (Flow)</strong> canvas node with the Flow ID.</p>
+
+                      {/* Existing flows list */}
+                      {waFlowsLoading ? (
+                        <p className="text-xs text-purple-500 animate-pulse">Loading flows…</p>
+                      ) : waFlows.length === 0 ? (
+                        <p className="text-xs text-gray-400">No flows yet. Create one below.</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {waFlows.map((f: any) => (
+                            <div key={f.id} className="flex items-center justify-between rounded-lg bg-white border border-purple-100 px-3 py-2">
+                              <div>
+                                <p className="text-xs font-semibold text-gray-800">{f.name}</p>
+                                <p className="text-[10px] text-gray-400">ID: <span className="font-mono">{f.id}</span> · {f.status}</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => { navigator.clipboard.writeText(f.id); toast.success('Flow ID copied!'); }}
+                                  className="text-[10px] rounded px-2 py-1 bg-purple-100 text-purple-700 hover:bg-purple-200 font-semibold"
+                                >Copy ID</button>
+                                {f.status === 'DRAFT' && (
+                                  <button
+                                    type="button"
+                                    onClick={async () => {
+                                      try {
+                                        await post(`/api/automation/whatsapp/flows/${f.id}/publish`, {});
+                                        toast.success('Flow published!');
+                                        setWaFlows(prev => prev.map(x => x.id === f.id ? {...x, status: 'PUBLISHED'} : x));
+                                      } catch { toast.error('Publish failed'); }
+                                    }}
+                                    className="text-[10px] rounded px-2 py-1 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 font-semibold"
+                                  >Publish</button>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Create new flow */}
+                      <div className="rounded-lg border border-purple-200 bg-white p-3 space-y-2">
+                        <p className="text-xs font-semibold text-purple-800">Create New Flow</p>
+                        <input
+                          value={newFlowName}
+                          onChange={e => setNewFlowName(e.target.value)}
+                          placeholder="Flow name (e.g. Lead Capture Form)"
+                          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-purple-400"
+                        />
+                        <select
+                          value={newFlowCategory}
+                          onChange={e => setNewFlowCategory(e.target.value)}
+                          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs focus:outline-none"
+                        >
+                          <option value="LEAD_GENERATION">Lead Generation</option>
+                          <option value="APPOINTMENT_BOOKING">Appointment Booking</option>
+                          <option value="CUSTOMER_SUPPORT">Customer Support</option>
+                          <option value="SURVEY">Survey / Feedback</option>
+                          <option value="OTHER">Other</option>
+                        </select>
+                        <button
+                          type="button"
+                          disabled={!newFlowName.trim()}
+                          onClick={async () => {
+                            if (!newFlowName.trim()) return;
+                            try {
+                              const r = await post('/api/automation/whatsapp/flows', { name: newFlowName.trim(), categories: [newFlowCategory] });
+                              toast.success('Flow created! Edit its screens in Meta Flow Builder.');
+                              setWaFlows(prev => [...prev, { id: r.data.id, name: newFlowName.trim(), status: 'DRAFT' }]);
+                              setNewFlowName('');
+                            } catch { toast.error('Failed to create flow'); }
+                          }}
+                          className="w-full rounded-lg bg-purple-600 px-3 py-2 text-xs font-semibold text-white hover:bg-purple-700 disabled:opacity-40 transition"
+                        >
+                          Create Flow
+                        </button>
+                        <p className="text-[10px] text-gray-400">After creating, design the screens at <a href="https://business.facebook.com/wa/manage/flows" target="_blank" rel="noreferrer" className="text-purple-600 underline">Meta Flow Builder</a>, then come back and click Publish.</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ── Business Profile ── */}
+              {whatsappConnected && (
+                <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 p-4">
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-between"
+                    onClick={() => {
+                      setBpEditing(v => !v);
+                      if (!bpEditing && !waBusinessProfile) {
+                        get('/api/automation/whatsapp/business-profile')
+                          .then(r => {
+                            const p = r.data?.profile || {};
+                            setWaBusinessProfile(p);
+                            setBpForm({
+                              about: p.about || '',
+                              address: p.address || '',
+                              description: p.description || '',
+                              email: p.email || '',
+                              websites: (p.websites || []).join(', '),
+                              vertical: p.vertical || '',
+                            });
+                          })
+                          .catch(() => {});
+                      }
+                    }}
+                  >
+                    <span className="text-xs font-bold uppercase tracking-wide text-blue-700">WhatsApp Business Profile</span>
+                    <span className="text-xs text-blue-500">{bpEditing ? '▲ collapse' : '▼ edit'}</span>
+                  </button>
+
+                  {bpEditing && (
+                    <div className="mt-3 space-y-2">
+                      {[
+                        { key: 'about', label: 'About (max 139 chars)', placeholder: 'Brief business description shown in WA profile' },
+                        { key: 'address', label: 'Address', placeholder: '123 Business Park, Mumbai' },
+                        { key: 'email', label: 'Email', placeholder: 'support@yourbusiness.com' },
+                        { key: 'websites', label: 'Website URLs (comma separated, max 2)', placeholder: 'https://yourbusiness.com' },
+                        { key: 'vertical', label: 'Business Vertical', placeholder: 'RETAIL / HEALTH / BEAUTY / EDUCATION…' },
+                      ].map(f => (
+                        <div key={f.key}>
+                          <p className="text-[10px] font-semibold text-gray-600 mb-0.5">{f.label}</p>
+                          <input
+                            value={(bpForm as any)[f.key]}
+                            onChange={e => setBpForm(prev => ({...prev, [f.key]: e.target.value}))}
+                            placeholder={f.placeholder}
+                            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400"
+                          />
+                        </div>
+                      ))}
+                      <div>
+                        <p className="text-[10px] font-semibold text-gray-600 mb-0.5">Description</p>
+                        <textarea
+                          value={bpForm.description}
+                          onChange={e => setBpForm(prev => ({...prev, description: e.target.value}))}
+                          placeholder="Detailed description of your business"
+                          rows={2}
+                          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400 resize-none"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            await post('/api/automation/whatsapp/business-profile', {
+                              ...bpForm,
+                              websites: bpForm.websites.split(',').map(s => s.trim()).filter(Boolean),
+                            });
+                            toast.success('Business profile updated on WhatsApp!');
+                            setBpEditing(false);
+                          } catch { toast.error('Failed to update profile'); }
+                        }}
+                        className="w-full rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition"
+                      >
+                        Save to WhatsApp
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
             )}
 
             {/* ════ GENERIC providers ════ */}

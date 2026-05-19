@@ -167,8 +167,14 @@ const visibleLibrary: LibraryBlock[] = [
   { type: 'ai', title: 'Summarize Conversation', description: 'AI creates a short 2-3 line summary of this lead conversation.', config: { tool: 'ai_agent', custom_prompt: 'Summarize this conversation in 2-3 lines. Include name, phone, and key requirement.', response_length: 'Short', use_previous_data: 'true' } },
   { type: 'ai', title: 'Score Lead', description: 'AI marks lead as Hot, Warm or Cold based on buying intent.', config: { tool: 'ai_agent', custom_prompt: 'Score this lead as HOT, WARM or COLD based on urgency and buying intent. Reply with only: HOT, WARM, or COLD.', response_length: 'Short' } },
   // ── Logic ─────────────────────────────────────────────────────────────────
+  { type: 'condition', title: 'Is New Customer?', description: 'Branch YES for first-time customers (never messaged before), NO for returning customers.', config: { field: 'lead.is_new', operator: 'equals', value: 'true' } },
+  { type: 'condition', title: 'If Flow → Show Catalog', description: 'Branch YES when AI flow wants to show product catalog.', config: { field: 'flow.intent', operator: 'equals', value: 'show_catalog' } },
+  { type: 'condition', title: 'If Flow → Collect Form', description: 'Branch YES when AI flow wants to collect customer details.', config: { field: 'flow.intent', operator: 'equals', value: 'collect_form' } },
+  { type: 'condition', title: 'If Flow → Take Payment', description: 'Branch YES when AI flow wants to send payment link.', config: { field: 'flow.intent', operator: 'equals', value: 'take_payment' } },
+  { type: 'condition', title: 'If Flow → Handover', description: 'Branch YES when AI decides human agent is needed.', config: { field: 'flow.intent', operator: 'equals', value: 'handover' } },
   { type: 'condition', title: 'If Hot Lead', description: 'Branch YES if AI scored this lead as HOT.', config: { field: 'lead_score', operator: 'greater_than', value: '7', then_action: 'notify_owner', else_action: 'create_task' } },
   { type: 'condition', title: 'Decide Next Step', description: 'Ask AI a Yes/No question to choose the next path.', config: { tool: 'ai_condition', condition_prompt: 'Does this lead want to book a demo or meeting?' } },
+  { type: 'action', title: 'Schedule Reminder', description: 'Schedule a WhatsApp follow-up reminder to send automatically after X hours or days.', config: { tool: 'schedule_followup', hours: '24', days: '0', message: 'Hi {{lead.name}}, just checking in! Kya koi help chahiye? 😊' } },
   { type: 'action', title: 'Wait 1 Hour', description: 'Pause the flow for 1 hour before the next step.', config: { tool: 'wait_node', delay_minutes: 60 } },
   // ── Actions ───────────────────────────────────────────────────────────────
   { type: 'action', title: 'Send WhatsApp', description: 'Send WhatsApp message or approved template to the lead.', config: { tool: 'send_whatsapp_message', recipient: '{{lead.phone}}', message_body: '{{ai.response}}', message_mode: 'text', send_mode: 'draft', language_code: 'en_US' } },
@@ -177,6 +183,10 @@ const visibleLibrary: LibraryBlock[] = [
   { type: 'action', title: 'WhatsApp Buttons (3)', description: 'Send up to 3 quick-reply buttons — customer taps to reply instantly.', config: { tool: 'send_whatsapp_buttons', recipient: '{{lead.phone}}', body_text: 'Which option suits you best?', buttons: '[{"id":"btn_0","title":"Option 1"},{"id":"btn_1","title":"Option 2"},{"id":"btn_2","title":"Option 3"}]', send_mode: 'draft' } },
   { type: 'action', title: 'WhatsApp CTA Button', description: 'Send a call-to-action button that opens a URL or calls a phone number.', config: { tool: 'send_whatsapp_cta', recipient: '{{lead.phone}}', body_text: 'Click below to learn more:', buttons: '[{"type":"url","text":"Visit Website","url":"https://your-site.com"}]', send_mode: 'draft' } },
   { type: 'action', title: 'WhatsApp Form (Flow)', description: 'Open an interactive Meta WhatsApp Flow — surveys, booking forms, lead capture inside chat.', config: { tool: 'send_whatsapp_meta_flow', recipient: '{{lead.phone}}', flow_id: '', cta_text: 'Fill Form', body_text: 'Please fill in your details below:', send_mode: 'draft' } },
+  { type: 'action', title: 'Send Location', description: 'Send your business location pin to the customer via WhatsApp with name and address.', config: { tool: 'send_whatsapp_location', recipient: '{{lead.phone}}', latitude: '28.6139', longitude: '77.2090', name: 'Our Office', address: '123 Business Park, New Delhi', send_mode: 'draft' } },
+  { type: 'action', title: 'Send Single Product', description: 'Send a single product card from your Meta catalog with a Buy Now button.', config: { tool: 'send_whatsapp_single_product', recipient: '{{lead.phone}}', catalog_id: '', product_retailer_id: '', body_text: 'Check out this product:', send_mode: 'draft' } },
+  { type: 'action', title: 'Get Inbound Media URL', description: 'When a customer sends an image/video/document, fetch its download URL for processing.', config: { tool: 'get_whatsapp_media_url', media_id: '{{message.media_id}}' } },
+  { type: 'action', title: 'Request Payment (UPI)', description: 'Send a WhatsApp Pay UPI payment request — customer taps to pay inline without leaving WhatsApp. Requires WhatsApp Pay enabled on your Meta account.', config: { tool: 'send_whatsapp_payment_request', recipient: '{{lead.phone}}', amount: '{{extraction.fields.amount}}', description: 'Payment for your order', reference_id: '', send_mode: 'draft' } },
   { type: 'action', title: 'Chat Flow Reply', description: 'Send step-by-step reply from the uploaded conversation flow PDF — with interactive buttons when the flow includes choices.', config: { tool: 'send_whatsapp_flow_message', recipient: '{{lead.phone}}', send_mode: 'draft' } },
   { type: 'action', title: 'Send Instagram DM', description: 'Reply to the Instagram DM with an AI-generated message.', config: { tool: 'send_instagram_dm', recipient: '{{instagram.senderId}}', message_body: '{{ai.response}}', send_mode: 'draft' } },
   { type: 'action', title: 'Send Facebook Message', description: 'Reply to the Facebook Messenger message with an AI response.', config: { tool: 'send_facebook_message', recipient: '{{facebook.senderId}}', message_body: '{{ai.response}}', send_mode: 'draft' } },
@@ -255,12 +265,22 @@ export default function AutomationsPage() {
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testMessage, setTestMessage] = useState(samplePrompts.custom);
+  const [testLeadName, setTestLeadName] = useState('Rahul Sharma');
+  const [testLeadPhone, setTestLeadPhone] = useState('9876543210');
+  const [testLeadEmail, setTestLeadEmail] = useState('');
+  const [testLeadStatus, setTestLeadStatus] = useState('new');
+  const [nodeOutputs, setNodeOutputs] = useState<Record<string, any>>({});
+  const [expandedOutputs, setExpandedOutputs] = useState<Set<string>>(new Set());
   const [timeline, setTimeline] = useState<any[]>([]);
   const [librarySearch, setLibrarySearch] = useState('');
   const [activeNodeIds, setActiveNodeIds] = useState<Set<string>>(new Set());
   const [completedNodeIds, setCompletedNodeIds] = useState<Set<string>>(new Set());
   const [failedNodeIds, setFailedNodeIds] = useState<Set<string>>(new Set());
   const [showTemplateGallery, setShowTemplateGallery] = useState(false);
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
+  const [generateDesc, setGenerateDesc] = useState('');
+  const [generatePlatform, setGeneratePlatform] = useState('whatsapp');
+  const [generating, setGenerating] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [lockedFeature, setLockedFeature] = useState<FeatureKey | null>(null);
   const [libraryCollapsed, setLibraryCollapsed] = useState(false);
@@ -777,8 +797,16 @@ export default function AutomationsPage() {
       // Derive channel source from the trigger node so the test simulates the right channel
       const triggerNode = nodes.find(n => n.type === 'trigger');
       const triggerSource = (triggerNode?.config?.source as string) || (triggerNode?.config?.trigger_type as string)?.replace('new_', '').replace('_message', '').replace('_lead', '') || 'whatsapp';
+      const testContext = {
+        lead: { name: testLeadName, phone: testLeadPhone, email: testLeadEmail, status: testLeadStatus },
+        message: { text: testMessage },
+        whatsapp: { fromNumber: testLeadPhone, text: testMessage },
+        user_message: testMessage,
+      };
+      setNodeOutputs({});
+      setExpandedOutputs(new Set());
       const response = activeWorkflowId
-        ? await post(`/api/automation/workflows/${activeWorkflowId}/run`, { message: testMessage, source: triggerSource })
+        ? await post(`/api/automation/workflows/${activeWorkflowId}/run`, { message: testMessage, source: triggerSource, test_context: testContext })
         : await post('/api/automation/chat', { message: testMessage });
       const runId = response.data.run_id;
       setTimeline(response.data.timeline || []);
@@ -798,6 +826,9 @@ export default function AutomationsPage() {
                 setFailedNodeIds((prev) => new Set([...prev, event.node_id]));
               } else {
                 setCompletedNodeIds((prev) => new Set([...prev, event.node_id]));
+              }
+              if (event.output && event.node_id) {
+                setNodeOutputs(prev => ({ ...prev, [event.node_id]: event.output }));
               }
               if (event.timeline) setTimeline((prev) => [event.timeline, ...prev.slice(0, 19)]);
             }
@@ -885,6 +916,10 @@ export default function AutomationsPage() {
           }}
         >
           {settingsOpen ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />} Settings
+        </Button>
+        <Button variant="secondary" size="sm" onClick={() => setShowGenerateModal(true)}
+          className="bg-gradient-to-r from-violet-50 to-blue-50 border-violet-200 text-violet-700 hover:from-violet-100">
+          ✨ Generate with AI
         </Button>
         <Button variant="secondary" size="sm" onClick={() => setShowTemplateGallery(true)}>
           <Sparkles className="h-3.5 w-3.5" /> Templates
@@ -1063,6 +1098,7 @@ export default function AutomationsPage() {
             activeNodeIds={activeNodeIds}
             completedNodeIds={completedNodeIds}
             failedNodeIds={failedNodeIds}
+            nodeOutputs={nodeOutputs}
             testing={testing}
           />
         </ReactFlowProvider>
@@ -1210,8 +1246,27 @@ export default function AutomationsPage() {
                     <p className="text-[10px] font-black uppercase tracking-widest text-amber-600">IF / ELSE</p>
                     <label className="block text-xs font-semibold text-amber-900">
                       Field
-                      <input value={selectedNode.config.field || ''} onChange={(e) => updateSelectedConfig('field', e.target.value)} className="input-field mt-1" placeholder="extraction.fields.budget" />
+                      <input value={selectedNode.config.field || ''} onChange={(e) => updateSelectedConfig('field', e.target.value)} className="input-field mt-1" placeholder="message.interactive_reply.id" />
                     </label>
+                    {/* Quick field suggestions */}
+                    <div className="flex flex-wrap gap-1 -mt-1">
+                      <p className="text-[9px] text-amber-600 w-full font-semibold">Quick select:</p>
+                      {[
+                        { label: '🔘 Button tapped', value: 'message.interactive_reply.id' },
+                        { label: '📝 Button text', value: 'message.interactive_reply.title' },
+                        { label: '👋 New customer', value: 'lead.is_new' },
+                        { label: '🤖 AI intent', value: 'flow.intent' },
+                        { label: '⭐ Lead score', value: 'lead_score' },
+                        { label: '📊 AI confidence', value: 'ai.confidence' },
+                        { label: '💰 Budget', value: 'extraction.fields.budget' },
+                      ].map(s => (
+                        <button key={s.value} type="button"
+                          onClick={() => updateSelectedConfig('field', s.value)}
+                          className={`rounded px-1.5 py-0.5 text-[9px] transition border ${selectedNode.config.field === s.value ? 'bg-amber-600 text-white border-amber-600' : 'bg-white text-amber-700 border-amber-200 hover:bg-amber-100'}`}>
+                          {s.label}
+                        </button>
+                      ))}
+                    </div>
                     <label className="block text-xs font-semibold text-amber-900">
                       Operator
                       <select value={selectedNode.config.operator || 'exists'} onChange={(e) => updateSelectedConfig('operator', e.target.value)} className="input-field mt-1">
@@ -1289,6 +1344,36 @@ export default function AutomationsPage() {
                 className="input-field resize-none text-sm"
                 placeholder="Paste a sample lead message to test..."
               />
+              {/* Lead context pre-fill */}
+              <details className="mt-2">
+                <summary className="text-[11px] font-semibold text-gray-500 cursor-pointer select-none hover:text-gray-700">
+                  ▶ Pre-fill lead data (optional)
+                </summary>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <div>
+                    <p className="text-[10px] text-gray-400 mb-0.5">Lead Name</p>
+                    <input value={testLeadName} onChange={e => setTestLeadName(e.target.value)} placeholder="Rahul Sharma" className="input-field text-xs py-1.5" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-gray-400 mb-0.5">Lead Phone</p>
+                    <input value={testLeadPhone} onChange={e => setTestLeadPhone(e.target.value)} placeholder="9876543210" className="input-field text-xs py-1.5" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-gray-400 mb-0.5">Lead Email</p>
+                    <input value={testLeadEmail} onChange={e => setTestLeadEmail(e.target.value)} placeholder="rahul@email.com" className="input-field text-xs py-1.5" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-gray-400 mb-0.5">Lead Status</p>
+                    <select value={testLeadStatus} onChange={e => setTestLeadStatus(e.target.value)} className="input-field text-xs py-1.5">
+                      <option value="new">new</option>
+                      <option value="hot">hot</option>
+                      <option value="warm">warm</option>
+                      <option value="cold">cold</option>
+                    </select>
+                  </div>
+                </div>
+                <p className="text-[10px] text-gray-400 mt-1.5">These fill <code className="font-mono">{'{{lead.name}}'}</code>, <code className="font-mono">{'{{lead.phone}}'}</code> etc. in your nodes</p>
+              </details>
               <Button className="mt-2 w-full" onClick={testWorkflow} loading={testing}>
                 <Play className="h-4 w-4" /> {testing ? '⚡ Running…' : 'Run Test'}
               </Button>
@@ -1300,6 +1385,46 @@ export default function AutomationsPage() {
               )}
               {(timeline.length > 0 || runs.length > 0) && (
                 <ExecutionLog timeline={timeline} runs={runs} />
+              )}
+              {/* Variable inspector — shows output of each completed node */}
+              {Object.keys(nodeOutputs).length > 0 && (
+                <div className="mt-3 rounded-xl border border-violet-200 bg-violet-50 p-3">
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-violet-700 mb-2">📦 Node Outputs (click to expand)</p>
+                  <div className="space-y-1.5">
+                    {nodes.filter(n => nodeOutputs[n.id]).map(n => {
+                      const out = nodeOutputs[n.id];
+                      const isExpanded = expandedOutputs.has(n.id);
+                      const displayKeys = Object.entries(out).filter(([k]) => !k.startsWith('_') && k !== 'message_ids');
+                      return (
+                        <div key={n.id} className="rounded-lg bg-white border border-violet-100 overflow-hidden">
+                          <button
+                            onClick={() => setExpandedOutputs(prev => {
+                              const s = new Set(prev);
+                              isExpanded ? s.delete(n.id) : s.add(n.id);
+                              return s;
+                            })}
+                            className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-violet-50 transition"
+                          >
+                            <span className="text-xs font-semibold text-gray-700 truncate">{n.title}</span>
+                            <span className="text-[10px] text-violet-500 shrink-0 ml-2">{isExpanded ? '▲' : '▼ show'}</span>
+                          </button>
+                          {isExpanded && (
+                            <div className="px-3 pb-2 space-y-1 border-t border-violet-50">
+                              {displayKeys.length === 0 ? (
+                                <p className="text-[10px] text-gray-400 pt-1">No output data</p>
+                              ) : displayKeys.map(([k, v]) => (
+                                <div key={k} className="flex gap-2 text-[11px]">
+                                  <span className="font-mono text-violet-600 shrink-0">{k}</span>
+                                  <span className="text-gray-600 truncate">{typeof v === 'object' ? JSON.stringify(v).slice(0, 80) : String(v).slice(0, 120)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               )}
             </div>
           </div>
@@ -1357,6 +1482,84 @@ export default function AutomationsPage() {
           onClose={() => setShowTemplateGallery(false)}
           onSelect={(key: string) => { loadTemplateByKey(key); setShowTemplateGallery(false); }}
         />
+      )}
+
+      {/* ✨ AI Flow Generator Modal */}
+      {showGenerateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-violet-200 bg-white shadow-2xl">
+            <div className="border-b border-gray-100 px-6 py-4">
+              <p className="font-bold text-gray-900 text-lg">✨ Generate Flow with AI</p>
+              <p className="text-xs text-gray-400 mt-0.5">Describe your chatbot in plain language — AI will build the entire flow</p>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <p className="text-sm font-semibold text-gray-700 mb-2">Describe your chatbot:</p>
+                <textarea
+                  value={generateDesc}
+                  onChange={e => setGenerateDesc(e.target.value)}
+                  rows={5}
+                  className="input-field resize-none text-sm"
+                  placeholder={`Examples:\n• "Mera coaching center hai. Pehle poochho konsi class — 9th ya 10th. Phir fee details do."\n• "Real estate chatbot. Ask budget, location preference, then book a site visit."\n• "Salon booking — show services, collect name/phone, confirm appointment"`}
+                />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-700 mb-2">Platform:</p>
+                <div className="flex gap-2">
+                  {[
+                    { value: 'whatsapp', label: '💬 WhatsApp', desc: 'Interactive buttons (max 3)' },
+                    { value: 'instagram', label: '📸 Instagram', desc: 'Quick replies (max 13)' },
+                    { value: 'facebook', label: '📘 Facebook', desc: 'Quick replies (max 13)' },
+                  ].map(p => (
+                    <button key={p.value} onClick={() => setGeneratePlatform(p.value)}
+                      className={`flex-1 rounded-xl border p-2.5 text-left text-xs transition ${generatePlatform === p.value ? 'border-violet-400 bg-violet-50 text-violet-800' : 'border-gray-200 hover:border-gray-300'}`}>
+                      <p className="font-semibold">{p.label}</p>
+                      <p className="text-gray-400 mt-0.5">{p.desc}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3 text-xs text-amber-700">
+                <p className="font-semibold mb-1">💡 Tips for best results:</p>
+                <ul className="space-y-0.5 list-disc list-inside">
+                  <li>Mention specific options/choices customers will have</li>
+                  <li>Mention if you want to collect details (name, phone, address)</li>
+                  <li>Mention if you want to show a product catalog or payment link</li>
+                </ul>
+              </div>
+            </div>
+            <div className="flex gap-3 border-t border-gray-100 px-6 py-4">
+              <Button variant="secondary" onClick={() => setShowGenerateModal(false)} disabled={generating}>Cancel</Button>
+              <Button
+                className="flex-1"
+                disabled={generateDesc.trim().length < 10 || generating}
+                loading={generating}
+                onClick={async () => {
+                  setGenerating(true);
+                  try {
+                    const res = await post('/api/automation/workflows/generate-from-description', {
+                      description: generateDesc.trim(),
+                      platform: generatePlatform,
+                    });
+                    const { nodes: genNodes, edges: genEdges, name: genName } = res.data;
+                    setNodes(genNodes);
+                    setEdges(genEdges);
+                    if (genName) setWorkflowName(genName);
+                    setShowGenerateModal(false);
+                    setTimeout(() => autoArrangeFlow(), 100);
+                    toast.success('Flow generated! Review nodes and click Save.');
+                  } catch (err: any) {
+                    toast.error(err.response?.data?.detail || 'Generation failed — try a more detailed description');
+                  } finally {
+                    setGenerating(false);
+                  }
+                }}
+              >
+                {generating ? '✨ Generating…' : '✨ Generate Flow →'}
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
       <UpgradeModal
         isOpen={!!lockedFeature}
@@ -1588,6 +1791,7 @@ function WorkflowCanvas({
   activeNodeIds,
   completedNodeIds,
   failedNodeIds,
+  nodeOutputs,
   testing,
 }: {
   nodes: BuilderBlock[];
@@ -1603,6 +1807,7 @@ function WorkflowCanvas({
   activeNodeIds?: Set<string>;
   completedNodeIds?: Set<string>;
   failedNodeIds?: Set<string>;
+  nodeOutputs?: Record<string, any>;
   testing?: boolean;
 }) {
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -2020,6 +2225,12 @@ function WorkflowNode({ data }: NodeProps<Node<FlowNodeData>>) {
   );
 }
 
+const TEMPLATE_VAR_SUGGESTIONS = [
+  '{{lead.name}}', '{{lead.phone}}', '{{lead.email}}',
+  '{{extraction.fields.budget}}', '{{order_form.product_choice}}',
+  '{{payment.amount}}', '{{payment.link_url}}', '{{ai.response}}',
+];
+
 function ActionBlockSettings({
   tool,
   config,
@@ -2035,6 +2246,28 @@ function ActionBlockSettings({
 }) {
   const linkedProvider = config.provider || defaultProviderForTool(tool);
   const linkedIntegration = integrations.find((item) => item.provider === linkedProvider);
+
+  // Template picker state
+  const [waTemplates, setWaTemplates] = useState<any[]>([]);
+  const [templatesLoading, setTemplatesLoading] = useState(false);
+  const [templatesLoaded, setTemplatesLoaded] = useState(false);
+
+  const loadTemplates = () => {
+    if (templatesLoaded || templatesLoading) return;
+    setTemplatesLoading(true);
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
+    const base = process.env.NEXT_PUBLIC_API_URL || '';
+    fetch(`${base}/api/automation/whatsapp/templates`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then(r => r.json())
+      .then(data => {
+        setWaTemplates((data.data || []).filter((t: any) => t.status === 'APPROVED'));
+        setTemplatesLoaded(true);
+      })
+      .catch(() => {})
+      .finally(() => setTemplatesLoading(false));
+  };
 
   return (
     <div className="space-y-3 rounded-xl bg-orange-50 p-3">
@@ -2056,24 +2289,94 @@ function ActionBlockSettings({
           <SelectField label="Message mode" value={config.message_mode || 'text'} options={['text', 'template']} onChange={(value) => onChange('message_mode', value)} />
           {config.message_mode === 'template' ? (
             <>
-              <InputField label="Template name" value={config.template_name || config.template || ''} placeholder="welcome_lead" onChange={(value) => onChange('template_name', value)} />
-              <InputField label="Language code" value={config.language_code || 'en_US'} placeholder="en_US (English) / hi (Hindi)" onChange={(value) => onChange('language_code', value)} />
-              <InputField label="Template variables" value={config.template_variables || '{{lead.name}}'} placeholder="{{lead.name}}, {{lead.phone}}" onChange={(value) => onChange('template_variables', value)} />
-              <div className="rounded-lg border border-orange-200 bg-orange-50 p-3 text-xs text-orange-800">
-                <p className="font-bold mb-1">Before using template mode:</p>
-                <ol className="list-decimal list-inside space-y-1">
-                  <li>Create & get template approved in <strong>Meta Business Manager</strong></li>
-                  <li>Enter the exact template name above (e.g. <code className="font-mono bg-orange-100 px-1">welcome_lead</code>)</li>
-                  <li>Variables map to <code className="font-mono bg-orange-100 px-1">{'{{1}}'}</code>, <code className="font-mono bg-orange-100 px-1">{'{{2}}'}</code> in your template</li>
-                </ol>
-                <p className="mt-2 font-semibold">Common: <code className="font-mono bg-orange-100 px-1">{'{{lead.name}}'}</code> <code className="font-mono bg-orange-100 px-1">{'{{lead.phone}}'}</code></p>
+              {/* ── Smart Template Picker ── */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-semibold text-gray-700">Select Template</p>
+                  <button onClick={() => { setTemplatesLoaded(false); loadTemplates(); }}
+                    className="text-[10px] text-emerald-600 hover:text-emerald-800 font-semibold">
+                    {templatesLoading ? '⟳ Loading…' : '⟳ Refresh'}
+                  </button>
+                </div>
+                {/* Dropdown — loads on focus/click */}
+                <select
+                  value={config.template_name || ''}
+                  onFocus={loadTemplates}
+                  onChange={e => {
+                    const name = e.target.value;
+                    const tpl = waTemplates.find(t => t.name === name);
+                    onChange('template_name', name);
+                    if (tpl) {
+                      onChange('language_code', tpl.language || 'en_US');
+                      const body = (tpl.components || []).find((c: any) => c.type === 'BODY')?.text || '';
+                      onChange('_tpl_body', body);
+                      const varCount = (body.match(/\{\{\d+\}\}/g) || []).length;
+                      onChange('_tpl_var_count', String(varCount));
+                      // Clear old var values
+                      for (let i = 0; i < 5; i++) onChange(`var_${i}`, '');
+                    }
+                  }}
+                  className="input-field text-sm"
+                >
+                  <option value="">{templatesLoading ? 'Loading templates…' : waTemplates.length === 0 ? 'Click Refresh to load templates' : 'Select an approved template…'}</option>
+                  {waTemplates.map(t => (
+                    <option key={t.name} value={t.name}>{t.name} ({t.language || 'en_US'})</option>
+                  ))}
+                </select>
+
+                {/* Template body preview */}
+                {config._tpl_body && (
+                  <div className="rounded-lg border border-gray-200 bg-gray-50 p-2 text-[11px] text-gray-600 font-mono whitespace-pre-wrap leading-relaxed">
+                    {config._tpl_body}
+                  </div>
+                )}
+
+                {/* Variable mapping — one per {{N}} */}
+                {parseInt(config._tpl_var_count || '0') > 0 && (
+                  <div className="space-y-2 rounded-lg border border-emerald-100 bg-emerald-50 p-2">
+                    <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-wide">Variable Values</p>
+                    {Array.from({length: parseInt(config._tpl_var_count || '0')}).map((_, i) => (
+                      <div key={i}>
+                        <p className="text-[10px] text-gray-500 mb-0.5">
+                          {`{{${i+1}}}`} in template =
+                        </p>
+                        <input
+                          value={config[`var_${i}`] || ''}
+                          onChange={e => onChange(`var_${i}`, e.target.value)}
+                          placeholder={TEMPLATE_VAR_SUGGESTIONS[i] || `{{lead.name}}`}
+                          className="input-field text-xs py-1.5"
+                        />
+                      </div>
+                    ))}
+                    <p className="text-[9px] text-gray-400">These become {'{{1}}'}, {'{{2}}'} etc. in the template</p>
+                  </div>
+                )}
+
+                {/* Fallback: manual name input if no templates loaded */}
+                {!config.template_name && (
+                  <details className="mt-1">
+                    <summary className="text-[10px] text-gray-400 cursor-pointer">Enter name manually instead</summary>
+                    <InputField label="Template name" value={config.template_name || ''} placeholder="welcome_lead" onChange={(value) => onChange('template_name', value)} />
+                  </details>
+                )}
               </div>
+              <InputField label="Language code" value={config.language_code || 'en_US'} placeholder="en_US" onChange={(value) => onChange('language_code', value)} />
             </>
           ) : (
-            <label className="block text-sm font-semibold text-gray-700">
-              Message body
-              <textarea value={config.message_body || '{{ai.response}}'} onChange={(e) => onChange('message_body', e.target.value)} rows={3} className="input-field mt-2 resize-none text-sm" />
-            </label>
+            <>
+              <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                <p className="font-bold mb-1">⚠️ 24-Hour Window Rule</p>
+                <p>Text messages only work within <strong>24 hours</strong> of the customer's last message. For first contact or re-engagement after 24h, switch to <strong>Template mode</strong>.</p>
+                <button onClick={() => onChange('message_mode', 'template')}
+                  className="mt-1.5 rounded-lg bg-amber-700 px-2.5 py-1 text-[10px] font-bold text-white hover:bg-amber-800 transition">
+                  Switch to Template →
+                </button>
+              </div>
+              <label className="block text-sm font-semibold text-gray-700">
+                Message body
+                <textarea value={config.message_body || '{{ai.response}}'} onChange={(e) => onChange('message_body', e.target.value)} rows={3} className="input-field mt-2 resize-none text-sm" />
+              </label>
+            </>
           )}
           <SelectField label="Send mode" value={config.send_mode || 'draft'} options={['draft', 'live']} onChange={(value) => onChange('send_mode', value)} />
           {(config.send_mode || 'draft') === 'draft' ? (
@@ -2102,6 +2405,51 @@ function ActionBlockSettings({
           )}
           <p className="text-xs text-amber-700">Use template messages for follow-ups outside the 24-hour WhatsApp window.</p>
         </>
+      )}
+
+      {/* ── Send Facebook Message ────────────────────────────────────────── */}
+      {tool === 'send_facebook_message' && (
+        <div className="space-y-3 rounded-xl border border-blue-200 bg-blue-50 p-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-bold text-blue-950">Facebook Message 📘</p>
+              <p className="text-xs text-blue-700">Reply to a Facebook Messenger conversation.</p>
+            </div>
+            <span className="rounded-full bg-white px-2 py-1 text-[10px] font-bold uppercase text-blue-700">
+              {integrationStatusFor('facebook')}
+            </span>
+          </div>
+          <InputField label="Connection ID (optional)" value={config.connection_id || ''} placeholder="Use default Facebook connection" onChange={(v) => onChange('connection_id', v)} />
+          <InputField label="Send to" value={config.recipient || '{{facebook.senderId}}'} placeholder="{{facebook.senderId}}" onChange={(v) => onChange('recipient', v)} />
+          <label className="block text-sm font-semibold text-gray-700">
+            Message body
+            <textarea value={config.message_body || '{{ai.response}}'} onChange={e => onChange('message_body', e.target.value)} rows={3} className="input-field mt-2 resize-none text-sm" />
+          </label>
+          <SelectField label="Send mode" value={config.send_mode || 'draft'} options={['draft', 'live']} onChange={(v) => onChange('send_mode', v)} />
+          <div className="rounded-lg bg-white p-2 text-[10px] text-gray-500">
+            Variables: <code className="rounded bg-blue-50 px-1">{'{{facebook.senderId}}'}</code> <code className="rounded bg-blue-50 px-1">{'{{facebook.text}}'}</code> <code className="rounded bg-blue-50 px-1">{'{{ai.response}}'}</code>
+          </div>
+        </div>
+      )}
+
+      {/* ── Chat Flow Reply (send_whatsapp_flow_message) ──────────────────── */}
+      {tool === 'send_whatsapp_flow_message' && (
+        <div className="space-y-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-bold text-emerald-950">Chat Flow Reply 🔄</p>
+            <span className="rounded-full bg-white px-2 py-1 text-[10px] font-bold uppercase text-emerald-700">{integrationStatusFor('meta')}</span>
+          </div>
+          <div className="rounded-lg bg-emerald-100 px-3 py-2 text-xs text-emerald-800">
+            <p className="font-semibold mb-1">How to use:</p>
+            <p>Place this node <strong>after a Conversation Flow (PDF)</strong> AI node. It automatically sends the AI's response — including interactive buttons if the flow step has choices.</p>
+          </div>
+          <InputField label="Send to" value={config.recipient || '{{lead.phone}}'} placeholder="{{lead.phone}}" onChange={(v) => onChange('recipient', v)} />
+          <label className="block text-sm font-semibold text-gray-700">
+            Message (leave blank to use flow response)
+            <textarea value={config.message_body || '{{flow.flowResponse}}'} onChange={e => onChange('message_body', e.target.value)} rows={2} className="input-field mt-2 resize-none text-sm" placeholder="{{flow.flowResponse}}" />
+          </label>
+          <SelectField label="Send mode" value={config.send_mode || 'draft'} options={['draft', 'live']} onChange={(v) => onChange('send_mode', v)} />
+        </div>
       )}
 
       {tool === 'send_instagram_dm' && (
@@ -2299,6 +2647,87 @@ function ActionBlockSettings({
         </div>
       )}
 
+      {/* ── Send Location ────────────────────────────────────────────────── */}
+      {tool === 'send_whatsapp_location' && (
+        <div className="space-y-3 rounded-xl border border-teal-200 bg-teal-50 p-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-bold text-teal-950">Send Location Pin 📍</p>
+            <span className="rounded-full bg-white px-2 py-1 text-[10px] font-bold uppercase text-teal-700">{integrationStatusFor('meta')}</span>
+          </div>
+          <p className="text-xs text-teal-700">Sends a Google Maps location pin inside WhatsApp. Customer taps to open in Maps. Great for sharing your store, office, or delivery zone.</p>
+          <div className="grid grid-cols-2 gap-2">
+            <InputField label="Latitude" value={config.latitude || '28.6139'} placeholder="28.6139" onChange={(v) => onChange('latitude', v)} />
+            <InputField label="Longitude" value={config.longitude || '77.2090'} placeholder="77.2090" onChange={(v) => onChange('longitude', v)} />
+          </div>
+          <InputField label="Location name" value={config.name || 'Our Office'} placeholder="Our Store / Office" onChange={(v) => onChange('name', v)} />
+          <InputField label="Address" value={config.address || ''} placeholder="123 Business Park, New Delhi" onChange={(v) => onChange('address', v)} />
+          <InputField label="Send to" value={config.recipient || '{{lead.phone}}'} placeholder="{{lead.phone}}" onChange={(v) => onChange('recipient', v)} />
+          <SelectField label="Send mode" value={config.send_mode || 'draft'} options={['draft', 'live']} onChange={(v) => onChange('send_mode', v)} />
+          <div className="rounded-lg bg-teal-100 p-2 text-xs text-teal-800">
+            <p className="font-semibold">Tip:</p>
+            <p>Find coordinates at <strong>maps.google.com</strong> → right-click any location → copy coordinates.</p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Send Single Product ───────────────────────────────────────────── */}
+      {tool === 'send_whatsapp_single_product' && (
+        <div className="space-y-3 rounded-xl border border-orange-200 bg-orange-50 p-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-bold text-orange-950">Send Single Product 🛍️</p>
+            <span className="rounded-full bg-white px-2 py-1 text-[10px] font-bold uppercase text-orange-700">{integrationStatusFor('meta')}</span>
+          </div>
+          <p className="text-xs text-orange-700">Sends a single product card from your Meta catalog with an image, name, price, and Buy Now button.</p>
+          <InputField label="Catalog ID" value={config.catalog_id || ''} placeholder="From Meta Commerce Manager" onChange={(v) => onChange('catalog_id', v)} />
+          <InputField label="Product Retailer ID" value={config.product_retailer_id || ''} placeholder="Your product SKU / ID in catalog" onChange={(v) => onChange('product_retailer_id', v)} />
+          <InputField label="Message body" value={config.body_text || 'Check out this product:'} placeholder="Check out this product:" onChange={(v) => onChange('body_text', v)} />
+          <InputField label="Send to" value={config.recipient || '{{lead.phone}}'} placeholder="{{lead.phone}}" onChange={(v) => onChange('recipient', v)} />
+          <SelectField label="Send mode" value={config.send_mode || 'draft'} options={['draft', 'live']} onChange={(v) => onChange('send_mode', v)} />
+          <div className="rounded-lg bg-orange-100 p-2 text-xs text-orange-800">
+            <p>Find your Catalog ID and Product IDs in <strong>Meta Commerce Manager → Catalog</strong>.</p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Get Inbound Media URL ─────────────────────────────────────────── */}
+      {tool === 'get_whatsapp_media_url' && (
+        <div className="space-y-3 rounded-xl border border-indigo-200 bg-indigo-50 p-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-bold text-indigo-950">Get Inbound Media URL 🖼️</p>
+            <span className="rounded-full bg-white px-2 py-1 text-[10px] font-bold uppercase text-indigo-700">{integrationStatusFor('meta')}</span>
+          </div>
+          <p className="text-xs text-indigo-700">When a customer sends an image, video, document, or audio — use this node to fetch its download URL and pass it to the next step (e.g. HTTP Request or AI Agent).</p>
+          <InputField label="Media ID" value={config.media_id || '{{message.media_id}}'} placeholder="{{message.media_id}}" onChange={(v) => onChange('media_id', v)} />
+          <div className="rounded-lg bg-indigo-100 p-2 text-xs text-indigo-800 space-y-1">
+            <p className="font-semibold">Output variables available after this node:</p>
+            {['{{get_whatsapp_media_url.url}}', '{{get_whatsapp_media_url.mime_type}}', '{{get_whatsapp_media_url.file_size}}'].map(v => (
+              <code key={v} className="block font-mono">{v}</code>
+            ))}
+            <p className="mt-1 text-indigo-600">Trigger condition: <code className="font-mono">message.type IN (image, video, audio, document)</code></p>
+          </div>
+        </div>
+      )}
+
+      {/* ── WhatsApp Pay (UPI) ───────────────────────────────────────────── */}
+      {tool === 'send_whatsapp_payment_request' && (
+        <div className="space-y-3 rounded-xl border border-rose-200 bg-rose-50 p-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-bold text-rose-950">Request Payment (UPI) 💳</p>
+            <span className="rounded-full bg-white px-2 py-1 text-[10px] font-bold uppercase text-rose-700">{integrationStatusFor('meta')}</span>
+          </div>
+          <div className="rounded-lg bg-rose-100 px-3 py-2 text-xs text-rose-800">
+            <p className="font-semibold mb-1">WhatsApp Pay — India Only</p>
+            <p>Customer receives a payment card inside WhatsApp and can pay via UPI without leaving the chat. Requires <strong>WhatsApp Pay enabled</strong> on your Meta Business account.</p>
+            <p className="mt-1">Apply at: <a href="https://business.facebook.com/" target="_blank" rel="noreferrer" className="underline font-semibold">Meta Business Suite → WhatsApp → Payments</a></p>
+          </div>
+          <InputField label="Amount (₹)" value={config.amount || '{{extraction.fields.amount}}'} placeholder="e.g. 999 or {{order_form.amount}}" onChange={(v) => onChange('amount', v)} />
+          <InputField label="Description" value={config.description || 'Payment for your order'} placeholder="Payment for your order" onChange={(v) => onChange('description', v)} />
+          <InputField label="Reference ID (optional)" value={config.reference_id || ''} placeholder="Auto-generated if blank" onChange={(v) => onChange('reference_id', v)} />
+          <InputField label="Send to" value={config.recipient || '{{lead.phone}}'} placeholder="{{lead.phone}}" onChange={(v) => onChange('recipient', v)} />
+          <SelectField label="Send mode" value={config.send_mode || 'draft'} options={['draft', 'live']} onChange={(v) => onChange('send_mode', v)} />
+        </div>
+      )}
+
       {/* ── Collect Order Form ────────────────────────────────────────────── */}
       {tool === 'collect_order_form' && (
         <div className="space-y-3 rounded-xl border border-orange-200 bg-orange-50 p-3">
@@ -2321,7 +2750,7 @@ function ActionBlockSettings({
       {tool === 'create_customer_payment_link' && (
         <div className="space-y-3 rounded-xl border border-green-200 bg-green-50 p-3">
           <p className="text-sm font-bold text-green-950">Send Payment Link 💳</p>
-          <p className="text-xs text-green-700">Creates a Razorpay payment link and sends it via WhatsApp. Requires <strong>RAZORPAY_KEY_ID</strong> and <strong>RAZORPAY_KEY_SECRET</strong> in backend .env.</p>
+          <p className="text-xs text-green-700">Creates a Razorpay payment link and sends it via WhatsApp. Connect your Razorpay account in <a href="/dashboard/integrations" className="underline font-semibold">Integrations → Razorpay</a>.</p>
           <InputField label="Amount (₹)" value={config.amount || '{{extraction.fields.budget}}'} placeholder="e.g. 4999 or {{order_form.amount}}" onChange={(v) => onChange('amount', v)} />
           <InputField label="Description" value={config.description || '{{extraction.fields.product_choice}}'} placeholder="Payment for {{order_form.product_choice}}" onChange={(v) => onChange('description', v)} />
           <InputField label="Customer phone" value={config.recipient_phone || '{{lead.phone}}'} placeholder="{{lead.phone}}" onChange={(v) => onChange('recipient_phone', v)} />
@@ -2487,6 +2916,65 @@ function ActionBlockSettings({
         </div>
       )}
 
+      {/* ── Schedule Reminder ────────────────────────────────────────────── */}
+      {tool === 'schedule_followup' && (
+        <div className="space-y-3 rounded-xl border border-sky-200 bg-sky-50 p-3">
+          <p className="text-sm font-bold text-sky-950">Schedule Reminder ⏰</p>
+          <div className="rounded-lg bg-sky-100 px-3 py-2 text-xs text-sky-800">
+            <p className="font-semibold mb-1">How it works:</p>
+            <p>This sets a follow-up timer on the lead. After X hours/days, the <strong>Follow-up Due</strong> trigger in another workflow fires automatically and sends the reminder message.</p>
+            <p className="mt-1 font-semibold">Tip: Create a second workflow with "Follow-up Due" trigger + "Send WhatsApp" to send the reminder.</p>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <InputField label="Hours from now" value={config.hours || '24'} placeholder="24" onChange={(v) => onChange('hours', v)} />
+            <InputField label="Days from now" value={config.days || '0'} placeholder="0" onChange={(v) => onChange('days', v)} />
+          </div>
+          <label className="block text-sm font-semibold text-gray-700">
+            Reminder message
+            <textarea value={config.message || 'Hi {{lead.name}}, just checking in! Kya koi help chahiye? 😊'} onChange={e => onChange('message', e.target.value)} rows={3} className="input-field mt-2 resize-none text-sm" />
+          </label>
+          <div className="rounded-lg bg-white p-2 text-[10px] text-gray-500">
+            Variables: <code className="rounded bg-sky-50 px-1">{'{{lead.name}}'}</code> <code className="rounded bg-sky-50 px-1">{'{{order_form.product_choice}}'}</code> <code className="rounded bg-sky-50 px-1">{'{{payment.amount}}'}</code>
+          </div>
+        </div>
+      )}
+
+      {/* ── Create Task ──────────────────────────────────────────────────── */}
+      {tool === 'create_task' && (
+        <div className="space-y-3 rounded-xl border border-amber-200 bg-amber-50 p-3">
+          <p className="text-sm font-bold text-amber-950">Create Task 📋</p>
+          <p className="text-xs text-amber-700">Adds a follow-up task to your B9 task board so your team doesn't miss this lead.</p>
+          <InputField label="Task title" value={config.title || 'Follow up with {{lead.name}}'} placeholder="Follow up with {{lead.name}}" onChange={(v) => onChange('title', v)} />
+          <label className="block text-sm font-semibold text-gray-700">
+            Description (optional)
+            <textarea value={config.description || ''} onChange={e => onChange('description', e.target.value)} rows={2} className="input-field mt-2 resize-none text-sm" placeholder="Lead interested in {{extraction.fields.requirement}}" />
+          </label>
+          <SelectField label="Priority" value={config.priority || 'medium'} options={['low', 'medium', 'high', 'urgent']} onChange={(v) => onChange('priority', v)} />
+          <InputField label="Due in (days)" value={config.days_from_now || '1'} placeholder="1" onChange={(v) => onChange('days_from_now', v)} />
+          <InputField label="Assign to (user ID or blank for owner)" value={config.assignee || ''} placeholder="Leave blank to assign to yourself" onChange={(v) => onChange('assignee', v)} />
+        </div>
+      )}
+
+      {/* ── Auto Handover ─────────────────────────────────────────────────── */}
+      {tool === 'auto_handover' && (
+        <div className="space-y-3 rounded-xl border border-rose-200 bg-rose-50 p-3">
+          <p className="text-sm font-bold text-rose-950">Auto Handover 🤝</p>
+          <div className="rounded-lg bg-rose-100 px-3 py-2 text-xs text-rose-800">
+            <p className="font-semibold mb-1">What this does:</p>
+            <p>Stops automation for this lead, marks it as <strong>"needs human"</strong>, and notifies the owner immediately. Use when AI detects a complaint, legal issue, or sensitive request.</p>
+          </div>
+          <label className="block text-sm font-semibold text-gray-700">
+            Handover reason
+            <textarea value={config.reason || '{{flow.reason}}'} onChange={e => onChange('reason', e.target.value)} rows={2} className="input-field mt-2 resize-none text-sm" placeholder="Customer needs human assistance: {{ai.intent}}" />
+          </label>
+          <SelectField label="Notify owner via" value={config.notify_via || 'telegram'} options={['telegram', 'email', 'slack', 'none']} onChange={(v) => onChange('notify_via', v)} />
+          <label className="block text-sm font-semibold text-gray-700">
+            Message to send customer (optional)
+            <textarea value={config.handover_message || ''} onChange={e => onChange('handover_message', e.target.value)} rows={2} className="input-field mt-2 resize-none text-sm" placeholder="Our team will contact you shortly. We're here to help!" />
+          </label>
+        </div>
+      )}
+
       {!['http_request', 'set_variable'].includes(tool) && (
         <div className="rounded-lg bg-white p-3 text-xs text-gray-600">
           <p className="font-bold text-gray-900">Connection status</p>
@@ -2496,6 +2984,48 @@ function ActionBlockSettings({
           </p>
         </div>
       )}
+
+      {/* ── 📋 Variable Cheat Sheet ───────────────────────────────────────── */}
+      <details className="rounded-xl border border-gray-200 bg-gray-50 overflow-hidden">
+        <summary className="flex cursor-pointer items-center justify-between px-4 py-2.5 text-xs font-bold text-gray-600 hover:bg-gray-100 select-none">
+          <span>📋 Available Variables — click to copy</span>
+          <span className="text-gray-400 text-[10px]">expand</span>
+        </summary>
+        <div className="px-3 pb-3 pt-1 space-y-2">
+          {[
+            { group: 'Lead', color: 'bg-emerald-50 text-emerald-800 border-emerald-200', vars: ['{{lead.name}}','{{lead.phone}}','{{lead.email}}','{{lead.message}}','{{lead.status}}','{{lead.source}}'] },
+            { group: 'Message', color: 'bg-blue-50 text-blue-800 border-blue-200', vars: ['{{user_message}}','{{message.text}}','{{message.media_id}}','{{message.location.latitude}}'] },
+            { group: 'AI Output', color: 'bg-violet-50 text-violet-800 border-violet-200', vars: ['{{ai.response}}','{{ai.intent}}','{{ai.confidence}}','{{flow.flowResponse}}'] },
+            { group: 'WhatsApp', color: 'bg-emerald-50 text-emerald-800 border-emerald-200', vars: ['{{whatsapp.fromNumber}}','{{whatsapp.interactiveReply.id}}','{{whatsapp.buttonPayload}}'] },
+            { group: 'Instagram', color: 'bg-pink-50 text-pink-800 border-pink-200', vars: ['{{instagram.senderId}}','{{instagram.text}}'] },
+            { group: 'Facebook', color: 'bg-blue-50 text-blue-800 border-blue-200', vars: ['{{facebook.senderId}}','{{facebook.text}}'] },
+            { group: 'Email', color: 'bg-sky-50 text-sky-800 border-sky-200', vars: ['{{email.subject}}','{{email.bodyText}}','{{email.gmailMessageId}}'] },
+            { group: 'Extraction', color: 'bg-amber-50 text-amber-800 border-amber-200', vars: ['{{extraction.fields.name}}','{{extraction.fields.phone}}','{{extraction.fields.budget}}','{{extraction.confidence}}'] },
+            { group: 'Orders', color: 'bg-orange-50 text-orange-800 border-orange-200', vars: ['{{order_form.name}}','{{order_form.product_choice}}','{{order_form.quantity}}','{{order_form.address}}'] },
+            { group: 'Payment', color: 'bg-green-50 text-green-800 border-green-200', vars: ['{{payment.link_url}}','{{payment.amount}}','{{payment.status}}'] },
+            { group: 'Media', color: 'bg-purple-50 text-purple-800 border-purple-200', vars: ['{{get_whatsapp_media_url.url}}','{{get_whatsapp_media_url.mime_type}}'] },
+            { group: 'Loop', color: 'bg-slate-50 text-slate-800 border-slate-200', vars: ['{{loop.item}}','{{loop.index}}','{{loop.total}}'] },
+          ].map(({ group, color, vars }) => (
+            <div key={group}>
+              <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-1">{group}</p>
+              <div className="flex flex-wrap gap-1">
+                {vars.map(v => (
+                  <button key={v} onClick={() => {
+                    navigator.clipboard.writeText(v);
+                    // Brief visual feedback via title change not possible without state — use toast via a hack
+                    const el = document.activeElement as HTMLElement;
+                    if (el) el.setAttribute('title', 'Copied!');
+                  }} title="Click to copy"
+                    className={`rounded border px-1.5 py-0.5 font-mono text-[10px] hover:opacity-70 active:scale-95 transition ${color}`}>
+                    {v}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+          <p className="text-[9px] text-gray-400 mt-1">Click any variable to copy it, then paste into any config field above.</p>
+        </div>
+      </details>
 
       {/* Retry on failure — shown for all action nodes */}
       <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-2">
@@ -2678,32 +3208,59 @@ function AiBlockSettings({ config, onChange }: { config: Record<string, any>; on
         </div>
       )}
 
-      {config.tool === 'conversation_flow_pdf' && (
-        <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-3">
-          <p className="text-xs font-bold text-emerald-700">Conversation Flow uses Gemini Flash and only the uploaded Flow PDF chunks.</p>
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <input value={config.assistant_id || ''} onChange={(e) => onChange('assistant_id', e.target.value)} className="input-field text-xs" placeholder="Assistant ID" />
-            <input value={config.flow_document_id || ''} onChange={(e) => onChange('flow_document_id', e.target.value)} className="input-field text-xs" placeholder="Flow PDF ID optional" />
-            <select value={config.strict_mode || 'true'} onChange={(e) => onChange('strict_mode', e.target.value)} className="input-field text-xs">
-              <option value="true">Strict flow ON</option>
-              <option value="false">Strict flow OFF</option>
+      {config.tool === 'conversation_flow_pdf' && (() => {
+        const { get: _get } = useApi();
+        const [flowDocs, setFlowDocs] = useState<any[]>([]);
+        useEffect(() => {
+          const assistantId = config.assistant_id;
+          if (!assistantId) return;
+          _get(`/api/documents/${assistantId}/flow-pdfs?limit=20`)
+            .then(r => setFlowDocs(r.data || []))
+            .catch(() => {});
+        }, [config.assistant_id]); // eslint-disable-line
+        return (
+          <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-3 space-y-3">
+            <div>
+              <p className="text-xs font-bold text-emerald-700 mb-1">AI reads your script PDF step by step</p>
+              <div className="rounded-lg bg-emerald-100 px-3 py-2 text-[10px] text-emerald-800 space-y-1">
+                <p className="font-semibold">📄 How to write your Flow PDF:</p>
+                <p>STEP 1 — Reply: "Konsi class chahiye?" Options: 9th-10th, 11th-12th</p>
+                <p>STEP 2A — If 9th-10th: Reply: "Fee ₹X/month." Options: Enroll, Demo</p>
+                <p className="text-emerald-600 font-semibold">Max 3 options per step • 20 chars per option</p>
+                <a href="/dashboard/documents" className="text-emerald-700 underline font-semibold">Upload flow PDF →</a>
+              </div>
+            </div>
+            <input value={config.assistant_id || ''} onChange={e => onChange('assistant_id', e.target.value)} className="input-field text-xs" placeholder="Assistant ID (required)" />
+            {/* Document picker */}
+            <div>
+              <p className="text-[10px] font-semibold text-emerald-800 mb-1">Select Flow PDF:</p>
+              <select value={config.flow_document_id || ''} onChange={e => onChange('flow_document_id', e.target.value)} className="input-field text-xs">
+                <option value="">Use latest uploaded flow PDF (recommended)</option>
+                {flowDocs.map((d: any) => (
+                  <option key={d.id} value={d.id}>{d.title || d.filename} — {d.created_at ? new Date(d.created_at).toLocaleDateString() : ''}</option>
+                ))}
+              </select>
+              {flowDocs.length === 0 && config.assistant_id && (
+                <p className="text-[9px] text-amber-600 mt-1">No flow PDFs found. <a href="/dashboard/documents" className="underline">Upload one →</a></p>
+              )}
+            </div>
+            <select value={config.strict_mode || 'true'} onChange={e => onChange('strict_mode', e.target.value)} className="input-field text-xs">
+              <option value="true">Strict mode ON — follow script exactly</option>
+              <option value="false">Strict mode OFF — allow some flexibility</option>
             </select>
-            <input value={config.test_input || ''} onChange={(e) => onChange('test_input', e.target.value)} className="input-field text-xs" placeholder="Test input optional" />
+            <label className="block text-xs font-semibold text-emerald-800">
+              Fallback (when AI is unsure):
+              <textarea value={config.fallback_instruction || 'Ask one clarification question or hand over to team if flow is unclear.'} onChange={e => onChange('fallback_instruction', e.target.value)} rows={2} className="input-field mt-1 resize-none text-xs" />
+            </label>
+            <div className="rounded-lg bg-white p-2 text-[10px] text-gray-600 space-y-0.5">
+              <p className="font-bold text-gray-700">Output variables after this node:</p>
+              {['{{flow.flowResponse}} — AI reply text', '{{flow.buttons}} — buttons array [{id, title}]', '{{flow.intent}} — greeting | show_catalog | collect_form | take_payment | handover', '{{flow.confidence}} — 0 to 1', '{{ai.response}} — same as flowResponse'].map(v => (
+                <p key={v} className="font-mono">{v}</p>
+              ))}
+            </div>
           </div>
-          <label className="mt-3 block text-xs font-semibold text-emerald-800">
-            Fallback instruction
-            <textarea
-              value={config.fallback_instruction || 'Ask one clarification question or hand over to team if flow is unclear.'}
-              onChange={(e) => onChange('fallback_instruction', e.target.value)}
-              rows={2}
-              className="input-field mt-1 resize-none text-xs"
-            />
-          </label>
-          <p className="mt-2 text-[10px] text-emerald-700">
-            Output variables: {'{{flow.flowResponse}}'}, {'{{flow.nextStep}}'}, {'{{flow.intent}}'}, {'{{flow.confidence}}'}. Actions can also use {'{{ai.response}}'}.
-          </p>
-        </div>
-      )}
+        );
+      })()}
 
       {config.tool === 'ai_agent' && (
         <div className="rounded-xl border border-violet-100 bg-violet-50 p-3">

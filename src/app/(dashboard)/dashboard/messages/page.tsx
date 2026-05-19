@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Check, Copy, Inbox, KeyRound, Loader2, MessageCircle, MoreVertical, Send, Server, ShieldCheck, Smartphone, Trash2, Webhook, XCircle } from 'lucide-react';
+import { ArrowLeft, Check, ChevronRight, Copy, FileText, Inbox, KeyRound, Loader2, MapPin, MessageCircle, MoreVertical, Play, Search, Send, Server, ShieldCheck, Smartphone, Tag, Trash2, User, Webhook, XCircle, Zap } from 'lucide-react';
 import { Button } from '@/components/button';
 import { Card } from '@/components/card';
 import { HelpTip } from '@/components/help-tip';
@@ -66,6 +66,217 @@ interface Contact {
   unread: number;
 }
 
+/* ── Delivery tick indicator ─────────────────────────────────────── */
+function DeliveryTick({ status, delivery_status, isOutbound }: { status?: string; delivery_status?: string; isOutbound: boolean }) {
+  if (!isOutbound) return null;
+  const ds = delivery_status || status || '';
+  if (ds === 'read') return <span className="text-sky-300 text-[11px]">✓✓</span>;
+  if (ds === 'delivered') return <span className="text-emerald-100 text-[11px]">✓✓</span>;
+  if (ds === 'sent' || status === 'sent') return <span className="text-emerald-200 text-[11px]">✓</span>;
+  if (status === 'failed') return <span className="text-red-300 text-[11px]">✗</span>;
+  return <span className="text-emerald-200 text-[11px]">✓</span>;
+}
+
+/* ── Rich message content renderer ──────────────────────────────── */
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || '';
+function mediaProxyUrl(mediaId: string) {
+  const token = typeof window !== 'undefined' ? (localStorage.getItem('token') || '') : '';
+  return `${API_BASE}/api/automation/media/${mediaId}?t=${encodeURIComponent(token)}`;
+}
+
+function MessageContent({ msg, isOutbound }: { msg: any; isOutbound: boolean }) {
+  const type = msg.message_type || 'text';
+  const payload = msg.payload || {};
+  const text = msg.text || '';
+
+  // Image
+  if (type === 'image') {
+    const img = payload.image || {};
+    const caption = img.caption || text;
+    const mediaId = img.id || '';
+    return (
+      <div className="space-y-1">
+        <div className="rounded-lg overflow-hidden bg-black/10 max-w-[240px]">
+          {mediaId ? (
+            <img
+              src={mediaProxyUrl(mediaId)}
+              alt="image"
+              className="max-w-full rounded-lg block"
+              style={{maxHeight: 300}}
+              onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
+          ) : (
+            <div className="flex flex-col items-center gap-1 py-4 px-6 opacity-60">
+              <span className="text-2xl">🖼️</span>
+              <span className="text-[10px]">Image</span>
+            </div>
+          )}
+        </div>
+        {caption && <p className="text-sm leading-relaxed mt-1">{caption}</p>}
+      </div>
+    );
+  }
+
+  // Video
+  if (type === 'video') {
+    const vid = payload.video || {};
+    const caption = vid.caption || text;
+    return (
+      <div className="space-y-1">
+        <div className="rounded-lg bg-black/20 flex items-center justify-center gap-2 px-4 py-3 min-w-[140px]">
+          <Play className="h-5 w-5" />
+          <span className="text-sm font-medium">Video</span>
+        </div>
+        {caption && <p className="text-sm leading-relaxed">{caption}</p>}
+      </div>
+    );
+  }
+
+  // Audio / Voice
+  if (type === 'audio' || type === 'voice') {
+    return (
+      <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-black/10 min-w-[140px]">
+        <span className="text-lg">🎵</span>
+        <div className="flex-1">
+          <div className="flex gap-0.5 items-end h-5">
+            {Array.from({length: 20}).map((_, i) => (
+              <div key={i} className="w-0.5 rounded-full opacity-60" style={{
+                height: `${30 + Math.sin(i * 0.8) * 20 + Math.cos(i * 1.3) * 15}%`,
+                background: isOutbound ? 'white' : '#25D366'
+              }} />
+            ))}
+          </div>
+          <p className="text-[10px] mt-0.5 opacity-70">Voice message</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Document
+  if (type === 'document') {
+    const doc = payload.document || {};
+    const filename = doc.filename || text || 'Document';
+    const caption = doc.caption || '';
+    const mediaId = doc.id || '';
+    return (
+      <div className="space-y-1">
+        <a
+          href={mediaId ? mediaProxyUrl(mediaId) : '#'}
+          download={filename}
+          target="_blank"
+          rel="noreferrer"
+          className={`flex items-center gap-2 rounded-lg px-3 py-2 min-w-[160px] transition ${
+            isOutbound ? 'bg-emerald-400/30 hover:bg-emerald-400/40' : 'bg-gray-100 hover:bg-gray-200'
+          }`}
+        >
+          <FileText className="h-5 w-5 shrink-0" />
+          <div className="min-w-0">
+            <p className="text-sm font-medium truncate max-w-[160px]">{filename}</p>
+            <p className="text-[10px] opacity-60">{doc.mime_type ? doc.mime_type.split('/')[1]?.toUpperCase() : 'Document'} · Tap to download</p>
+          </div>
+        </a>
+        {caption && <p className="text-sm px-1">{caption}</p>}
+      </div>
+    );
+  }
+
+  // Sticker
+  if (type === 'sticker') {
+    return (
+      <div className="flex items-center gap-2 opacity-70">
+        <span className="text-3xl">🎭</span>
+        <span className="text-xs">Sticker</span>
+      </div>
+    );
+  }
+
+  // Location
+  if (type === 'location') {
+    const loc = payload.location || {};
+    const lat = loc.latitude || 0;
+    const lng = loc.longitude || 0;
+    const name = loc.name || text || 'Location';
+    const address = loc.address || '';
+    const mapsUrl = `https://maps.google.com/?q=${lat},${lng}`;
+    return (
+      <a href={mapsUrl} target="_blank" rel="noreferrer" className="block">
+        <div className={`rounded-xl overflow-hidden border min-w-[200px] ${isOutbound ? 'border-emerald-400' : 'border-gray-200'}`}>
+          <div className="bg-gray-100 h-16 flex items-center justify-center relative">
+            <div className="w-full h-full" style={{
+              background: 'linear-gradient(135deg, #e2e8f0 25%, #f0f4f8 50%, #e2e8f0 75%)',
+              backgroundSize: '20px 20px',
+            }} />
+            <MapPin className="absolute h-6 w-6 text-red-500" />
+          </div>
+          <div className={`px-2 py-1.5 ${isOutbound ? 'bg-emerald-400/20' : 'bg-white'}`}>
+            <p className="text-xs font-semibold truncate">{name}</p>
+            {address && <p className="text-[10px] opacity-70 truncate">{address}</p>}
+            <p className="text-[10px] text-blue-500 mt-0.5">Open in Maps ↗</p>
+          </div>
+        </div>
+      </a>
+    );
+  }
+
+  // Interactive reply (customer tapped a button or list item)
+  if (type === 'interactive') {
+    const inter = payload.interactive || {};
+    const reply = inter.button_reply || inter.list_reply || inter.nfm_reply || {};
+    const replyTitle = reply.title || reply.id || text;
+    return (
+      <div className="space-y-1">
+        {replyTitle && (
+          <div className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold border ${
+            isOutbound ? 'border-emerald-300 bg-emerald-400/20' : 'border-emerald-200 bg-emerald-50 text-emerald-800'
+          }`}>
+            <Check className="h-3 w-3" />
+            {replyTitle}
+          </div>
+        )}
+        {text && text !== replyTitle && <p className="text-sm">{text}</p>}
+      </div>
+    );
+  }
+
+  // Template button reply
+  if (type === 'button') {
+    const btn = payload.button || {};
+    const btnText = btn.text || text;
+    return (
+      <div className="space-y-1">
+        <div className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold border ${
+          isOutbound ? 'border-emerald-300 bg-emerald-400/20' : 'border-blue-200 bg-blue-50 text-blue-800'
+        }`}>
+          <Check className="h-3 w-3" />
+          {btnText}
+        </div>
+      </div>
+    );
+  }
+
+  // Order
+  if (type === 'order') {
+    const order = payload.order || {};
+    const itemCount = (order.product_items || []).length;
+    return (
+      <div className="flex items-center gap-2 rounded-lg bg-black/10 px-3 py-2">
+        <span className="text-xl">🛒</span>
+        <div>
+          <p className="text-sm font-semibold">Order placed</p>
+          <p className="text-xs opacity-70">{itemCount > 0 ? `${itemCount} item${itemCount > 1 ? 's' : ''}` : 'From catalog'}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Default: plain text (with line breaks)
+  const displayText = text || '';
+  if (!displayText) return <p className="text-sm italic opacity-50">Empty message</p>;
+  return (
+    <p className="text-sm leading-relaxed whitespace-pre-wrap">{displayText}</p>
+  );
+}
+
 function UnifiedInbox() {
   const { get, post } = useApi();
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -78,8 +289,20 @@ function UnifiedInbox() {
   const [sending, setSending] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [leadsMap, setLeadsMap] = useState<Record<string, string>>({});
+  const [quickReplies, setQuickReplies] = useState<{id: string; title: string; message: string}[]>([]);
+  const [qrOpen, setQrOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [leadProfile, setLeadProfile] = useState<any>(null);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [tplOpen, setTplOpen] = useState(false);
+  const [tplSearch, setTplSearch] = useState('');
+  const [sendingTemplate, setSendingTemplate] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const chatBoxRef = useRef<HTMLDivElement>(null);
+  const qrRef = useRef<HTMLDivElement>(null);
+  const tplRef = useRef<HTMLDivElement>(null);
 
   // Fetch leads once to map phone → name
   useEffect(() => {
@@ -135,10 +358,45 @@ function UnifiedInbox() {
 
   useEffect(() => {
     loadInbox();
-    // Refresh contact list every 10 seconds
     const interval = setInterval(loadInbox, 10000);
     return () => clearInterval(interval);
   }, []); // eslint-disable-line
+
+  // Load saved quick replies once
+  useEffect(() => {
+    get('/api/quick-replies').then(r => setQuickReplies(r.data?.items || r.data || [])).catch(() => {});
+  }, []); // eslint-disable-line
+
+  // Close quick reply / template dropdowns on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (qrRef.current && !qrRef.current.contains(e.target as Node)) setQrOpen(false);
+      if (tplRef.current && !tplRef.current.contains(e.target as Node)) setTplOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  // Load APPROVED templates once
+  useEffect(() => {
+    get('/api/automation/whatsapp/templates').then(r => {
+      const all = r.data?.data || r.data || [];
+      setTemplates(all.filter((t: any) => t.status === 'APPROVED'));
+    }).catch(() => {});
+  }, []); // eslint-disable-line
+
+  // Load lead profile when contact selected
+  useEffect(() => {
+    if (!selected) { setLeadProfile(null); return; }
+    setProfileLoading(true);
+    get(`/api/leads?phone=${encodeURIComponent(selected.sender_id)}&limit=1`)
+      .then(r => {
+        const leads = r.data?.leads || r.data || [];
+        setLeadProfile(leads[0] || null);
+      })
+      .catch(() => setLeadProfile(null))
+      .finally(() => setProfileLoading(false));
+  }, [selected?.sender_id]); // eslint-disable-line
 
   const fetchThread = (s: typeof selected) => {
     if (!s) return;
@@ -203,16 +461,23 @@ function UnifiedInbox() {
     finally { setSending(false); }
   };
 
-  const filtered = filter === 'all' ? contacts : contacts.filter(c => c.channel === filter);
+  const filtered = contacts
+    .filter(c => filter === 'all' || c.channel === filter)
+    .filter(c => {
+      if (!search.trim()) return true;
+      const q = search.toLowerCase();
+      const name = (resolveContactName(c.sender_id) || c.sender_name || '').toLowerCase();
+      return name.includes(q) || c.sender_id.includes(q) || c.last_text.toLowerCase().includes(q);
+    });
 
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-xl bg-white">
-      <div className="flex h-[620px]">
+      <div className="flex h-[calc(100vh-160px)] min-h-[520px]">
         {/* LEFT — Dark Premium Sidebar */}
         <div className={`flex flex-col bg-slate-950 w-72 shrink-0 ${selected ? 'hidden md:flex' : 'flex'}`}>
           {/* Header */}
           <div className="px-5 pt-5 pb-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-500/20">
                   <Inbox className="h-4 w-4 text-cyan-400" />
@@ -221,6 +486,22 @@ function UnifiedInbox() {
               </div>
               {contacts.length > 0 && (
                 <span className="rounded-full bg-cyan-500 px-2 py-0.5 text-[10px] font-bold text-white">{contacts.length}</span>
+              )}
+            </div>
+            {/* Search */}
+            <div className="relative mb-2">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search contacts…"
+                className="w-full rounded-lg bg-white/8 border border-white/10 pl-8 pr-7 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/50"
+              />
+              {search && (
+                <button onClick={() => setSearch('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-100 transition">
+                  <XCircle className="h-3.5 w-3.5" />
+                </button>
               )}
             </div>
             {/* Filter tabs */}
@@ -276,7 +557,7 @@ function UnifiedInbox() {
                       <p className={`text-xs font-semibold truncate ${isSelected ? 'text-cyan-300' : 'text-slate-200'}`}>
                         {resolveContactName(c.sender_id) || c.sender_name}
                       </p>
-                      <p className="shrink-0 text-[10px] text-slate-500">{timeAgo(c.last_time)}</p>
+                      <p className="shrink-0 text-[10px] text-slate-500" title={c.last_time ? new Date(c.last_time + 'Z').toLocaleString() : ''}>{timeAgo(c.last_time)}</p>
                     </div>
                     <p className="text-[11px] text-slate-500 truncate mt-0.5">{c.last_text}</p>
                   </div>
@@ -286,13 +567,15 @@ function UnifiedInbox() {
           </div>
         </div>
 
-        {/* RIGHT — Chat Thread */}
+        {/* RIGHT — Chat Thread + Lead Profile */}
         {selected ? (
+          <div className="flex flex-1 min-w-0">
           <div className="flex flex-col flex-1 min-w-0 bg-white">
             {/* Chat header */}
             <div className="flex items-center gap-3 px-5 py-3.5 border-b border-gray-100 bg-white shadow-sm">
-              <button onClick={() => setSelected(null)} className="md:hidden p-1.5 rounded-lg hover:bg-gray-100">
+              <button onClick={() => setSelected(null)} className="md:hidden flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition mr-1">
                 <ArrowLeft className="h-4 w-4" />
+                <span className="text-xs font-semibold">Back</span>
               </button>
               <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-base font-bold ${
                 selected.channel === 'whatsapp' ? 'bg-emerald-100 text-emerald-600' :
@@ -312,6 +595,14 @@ function UnifiedInbox() {
                   <span className="text-[10px] text-emerald-500">Active</span>
                 </div>
               </div>
+              {/* Profile toggle */}
+              <button
+                onClick={() => setProfileOpen(o => !o)}
+                title="Lead Profile"
+                className={`p-2 rounded-xl transition ${profileOpen ? 'bg-slate-900 text-white' : 'hover:bg-gray-100 text-gray-400 hover:text-gray-700'}`}
+              >
+                <User className="h-5 w-5" />
+              </button>
               {/* 3-dot menu */}
               <div className="relative">
                 <button onClick={e => { e.stopPropagation(); setMenuOpen(o => !o); }}
@@ -373,44 +664,199 @@ function UnifiedInbox() {
                   <MessageCircle className="h-10 w-10 text-gray-200" />
                   <p className="text-sm text-gray-400">No messages yet</p>
                 </div>
-              ) : thread.map(msg => (
-                <div key={msg.id} className={`flex items-end gap-2 ${msg.direction === 'outbound' ? 'justify-end' : 'justify-start'}`}>
-                  {msg.direction === 'inbound' && (
-                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-200 text-[10px] font-bold text-gray-600 mb-1">
-                      {selected.sender_name?.[0]?.toUpperCase() || '?'}
+              ) : thread.map(msg => {
+                const isOutbound = msg.direction === 'outbound';
+                const isPureMedia = ['image','video','audio','voice','sticker','location','document'].includes(msg.message_type);
+                return (
+                <div key={msg.id} className={`flex items-end gap-2 ${isOutbound ? 'justify-end' : 'justify-start'}`}>
+                  {!isOutbound && (
+                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-300 text-[10px] font-bold text-gray-600 mb-1">
+                      {(resolveContactName(selected.sender_id) || selected.sender_name)?.[0]?.toUpperCase() || '?'}
                     </div>
                   )}
-                  <div className={`max-w-[68%] rounded-2xl px-3.5 py-2 text-sm ${
-                    msg.direction === 'outbound'
+                  <div className={`max-w-[72%] rounded-2xl text-sm ${
+                    isOutbound
                       ? 'bg-emerald-500 text-white rounded-br-none shadow-md shadow-emerald-100'
                       : 'bg-white text-gray-900 border border-gray-100 rounded-bl-none shadow-sm'
-                  }`}>
-                    <p className="leading-relaxed">{msg.text}</p>
-                    <p className={`text-[10px] mt-1 text-right ${msg.direction === 'outbound' ? 'text-emerald-100' : 'text-gray-400'}`}>
-                      {timeAgo(msg.created_at)}
-                      {msg.direction === 'outbound' && ' ✓✓'}
-                    </p>
+                  } ${isPureMedia ? 'p-1.5' : 'px-3.5 py-2'}`}>
+                    <MessageContent msg={msg} isOutbound={isOutbound} />
+                    <div className={`flex items-center justify-end gap-1 mt-1 ${isPureMedia ? 'px-2 pb-1' : ''}`}>
+                      <span className={`text-[10px] ${isOutbound ? 'text-emerald-100' : 'text-gray-400'}`}
+                        title={msg.created_at ? new Date(msg.created_at + 'Z').toLocaleString() : ''}>
+                        {timeAgo(msg.created_at)}
+                      </span>
+                      <DeliveryTick status={msg.status} delivery_status={msg.delivery_status} isOutbound={isOutbound} />
+                    </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
               <div ref={bottomRef} />
             </div>
 
             {/* Reply box */}
-            <div className="flex items-center gap-3 px-4 py-3.5 border-t border-gray-100 bg-white">
-              <input
-                type="text"
-                value={reply}
-                onChange={e => setReply(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendReply()}
-                placeholder={`Message ${selected.sender_name}…`}
-                className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 focus:bg-white transition"
-              />
-              <button onClick={sendReply} disabled={sending || !reply.trim()}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white hover:bg-slate-700 disabled:opacity-30 transition shadow-md">
-                {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              </button>
+            <div className="border-t border-gray-100 bg-white">
+              {/* Quick Reply dropdown */}
+              {qrOpen && (
+                <div ref={qrRef} className="border-b border-gray-100 bg-amber-50 px-4 py-2 max-h-40 overflow-y-auto">
+                  {quickReplies.length === 0 ? (
+                    <p className="text-xs text-gray-400 py-1">No quick replies saved. Add them in <a href="/dashboard/auto-replies" className="text-amber-600 underline">Auto Replies → Quick Replies</a>.</p>
+                  ) : (
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-semibold text-amber-700 mb-1.5">Quick Replies — click to insert</p>
+                      {quickReplies.map(qr => (
+                        <button key={qr.id} onClick={() => { setReply(qr.message); setQrOpen(false); }}
+                          className="w-full text-left rounded-lg bg-white border border-amber-100 px-3 py-1.5 text-xs hover:bg-amber-50 transition">
+                          <span className="font-semibold text-amber-800">{qr.title}</span>
+                          <span className="ml-2 text-gray-500 truncate">{qr.message.slice(0, 60)}{qr.message.length > 60 ? '…' : ''}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+              <div className="flex items-center gap-2 px-4 py-3.5">
+                {/* Quick Reply ⚡ */}
+                <button onClick={() => { setQrOpen(v => !v); setTplOpen(false); }} title="Quick Replies"
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition ${qrOpen ? 'bg-amber-100 border-amber-300 text-amber-700' : 'border-gray-200 bg-gray-50 text-gray-500 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200'}`}>
+                  <Zap className="h-4 w-4" />
+                </button>
+                {/* Template send 📋 */}
+                <div className="relative" ref={tplRef}>
+                  <button onClick={() => { setTplOpen(v => !v); setQrOpen(false); }} title="Send Template"
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition ${tplOpen ? 'bg-blue-100 border-blue-300 text-blue-700' : 'border-gray-200 bg-gray-50 text-gray-500 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200'}`}>
+                    <FileText className="h-4 w-4" />
+                  </button>
+                  {tplOpen && (
+                    <div className="absolute bottom-12 left-0 z-30 w-80 bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-hidden">
+                      <div className="px-3 py-2.5 border-b border-gray-100 flex items-center gap-2">
+                        <Search className="h-3.5 w-3.5 text-gray-400" />
+                        <input autoFocus value={tplSearch} onChange={e => setTplSearch(e.target.value)}
+                          placeholder="Search approved templates…"
+                          className="flex-1 text-xs outline-none" />
+                      </div>
+                      <div className="max-h-64 overflow-y-auto">
+                        {templates.filter(t => !tplSearch || t.name?.toLowerCase().includes(tplSearch.toLowerCase())).length === 0 ? (
+                          <p className="text-xs text-gray-400 p-4 text-center">No approved templates</p>
+                        ) : templates
+                          .filter(t => !tplSearch || t.name?.toLowerCase().includes(tplSearch.toLowerCase()))
+                          .map((t: any) => {
+                            const body = t.components?.find((c: any) => c.type === 'BODY')?.text || t.body || '';
+                            return (
+                              <button key={t.id || t.name} onClick={async () => {
+                                setTplOpen(false);
+                                setSendingTemplate(true);
+                                try {
+                                  await post('/api/automation/outbound-messages', {
+                                    channel: selected.channel,
+                                    recipient: selected.sender_id,
+                                    message: body,
+                                    msg_type: 'template',
+                                    template_name: t.name,
+                                    language_code: t.language || 'en_US',
+                                    send_mode: 'live',
+                                  });
+                                  toast.success(`Template "${t.name}" sent`);
+                                  fetchThread(selected);
+                                } catch { toast.error('Failed to send template'); }
+                                finally { setSendingTemplate(false); }
+                              }} className="w-full text-left px-4 py-3 hover:bg-blue-50 transition border-b border-gray-50 last:border-0">
+                                <p className="text-xs font-semibold text-gray-800">{t.name}</p>
+                                <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-2">{body}</p>
+                                <span className="text-[10px] text-blue-500 mt-1 inline-block">{t.language} · {t.category}</span>
+                              </button>
+                            );
+                          })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <input
+                  type="text"
+                  value={reply}
+                  onChange={e => setReply(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendReply()}
+                  placeholder={`Message ${resolveContactName(selected.sender_id) || selected.sender_name}…`}
+                  className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 focus:bg-white transition"
+                />
+                <button onClick={sendReply} disabled={sending || sendingTemplate || !reply.trim()}
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white hover:bg-slate-700 disabled:opacity-30 transition shadow-md">
+                  {sending || sendingTemplate ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
+          </div>
+
+          {/* LEAD PROFILE SIDEBAR */}
+          {profileOpen && (
+            <div className="w-72 shrink-0 border-l border-gray-100 bg-gray-50 flex flex-col overflow-y-auto">
+              <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wide text-gray-500">Lead Profile</span>
+                <button onClick={() => setProfileOpen(false)} className="text-gray-400 hover:text-gray-700 p-1 rounded-lg hover:bg-gray-100">
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+              {profileLoading ? (
+                <div className="p-4 space-y-2">
+                  {[1,2,3].map(i => <div key={i} className="h-8 bg-gray-200 rounded-lg animate-pulse" />)}
+                </div>
+              ) : leadProfile ? (
+                <div className="p-4 space-y-4">
+                  {/* Avatar + Name */}
+                  <div className="flex flex-col items-center gap-2 py-2">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-900 text-white text-xl font-bold">
+                      {leadProfile.name?.[0]?.toUpperCase() || '?'}
+                    </div>
+                    <p className="font-bold text-gray-900 text-sm text-center">{leadProfile.name || 'Unknown'}</p>
+                    <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                      leadProfile.status === 'hot' ? 'bg-red-100 text-red-700' :
+                      leadProfile.status === 'warm' ? 'bg-amber-100 text-amber-700' :
+                      'bg-blue-100 text-blue-700'
+                    }`}>{leadProfile.status || 'new'}</span>
+                  </div>
+                  {/* Details */}
+                  {[
+                    { label: 'Phone', value: leadProfile.phone, icon: '📞' },
+                    { label: 'Email', value: leadProfile.email, icon: '✉️' },
+                    { label: 'Source', value: leadProfile.source, icon: '📌' },
+                    { label: 'Assigned to', value: leadProfile.assigned_to, icon: '👤' },
+                  ].filter(d => d.value).map(d => (
+                    <div key={d.label} className="flex gap-2">
+                      <span className="text-sm shrink-0">{d.icon}</span>
+                      <div>
+                        <p className="text-[10px] text-gray-400 uppercase tracking-wide">{d.label}</p>
+                        <p className="text-xs font-medium text-gray-800">{d.value}</p>
+                      </div>
+                    </div>
+                  ))}
+                  {/* Last message */}
+                  {leadProfile.message && (
+                    <div>
+                      <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Last Message</p>
+                      <p className="text-xs text-gray-600 bg-white rounded-lg px-3 py-2 border border-gray-100 leading-relaxed">{leadProfile.message}</p>
+                    </div>
+                  )}
+                  {/* Tags */}
+                  {leadProfile.tag && (
+                    <div className="flex items-center gap-1.5">
+                      <Tag className="h-3.5 w-3.5 text-gray-400" />
+                      <span className="rounded-full bg-gray-200 px-2 py-0.5 text-[10px] font-semibold text-gray-600">{leadProfile.tag}</span>
+                    </div>
+                  )}
+                  {/* View full profile */}
+                  <a href="/dashboard/leads" className="flex items-center justify-center gap-1.5 mt-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition">
+                    View Full Profile →
+                  </a>
+                </div>
+              ) : (
+                <div className="p-4 text-center">
+                  <User className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                  <p className="text-xs text-gray-400">No lead profile found for this contact</p>
+                  <p className="text-[10px] text-gray-400 mt-1">{selected.sender_id}</p>
+                </div>
+              )}
+            </div>
+          )}
           </div>
         ) : (
           <div className="hidden md:flex flex-1 flex-col items-center justify-center gap-4"
