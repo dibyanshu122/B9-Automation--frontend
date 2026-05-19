@@ -5,7 +5,7 @@ import {
   AlertCircle, BarChart2, CheckCircle2,
   Clock, Loader2, MessageSquare, Plus, RefreshCw, Send, Users,
   X, XCircle, FileText, Calendar, Ban, ChevronLeft, ChevronRight,
-  Globe, Smartphone, Trash2, Eye, Upload,
+  Globe, Smartphone, Trash2, Eye, Upload, Download, Filter,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -19,6 +19,7 @@ interface Campaign {
   name: string; message: string; channel: string; msg_type: string;
   template_name: string | null; total: number; sent: number; failed: number;
   queued: number; cancelled: number; status: string;
+  delivered?: number; read?: number;
   scheduled_at: string | null; created_at: string | null;
 }
 interface PreviewResult {
@@ -141,24 +142,45 @@ function WaPreview({ template, vars }: { template: any; vars: string[] }) {
 
 // ─── Campaign Table ───────────────────────────────────────────────────────────
 
-const COL = '40px minmax(140px,260px) 100px 110px 80px 120px 52px 56px 56px 44px';
+const COL = '36px minmax(150px,1fr) 88px 96px 68px 108px 44px 48px 52px 48px 48px 40px';
+
+// WhatsApp-style tick SVGs
+const TickSent     = () => <svg width="16" height="11" viewBox="0 0 16 11" fill="none"><path d="M1 5.5L5.5 10L15 1" stroke="#9CA3AF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+const TickDelivered= () => <svg width="20" height="11" viewBox="0 0 20 11" fill="none"><path d="M1 5.5L5.5 10L15 1" stroke="#9CA3AF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/><path d="M6 5.5L10.5 10L20 1" stroke="#9CA3AF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+const TickRead     = () => <svg width="20" height="11" viewBox="0 0 20 11" fill="none"><path d="M1 5.5L5.5 10L15 1" stroke="#06B6D4" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/><path d="M6 5.5L10.5 10L20 1" stroke="#06B6D4" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+
+function exportToExcel(campaigns: Campaign[]) {
+  const rows = campaigns.map((c, i) => [
+    i + 1, c.name, c.msg_type === 'template' ? 'Template' : 'Text',
+    c.created_at ? new Date(c.created_at.endsWith('Z') ? c.created_at : c.created_at + 'Z').toLocaleDateString('en-IN') : '',
+    c.total, c.status, c.sent, c.delivered || 0, c.read || 0, c.failed,
+  ]);
+  const header = ['Sr', 'Campaign Name', 'Category', 'Created Date', 'Contacts', 'Status', 'Sent', 'Delivered', 'Read', 'Failed'];
+  const csv = [header, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'campaigns.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
 
 function CampaignTable({ campaigns, onDetail, onRefresh }: { campaigns: Campaign[]; onDetail: (name: string) => void; onRefresh: () => void }) {
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-200">
-      {/* Header */}
-      <div className="grid bg-[#1877F2] text-white text-[11px] font-semibold px-4 py-3 select-none rounded-t-2xl"
-        style={{ gridTemplateColumns: COL }}>
-        <div className="opacity-80">Sr</div>
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-visible">
+      {/* Premium dark header */}
+      <div className="grid text-white text-[11px] font-semibold px-4 py-3 select-none rounded-t-2xl"
+        style={{ gridTemplateColumns: COL, background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e1b4b 100%)' }}>
+        <div className="text-slate-400">Sr</div>
         <div>Campaign Name</div>
         <div>Category</div>
-        <div>Created</div>
-        <div>Contacts</div>
+        <div>Created Date</div>
+        <div className="text-center">Contacts</div>
         <div>Status</div>
-        <div className="text-center opacity-80">Details</div>
-        <div className="text-center text-emerald-200">✓ Sent</div>
-        <div className="text-center text-red-200">✗ Failed</div>
-        <div className="text-center opacity-80">More</div>
+        <div className="flex justify-center" title="View Details"><Eye className="w-3.5 h-3.5 text-slate-400" /></div>
+        <div className="flex justify-center items-center gap-0.5" title="Sent"><TickSent /></div>
+        <div className="flex justify-center items-center gap-0.5" title="Delivered"><TickDelivered /></div>
+        <div className="flex justify-center items-center gap-0.5" title="Read"><TickRead /></div>
+        <div className="flex justify-center" title="Failed"><AlertCircle className="w-3.5 h-3.5 text-red-400" /></div>
+        <div className="text-center text-slate-400">More</div>
       </div>
       {/* Rows */}
       {campaigns.map((c, i) => (
@@ -173,14 +195,9 @@ function CampaignRow({ idx, c, onDetail, onRefresh }: { idx: number; c: Campaign
   const [menuOpen, setMenuOpen] = useState(false);
   const [acting, setActing] = useState<string | null>(null);
   const cfg = STATUS_CONFIG[c.status] || STATUS_CONFIG.completed;
-  const catColor: Record<string, string> = {
-    MARKETING: 'text-violet-700 bg-violet-50', UTILITY: 'text-blue-700 bg-blue-50',
-    AUTHENTICATION: 'text-orange-700 bg-orange-50',
-  };
 
   const doAction = async (action: string) => {
-    setMenuOpen(false);
-    setActing(action);
+    setMenuOpen(false); setActing(action);
     try {
       if (action === 'cancel') {
         if (!confirm('Cancel this campaign?')) return;
@@ -198,57 +215,71 @@ function CampaignRow({ idx, c, onDetail, onRefresh }: { idx: number; c: Campaign
     finally { setActing(null); }
   };
 
-  const msgType = c.msg_type === 'template' ? c.template_name || 'Template' : 'Text';
-  const catKey = c.template_name ? 'MARKETING' : '';
+  const delivered = c.delivered ?? 0;
+  const read = c.read ?? 0;
 
   return (
-    <div className={`relative grid px-4 py-3 items-center text-sm hover:bg-blue-50/30 transition border-t border-gray-100 ${idx % 2 === 1 ? 'bg-gray-50/40' : 'bg-white'}`}
+    <div className={`relative grid px-4 py-3 items-center text-sm transition border-t border-gray-100 hover:bg-slate-50/60 ${idx % 2 === 1 ? 'bg-gray-50/30' : 'bg-white'}`}
       style={{ gridTemplateColumns: COL }}>
-      <div className="text-xs text-gray-400 font-medium">{idx + 1}</div>
+      <div className="text-xs text-gray-400">{idx + 1}</div>
       <div className="min-w-0 pr-2">
         <p className="font-semibold text-gray-900 truncate text-sm">{c.name}</p>
-        <p className="text-[10px] text-gray-400 truncate">{msgType}</p>
+        <p className="text-[10px] text-gray-400 truncate">{c.template_name || 'Custom text'}</p>
       </div>
       <div>
-        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${catColor[catKey] || 'bg-gray-100 text-gray-500'}`}>
+        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${c.msg_type === 'template' ? 'bg-violet-50 text-violet-700' : 'bg-gray-100 text-gray-500'}`}>
           {c.msg_type === 'template' ? 'Template' : 'Text'}
         </span>
       </div>
-      <div className="text-xs text-gray-500">{c.created_at ? new Date(c.created_at.endsWith('Z') ? c.created_at : c.created_at + 'Z').toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' }) : '—'}</div>
-      <div className="text-sm font-semibold text-gray-700">{c.total}</div>
+      <div className="text-xs text-gray-500">
+        {c.created_at ? new Date(c.created_at.endsWith('Z') ? c.created_at : c.created_at + 'Z').toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' }) : '—'}
+      </div>
+      <div className="text-center text-sm font-semibold text-gray-700">{c.total}</div>
       <div>
         <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${cfg.color}`}>
           {cfg.icon}{cfg.label}
         </span>
       </div>
-      {/* Preview eye */}
+      {/* Preview */}
       <div className="flex justify-center">
-        <button onClick={() => onDetail(c.name)} className="p-1 rounded hover:bg-blue-100 text-gray-400 hover:text-blue-600 transition" title="View Details">
-          <BarChart2 className="w-4 h-4" />
+        <button onClick={() => onDetail(c.name)} className="p-1.5 rounded-lg hover:bg-slate-100 text-gray-400 hover:text-slate-700 transition" title="View Details">
+          <BarChart2 className="w-3.5 h-3.5" />
         </button>
       </div>
-      {/* Sent ✓ */}
-      <div className="text-center">
-        <span className="text-xs font-bold text-emerald-600">{c.sent}</span>
+      {/* Sent */}
+      <div className="flex justify-center items-center gap-1">
+        <TickSent />
+        <span className="text-xs font-bold text-gray-600">{c.sent}</span>
       </div>
-      {/* Failed ⚠ */}
-      <div className="text-center">
-        <span className={`text-xs font-bold ${c.failed > 0 ? 'text-red-500' : 'text-gray-300'}`}>{c.failed}</span>
+      {/* Delivered */}
+      <div className="flex justify-center items-center gap-1">
+        <TickDelivered />
+        <span className={`text-xs font-bold ${delivered > 0 ? 'text-gray-600' : 'text-gray-300'}`}>{delivered || '—'}</span>
+      </div>
+      {/* Read */}
+      <div className="flex justify-center items-center gap-1">
+        <TickRead />
+        <span className={`text-xs font-bold ${read > 0 ? 'text-cyan-600' : 'text-gray-300'}`}>{read || '—'}</span>
+      </div>
+      {/* Failed */}
+      <div className="flex justify-center items-center gap-1">
+        <AlertCircle className={`w-3 h-3 ${c.failed > 0 ? 'text-red-400' : 'text-gray-200'}`} />
+        <span className={`text-xs font-bold ${c.failed > 0 ? 'text-red-500' : 'text-gray-300'}`}>{c.failed > 0 ? c.failed : '—'}</span>
       </div>
       {/* More menu */}
       <div className="relative flex justify-center">
         <button onClick={e => { e.stopPropagation(); setMenuOpen(o => !o); }} disabled={!!acting}
-          className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition">
-          {acting ? <Loader2 className="w-4 h-4 animate-spin" /> : <span className="text-base leading-none">⋯</span>}
+          className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition">
+          {acting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <span className="text-sm font-bold tracking-widest">···</span>}
         </button>
         {menuOpen && (
           <>
             <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-            <div className="absolute right-0 top-7 z-50 bg-white border border-gray-200 rounded-xl shadow-xl py-1 min-w-[150px]">
-              <button onClick={() => { setMenuOpen(false); onDetail(c.name); }} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-gray-700">📊 View Details</button>
-              {c.status === 'draft' && <button onClick={() => doAction('send-draft')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-emerald-600">▶ Send Draft</button>}
-              {c.failed > 0 && <button onClick={() => doAction('retry')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-blue-600">↩ Retry Failed ({c.failed})</button>}
-              {(c.status === 'sending' || c.status === 'scheduled') && <button onClick={() => doAction('cancel')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-red-500">✕ Cancel</button>}
+            <div className="absolute right-0 top-8 z-50 bg-white border border-gray-200 rounded-xl shadow-xl py-1 min-w-[160px]">
+              <button onClick={() => { setMenuOpen(false); onDetail(c.name); }} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-gray-700 flex items-center gap-2"><BarChart2 className="w-3.5 h-3.5" /> View Details</button>
+              {c.status === 'draft' && <button onClick={() => doAction('send-draft')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-emerald-600 flex items-center gap-2"><Send className="w-3.5 h-3.5" /> Send Draft</button>}
+              {c.failed > 0 && <button onClick={() => doAction('retry')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-blue-600 flex items-center gap-2"><RefreshCw className="w-3.5 h-3.5" /> Retry Failed ({c.failed})</button>}
+              {(c.status === 'sending' || c.status === 'scheduled') && <button onClick={() => doAction('cancel')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-red-500 flex items-center gap-2"><Ban className="w-3.5 h-3.5" /> Cancel</button>}
             </div>
           </>
         )}
@@ -1042,6 +1073,8 @@ export default function CampaignsPage() {
   const [tab, setTab] = useState('all');
   const [showNew, setShowNew] = useState(false);
   const [detailName, setDetailName] = useState<string | null>(null);
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
 
   const load = () => {
     setLoading(true);
@@ -1053,7 +1086,18 @@ export default function CampaignsPage() {
 
   useEffect(() => { load(); }, []); // eslint-disable-line
 
-  const filtered = tab === 'all' ? campaigns : campaigns.filter(c => c.status === tab);
+  const filtered = campaigns.filter(c => {
+    if (tab !== 'all' && c.status !== tab) return false;
+    if (dateFrom && c.created_at) {
+      const d = new Date(c.created_at.endsWith('Z') ? c.created_at : c.created_at + 'Z');
+      if (d < new Date(dateFrom)) return false;
+    }
+    if (dateTo && c.created_at) {
+      const d = new Date(c.created_at.endsWith('Z') ? c.created_at : c.created_at + 'Z');
+      if (d > new Date(dateTo + 'T23:59:59Z')) return false;
+    }
+    return true;
+  });
 
   const tabCounts = Object.fromEntries(
     STATUS_TABS.slice(1).map(t => [t.key, campaigns.filter(c => c.status === t.key).length])
@@ -1062,14 +1106,41 @@ export default function CampaignsPage() {
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Campaigns</h1>
           <p className="text-sm text-gray-500 mt-0.5">Send WhatsApp broadcasts to your leads</p>
         </div>
-        <Button onClick={() => setShowNew(true)} className="flex items-center gap-2 flex-shrink-0">
-          <Plus className="w-4 h-4" /> New Campaign
-        </Button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button onClick={() => exportToExcel(filtered)}
+            className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-600 transition">
+            <Download className="w-4 h-4" /> Export CSV
+          </button>
+          <Button onClick={() => setShowNew(true)} className="flex items-center gap-2">
+            <Plus className="w-4 h-4" /> New Campaign
+          </Button>
+        </div>
+      </div>
+
+      {/* Date filter bar */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 text-sm text-gray-500">
+          <Filter className="w-3.5 h-3.5" /> Filter by date:
+        </div>
+        <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
+          className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white" />
+        <span className="text-xs text-gray-400">to</span>
+        <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
+          className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white" />
+        {(dateFrom || dateTo) && (
+          <button onClick={() => { setDateFrom(''); setDateTo(''); }}
+            className="text-xs text-orange-500 hover:text-orange-700 font-medium flex items-center gap-1">
+            <X className="w-3 h-3" /> Clear
+          </button>
+        )}
+        {filtered.length < campaigns.length && (
+          <span className="text-xs text-gray-400">{filtered.length} of {campaigns.length} shown</span>
+        )}
       </div>
 
       {/* Status tabs */}
