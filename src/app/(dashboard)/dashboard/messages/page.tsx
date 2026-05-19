@@ -324,11 +324,10 @@ function UnifiedInbox() {
     return leadsMap[senderId] || leadsMap[clean] || leadsMap['+' + clean] || null!;
   };
 
-  const loadInbox = () => {
+  const loadInbox = (retryCount = 0) => {
     get('/api/automation/inbox')
       .then(res => {
         const items: any[] = res.data?.items || [];
-        // Group by sender_id + channel
         const map = new Map<string, Contact>();
         items.forEach(item => {
           const key = `${item.channel}::${item.sender_id}`;
@@ -352,7 +351,15 @@ function UnifiedInbox() {
         });
         setContacts(Array.from(map.values()).sort((a, b) => b.last_time.localeCompare(a.last_time)));
       })
-      .catch(() => toast.error('Failed to load inbox'))
+      .catch((err: any) => {
+        const status = err?.response?.status;
+        if (status === 401 && retryCount < 2) {
+          // Token may not be hydrated yet — retry after short delay
+          setTimeout(() => loadInbox(retryCount + 1), 1500);
+        } else {
+          toast.error('Failed to load inbox');
+        }
+      })
       .finally(() => setLoading(false));
   };
 
@@ -364,7 +371,12 @@ function UnifiedInbox() {
 
   // Load saved quick replies once
   useEffect(() => {
-    get('/api/auto-replies/quick-replies').then(r => setQuickReplies(r.data?.items || r.data || [])).catch(() => {});
+    get('/api/auto-replies/quick-replies')
+      .then(r => {
+        const list = r.data?.quick_replies || r.data?.items || (Array.isArray(r.data) ? r.data : []);
+        setQuickReplies(list);
+      })
+      .catch(() => {});
   }, []); // eslint-disable-line
 
   // Close quick reply / template dropdowns on outside click
