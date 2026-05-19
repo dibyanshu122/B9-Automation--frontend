@@ -1337,7 +1337,8 @@ export default function TemplatesPage() {
           ) : (
             <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
               {/* List header */}
-              <div className="grid grid-cols-12 gap-2 px-4 py-3 bg-[#1877F2] text-white text-xs font-semibold uppercase tracking-wide">
+              <div className="grid grid-cols-12 gap-2 px-4 py-3 text-white text-xs font-semibold uppercase tracking-wide rounded-t-2xl"
+                style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e1b4b 100%)' }}>
                 <div className="col-span-1">Sr</div>
                 <div className="col-span-2">Name</div>
                 <div className="col-span-2">Status</div>
