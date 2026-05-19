@@ -1113,7 +1113,8 @@ export default function CampaignsPage() {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <button onClick={() => exportToExcel(filtered)}
-            className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-600 transition">
+            className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-xl text-white transition hover:opacity-90"
+            style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e1b4b 100%)' }}>
             <Download className="w-4 h-4" /> Export CSV
           </button>
           <Button onClick={() => setShowNew(true)} className="flex items-center gap-2">
