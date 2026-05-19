@@ -145,9 +145,9 @@ const COL = '40px minmax(140px,260px) 100px 110px 80px 120px 52px 56px 56px 44px
 
 function CampaignTable({ campaigns, onDetail, onRefresh }: { campaigns: Campaign[]; onDetail: (name: string) => void; onRefresh: () => void }) {
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-200">
       {/* Header */}
-      <div className="grid bg-[#1877F2] text-white text-[11px] font-semibold px-4 py-3 select-none"
+      <div className="grid bg-[#1877F2] text-white text-[11px] font-semibold px-4 py-3 select-none rounded-t-2xl"
         style={{ gridTemplateColumns: COL }}>
         <div className="opacity-80">Sr</div>
         <div>Campaign Name</div>
@@ -244,7 +244,7 @@ function CampaignRow({ idx, c, onDetail, onRefresh }: { idx: number; c: Campaign
         {menuOpen && (
           <>
             <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-            <div className="absolute right-0 top-7 z-20 bg-white border border-gray-200 rounded-xl shadow-xl py-1 min-w-[140px]">
+            <div className="absolute right-0 top-7 z-50 bg-white border border-gray-200 rounded-xl shadow-xl py-1 min-w-[150px]">
               <button onClick={() => { setMenuOpen(false); onDetail(c.name); }} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-gray-700">📊 View Details</button>
               {c.status === 'draft' && <button onClick={() => doAction('send-draft')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-emerald-600">▶ Send Draft</button>}
               {c.failed > 0 && <button onClick={() => doAction('retry')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-blue-600">↩ Retry Failed ({c.failed})</button>}
