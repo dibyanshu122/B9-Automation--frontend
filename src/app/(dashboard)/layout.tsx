@@ -93,7 +93,7 @@ export default function DashboardLayout({
         {/* Single scroll container — body never scrolls, only this main element does */}
         <main
           ref={mainRef}
-          className={`min-w-0 flex-1 overflow-y-auto overflow-x-hidden transition-all duration-300 ${sidebarPinned ? 'md:ml-72' : 'md:ml-16'}`}
+          className={`min-w-0 flex-1 overflow-y-auto overflow-x-hidden transition-[margin] duration-300 ease-in-out ${sidebarPinned ? 'md:ml-72' : 'md:ml-16'}`}
           style={{ scrollbarGutter: 'stable' }}
         >
           <AnimatePresence mode="wait">
@@ -103,7 +103,7 @@ export default function DashboardLayout({
               animate={reduceMotion ? undefined : { opacity: 1, y: 0, scale: 1 }}
               exit={reduceMotion ? undefined : { opacity: 0, y: -10, scale: 0.996 }}
               transition={{ type: 'spring', stiffness: 120, damping: 22, mass: 0.7 }}
-              className="min-w-0 max-w-full px-4 pb-8 pt-6 sm:px-6 sm:pt-8 lg:px-8 lg:pt-10"
+              className="min-w-0 w-full px-4 pb-8 pt-6 sm:px-5 sm:pt-7 lg:px-6 lg:pt-8"
             >
               <ErrorBoundary>{children}</ErrorBoundary>
             </motion.div>
