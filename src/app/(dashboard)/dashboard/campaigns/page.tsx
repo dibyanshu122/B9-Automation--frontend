@@ -893,6 +893,7 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
 
           {/* Template dropdown — for single always show; for Excel bulk only after valid upload */}
           {(sendMode === 'single' || recipientMode === 'leads' || (recipientMode === 'excel' && parseResult && parseResult.valid.length > 0)) && (
+          <>
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">
               Select Template <span className="text-red-500">*</span>
@@ -987,7 +988,8 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
               </div>
             </div>
           )}
-          </div>
+          </>
+          )}
         </div>
 
         {/* Footer */}
