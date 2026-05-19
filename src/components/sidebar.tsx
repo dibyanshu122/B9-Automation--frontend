@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { SIDEBAR_GROUPS } from '@/lib/constants';
 import { useUIStore } from '@/store/uiStore';
 import { Logo } from '@/components/logo';
@@ -23,13 +23,13 @@ const ICONS = {
   Key, Megaphone, MessageSquare, Zap, Database, Building2,
 };
 
-// Exact same dark bg as the original sidebar — rgba avoids Tailwind opacity-scale issues
-const SIDEBAR_BG = 'rgba(2, 6, 23, 0.95)';  // slate-950 at 95% opacity
+// Guaranteed dark bg — inline style bypasses Tailwind purge issues
+const BG = 'rgba(2, 6, 23, 0.97)';
 
 function useUnreadCount() {
   const [count, setCount] = useState(0);
   useEffect(() => {
-    const fetchCount = () => {
+    const run = () => {
       const token = localStorage.getItem('token');
       const base = process.env.NEXT_PUBLIC_API_URL || '';
       fetch(`${base}/api/automation/inbox`, {
@@ -39,16 +39,15 @@ function useUnreadCount() {
         .then(data => {
           const items: any[] = data?.items || [];
           const cutoff = Date.now() - 86400000;
-          const unread = items.filter(
+          setCount(Math.min(items.filter(
             (i: any) => i.direction === 'inbound' && new Date(i.created_at + 'Z').getTime() > cutoff
-          ).length;
-          setCount(Math.min(unread, 99));
+          ).length, 99));
         })
         .catch(() => {});
     };
-    fetchCount();
-    const interval = setInterval(fetchCount, 30000);
-    return () => clearInterval(interval);
+    run();
+    const t = setInterval(run, 30000);
+    return () => clearInterval(t);
   }, []);
   return count;
 }
@@ -62,121 +61,142 @@ export const Sidebar = () => {
   } = useUIStore();
   const unreadCount = useUnreadCount();
 
-  // JS hover state — reliable across all browsers
+  // Hover state with small leave-delay to prevent flicker when moving between children
   const [hovered, setHovered] = useState(false);
+  const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleEnter = () => {
+    if (leaveTimer.current) clearTimeout(leaveTimer.current);
+    setHovered(true);
+  };
+  const handleLeave = () => {
+    leaveTimer.current = setTimeout(() => setHovered(false), 80);
+  };
+
+  useEffect(() => () => { if (leaveTimer.current) clearTimeout(leaveTimer.current); }, []);
+
   const expanded = sidebarPinned || hovered;
 
-  const isPathActive = (href: string): boolean =>
+  const isActive = (href: string): boolean =>
     pathname === href || (href !== '/dashboard' && (pathname?.startsWith(href) ?? false));
-  const isGroupChildActive = (children?: any[]): boolean =>
-    children?.some((child) => isPathActive(child.href)) ?? false;
+  const groupActive = (children?: any[]): boolean =>
+    children?.some(c => isActive(c.href)) ?? false;
 
-  // Active item style — same cyan glow as original
-  const itemCls = (active: boolean) => clsx(
-    'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-150 text-sm',
+  // Item styles — exact same as original dark sidebar
+  const item = (active: boolean) => clsx(
+    'flex w-full items-center gap-3 rounded-lg transition-all duration-150 text-sm',
+    'px-3 py-2.5',
     active
       ? 'bg-primary-500/20 text-cyan-100 font-semibold shadow-lg shadow-cyan-500/10 ring-1 ring-cyan-400/30'
       : 'text-slate-400 hover:bg-white/10 hover:text-slate-100'
   );
-  const childItemCls = (active: boolean) => clsx(
-    'flex w-full items-center gap-3 rounded-lg px-3 py-2 transition-all duration-150 text-sm',
+  const child = (active: boolean) => clsx(
+    'flex w-full items-center gap-3 rounded-lg transition-all duration-150 text-sm',
+    'px-3 py-2',
     active
-      ? 'bg-primary-500/20 text-cyan-100 font-semibold shadow-lg shadow-cyan-500/10 ring-1 ring-cyan-400/30'
+      ? 'bg-primary-500/20 text-cyan-100 font-semibold ring-1 ring-cyan-400/30'
       : 'text-slate-400 hover:bg-white/10 hover:text-slate-100'
+  );
+
+  // Label — fades in/out based on expanded state
+  const lbl = clsx(
+    'transition-all duration-200 whitespace-nowrap overflow-hidden',
+    expanded ? 'opacity-100 max-w-[180px]' : 'opacity-0 max-w-0 pointer-events-none'
   );
 
   return (
     <>
-      {/* Mobile toggle */}
+      {/* ── Mobile button ────────────────────────────────────────────── */}
       <Button variant="ghost" size="sm" onClick={toggleSidebar}
         className="md:hidden fixed top-20 left-4 z-50">
         {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
       </Button>
 
-      {/* Mobile overlay */}
+      {/* ── Mobile backdrop ──────────────────────────────────────────── */}
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black/50 md:hidden z-30"
           onClick={() => setSidebarOpen(false)} />
       )}
 
-      {/* ── DESKTOP SIDEBAR ────────────────────────────────────────────────── */}
+      {/* ═══════════════════════════════════════════════════════════════
+          DESKTOP SIDEBAR — Mini (64 px) ↔ Expanded (288 px) on hover
+      ═══════════════════════════════════════════════════════════════ */}
       <aside
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-        style={{ backgroundColor: SIDEBAR_BG }}
+        onMouseEnter={handleEnter}
+        onMouseLeave={handleLeave}
+        style={{ backgroundColor: BG }}
         className={clsx(
-          'hidden md:flex flex-col',
-          'fixed left-0 top-16 z-40',
+          // Layout
+          'hidden md:flex flex-col fixed left-0 top-16 z-40',
           'h-[calc(100vh-64px)]',
+          // Appearance
           'border-r border-white/10 backdrop-blur-xl',
-          'overflow-hidden',                         // clip content to current width
+          'overflow-hidden',                         // clips content to current width
+          // Width — transitions smoothly
           'transition-[width] duration-300 ease-in-out',
-          expanded ? 'w-72 shadow-2xl shadow-black/50' : 'w-16',
+          expanded ? 'w-72' : 'w-16',
+          // Shadow when open
+          expanded && 'shadow-[4px_0_24px_rgba(0,0,0,0.5)]',
         )}
       >
-        {/* Logo area */}
-        <div className="flex h-[61px] shrink-0 items-center border-b border-white/10"
-          style={{ padding: expanded ? '0 16px' : '0 12px', justifyContent: expanded ? 'flex-start' : 'center' }}>
-          {expanded ? (
-            <div className="overflow-hidden">
-              <Logo variant="dark" />
-            </div>
-          ) : (
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/20 shrink-0">
-              <span className="text-cyan-400 font-black text-sm select-none">B9</span>
-            </div>
-          )}
+        {/* Logo */}
+        <div className={clsx(
+          'flex shrink-0 items-center h-[61px] border-b border-white/10',
+          expanded ? 'px-4' : 'justify-center'
+        )}>
+          {expanded
+            ? <Logo variant="dark" />
+            : (
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/20">
+                <span className="text-cyan-400 font-black text-sm select-none">B9</span>
+              </div>
+            )
+          }
         </div>
 
-        {/* Scrollable nav */}
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-3 space-y-0.5 px-2">
+        {/* Nav */}
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-3 px-2 space-y-0.5">
           {SIDEBAR_GROUPS.slice(0, 8).map((group) => {
             const Icon = ICONS[group.icon as keyof typeof ICONS];
-            const isOpen = openGroups.includes(group.id);
-            const hasChildren = !!(group.children?.length);
-            const isActive = isPathActive(group.href || '');
-            const childActive = isGroupChildActive(group.children);
+            const open = openGroups.includes(group.id);
+            const hasKids = !!(group.children?.length);
+            const gActive = groupActive(group.children);
+            const singleActive = isActive(group.href || '');
 
-            if (hasChildren) {
+            if (hasKids) {
               return (
                 <div key={group.id}>
                   <button
                     title={!expanded ? group.name : undefined}
                     onClick={() => {
+                      // If sidebar is collapsed, pin it first then open group
                       if (!expanded) toggleSidebarPinned();
                       toggleGroup(group.id);
                     }}
-                    className={itemCls(childActive)}
+                    className={item(gActive)}
                   >
                     <Icon className="w-5 h-5 shrink-0" />
-                    {/* Label — fades in when expanded */}
-                    <span className={clsx(
-                      'flex-1 text-left whitespace-nowrap transition-all duration-200',
-                      expanded ? 'opacity-100' : 'opacity-0 w-0 pointer-events-none'
-                    )}>
-                      {group.name}
-                    </span>
+                    <span className={clsx(lbl, 'flex-1 text-left')}>{group.name}</span>
                     <ChevronDown className={clsx(
                       'w-4 h-4 shrink-0 transition-all duration-200',
-                      isOpen && 'rotate-180',
+                      open && 'rotate-180',
                       expanded ? 'opacity-100' : 'opacity-0 w-0'
                     )} />
                   </button>
 
-                  {/* Children — only when expanded */}
-                  {isOpen && expanded && (
-                    <div className="ml-3 mt-0.5 space-y-0.5 border-l border-white/10 pl-3">
-                      {group.children?.map((child) => {
-                        const ChildIcon = ICONS[child.icon as keyof typeof ICONS];
-                        const childIsActive = isPathActive(child.href);
-                        const isMessages = child.href === '/dashboard/messages';
+                  {open && expanded && (
+                    <div className="mt-0.5 ml-3 pl-3 space-y-0.5 border-l border-white/10">
+                      {group.children?.map((c) => {
+                        const CIcon = ICONS[c.icon as keyof typeof ICONS];
+                        const cActive = isActive(c.href);
+                        const isMsg = c.href === '/dashboard/messages';
                         return (
-                          <Link key={child.href} href={child.href}
-                            className={childItemCls(childIsActive)}
+                          <Link key={c.href} href={c.href}
+                            className={child(cActive)}
                             onClick={() => setSidebarOpen(false)}>
-                            <ChildIcon className="w-4 h-4 shrink-0" />
-                            <span className="flex-1 whitespace-nowrap overflow-hidden">{child.name}</span>
-                            {isMessages && unreadCount > 0 && (
+                            <CIcon className="w-4 h-4 shrink-0" />
+                            <span className="flex-1 whitespace-nowrap overflow-hidden">{c.name}</span>
+                            {isMsg && unreadCount > 0 && (
                               <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-cyan-500 px-1 text-[9px] font-bold text-white shrink-0">
                                 {unreadCount}
                               </span>
@@ -193,67 +213,53 @@ export const Sidebar = () => {
             return (
               <Link key={group.id} href={group.href || '#'}
                 title={!expanded ? group.name : undefined}
-                className={itemCls(isActive)}
+                className={item(singleActive)}
                 onClick={() => setSidebarOpen(false)}>
                 <Icon className="w-5 h-5 shrink-0" />
-                <span className={clsx(
-                  'whitespace-nowrap transition-all duration-200',
-                  expanded ? 'opacity-100' : 'opacity-0 w-0 pointer-events-none'
-                )}>
-                  {group.name}
-                </span>
+                <span className={lbl}>{group.name}</span>
               </Link>
             );
           })}
         </nav>
 
-        {/* Bottom section — Launch, Billing, Settings + pin button */}
+        {/* Bottom: Launch / Billing / Settings + pin */}
         <div className="shrink-0 border-t border-white/10 py-2 px-2 space-y-0.5">
           {SIDEBAR_GROUPS.slice(8).map((group) => {
             const Icon = ICONS[group.icon as keyof typeof ICONS];
-            const isActive = isPathActive(group.href || '');
+            const a = isActive(group.href || '');
             return (
               <Link key={group.id} href={group.href || '#'}
                 title={!expanded ? group.name : undefined}
-                className={itemCls(isActive)}
+                className={item(a)}
                 onClick={() => setSidebarOpen(false)}>
                 <Icon className="w-5 h-5 shrink-0" />
-                <span className={clsx(
-                  'whitespace-nowrap transition-all duration-200',
-                  expanded ? 'opacity-100' : 'opacity-0 w-0 pointer-events-none'
-                )}>
-                  {group.name}
-                </span>
+                <span className={lbl}>{group.name}</span>
               </Link>
             );
           })}
 
-          {/* Pin / Unpin button */}
-          <button
-            onClick={toggleSidebarPinned}
+          {/* Pin / Unpin */}
+          <button onClick={toggleSidebarPinned}
             title={sidebarPinned ? 'Collapse sidebar' : 'Pin sidebar open'}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-slate-500 hover:bg-white/10 hover:text-slate-300 transition-all duration-150 text-sm"
-          >
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-slate-500 hover:bg-white/10 hover:text-slate-300 transition-all text-sm">
             {sidebarPinned
               ? <ChevronsLeft className="w-4 h-4 shrink-0" />
-              : <ChevronsRight className="w-4 h-4 shrink-0" />}
-            <span className={clsx(
-              'whitespace-nowrap transition-all duration-200',
-              expanded ? 'opacity-100' : 'opacity-0 w-0 pointer-events-none'
-            )}>
-              {sidebarPinned ? 'Collapse' : 'Pin open'}
-            </span>
+              : <ChevronsRight className="w-4 h-4 shrink-0" />
+            }
+            <span className={lbl}>{sidebarPinned ? 'Collapse' : 'Pin open'}</span>
           </button>
         </div>
       </aside>
 
-      {/* ── MOBILE SIDEBAR — slide-in, unchanged ─────────────────────────── */}
+      {/* ═════════════════════════════════════════════════════
+          MOBILE SIDEBAR — slide-in overlay (unchanged)
+      ═════════════════════════════════════════════════════ */}
       <aside
-        style={{ backgroundColor: SIDEBAR_BG }}
+        style={{ backgroundColor: BG }}
         className={clsx(
           'md:hidden fixed left-0 top-16 h-[calc(100vh-64px)] w-72 z-40',
-          'border-r border-white/10 backdrop-blur-xl',
-          'overflow-y-auto transition-transform duration-300 ease-in-out',
+          'border-r border-white/10 backdrop-blur-xl overflow-y-auto',
+          'transition-transform duration-300 ease-in-out',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
@@ -263,33 +269,31 @@ export const Sidebar = () => {
         <nav className="p-3 space-y-0.5">
           {SIDEBAR_GROUPS.slice(0, 8).map((group) => {
             const Icon = ICONS[group.icon as keyof typeof ICONS];
-            const isOpen = openGroups.includes(group.id);
-            const hasChildren = !!(group.children?.length);
-            const isActive = isPathActive(group.href || '');
-            const childActive = isGroupChildActive(group.children);
+            const open = openGroups.includes(group.id);
+            const hasKids = !!(group.children?.length);
+            const gActive = groupActive(group.children);
+            const sActive = isActive(group.href || '');
 
-            if (hasChildren) {
+            if (hasKids) {
               return (
                 <div key={group.id}>
-                  <button onClick={() => toggleGroup(group.id)}
-                    className={itemCls(childActive)}>
+                  <button onClick={() => toggleGroup(group.id)} className={item(gActive)}>
                     <Icon className="w-5 h-5 shrink-0" />
                     <span className="flex-1 text-left">{group.name}</span>
-                    <ChevronDown className={clsx('w-4 h-4 transition-transform', isOpen && 'rotate-180')} />
+                    <ChevronDown className={clsx('w-4 h-4 transition-transform', open && 'rotate-180')} />
                   </button>
-                  {isOpen && (
-                    <div className="ml-4 mt-0.5 space-y-0.5 border-l border-white/10 pl-3">
-                      {group.children?.map((child) => {
-                        const ChildIcon = ICONS[child.icon as keyof typeof ICONS];
-                        const childIsActive = isPathActive(child.href);
-                        const isMessages = child.href === '/dashboard/messages';
+                  {open && (
+                    <div className="mt-0.5 ml-4 pl-3 space-y-0.5 border-l border-white/10">
+                      {group.children?.map((c) => {
+                        const CIcon = ICONS[c.icon as keyof typeof ICONS];
+                        const cActive = isActive(c.href);
+                        const isMsg = c.href === '/dashboard/messages';
                         return (
-                          <Link key={child.href} href={child.href}
-                            className={childItemCls(childIsActive)}
+                          <Link key={c.href} href={c.href} className={child(cActive)}
                             onClick={() => setSidebarOpen(false)}>
-                            <ChildIcon className="w-4 h-4 shrink-0" />
-                            <span className="flex-1">{child.name}</span>
-                            {isMessages && unreadCount > 0 && (
+                            <CIcon className="w-4 h-4 shrink-0" />
+                            <span className="flex-1">{c.name}</span>
+                            {isMsg && unreadCount > 0 && (
                               <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-cyan-500 px-1 text-[9px] font-bold text-white">
                                 {unreadCount}
                               </span>
@@ -303,8 +307,7 @@ export const Sidebar = () => {
               );
             }
             return (
-              <Link key={group.id} href={group.href || '#'}
-                className={itemCls(isActive)}
+              <Link key={group.id} href={group.href || '#'} className={item(sActive)}
                 onClick={() => setSidebarOpen(false)}>
                 <Icon className="w-5 h-5 shrink-0" />
                 <span>{group.name}</span>
@@ -314,10 +317,8 @@ export const Sidebar = () => {
           <div className="my-2 border-t border-white/10" />
           {SIDEBAR_GROUPS.slice(8).map((group) => {
             const Icon = ICONS[group.icon as keyof typeof ICONS];
-            const isActive = isPathActive(group.href || '');
             return (
-              <Link key={group.id} href={group.href || '#'}
-                className={itemCls(isActive)}
+              <Link key={group.id} href={group.href || '#'} className={item(isActive(group.href || ''))}
                 onClick={() => setSidebarOpen(false)}>
                 <Icon className="w-5 h-5 shrink-0" />
                 <span>{group.name}</span>

@@ -60,6 +60,16 @@ export const useUIStore = create<UIState>()(
         openGroups: [],
       }),
     }),
-    { name: 'ui-store' }
+    {
+      name: 'ui-store-v2',  // v2 forces fresh state — clears old pinned=true from localStorage
+      partialize: (state) => ({
+        // Persist these — user preferences
+        sidebarOpen: state.sidebarOpen,
+        openGroups: state.openGroups,
+        darkMode: state.darkMode,
+        // Persist pinned only explicitly — default false on fresh load
+        sidebarPinned: state.sidebarPinned,
+      }),
+    }
   )
 );
