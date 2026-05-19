@@ -141,7 +141,7 @@ function WaPreview({ template, vars }: { template: any; vars: string[] }) {
 
 // ─── Campaign Table ───────────────────────────────────────────────────────────
 
-const COL = '40px minmax(160px,1fr) 100px 110px 80px 120px 52px 56px 56px 44px';
+const COL = '40px minmax(140px,260px) 100px 110px 80px 120px 52px 56px 56px 44px';
 
 function CampaignTable({ campaigns, onDetail, onRefresh }: { campaigns: Campaign[]; onDetail: (name: string) => void; onRefresh: () => void }) {
   return (
@@ -149,7 +149,7 @@ function CampaignTable({ campaigns, onDetail, onRefresh }: { campaigns: Campaign
       {/* Header */}
       <div className="grid bg-[#1877F2] text-white text-[11px] font-semibold px-4 py-3 select-none"
         style={{ gridTemplateColumns: COL }}>
-        <div className="opacity-80">#</div>
+        <div className="opacity-80">Sr</div>
         <div>Campaign Name</div>
         <div>Category</div>
         <div>Created</div>
@@ -709,11 +709,11 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
   return (
     <AnimatePresence>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm flex items-start justify-center pt-10 pb-6 px-4 overflow-y-auto"
+        className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm flex items-center justify-center px-4 overflow-y-auto py-6"
         onClick={onClose}>
         <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-          className="bg-white rounded-2xl shadow-2xl w-full max-w-xl flex flex-col"
+          className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[88vh]"
           onClick={e => e.stopPropagation()}>
 
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 flex-shrink-0">
