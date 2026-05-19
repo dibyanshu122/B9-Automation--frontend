@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Check, ChevronRight, Copy, Inbox, Loader2, MapPin, MessageCircle, MoreVertical, Search, Send, Tag, Trash2, User, XCircle, Zap } from 'lucide-react';
+import { ArrowLeft, Check, ChevronRight, Copy, FileText, Inbox, Loader2, MapPin, MessageCircle, MoreVertical, Play, Search, Send, Tag, Trash2, User, XCircle, Zap } from 'lucide-react';
 import { Button } from '@/components/button';
 import { useApi } from '@/hooks/useApi';
 import { useAuthStore } from '@/store/authStore';
