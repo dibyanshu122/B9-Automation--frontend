@@ -5,6 +5,7 @@ import {
   AlertCircle, BarChart2, CheckCircle2,
   Clock, Loader2, MessageSquare, Plus, RefreshCw, Send, Users,
   X, XCircle, FileText, Calendar, Ban, ChevronLeft, ChevronRight,
+  Globe, Smartphone, Trash2, Eye, Upload,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -58,6 +59,84 @@ function formatScheduled(iso: string): string {
   return new Date(iso.endsWith('Z') ? iso : iso + 'Z').toLocaleString('en-IN', {
     day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
   });
+}
+
+// ─── Country detection ────────────────────────────────────────────────────────
+
+const COUNTRY_MAP: { prefix: string; flag: string; name: string }[] = [
+  { prefix: '+91',  flag: '🇮🇳', name: 'India' },
+  { prefix: '+1',   flag: '🇺🇸', name: 'USA / Canada' },
+  { prefix: '+44',  flag: '🇬🇧', name: 'UK' },
+  { prefix: '+971', flag: '🇦🇪', name: 'UAE' },
+  { prefix: '+966', flag: '🇸🇦', name: 'Saudi Arabia' },
+  { prefix: '+974', flag: '🇶🇦', name: 'Qatar' },
+  { prefix: '+65',  flag: '🇸🇬', name: 'Singapore' },
+  { prefix: '+61',  flag: '🇦🇺', name: 'Australia' },
+  { prefix: '+60',  flag: '🇲🇾', name: 'Malaysia' },
+  { prefix: '+880', flag: '🇧🇩', name: 'Bangladesh' },
+  { prefix: '+92',  flag: '🇵🇰', name: 'Pakistan' },
+  { prefix: '+977', flag: '🇳🇵', name: 'Nepal' },
+];
+
+function detectCountry(phone: string): string {
+  // Sort by prefix length desc so +974 matches before +97
+  const sorted = [...COUNTRY_MAP].sort((a, b) => b.prefix.length - a.prefix.length);
+  const match = sorted.find(c => phone.startsWith(c.prefix));
+  return match ? `${match.flag} ${match.name}` : '🌐 International';
+}
+
+interface ParseResult {
+  valid: string[];
+  invalidCount: number;
+  duplicateCount: number;
+  countryBreakdown: Record<string, number>;
+  fileName: string;
+}
+
+// ─── WhatsApp Preview Bubble ──────────────────────────────────────────────────
+
+function WaPreview({ template, vars }: { template: any; vars: string[] }) {
+  if (!template) return null;
+  const body = template.components?.find((c: any) => c.type === 'BODY')?.text || '';
+  const header = template.components?.find((c: any) => c.type === 'HEADER');
+  const footer = template.components?.find((c: any) => c.type === 'FOOTER')?.text;
+  const buttons = template.components?.find((c: any) => c.type === 'BUTTONS')?.buttons || [];
+
+  const rendered = body.replace(/\{\{(\d+)\}\}/g, (_: string, n: string) => {
+    const val = vars[parseInt(n) - 1];
+    return val ? `*${val}*` : `{{${n}}}`;
+  });
+
+  return (
+    <div className="rounded-xl bg-[#e5ddd5] p-3">
+      <p className="text-[10px] text-gray-500 text-center mb-2">WhatsApp Preview</p>
+      <div className="bg-white rounded-xl shadow-sm max-w-[280px] mx-auto overflow-hidden">
+        {header?.format === 'IMAGE' && (
+          <div className="h-24 bg-gray-100 flex items-center justify-center text-gray-400 text-xs border-b">
+            🖼️ Image Header
+          </div>
+        )}
+        {header?.format === 'TEXT' && (
+          <div className="px-3 pt-3 pb-1 font-bold text-sm text-gray-900">{header.text}</div>
+        )}
+        <div className="px-3 py-2.5">
+          <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap"
+            dangerouslySetInnerHTML={{ __html: rendered.replace(/\*(.+?)\*/g, '<strong>$1</strong>').replace(/\n/g, '<br/>') }} />
+          {footer && <p className="text-[10px] text-gray-400 mt-1.5">{footer}</p>}
+          <p className="text-[9px] text-gray-400 text-right mt-1">12:30 ✓✓</p>
+        </div>
+        {buttons.length > 0 && (
+          <div className="border-t border-gray-100 divide-y divide-gray-100">
+            {buttons.map((b: any, i: number) => (
+              <div key={i} className="px-3 py-2 text-center text-xs font-semibold text-blue-500">
+                {b.type === 'URL' ? '🔗 ' : b.type === 'PHONE_NUMBER' ? '📞 ' : ''}{b.text}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 // ─── Campaign Table ───────────────────────────────────────────────────────────
@@ -245,10 +324,16 @@ function DetailDrawer({ name, onClose, onRefresh }: { name: string; onClose: () 
   const statusCfg = data ? STATUS_CONFIG[data.status] || STATUS_CONFIG.completed : null;
 
   return (
-    <AnimatePresence>
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+    <>
+      {/* Backdrop */}
+      <motion.div
+        key="detail-backdrop"
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
         className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
+      {/* Panel */}
+      <motion.div
+        key="detail-panel"
+        initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
         transition={{ type: 'spring', stiffness: 280, damping: 30 }}
         className="fixed right-0 top-0 z-50 h-full w-full max-w-xl bg-white shadow-2xl flex flex-col">
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 flex-shrink-0">
@@ -343,7 +428,7 @@ function DetailDrawer({ name, onClose, onRefresh }: { name: string; onClose: () 
           </>
         ) : null}
       </motion.div>
-    </AnimatePresence>
+    </>
   );
 }
 
@@ -461,9 +546,8 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
   const [recipientMode, setRecipientMode] = useState<'leads' | 'excel'>('leads');
   const [filter, setFilter] = useState('all');
   const [customTag, setCustomTag] = useState('');
+  const [parseResult, setParseResult] = useState<ParseResult | null>(null);
   const [excelPhones, setExcelPhones] = useState<string[]>([]);
-  const [excelFileName, setExcelFileName] = useState('');
-  const [parsedCount, setParsedCount] = useState(0);
   const [templates, setTemplates] = useState<any[]>([]);
   const [loadingTpl, setLoadingTpl] = useState(false);
   const [selected, setSelected] = useState<any>(null);
@@ -491,40 +575,52 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setExcelFileName(file.name);
     try {
       const XLSX = await import('xlsx');
       const data = await file.arrayBuffer();
       const wb = XLSX.read(data, { type: 'array' });
       const ws = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(ws, { header: 1 }) as any[][];
-      const phones: string[] = [];
+
+      const raw: string[] = [];
+      let invalidCount = 0;
+
       for (const row of rows) {
         for (const cell of row) {
-          const val = String(cell ?? '').trim().replace(/[\s\-\(\)\+\.]/g, '');
-          if (!/^\d{8,15}$/.test(val)) continue;
-          let normalized: string;
-          if (val.startsWith('91') && val.length === 12) {
-            normalized = '+' + val;           // 91XXXXXXXXXX → +91XXXXXXXXXX
-          } else if (val.length === 10) {
-            normalized = '+91' + val;          // 10 digit → +91XXXXXXXXXX
-          } else if (val.startsWith('0') && val.length === 11) {
-            normalized = '+91' + val.slice(1); // 0XXXXXXXXXX → +91XXXXXXXXXX
-          } else {
-            normalized = '+' + val;            // other: add + prefix
+          const original = String(cell ?? '').trim();
+          if (!original) continue;
+          const val = original.replace(/[\s\-\(\)\+\.]/g, '');
+          if (!/^\d{8,15}$/.test(val)) {
+            // Skip obvious non-phone values (headers, names, emails etc.)
+            if (val.length > 3) invalidCount++;
+            continue;
           }
-          phones.push(normalized);
+          let normalized: string;
+          if (val.startsWith('91') && val.length === 12) normalized = '+' + val;
+          else if (val.length === 10) normalized = '+91' + val;
+          else if (val.startsWith('0') && val.length === 11) normalized = '+91' + val.slice(1);
+          else normalized = '+' + val;
+          raw.push(normalized);
         }
       }
-      const unique = [...new Set(phones)];
-      const dupes = phones.length - unique.length;
+
+      const unique = [...new Set(raw)];
+      const duplicateCount = raw.length - unique.length;
+
+      // Country breakdown
+      const countryBreakdown: Record<string, number> = {};
+      for (const p of unique) {
+        const country = detectCountry(p);
+        countryBreakdown[country] = (countryBreakdown[country] || 0) + 1;
+      }
+
+      const result: ParseResult = {
+        valid: unique, invalidCount, duplicateCount,
+        countryBreakdown, fileName: file.name,
+      };
+      setParseResult(result);
       setExcelPhones(unique);
-      setParsedCount(unique.length);
       setPreview(null);
-      if (dupes > 0)
-        toast.success(`${unique.length} numbers loaded — ${dupes} duplicate${dupes > 1 ? 's' : ''} removed`);
-      else
-        toast.success(`${unique.length} phone numbers loaded from ${file.name}`);
     } catch {
       toast.error('Could not read file. Please use .xlsx or .csv format');
     }
@@ -545,6 +641,7 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
     } else {
       if (!excelPhones.length) { toast.error('Upload an Excel/CSV file first'); return; }
       setPreview({ total_recipients: excelPhones.length, sample: excelPhones.slice(0, 5).map(p => ({ name: p, phone: p, score: '', tag: '' })) });
+      return;
     }
   };
 
@@ -574,11 +671,10 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
     if (!name.trim()) { toast.error('Campaign name required'); return; }
     if (!selected) { toast.error('Select a template first'); return; }
     if (vars.some(v => !v.trim())) { toast.error('Fill all template variables'); return; }
-    if (recipientMode === 'excel' && !excelPhones.length) { toast.error('Upload a file with phone numbers'); return; }
+    if (recipientMode === 'excel' && !excelPhones.length) { toast.error('Upload a file with valid phone numbers'); return; }
     if (!saveAsDraft) {
       const count = recipientMode === 'excel' ? excelPhones.length : preview?.total_recipients;
-      if (!count) { toast.error('Preview recipients first'); return; }
-      if (!confirm(`Send to ${count} recipient${count !== 1 ? 's' : ''}?`)) return;
+      if (!count && recipientMode === 'leads') { toast.error('Click Preview to see recipients first'); return; }
     }
     setSending(true);
     try {
@@ -690,35 +786,114 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
             )}
 
             {recipientMode === 'excel' && (
-              <div className="space-y-2">
-                <label className={`flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl py-6 cursor-pointer transition ${parsedCount > 0 ? 'border-green-400 bg-green-50' : 'border-gray-200 hover:border-orange-400 hover:bg-orange-50/30'}`}>
+              <div className="space-y-3">
+                {/* Upload zone */}
+                <label className={`flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl py-5 cursor-pointer transition ${parseResult ? 'border-green-400 bg-green-50' : 'border-gray-200 hover:border-blue-400 hover:bg-blue-50/30'}`}>
                   <input type="file" accept=".xlsx,.xls,.csv" onChange={handleFileUpload} className="hidden" />
-                  {parsedCount > 0 ? (
+                  {parseResult ? (
                     <>
-                      <span className="text-2xl">✅</span>
-                      <p className="text-sm font-semibold text-green-700">{parsedCount} numbers loaded</p>
-                      <p className="text-xs text-green-600">{excelFileName}</p>
-                      <p className="text-xs text-gray-400">Click to replace file</p>
+                      <Upload className="w-5 h-5 text-green-500" />
+                      <p className="text-sm font-semibold text-green-700">{parseResult.fileName}</p>
+                      <p className="text-xs text-green-600">{parseResult.valid.length} valid numbers found</p>
+                      <p className="text-xs text-gray-400 underline">Click to replace file</p>
                     </>
                   ) : (
                     <>
-                      <span className="text-2xl">📊</span>
-                      <p className="text-sm font-semibold text-gray-700">Click to upload Excel or CSV</p>
-                      <p className="text-xs text-gray-400">Phone numbers will be extracted automatically</p>
+                      <Upload className="w-6 h-6 text-gray-400" />
+                      <p className="text-sm font-semibold text-gray-700">Upload Excel (.xlsx) or CSV</p>
+                      <p className="text-xs text-gray-400">Phone numbers extracted automatically from any column</p>
                     </>
                   )}
                 </label>
-                <p className="text-xs text-gray-400">File should have phone numbers with country code (+91XXXXXXXXXX). One number per row or in any column.</p>
+
+                {/* Validation Summary */}
+                {parseResult && (
+                  <div className="rounded-xl border border-gray-200 overflow-hidden text-sm">
+                    {/* Stats row */}
+                    <div className="grid grid-cols-3 divide-x divide-gray-200 bg-gray-50">
+                      <div className="px-3 py-2.5 text-center">
+                        <p className="text-lg font-bold text-emerald-600">{parseResult.valid.length}</p>
+                        <p className="text-[10px] text-gray-500">Valid Numbers</p>
+                      </div>
+                      <div className="px-3 py-2.5 text-center">
+                        <p className={`text-lg font-bold ${parseResult.duplicateCount > 0 ? 'text-amber-500' : 'text-gray-300'}`}>{parseResult.duplicateCount}</p>
+                        <p className="text-[10px] text-gray-500">Duplicates Removed</p>
+                      </div>
+                      <div className="px-3 py-2.5 text-center">
+                        <p className={`text-lg font-bold ${parseResult.invalidCount > 0 ? 'text-red-400' : 'text-gray-300'}`}>{parseResult.invalidCount}</p>
+                        <p className="text-[10px] text-gray-500">Invalid Skipped</p>
+                      </div>
+                    </div>
+
+                    {/* Country breakdown */}
+                    <div className="px-3 py-2.5 border-t border-gray-100">
+                      <p className="text-[10px] font-semibold text-gray-500 mb-2 flex items-center gap-1">
+                        <Globe className="w-3 h-3" /> Country Breakdown
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {Object.entries(parseResult.countryBreakdown)
+                          .sort(([, a], [, b]) => b - a)
+                          .map(([country, count]) => (
+                            <span key={country} className="text-[11px] bg-blue-50 text-blue-700 border border-blue-200 rounded-full px-2.5 py-1 flex items-center gap-1">
+                              <Smartphone className="w-2.5 h-2.5" />
+                              {country} <strong>{count}</strong>
+                            </span>
+                          ))
+                        }
+                      </div>
+                    </div>
+
+                    {/* Warnings */}
+                    {(parseResult.duplicateCount > 0 || parseResult.invalidCount > 0) && (
+                      <div className="px-3 py-2 bg-amber-50 border-t border-amber-100">
+                        {parseResult.duplicateCount > 0 && (
+                          <p className="text-[10px] text-amber-700 flex items-center gap-1">
+                            <Trash2 className="w-3 h-3" />
+                            {parseResult.duplicateCount} duplicate number{parseResult.duplicateCount > 1 ? 's' : ''} removed automatically
+                          </p>
+                        )}
+                        {parseResult.invalidCount > 0 && (
+                          <p className="text-[10px] text-red-600 flex items-center gap-1 mt-0.5">
+                            <XCircle className="w-3 h-3" />
+                            {parseResult.invalidCount} invalid cell{parseResult.invalidCount > 1 ? 's' : ''} skipped (non-phone values)
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {parseResult.valid.length === 0 && (
+                      <div className="px-3 py-2.5 bg-red-50 border-t border-red-100">
+                        <p className="text-xs text-red-600 font-semibold">⚠️ No valid phone numbers found. Please check your file format.</p>
+                        <p className="text-[10px] text-red-500 mt-0.5">Expected: +91XXXXXXXXXX or 10-digit numbers</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {!parseResult && (
+                  <p className="text-[10px] text-gray-400">
+                    Supports any column layout. Numbers auto-normalized to E.164 format. Duplicates removed automatically.
+                  </p>
+                )}
               </div>
             )}
           </div>}
+
+          {/* Meta compliance notice */}
+          <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800">
+            <p className="font-semibold mb-1">⚠️ Meta WhatsApp Compliance</p>
+            <ul className="space-y-0.5 opacity-90">
+              <li>• Only <strong>APPROVED templates</strong> can be used for bulk campaigns</li>
+              <li>• Free-form text can only be sent within the 24-hour window after a customer messages you</li>
+              <li>• Sending to opted-out contacts is automatically blocked</li>
+            </ul>
+          </div>
 
           {/* Template dropdown */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">
               Select Template <span className="text-red-500">*</span>
             </label>
-            <p className="text-xs text-amber-600 mb-2">⚠️ Use APPROVED templates for leads outside 24h window</p>
             <div className="relative">
               {/* Dropdown trigger */}
               <button type="button" onClick={() => setDropdownOpen(o => !o)}
@@ -766,15 +941,26 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
           {/* Template variable inputs */}
           {vars.length > 0 && (
             <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">Template Variables <span className="text-red-500">*</span></label>
+              <label className="block text-sm font-semibold text-gray-700">
+                Fill Template Variables <span className="text-red-500">*</span>
+              </label>
+              <p className="text-xs text-gray-400">
+                Use <code className="bg-gray-100 px-1 rounded">{'{{lead.name}}'}</code> for personalization per lead.
+              </p>
               {vars.map((v, i) => (
                 <div key={i} className="flex items-center gap-2">
-                  <span className="text-xs font-mono bg-orange-50 text-orange-700 border border-orange-200 px-2 py-1 rounded w-14 text-center flex-shrink-0">{`{{${i+1}}}`}</span>
+                  <span className="text-xs font-mono bg-orange-50 text-orange-700 border border-orange-200 px-2 py-1.5 rounded-lg w-14 text-center flex-shrink-0">{`{{${i+1}}}`}</span>
                   <input value={v} onChange={e => setVars(vars.map((x, j) => j === i ? e.target.value : x))}
-                    placeholder={`Value for {{${i+1}}}`} className={inputCls} />
+                    placeholder={i === 0 ? '{{lead.name}} or "Hello!"' : `Value for {{${i+1}}}`}
+                    className={inputCls} />
                 </div>
               ))}
             </div>
+          )}
+
+          {/* WhatsApp Preview */}
+          {selected && (
+            <WaPreview template={selected} vars={vars} />
           )}
 
           {/* Schedule */}
