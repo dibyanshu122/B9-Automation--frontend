@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  Bell, CheckCircle2, Clock, Loader2, MessageSquare, Plus,
+  Bell, CheckCircle2, Clock, Edit2, Loader2, MessageSquare, Plus,
   ToggleLeft, ToggleRight, Trash2, X, Zap, UserCheck, PhoneOff, Bot,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -29,6 +29,7 @@ const TABS = [
   { key: 'opt_out',        label: 'Opt Out',        icon: <PhoneOff className="w-4 h-4" />,     desc: 'Handle STOP / unsubscribe keywords' },
   { key: 'keyword_alert',  label: 'Keyword Alerts', icon: <Bell className="w-4 h-4" />,         desc: 'Get notified when keyword detected' },
   { key: 'auto_assign',    label: 'Auto Assign',    icon: <UserCheck className="w-4 h-4" />,    desc: 'Route chats to specific agents by keyword' },
+  { key: 'quick_replies',  label: 'Quick Replies',  icon: <Zap className="w-4 h-4" />,          desc: 'Saved short replies — use ⚡ button in inbox to insert instantly' },
   { key: 'icebreaker',     label: 'Icebreaker',     icon: <Bot className="w-4 h-4" />,          desc: 'Conversation starters on WhatsApp profile' },
 ];
 
@@ -264,6 +265,56 @@ export default function AutoRepliesPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingRule, setEditingRule] = useState<Rule | null>(null);
 
+  // Quick Replies state
+  const [qrs, setQrs] = useState<{id:string;title:string;message:string;shortcut?:string}[]>([]);
+  const [qrLoading, setQrLoading] = useState(false);
+  const [showQrForm, setShowQrForm] = useState(false);
+  const [editingQr, setEditingQr] = useState<{id:string;title:string;message:string;shortcut?:string}|null>(null);
+  const [qrTitle, setQrTitle] = useState('');
+  const [qrMessage, setQrMessage] = useState('');
+  const [qrShortcut, setQrShortcut] = useState('');
+  const [qrSaving, setQrSaving] = useState(false);
+
+  const loadQrs = () => {
+    setQrLoading(true);
+    get('/api/quick-replies')
+      .then(r => setQrs(r.data?.quick_replies || r.data || []))
+      .catch(() => {})
+      .finally(() => setQrLoading(false));
+  };
+
+  const saveQr = async () => {
+    if (!qrTitle.trim() || !qrMessage.trim()) { toast.error('Title and message required'); return; }
+    setQrSaving(true);
+    try {
+      const payload = { title: qrTitle.trim(), message: qrMessage.trim(), shortcut: qrShortcut.trim() || undefined };
+      if (editingQr) {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+        const token = localStorage.getItem('token');
+        const axios = (await import('axios')).default;
+        await axios.put(`${apiUrl}/api/quick-replies/${editingQr.id}`, payload, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+        toast.success('Quick reply updated');
+      } else {
+        await post('/api/quick-replies', payload);
+        toast.success('Quick reply saved');
+      }
+      setShowQrForm(false); setEditingQr(null); setQrTitle(''); setQrMessage(''); setQrShortcut('');
+      loadQrs();
+    } catch { toast.error('Save failed'); }
+    finally { setQrSaving(false); }
+  };
+
+  const deleteQr = async (id: string) => {
+    if (!confirm('Delete this quick reply?')) return;
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+      const token = localStorage.getItem('token');
+      const axios = (await import('axios')).default;
+      await axios.delete(`${apiUrl}/api/quick-replies/${id}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+      toast.success('Deleted'); loadQrs();
+    } catch { toast.error('Delete failed'); }
+  };
+
   const load = () => {
     setLoading(true);
     get('/api/auto-replies/rules')
@@ -273,6 +324,7 @@ export default function AutoRepliesPage() {
   };
 
   useEffect(() => { load(); }, []); // eslint-disable-line
+  useEffect(() => { if (activeTab === 'quick_replies') loadQrs(); }, [activeTab]); // eslint-disable-line
 
   const toggle = async (rule: Rule) => {
     try {
@@ -323,7 +375,7 @@ export default function AutoRepliesPage() {
       </div>
 
       {/* Tab description + add button */}
-      {activeTab !== 'icebreaker' && (
+      {activeTab !== 'icebreaker' && activeTab !== 'quick_replies' && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-gray-500">{tab.desc}</p>
           {(!isSingleRule || tabRules.length === 0) && (
@@ -337,8 +389,93 @@ export default function AutoRepliesPage() {
       {/* Icebreaker tab */}
       {activeTab === 'icebreaker' && <IcebreakerPanel />}
 
+      {/* ── Quick Replies tab ──────────────────────────────────────────────── */}
+      {activeTab === 'quick_replies' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-500">Inbox ke ⚡ button se select karke instantly bhejo — type karne ki zarurat nahi.</p>
+            <Button onClick={() => { setEditingQr(null); setQrTitle(''); setQrMessage(''); setQrShortcut(''); setShowQrForm(true); }}
+              className="flex items-center gap-2"><Plus className="w-4 h-4" /> Add Quick Reply</Button>
+          </div>
+
+          {/* Add / Edit form */}
+          {showQrForm && (
+            <div className="rounded-2xl border border-orange-200 bg-orange-50 p-5 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="font-semibold text-gray-800">{editingQr ? 'Edit Quick Reply' : 'New Quick Reply'}</p>
+                <button onClick={() => setShowQrForm(false)} className="text-gray-400 hover:text-gray-700"><X className="w-4 h-4" /></button>
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-gray-600 mb-1">Title <span className="text-gray-400">(shown in dropdown)</span></p>
+                <input value={qrTitle} onChange={e => setQrTitle(e.target.value)}
+                  placeholder="e.g. Greeting, Price Info, Follow Up..."
+                  className="input-field text-sm" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-gray-600 mb-1">Message <span className="text-gray-400">(what gets sent)</span></p>
+                <textarea value={qrMessage} onChange={e => setQrMessage(e.target.value)}
+                  rows={3} placeholder="Namaste! Aapki query ke liye shukriya. Hum 10 minute mein aapse contact karenge."
+                  className="input-field text-sm resize-none" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-gray-600 mb-1">Shortcut <span className="text-gray-400">(optional — e.g. /greet)</span></p>
+                <input value={qrShortcut} onChange={e => setQrShortcut(e.target.value)}
+                  placeholder="/greet" className="input-field text-sm" />
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button variant="secondary" onClick={() => setShowQrForm(false)}>Cancel</Button>
+                <Button onClick={saveQr} loading={qrSaving}>
+                  {editingQr ? 'Update' : 'Save Quick Reply'}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* List */}
+          {qrLoading ? (
+            <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-gray-400" /></div>
+          ) : qrs.length === 0 ? (
+            <div className="flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-gray-200 py-14 text-center">
+              <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center text-orange-500">
+                <Zap className="w-5 h-5" />
+              </div>
+              <p className="font-semibold text-gray-500">Koi Quick Reply nahi hai abhi</p>
+              <p className="text-sm text-gray-400">Add karo — inbox mein ⚡ button se instantly bhej sakte ho</p>
+              <Button onClick={() => setShowQrForm(true)} className="mt-1 flex items-center gap-2">
+                <Plus className="w-4 h-4" /> Add First Quick Reply
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {qrs.map(qr => (
+                <div key={qr.id} className="bg-white border border-gray-200 rounded-xl px-4 py-3 hover:shadow-sm transition flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-gray-900 text-sm">{qr.title}</span>
+                      {qr.shortcut && (
+                        <span className="text-[10px] font-mono bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">{qr.shortcut}</span>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-0.5 truncate">{qr.message}</p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button onClick={() => {
+                      setEditingQr(qr); setQrTitle(qr.title); setQrMessage(qr.message);
+                      setQrShortcut(qr.shortcut || ''); setShowQrForm(true);
+                    }} className="p-1.5 text-gray-400 hover:text-blue-600 transition"><Edit2 className="w-4 h-4" /></button>
+                    <button onClick={() => deleteQr(qr.id)} className="p-1.5 text-gray-400 hover:text-red-500 transition">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Rules list */}
-      {activeTab !== 'icebreaker' && (
+      {activeTab !== 'icebreaker' && activeTab !== 'quick_replies' && (
         loading ? (
           <div className="flex justify-center py-12"><Loader2 className="w-5 h-5 animate-spin text-gray-400" /></div>
         ) : tabRules.length === 0 ? (
