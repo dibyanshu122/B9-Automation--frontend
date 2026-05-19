@@ -141,22 +141,24 @@ function WaPreview({ template, vars }: { template: any; vars: string[] }) {
 
 // ─── Campaign Table ───────────────────────────────────────────────────────────
 
+const COL = '40px minmax(160px,1fr) 100px 110px 80px 120px 52px 56px 56px 44px';
+
 function CampaignTable({ campaigns, onDetail, onRefresh }: { campaigns: Campaign[]; onDetail: (name: string) => void; onRefresh: () => void }) {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-      {/* Blue header */}
-      <div className="grid bg-[#1877F2] text-white text-xs font-semibold px-4 py-3"
-        style={{ gridTemplateColumns: '36px 180px 90px 100px 70px 110px 36px 46px 46px 36px' }}>
-        <div>Sr</div>
+      {/* Header */}
+      <div className="grid bg-[#1877F2] text-white text-[11px] font-semibold px-4 py-3 select-none"
+        style={{ gridTemplateColumns: COL }}>
+        <div className="opacity-80">#</div>
         <div>Campaign Name</div>
         <div>Category</div>
-        <div>Created Date</div>
+        <div>Created</div>
         <div>Contacts</div>
         <div>Status</div>
-        <div className="text-center" title="Preview">👁</div>
-        <div className="text-center" title="Sent">✓</div>
-        <div className="text-center text-red-200" title="Failed">⚠</div>
-        <div className="text-center">More</div>
+        <div className="text-center opacity-80">Details</div>
+        <div className="text-center text-emerald-200">✓ Sent</div>
+        <div className="text-center text-red-200">✗ Failed</div>
+        <div className="text-center opacity-80">More</div>
       </div>
       {/* Rows */}
       {campaigns.map((c, i) => (
@@ -201,7 +203,7 @@ function CampaignRow({ idx, c, onDetail, onRefresh }: { idx: number; c: Campaign
 
   return (
     <div className={`relative grid px-4 py-3 items-center text-sm hover:bg-blue-50/30 transition border-t border-gray-100 ${idx % 2 === 1 ? 'bg-gray-50/40' : 'bg-white'}`}
-      style={{ gridTemplateColumns: '36px 180px 90px 100px 70px 110px 36px 46px 46px 36px' }}>
+      style={{ gridTemplateColumns: COL }}>
       <div className="text-xs text-gray-400 font-medium">{idx + 1}</div>
       <div className="min-w-0 pr-2">
         <p className="font-semibold text-gray-900 truncate text-sm">{c.name}</p>
