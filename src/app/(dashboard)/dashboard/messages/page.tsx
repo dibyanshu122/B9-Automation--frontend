@@ -364,7 +364,7 @@ function UnifiedInbox() {
 
   // Load saved quick replies once
   useEffect(() => {
-    get('/api/quick-replies').then(r => setQuickReplies(r.data?.items || r.data || [])).catch(() => {});
+    get('/api/auto-replies/quick-replies').then(r => setQuickReplies(r.data?.items || r.data || [])).catch(() => {});
   }, []); // eslint-disable-line
 
   // Close quick reply / template dropdowns on outside click
