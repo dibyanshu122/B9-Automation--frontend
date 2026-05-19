@@ -278,7 +278,7 @@ function MessageContent({ msg, isOutbound }: { msg: any; isOutbound: boolean }) 
 }
 
 function UnifiedInbox() {
-  const { get, post } = useApi();
+  const { get, post, delete: del } = useApi();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'whatsapp' | 'instagram' | 'facebook'>('all');
@@ -627,19 +627,17 @@ function UnifiedInbox() {
                       <button onClick={async () => {
                         setMenuOpen(false);
                         if (!confirm('Delete this entire conversation? This cannot be undone.')) return;
+                        const deletingContact = selected;
                         try {
-                          await (get as any)(`/api/automation/inbox/conversation?sender_id=${encodeURIComponent(selected.sender_id)}&channel=${selected.channel}`, { method: 'DELETE' });
-                        } catch {}
-                        // Use delete via fetch directly
-                        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-                        const token = localStorage.getItem('token');
-                        await fetch(`${apiUrl}/api/automation/inbox/conversation?sender_id=${encodeURIComponent(selected.sender_id)}&channel=${selected.channel}`, {
-                          method: 'DELETE',
-                          headers: token ? { Authorization: `Bearer ${token}` } : {},
-                        });
-                        toast.success('Conversation deleted');
-                        setSelected(null);
-                        setThread([]);
+                          await del(`/api/automation/inbox/conversation?sender_id=${encodeURIComponent(selected.sender_id)}&channel=${selected.channel}`);
+                          toast.success('Conversation deleted');
+                          setSelected(null);
+                          setThread([]);
+                          // Remove from contacts list immediately
+                          setContacts(prev => prev.filter(c => !(c.sender_id === deletingContact.sender_id && c.channel === deletingContact.channel)));
+                        } catch {
+                          toast.error('Failed to delete conversation');
+                        }
                       }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-red-50 text-red-600 flex items-center gap-2">
                         <Trash2 className="h-4 w-4" /> Delete Chat
                       </button>
