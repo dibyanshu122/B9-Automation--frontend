@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
 import toast from 'react-hot-toast';
 import {
   AlertCircle,
@@ -9,7 +8,6 @@ import {
   CalendarClock,
   CheckCircle2,
   ChevronDown,
-  MessageCircle,
   Database,
   ExternalLink,
   Instagram,
@@ -181,11 +179,6 @@ export default function IntegrationsPage() {
   const [gsShowFilePicker, setGsShowFilePicker] = useState(false);
   const [whatsappWebhookUrl, setWhatsappWebhookUrl] = useState('');
   const [whatsappConnected, setWhatsappConnected] = useState(false);
-  const [waFlows, setWaFlows] = useState<any[]>([]);
-  const [waFlowsLoading, setWaFlowsLoading] = useState(false);
-  const [waFlowsExpanded, setWaFlowsExpanded] = useState(false);
-  const [newFlowName, setNewFlowName] = useState('');
-  const [newFlowCategory, setNewFlowCategory] = useState('LEAD_GENERATION');
   const [waBusinessProfile, setWaBusinessProfile] = useState<any>(null);
   const [bpEditing, setBpEditing] = useState(false);
   const [bpForm, setBpForm] = useState({ about: '', address: '', description: '', email: '', websites: '', vertical: '' });
@@ -1976,24 +1969,7 @@ export default function IntegrationsPage() {
                   </label>
                 </div>
                 <div className="rounded-xl border border-gray-200 p-4">
-                  <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Step 1 — Provider Mode</p>
-                  <div className="mt-3 grid grid-cols-2 gap-3">
-                    <button type="button" onClick={() => setConfigForm({...configForm, mode: 'draft'})}
-                      className={`rounded-lg border p-3 text-left transition ${configForm.mode === 'draft' || !configForm.mode ? 'border-primary-500 bg-emerald-50 text-primary-700' : 'border-gray-200 hover:border-gray-300'}`}>
-                      <p className="text-sm font-semibold">Draft Mode</p>
-                      <p className="mt-0.5 text-xs text-gray-500">Test automation without sending real messages.</p>
-                    </button>
-                    <button type="button" onClick={() => setConfigForm({...configForm, mode: 'live'})}
-                      className={`rounded-lg border p-3 text-left transition ${configForm.mode === 'live' ? 'border-primary-500 bg-emerald-50 text-primary-700' : 'border-gray-200 hover:border-gray-300'}`}>
-                      <p className="text-sm font-semibold">Live Mode</p>
-                      <p className="mt-0.5 text-xs text-gray-500">Connect Meta Cloud API to send real messages.</p>
-                    </button>
-                  </div>
-                </div>
-
-                {configForm.mode === 'live' && (
-                  <div className="rounded-xl border border-gray-200 p-4">
-                    <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Step 2 — Meta Credentials</p>
+                  <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Step 1 — Meta Cloud API Credentials</p>
 
                     <div className="mt-3 mb-4 rounded-lg border border-blue-100 bg-blue-50 p-3 text-xs text-blue-800">
                       <p className="font-bold mb-1.5">Where to find these credentials:</p>
@@ -2042,8 +2018,7 @@ export default function IntegrationsPage() {
                       </label>
                     </div>
                   </div>
-                )}
-                
+
                 <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
                   <Button type="button" variant="secondary" onClick={closeModal}>Cancel</Button>
                   <Button type="button" variant="secondary" onClick={testWhatsAppConnection} loading={loading === 'whatsapp:test'}>
@@ -2054,134 +2029,19 @@ export default function IntegrationsPage() {
                   </Button>
                 </div>
 
-                {/* Quick navigation to WhatsApp sections */}
-                <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl border border-emerald-100 bg-emerald-50 p-4">
-                  <p className="col-span-2 text-xs font-bold uppercase tracking-wide text-emerald-700 mb-1">
-                    After connecting, go to:
-                  </p>
-                  <Link
-                    href="/dashboard/messages"
-                    onClick={closeModal}
-                    className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-white px-3 py-2.5 text-sm font-semibold text-emerald-800 hover:bg-emerald-100 transition"
-                  >
-                    <Send className="h-4 w-4 shrink-0" />
-                    WhatsApp Messages
-                  </Link>
-                  <Link
-                    href="/dashboard/chat"
-                    onClick={closeModal}
-                    className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-white px-3 py-2.5 text-sm font-semibold text-emerald-800 hover:bg-emerald-100 transition"
-                  >
-                    <MessageCircle className="h-4 w-4 shrink-0" />
-                    AI Chat
-                  </Link>
+                {/* Compact inline test */}
+                <div className="mt-3 flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5">
+                  <span className="text-xs font-semibold text-gray-500 shrink-0">Quick Test</span>
+                  <input
+                    value={configForm.test_to || ''}
+                    onChange={(e) => setConfigForm({...configForm, test_to: e.target.value})}
+                    placeholder="+91 98765 43210"
+                    className="flex-1 min-w-0 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-400"
+                  />
+                  <Button type="button" variant="secondary" onClick={testWhatsAppConnection} loading={loading === 'whatsapp:test'} className="shrink-0 text-xs py-1.5 px-3">
+                    <Send className="h-3.5 w-3.5" /> Send Test
+                  </Button>
                 </div>
-
-              {/* ── WhatsApp Flows Management ── */}
-              {whatsappConnected && (
-                <div className="mt-4 rounded-xl border border-purple-200 bg-purple-50 p-4">
-                  <button
-                    type="button"
-                    className="flex w-full items-center justify-between"
-                    onClick={() => {
-                      setWaFlowsExpanded(v => !v);
-                      if (!waFlowsExpanded && waFlows.length === 0) {
-                        setWaFlowsLoading(true);
-                        get('/api/automation/whatsapp/flows')
-                          .then(r => setWaFlows(r.data?.data || []))
-                          .catch(() => toast.error('Could not load flows'))
-                          .finally(() => setWaFlowsLoading(false));
-                      }
-                    }}
-                  >
-                    <span className="text-xs font-bold uppercase tracking-wide text-purple-700">WhatsApp Flows (Interactive Forms)</span>
-                    <span className="text-xs text-purple-500">{waFlowsExpanded ? '▲ collapse' : '▼ expand'}</span>
-                  </button>
-
-                  {waFlowsExpanded && (
-                    <div className="mt-3 space-y-3">
-                      <p className="text-xs text-purple-700">Flows are interactive forms that open inside WhatsApp — surveys, lead capture, bookings. Create them here, then use the <strong>WhatsApp Form (Flow)</strong> canvas node with the Flow ID.</p>
-
-                      {/* Existing flows list */}
-                      {waFlowsLoading ? (
-                        <p className="text-xs text-purple-500 animate-pulse">Loading flows…</p>
-                      ) : waFlows.length === 0 ? (
-                        <p className="text-xs text-gray-400">No flows yet. Create one below.</p>
-                      ) : (
-                        <div className="space-y-2">
-                          {waFlows.map((f: any) => (
-                            <div key={f.id} className="flex items-center justify-between rounded-lg bg-white border border-purple-100 px-3 py-2">
-                              <div>
-                                <p className="text-xs font-semibold text-gray-800">{f.name}</p>
-                                <p className="text-[10px] text-gray-400">ID: <span className="font-mono">{f.id}</span> · {f.status}</p>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() => { navigator.clipboard.writeText(f.id); toast.success('Flow ID copied!'); }}
-                                  className="text-[10px] rounded px-2 py-1 bg-purple-100 text-purple-700 hover:bg-purple-200 font-semibold"
-                                >Copy ID</button>
-                                {f.status === 'DRAFT' && (
-                                  <button
-                                    type="button"
-                                    onClick={async () => {
-                                      try {
-                                        await post(`/api/automation/whatsapp/flows/${f.id}/publish`, {});
-                                        toast.success('Flow published!');
-                                        setWaFlows(prev => prev.map(x => x.id === f.id ? {...x, status: 'PUBLISHED'} : x));
-                                      } catch { toast.error('Publish failed'); }
-                                    }}
-                                    className="text-[10px] rounded px-2 py-1 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 font-semibold"
-                                  >Publish</button>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Create new flow */}
-                      <div className="rounded-lg border border-purple-200 bg-white p-3 space-y-2">
-                        <p className="text-xs font-semibold text-purple-800">Create New Flow</p>
-                        <input
-                          value={newFlowName}
-                          onChange={e => setNewFlowName(e.target.value)}
-                          placeholder="Flow name (e.g. Lead Capture Form)"
-                          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-purple-400"
-                        />
-                        <select
-                          value={newFlowCategory}
-                          onChange={e => setNewFlowCategory(e.target.value)}
-                          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs focus:outline-none"
-                        >
-                          <option value="LEAD_GENERATION">Lead Generation</option>
-                          <option value="APPOINTMENT_BOOKING">Appointment Booking</option>
-                          <option value="CUSTOMER_SUPPORT">Customer Support</option>
-                          <option value="SURVEY">Survey / Feedback</option>
-                          <option value="OTHER">Other</option>
-                        </select>
-                        <button
-                          type="button"
-                          disabled={!newFlowName.trim()}
-                          onClick={async () => {
-                            if (!newFlowName.trim()) return;
-                            try {
-                              const r = await post('/api/automation/whatsapp/flows', { name: newFlowName.trim(), categories: [newFlowCategory] });
-                              toast.success('Flow created! Edit its screens in Meta Flow Builder.');
-                              setWaFlows(prev => [...prev, { id: r.data.id, name: newFlowName.trim(), status: 'DRAFT' }]);
-                              setNewFlowName('');
-                            } catch { toast.error('Failed to create flow'); }
-                          }}
-                          className="w-full rounded-lg bg-purple-600 px-3 py-2 text-xs font-semibold text-white hover:bg-purple-700 disabled:opacity-40 transition"
-                        >
-                          Create Flow
-                        </button>
-                        <p className="text-[10px] text-gray-400">After creating, design the screens at <a href="https://business.facebook.com/wa/manage/flows" target="_blank" rel="noreferrer" className="text-purple-600 underline">Meta Flow Builder</a>, then come back and click Publish.</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
 
               {/* ── Business Profile ── */}
               {whatsappConnected && (

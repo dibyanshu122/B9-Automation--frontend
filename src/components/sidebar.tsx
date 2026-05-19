@@ -11,7 +11,7 @@ import {
   Settings, X, Menu, Briefcase, CheckSquare, Users, Workflow, Plug,
   Rocket, ChevronDown, ChevronsLeft, ChevronsRight, LayoutDashboard,
   ShoppingCart, Send, Layout, Upload, ScrollText, Key, Megaphone,
-  MessageSquare, Zap, Database, Building2,
+  MessageSquare, Zap, Database, Building2, Layers,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { Button } from './button';
@@ -20,7 +20,7 @@ const ICONS = {
   Bell, LayoutDashboard, Brain, FileText, MessageCircle, Code, BarChart3,
   CreditCard, Settings, Briefcase, CheckSquare, Users, Workflow, Plug,
   Rocket, ChevronDown, ShoppingCart, Send, Layout, Upload, ScrollText,
-  Key, Megaphone, MessageSquare, Zap, Database, Building2,
+  Key, Megaphone, MessageSquare, Zap, Database, Building2, Layers,
 };
 
 // Guaranteed dark bg — inline style bypasses Tailwind purge issues
