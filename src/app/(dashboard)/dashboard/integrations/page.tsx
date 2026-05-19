@@ -25,6 +25,7 @@ import { Button } from '@/components/button';
 import { Card } from '@/components/card';
 import { UpgradeModal } from '@/components/upgrade-modal';
 import { useApi } from '@/hooks/useApi';
+import { useAuthStore } from '@/store/authStore';
 import { usePlanAccess } from '@/hooks/usePlanAccess';
 import { featureForProvider, FeatureKey } from '@/lib/billing/features';
 import { IntegrationCatalogItem, OutboundMessage } from '@/types';
@@ -148,6 +149,7 @@ const requiredEnv: Record<string, string[]> = {
 
 export default function IntegrationsPage() {
   const { get, post, delete: del } = useApi();
+  const authToken = useAuthStore((s: any) => s.token);
   const planAccess = usePlanAccess();
   const [catalog, setCatalog] = useState<IntegrationCatalogItem[]>([]);
   const [drafts, setDrafts] = useState<OutboundMessage[]>([]);
@@ -719,6 +721,7 @@ export default function IntegrationsPage() {
   };
 
   const connectFacebook = async () => {
+    if (!authToken) { toast.error('Session expired. Please refresh the page.'); return; }
     setFacebookOAuthLoading(true);
     setSetupError('');
     try {
@@ -862,6 +865,7 @@ export default function IntegrationsPage() {
   };
 
   const connectInstagram = async () => {
+    if (!authToken) { toast.error('Session expired. Please refresh the page.'); return; }
     setInstagramOAuthLoading(true);
     setSetupError('');
     try {

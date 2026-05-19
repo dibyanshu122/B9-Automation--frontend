@@ -56,9 +56,18 @@ export const getApiClient = (): AxiosInstance => {
       const status = error.response?.status;
 
       if (status === 401) {
-        useAuthStore.getState().logout();
-        _dedupeToast('Session expired. Please login again.', 5000, 30000);
-        if (typeof window !== 'undefined') window.location.href = '/login';
+        // Only logout if token is genuinely missing from storage
+        // (avoids logging out users whose store hasn't hydrated yet)
+        let hasStoredToken = false;
+        try {
+          const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('auth-store') : null;
+          hasStoredToken = raw ? Boolean(JSON.parse(raw)?.state?.token) : false;
+        } catch {}
+        if (!hasStoredToken) {
+          useAuthStore.getState().logout();
+          _dedupeToast('Session expired. Please login again.', 5000, 30000);
+          if (typeof window !== 'undefined') window.location.href = '/login';
+        }
       } else if (status === 402) {
         const detail = error.response?.data?.detail;
         const msg = typeof detail === 'string' ? detail : detail?.message || 'Plan limit reached. Please upgrade.';
