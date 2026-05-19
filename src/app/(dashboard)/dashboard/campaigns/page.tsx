@@ -879,17 +879,20 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
             )}
           </div>}
 
-          {/* Meta compliance notice */}
-          <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800">
-            <p className="font-semibold mb-1">⚠️ Meta WhatsApp Compliance</p>
-            <ul className="space-y-0.5 opacity-90">
-              <li>• Only <strong>APPROVED templates</strong> can be used for bulk campaigns</li>
-              <li>• Free-form text can only be sent within the 24-hour window after a customer messages you</li>
-              <li>• Sending to opted-out contacts is automatically blocked</li>
-            </ul>
-          </div>
+          {/* Meta compliance notice — bulk only */}
+          {sendMode === 'bulk' && (
+            <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800">
+              <p className="font-semibold mb-1">⚠️ Meta WhatsApp Compliance</p>
+              <ul className="space-y-0.5 opacity-90">
+                <li>• Only <strong>APPROVED templates</strong> can be used for bulk campaigns</li>
+                <li>• Free-form text can only be sent within the 24-hour window after a customer messages you</li>
+                <li>• Sending to opted-out contacts is automatically blocked</li>
+              </ul>
+            </div>
+          )}
 
-          {/* Template dropdown */}
+          {/* Template dropdown — for single always show; for Excel bulk only after valid upload */}
+          {(sendMode === 'single' || recipientMode === 'leads' || (recipientMode === 'excel' && parseResult && parseResult.valid.length > 0)) && (
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">
               Select Template <span className="text-red-500">*</span>
@@ -984,6 +987,7 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
               </div>
             </div>
           )}
+          </div>
         </div>
 
         {/* Footer */}
