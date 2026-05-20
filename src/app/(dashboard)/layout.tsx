@@ -77,8 +77,12 @@ export default function DashboardLayout({
 
   if (!hasHydrated || !user || !token) {
     return (
-      <div className="b9-command-shell flex min-h-screen items-center justify-center text-slate-200">
-        <div className="b9-glass b9-scanline rounded-lg px-6 py-4 text-sm font-medium">
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-6 py-4 text-sm font-medium text-slate-700 shadow-sm">
+          <svg className="h-4 w-4 animate-spin text-orange-500" viewBox="0 0 24 24" fill="none">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
           Opening B9 Automation...
         </div>
       </div>
