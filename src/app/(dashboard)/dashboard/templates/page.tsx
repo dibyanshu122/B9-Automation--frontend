@@ -990,11 +990,11 @@ function TemplatePreviewModal({ template, onClose }: { template: any; onClose: (
         onClick={onClose}>
         <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-          className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden"
+          className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden max-h-[90vh] flex flex-col"
           onClick={e => e.stopPropagation()}>
 
           {/* Modal header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 flex-shrink-0">
             <div>
               <p className="text-sm font-bold text-gray-900">{template.name}</p>
               <div className="flex items-center gap-2 mt-0.5">
@@ -1010,7 +1010,7 @@ function TemplatePreviewModal({ template, onClose }: { template: any; onClose: (
           </div>
 
           {/* WA preview */}
-          <div className="bg-[#e5ddd5] p-5" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d1ccc0' fill-opacity='0.3'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }}>
+          <div className="bg-[#e5ddd5] p-5 overflow-y-auto flex-1 min-h-0" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d1ccc0' fill-opacity='0.3'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }}>
             <div className="max-w-[280px] mx-auto">
               {/* Message bubble */}
               <div className="bg-white rounded-xl rounded-tl-none shadow-md overflow-hidden">
@@ -1464,10 +1464,10 @@ export default function TemplatesPage() {
       {rejectionModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
           onClick={() => setRejectionModal(null)}>
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md" onClick={e => e.stopPropagation()}>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
 
             {/* Header */}
-            <div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-red-100 bg-red-50 rounded-t-xl">
+            <div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-red-100 bg-red-50 rounded-t-xl flex-shrink-0">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-600 text-sm font-bold flex-shrink-0">✕</div>
                 <div>
@@ -1482,7 +1482,7 @@ export default function TemplatesPage() {
             </div>
 
             {/* Body */}
-            <div className="px-5 py-4 space-y-4">
+            <div className="px-5 py-4 space-y-4 overflow-y-auto flex-1 min-h-0">
 
               {/* Rejection Reason */}
               <div>
@@ -1529,7 +1529,7 @@ export default function TemplatesPage() {
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-gray-100">
+            <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-gray-100 flex-shrink-0">
               <button onClick={() => setRejectionModal(null)}
                 className="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
                 Close
@@ -1593,10 +1593,10 @@ export default function TemplatesPage() {
       {showAiDraft && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
           onClick={() => { if (!aiGenerating) setShowAiDraft(false); }}>
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg" onClick={e => e.stopPropagation()}>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
 
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center text-white text-sm font-bold">✨</div>
                 <div>
@@ -1609,7 +1609,7 @@ export default function TemplatesPage() {
             </div>
 
             {/* Body */}
-            <div className="px-5 py-4 space-y-4">
+            <div className="px-5 py-4 space-y-4 overflow-y-auto flex-1 min-h-0">
               {/* Description */}
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1.5">Describe the template use case *</label>
@@ -1707,7 +1707,7 @@ export default function TemplatesPage() {
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-gray-100">
+            <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-gray-100 flex-shrink-0">
               <button onClick={() => setShowAiDraft(false)} disabled={aiGenerating}
                 className="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40">
                 Cancel

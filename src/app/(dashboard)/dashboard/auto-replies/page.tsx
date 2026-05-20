@@ -176,13 +176,13 @@ function RuleForm({ ruleType, existing, onClose, onSaved }: {
         onClick={onClose}>
         <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-          className="bg-white rounded-2xl shadow-2xl w-full max-w-lg my-auto"
+          className="bg-white rounded-2xl shadow-2xl w-full max-w-lg my-auto max-h-[90vh] flex flex-col"
           onClick={e => e.stopPropagation()}>
-          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
             <h2 className="font-bold text-gray-900">{existing ? 'Edit' : 'Create'} {TABS.find(t => t.key === ruleType)?.label}</h2>
             <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><X className="w-4 h-4" /></button>
           </div>
-          <div className="p-5 space-y-4">
+          <div className="p-5 space-y-4 overflow-y-auto flex-1 min-h-0">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">Rule Name *</label>
               <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Price Inquiry Reply" className={inputCls} />
@@ -364,7 +364,7 @@ function RuleForm({ ruleType, existing, onClose, onSaved }: {
               </div>
             )}
           </div>
-          <div className="px-5 py-4 border-t border-gray-100 flex justify-end gap-3">
+          <div className="px-5 py-4 border-t border-gray-100 flex justify-end gap-3 flex-shrink-0">
             <Button variant="secondary" onClick={onClose}>Cancel</Button>
             <Button onClick={save} disabled={saving} className="flex items-center gap-2">
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}

@@ -302,14 +302,14 @@ export default function CatalogPage() {
       {/* Add/Edit Modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900 shadow-2xl max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-white/10 px-5 py-4 flex-shrink-0">
               <h2 className="text-sm font-bold text-white">{editingId ? 'Edit Product' : 'Add Product'}</h2>
               <button onClick={() => setShowForm(false)} className="text-slate-500 hover:text-white">
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="p-5 space-y-4">
+            <div className="p-5 space-y-4 overflow-y-auto flex-1 min-h-0">
               {error && <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400">{error}</div>}
               <div>
                 <label className="mb-1 block text-xs font-medium text-slate-400">Product Name *</label>
@@ -375,7 +375,7 @@ export default function CatalogPage() {
                 <span className="text-xs text-slate-400">Active (visible in catalog)</span>
               </label>
             </div>
-            <div className="flex gap-2 border-t border-white/10 px-5 py-4">
+            <div className="flex gap-2 border-t border-white/10 px-5 py-4 flex-shrink-0">
               <Button variant="ghost" size="sm" className="flex-1" onClick={() => setShowForm(false)}>Cancel</Button>
               <Button variant="primary" size="sm" className="flex-1" onClick={handleSave} disabled={saving}>
                 {saving ? 'Saving...' : (<><Check className="h-4 w-4 mr-1" />{editingId ? 'Update' : 'Add Product'}</>)}

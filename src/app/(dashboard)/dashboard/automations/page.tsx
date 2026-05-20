@@ -1526,8 +1526,8 @@ export default function AutomationsPage() {
       {/* ✨ AI Flow Generator Modal */}
       {showGenerateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-lg rounded-2xl border border-violet-200 bg-white shadow-2xl">
-            <div className="border-b border-gray-100 px-6 py-4">
+          <div className="w-full max-w-lg rounded-2xl border border-violet-200 bg-white shadow-2xl max-h-[90vh] flex flex-col">
+            <div className="border-b border-gray-100 px-6 py-4 flex-shrink-0">
               <div className="flex items-center justify-between">
                 <p className="font-bold text-gray-900 text-lg">✨ Generate Flow with AI</p>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white"
@@ -1537,7 +1537,7 @@ export default function AutomationsPage() {
               </div>
               <p className="text-xs text-gray-400 mt-0.5">Describe your chatbot in plain language — AI will build the entire flow</p>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 overflow-y-auto flex-1 min-h-0">
               <div>
                 <p className="text-sm font-semibold text-gray-700 mb-2">Describe your chatbot:</p>
                 <textarea
@@ -1573,7 +1573,7 @@ export default function AutomationsPage() {
                 </ul>
               </div>
             </div>
-            <div className="flex gap-3 border-t border-gray-100 px-6 py-4">
+            <div className="flex gap-3 border-t border-gray-100 px-6 py-4 flex-shrink-0">
               <Button variant="secondary" onClick={() => setShowGenerateModal(false)} disabled={generating}>Cancel</Button>
               <Button
                 className="flex-1"
@@ -4150,8 +4150,8 @@ function TemplateGallery({ onClose, onSelect }: { onClose: () => void; onSelect:
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-2xl rounded-2xl border border-gray-200 bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+      <div className="w-full max-w-2xl rounded-2xl border border-gray-200 bg-white shadow-2xl max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4 flex-shrink-0">
           <div>
             <p className="font-bold text-gray-900">Automation Templates</p>
             <p className="text-xs text-gray-400">Pick a pre-built workflow to start fast</p>
@@ -4159,7 +4159,7 @@ function TemplateGallery({ onClose, onSelect }: { onClose: () => void; onSelect:
           <button type="button" onClick={onClose} className="rounded-lg p-1.5 hover:bg-gray-100 text-gray-500">✕</button>
         </div>
 
-        <div className="flex gap-1.5 px-5 pt-3">
+        <div className="flex gap-1.5 px-5 pt-3 flex-shrink-0">
           {['all', 'beginner', 'intermediate', 'advanced'].map((f) => (
             <button key={f} type="button" onClick={() => setFilter(f)}
               className={`rounded-full px-3 py-1 text-xs font-bold capitalize transition ${filter === f ? 'bg-orange-100 text-primary-700' : 'text-gray-500 hover:bg-gray-100'}`}>
@@ -4189,7 +4189,7 @@ function TemplateGallery({ onClose, onSelect }: { onClose: () => void; onSelect:
           ))}
         </div>
 
-        <div className="border-t border-gray-100 px-5 py-3 text-[11px] text-gray-400">
+        <div className="border-t border-gray-100 px-5 py-3 text-[11px] text-gray-400 flex-shrink-0">
           Selecting a template loads it into the canvas. You can edit it before saving.
         </div>
       </div>

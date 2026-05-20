@@ -193,10 +193,10 @@ function AiGenerateModal({
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col"
+        className="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh]"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
               <Wand2 className="w-4 h-4 text-white" />
@@ -212,7 +212,7 @@ function AiGenerateModal({
         </div>
 
         {/* Body */}
-        <div className="p-5 space-y-4">
+        <div className="p-5 space-y-4 overflow-y-auto flex-1 min-h-0">
           <div>
             <label className="block text-xs font-semibold text-gray-700 mb-1.5">Describe the form use case *</label>
             <textarea
@@ -255,7 +255,7 @@ function AiGenerateModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-2.5 px-5 py-4 border-t border-gray-100">
+        <div className="flex items-center justify-end gap-2.5 px-5 py-4 border-t border-gray-100 flex-shrink-0">
           <button onClick={onClose} disabled={loading}
             className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition">
             Cancel
@@ -1131,7 +1131,7 @@ export default function FlowsPage() {
               className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={() => setShowCreate(false)} />
             <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-              className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-white rounded-xl shadow-2xl w-full max-w-md p-5">
+              className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-white rounded-xl shadow-2xl w-full max-w-md p-5 max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-base font-bold text-gray-900">Create New Flow</h2>
                 <button onClick={() => setShowCreate(false)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">
@@ -1155,7 +1155,7 @@ export default function FlowsPage() {
                 </div>
                 <p className="text-xs text-gray-400">After creating, you&apos;ll be taken directly to the flow designer.</p>
               </div>
-              <div className="flex justify-end gap-2 mt-5">
+              <div className="flex flex-wrap justify-end gap-2 mt-5">
                 <Button variant="secondary" onClick={() => setShowCreate(false)}>Cancel</Button>
                 <Button variant="secondary" onClick={() => createFlow(false)} disabled={creating || !newName.trim()} className="flex items-center gap-2">
                   {creating && <Loader2 className="w-4 h-4 animate-spin" />}

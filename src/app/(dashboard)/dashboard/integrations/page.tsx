@@ -2531,9 +2531,9 @@ export default function IntegrationsPage() {
       {/* ════ Meta Catalog Modal ════ */}
       {showMetaCatalog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/60 p-4">
-          <div className="w-full max-w-lg rounded-2xl border border-gray-200 bg-white shadow-2xl">
+          <div className="w-full max-w-lg rounded-2xl border border-gray-200 bg-white shadow-2xl max-h-[90vh] flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4 flex-shrink-0">
               <div className="flex items-center gap-3">
                 <span className="text-2xl">🛍</span>
                 <div>
@@ -2546,7 +2546,7 @@ export default function IntegrationsPage() {
               </button>
             </div>
 
-            <div className="px-6 py-5 space-y-4">
+            <div className="px-6 py-5 space-y-4 overflow-y-auto flex-1 min-h-0">
               {/* Status banner */}
               {metaCatalogConnected ? (
                 <div className="flex items-center justify-between rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3">
@@ -2609,7 +2609,7 @@ export default function IntegrationsPage() {
             </div>
 
             {/* Footer actions */}
-            <div className="flex gap-2 border-t border-gray-100 px-6 py-4">
+            <div className="flex gap-2 border-t border-gray-100 px-6 py-4 flex-shrink-0">
               <Button variant="secondary" className="flex-1" onClick={() => setShowMetaCatalog(false)}>
                 Cancel
               </Button>

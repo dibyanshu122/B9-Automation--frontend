@@ -888,31 +888,33 @@ function UnifiedInbox() {
 
           {templateDraft && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-              <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-5 shadow-2xl">
-                <div className="mb-4">
+              <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white shadow-2xl max-h-[90vh] flex flex-col">
+                <div className="mb-4 px-5 pt-5 flex-shrink-0">
                   <p className="text-sm font-bold text-gray-900">Fill template variables</p>
                   <p className="mt-1 text-xs text-gray-500">This Meta template has placeholders. Fill the values before sending it to the customer.</p>
                 </div>
-                <div className="mb-4 rounded-lg bg-gray-50 p-3 text-xs text-gray-600">
-                  {templateDraft.body}
+                <div className="overflow-y-auto flex-1 min-h-0 px-5 pb-2">
+                  <div className="mb-4 rounded-lg bg-gray-50 p-3 text-xs text-gray-600">
+                    {templateDraft.body}
+                  </div>
+                  <div className="space-y-2">
+                    {templateDraft.values.map((value, idx) => (
+                      <label key={idx} className="block">
+                        <span className="text-xs font-semibold text-gray-700">{`{{${idx + 1}}}`}</span>
+                        <input
+                          value={value}
+                          onChange={(e) => setTemplateDraft((draft) => draft ? {
+                            ...draft,
+                            values: draft.values.map((v, i) => i === idx ? e.target.value : v),
+                          } : draft)}
+                          placeholder={idx === 0 ? (resolveContactName(selected.sender_id) || selected.sender_name || 'Customer name') : `Value ${idx + 1}`}
+                          className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        />
+                      </label>
+                    ))}
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  {templateDraft.values.map((value, idx) => (
-                    <label key={idx} className="block">
-                      <span className="text-xs font-semibold text-gray-700">{`{{${idx + 1}}}`}</span>
-                      <input
-                        value={value}
-                        onChange={(e) => setTemplateDraft((draft) => draft ? {
-                          ...draft,
-                          values: draft.values.map((v, i) => i === idx ? e.target.value : v),
-                        } : draft)}
-                        placeholder={idx === 0 ? (resolveContactName(selected.sender_id) || selected.sender_name || 'Customer name') : `Value ${idx + 1}`}
-                        className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                      />
-                    </label>
-                  ))}
-                </div>
-                <div className="mt-5 flex justify-end gap-2">
+                <div className="mt-5 flex justify-end gap-2 px-5 pb-5 flex-shrink-0">
                   <Button variant="secondary" onClick={() => setTemplateDraft(null)} disabled={sendingTemplate}>Cancel</Button>
                   <Button
                     onClick={() => sendTemplate(templateDraft.template, templateDraft.body, templateDraft.values)}
