@@ -62,6 +62,19 @@ interface Contact {
   last_text: string;
   last_time: string;
   unread: number;
+  lead_score?: string; // hot | warm | cold
+}
+
+/* ── 24-hour window helper ───────────────────────────────────────── */
+function getWindowStatus(lastTime: string, channel: string): { open: boolean; hoursAgo: number; windowHours: number } {
+  const windowHours = channel === 'whatsapp' ? 24 : 168; // WA=24h, IG/FB=168h (7 days)
+  const hoursAgo = lastTime ? (Date.now() - new Date(lastTime.endsWith('Z') ? lastTime : lastTime + 'Z').getTime()) / 3600000 : 999;
+  return { open: hoursAgo < windowHours, hoursAgo, windowHours };
+}
+
+function templateVarCount(body: string): number {
+  const vars = new Set((body.match(/\{\{(\d+)\}\}/g) || []).map((m) => m.replace(/\D/g, '')));
+  return vars.size;
 }
 
 /* ── Delivery tick indicator ─────────────────────────────────────── */
@@ -78,7 +91,7 @@ function DeliveryTick({ status, delivery_status, isOutbound }: { status?: string
 /* ── Rich message content renderer ──────────────────────────────── */
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || '';
 function mediaProxyUrl(mediaId: string) {
-  const token = typeof window !== 'undefined' ? (localStorage.getItem('token') || '') : '';
+  const token = typeof window !== 'undefined' ? (useAuthStore.getState().token || '') : '';
   return `${API_BASE}/api/automation/media/${mediaId}?t=${encodeURIComponent(token)}`;
 }
 
@@ -293,10 +306,13 @@ function UnifiedInbox() {
   const [leadProfile, setLeadProfile] = useState<any>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
+  const [leadMemory, setLeadMemory] = useState<any[]>([]);
+  const [memoryExpanded, setMemoryExpanded] = useState(false);
   const [templates, setTemplates] = useState<any[]>([]);
   const [tplOpen, setTplOpen] = useState(false);
   const [tplSearch, setTplSearch] = useState('');
   const [sendingTemplate, setSendingTemplate] = useState(false);
+  const [templateDraft, setTemplateDraft] = useState<{ template: any; body: string; values: string[] } | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const chatBoxRef = useRef<HTMLDivElement>(null);
   const qrRef = useRef<HTMLDivElement>(null);
@@ -304,7 +320,7 @@ function UnifiedInbox() {
 
   // Fetch leads once to map phone → name
   useEffect(() => {
-    get('/api/leads?limit=500').then(r => {
+    get('/api/leads?limit=200').then(r => {
       const map: Record<string, string> = {};
       (r.data?.leads || r.data || []).forEach((l: any) => {
         if (l.phone && l.name) {
@@ -337,6 +353,7 @@ function UnifiedInbox() {
               last_text: item.text || `[${item.message_type}]`,
               last_time: item.created_at,
               unread: 1,
+              lead_score: item.lead_score || 'cold',
             });
           } else {
             const c = map.get(key)!;
@@ -345,9 +362,19 @@ function UnifiedInbox() {
               c.last_time = item.created_at;
             }
             c.unread++;
+            // Keep hottest score
+            if (item.lead_score === 'hot') c.lead_score = 'hot';
+            else if (item.lead_score === 'warm' && c.lead_score !== 'hot') c.lead_score = 'warm';
           }
         });
-        setContacts(Array.from(map.values()).sort((a, b) => b.last_time.localeCompare(a.last_time)));
+        // AI Priority Queue: hot first, then warm, then cold, then by time
+        const scoreOrder: Record<string, number> = { hot: 0, warm: 1, cold: 2 };
+        setContacts(Array.from(map.values()).sort((a, b) => {
+          const sa = scoreOrder[a.lead_score || 'cold'] ?? 2;
+          const sb = scoreOrder[b.lead_score || 'cold'] ?? 2;
+          if (sa !== sb) return sa - sb;
+          return b.last_time.localeCompare(a.last_time);
+        }));
       })
       .catch((err: any) => {
         const status = err?.response?.status;
@@ -402,9 +429,17 @@ function UnifiedInbox() {
     get(`/api/leads?phone=${encodeURIComponent(selected.sender_id)}&limit=1`)
       .then(r => {
         const leads = r.data?.leads || r.data || [];
-        setLeadProfile(leads[0] || null);
+        const lead = leads[0] || null;
+        setLeadProfile(lead);
+        if (lead?.id) {
+          get(`/api/leads/${lead.id}/memory`)
+            .then(mr => setLeadMemory(mr.data?.memory || []))
+            .catch(() => setLeadMemory([]));
+        } else {
+          setLeadMemory([]);
+        }
       })
-      .catch(() => setLeadProfile(null))
+      .catch(() => { setLeadProfile(null); setLeadMemory([]); })
       .finally(() => setProfileLoading(false));
   }, [selected?.sender_id]); // eslint-disable-line
 
@@ -469,6 +504,30 @@ function UnifiedInbox() {
       }
     }
     finally { setSending(false); }
+  };
+
+  const sendTemplate = async (template: any, body: string, values: string[] = []) => {
+    if (!selected) return;
+    setSendingTemplate(true);
+    try {
+      await post('/api/automation/outbound-messages', {
+        channel: selected.channel,
+        recipient: selected.sender_id,
+        message: body,
+        msg_type: 'template',
+        template_name: template.name,
+        language_code: template.language || 'en_US',
+        template_variables: values,
+        send_mode: 'live',
+      });
+      toast.success(`Template "${template.name}" sent`);
+      fetchThread(selected);
+      setTemplateDraft(null);
+    } catch {
+      toast.error('Failed to send template');
+    } finally {
+      setSendingTemplate(false);
+    }
   };
 
   const filtered = contacts
@@ -542,6 +601,7 @@ function UnifiedInbox() {
             ) : filtered.map(c => {
               const badge = CHANNEL_BADGE[c.channel] || { emoji: '💬', label: c.channel, color: '' };
               const isSelected = selected?.sender_id === c.sender_id && selected?.channel === c.channel;
+              const win = getWindowStatus(c.last_time, c.channel);
               return (
                 <button key={`${c.channel}::${c.sender_id}`}
                   onClick={() => setSelected(c)}
@@ -560,12 +620,19 @@ function UnifiedInbox() {
                       {c.sender_name?.[0]?.toUpperCase() || badge.emoji}
                     </div>
                     <span className="absolute -bottom-0.5 -right-0.5"><ChannelIcon channel={c.channel} size={14} /></span>
+                    {/* Window dot */}
+                    <span className={`absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-slate-900 ${win.open ? 'bg-emerald-400' : 'bg-red-400'}`}
+                      title={win.open ? `Window open (${Math.round(win.hoursAgo)}h ago)` : 'Window closed — template required'} />
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-1">
-                      <p className={`text-xs font-semibold truncate ${isSelected ? 'text-cyan-300' : 'text-slate-200'}`}>
-                        {resolveContactName(c.sender_id) || c.sender_name}
-                      </p>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <p className={`text-xs font-semibold truncate ${isSelected ? 'text-cyan-300' : 'text-slate-200'}`}>
+                          {resolveContactName(c.sender_id) || c.sender_name}
+                        </p>
+                        {c.lead_score === 'hot' && <span className="shrink-0 text-[8px] font-bold px-1 py-0.5 rounded bg-red-500/20 text-red-400">🔥</span>}
+                        {c.lead_score === 'warm' && <span className="shrink-0 text-[8px] font-bold px-1 py-0.5 rounded bg-amber-500/20 text-amber-400">☀️</span>}
+                      </div>
                       <p className="shrink-0 text-[10px] text-slate-500" title={c.last_time ? new Date(c.last_time + 'Z').toLocaleString() : ''}>{timeAgo(c.last_time)}</p>
                     </div>
                     <p className="text-[11px] text-slate-500 truncate mt-0.5">{c.last_text}</p>
@@ -644,7 +711,7 @@ function UnifiedInbox() {
                         if (!confirm(`Block ${resolveContactName(selected.sender_id) || selected.sender_name}? They will not trigger automations.`)) return;
                         try {
                           const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-                          const token = localStorage.getItem('token');
+                          const token = useAuthStore.getState().token;
                           await fetch(`${apiUrl}/api/automation/inbox/block?sender_id=${encodeURIComponent(selected.sender_id)}&channel=${selected.channel}`, {
                             method: 'POST',
                             headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -702,6 +769,31 @@ function UnifiedInbox() {
 
             {/* Reply box */}
             <div className="border-t border-white/10 shrink-0">
+              {/* 24-hour window compliance banner */}
+              {selected && (() => {
+                const win = getWindowStatus(selected.last_time, selected.channel);
+                if (win.open) return (
+                  <div className="flex items-center gap-2 bg-emerald-500/10 border-b border-emerald-500/20 px-4 py-2">
+                    <span className="text-emerald-400 text-sm">●</span>
+                    <p className="text-[11px] text-emerald-300 flex-1">
+                      <strong>Free reply allowed</strong> — messaging window open. AI/manual replies are safe.
+                    </p>
+                  </div>
+                );
+                return (
+                  <div className="flex items-center gap-2 bg-amber-500/10 border-b border-amber-500/20 px-4 py-2">
+                    <span className="text-amber-400 text-sm">⚠️</span>
+                    <p className="text-[11px] text-amber-300 flex-1">
+                      <strong>Window closed</strong> — {Math.round(win.hoursAgo)}h since last message.
+                      Only approved templates can be sent.
+                    </p>
+                    <button onClick={() => { setTplOpen(true); setQrOpen(false); }}
+                      className="shrink-0 text-[10px] font-bold text-amber-400 border border-amber-500/40 rounded-lg px-2 py-1 hover:bg-amber-500/20 transition">
+                      Use Template →
+                    </button>
+                  </div>
+                );
+              })()}
               {/* Quick Reply dropdown */}
               {qrOpen && (
                 <div ref={qrRef} className="border-b border-white/10 bg-white/5 px-4 py-2 max-h-40 overflow-y-auto">
@@ -751,21 +843,12 @@ function UnifiedInbox() {
                             return (
                               <button key={t.id || t.name} onClick={async () => {
                                 setTplOpen(false);
-                                setSendingTemplate(true);
-                                try {
-                                  await post('/api/automation/outbound-messages', {
-                                    channel: selected.channel,
-                                    recipient: selected.sender_id,
-                                    message: body,
-                                    msg_type: 'template',
-                                    template_name: t.name,
-                                    language_code: t.language || 'en_US',
-                                    send_mode: 'live',
-                                  });
-                                  toast.success(`Template "${t.name}" sent`);
-                                  fetchThread(selected);
-                                } catch { toast.error('Failed to send template'); }
-                                finally { setSendingTemplate(false); }
+                                const count = templateVarCount(body);
+                                if (count > 0) {
+                                  setTemplateDraft({ template: t, body, values: Array(count).fill('') });
+                                } else {
+                                  await sendTemplate(t, body, []);
+                                }
                               }} className="w-full text-left px-4 py-3 hover:bg-blue-50 transition border-b border-gray-50 last:border-0">
                                 <p className="text-xs font-semibold text-gray-800">{t.name}</p>
                                 <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-2">{body}</p>
@@ -777,21 +860,71 @@ function UnifiedInbox() {
                     </div>
                   )}
                 </div>
-                <input
-                  type="text"
-                  value={reply}
-                  onChange={e => setReply(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendReply()}
-                  placeholder={`Message ${resolveContactName(selected.sender_id) || selected.sender_name}…`}
-                  className="flex-1 rounded-xl border border-white/10 bg-white/8 px-4 py-2.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:bg-white/15 transition"
-                />
-                <button onClick={sendReply} disabled={sending || sendingTemplate || !reply.trim()}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white hover:bg-slate-700 disabled:opacity-30 transition shadow-md">
-                  {sending || sendingTemplate ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                </button>
+                {(() => {
+                  const win = getWindowStatus(selected.last_time, selected.channel);
+                  const blocked = !win.open && selected.channel === 'whatsapp';
+                  return (
+                    <>
+                      <input
+                        type="text"
+                        value={reply}
+                        onChange={e => setReply(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && !e.shiftKey && !blocked && sendReply()}
+                        placeholder={blocked ? 'Window closed — use template above' : `Message ${resolveContactName(selected.sender_id) || selected.sender_name}…`}
+                        disabled={blocked}
+                        className={`flex-1 rounded-xl border px-4 py-2.5 text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition ${blocked ? 'border-amber-500/20 bg-amber-500/5 text-slate-500 cursor-not-allowed' : 'border-white/10 bg-white/8 text-slate-200 focus:bg-white/15'}`}
+                      />
+                      <button onClick={sendReply} disabled={sending || sendingTemplate || !reply.trim() || blocked}
+                        title={blocked ? '24h window closed — use template' : 'Send message'}
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white hover:bg-slate-700 disabled:opacity-30 transition shadow-md">
+                        {sending || sendingTemplate ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                      </button>
+                    </>
+                  );
+                })()}
               </div>
             </div>
           </div>
+
+          {templateDraft && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+              <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-5 shadow-2xl">
+                <div className="mb-4">
+                  <p className="text-sm font-bold text-gray-900">Fill template variables</p>
+                  <p className="mt-1 text-xs text-gray-500">This Meta template has placeholders. Fill the values before sending it to the customer.</p>
+                </div>
+                <div className="mb-4 rounded-lg bg-gray-50 p-3 text-xs text-gray-600">
+                  {templateDraft.body}
+                </div>
+                <div className="space-y-2">
+                  {templateDraft.values.map((value, idx) => (
+                    <label key={idx} className="block">
+                      <span className="text-xs font-semibold text-gray-700">{`{{${idx + 1}}}`}</span>
+                      <input
+                        value={value}
+                        onChange={(e) => setTemplateDraft((draft) => draft ? {
+                          ...draft,
+                          values: draft.values.map((v, i) => i === idx ? e.target.value : v),
+                        } : draft)}
+                        placeholder={idx === 0 ? (resolveContactName(selected.sender_id) || selected.sender_name || 'Customer name') : `Value ${idx + 1}`}
+                        className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      />
+                    </label>
+                  ))}
+                </div>
+                <div className="mt-5 flex justify-end gap-2">
+                  <Button variant="secondary" onClick={() => setTemplateDraft(null)} disabled={sendingTemplate}>Cancel</Button>
+                  <Button
+                    onClick={() => sendTemplate(templateDraft.template, templateDraft.body, templateDraft.values)}
+                    disabled={sendingTemplate || templateDraft.values.some(v => !v.trim())}
+                    className="min-w-[120px]"
+                  >
+                    {sendingTemplate ? 'Sending...' : 'Send Template'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* LEAD PROFILE SIDEBAR */}
           {profileOpen && (
@@ -820,6 +953,14 @@ function UnifiedInbox() {
                       'bg-blue-100 text-blue-700'
                     }`}>{leadProfile.status || 'new'}</span>
                   </div>
+                  <div className="rounded-xl border border-cyan-100 bg-cyan-50 p-3">
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-cyan-700">Owner Summary</p>
+                    <div className="mt-2 space-y-1 text-xs text-cyan-900">
+                      <p><span className="font-semibold">Intent:</span> {leadProfile.intent || leadProfile.ai_intent || leadProfile.tag || 'Needs review'}</p>
+                      <p><span className="font-semibold">Priority:</span> {leadProfile.status || selected.lead_score || 'cold'}</p>
+                      <p><span className="font-semibold">Next:</span> {leadProfile.status === 'hot' ? 'Call or send payment/catalog' : 'Reply, qualify, or schedule follow-up'}</p>
+                    </div>
+                  </div>
                   {/* Details */}
                   {[
                     { label: 'Phone', value: leadProfile.phone, icon: '📞' },
@@ -840,6 +981,35 @@ function UnifiedInbox() {
                     <div>
                       <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Last Message</p>
                       <p className="text-xs text-gray-600 bg-white rounded-lg px-3 py-2 border border-gray-100 leading-relaxed">{leadProfile.message}</p>
+                    </div>
+                  )}
+                  {/* AI Summary */}
+                  {leadProfile.ai_summary && (
+                    <div>
+                      <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">🤖 AI Summary</p>
+                      <p className="text-xs text-gray-600 bg-purple-50 rounded-lg px-3 py-2 border border-purple-100 leading-relaxed italic">{leadProfile.ai_summary}</p>
+                    </div>
+                  )}
+                  {/* Persistent Lead Memory */}
+                  {leadMemory.length > 0 && (
+                    <div>
+                      <button
+                        onClick={() => setMemoryExpanded(e => !e)}
+                        className="flex items-center justify-between w-full text-[10px] text-gray-400 uppercase tracking-wide mb-1 hover:text-gray-600"
+                      >
+                        <span>🧠 AI Memory ({leadMemory.length} turns)</span>
+                        <span>{memoryExpanded ? '▲' : '▼'}</span>
+                      </button>
+                      {memoryExpanded && (
+                        <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                          {leadMemory.slice(-8).map((m: any, i: number) => (
+                            <div key={i} className={`text-[10px] rounded-lg px-2 py-1.5 leading-relaxed ${m.role === 'customer' ? 'bg-blue-50 text-blue-800' : 'bg-green-50 text-green-800'}`}>
+                              <span className="font-bold uppercase mr-1">{m.role === 'customer' ? '👤' : '🤖'}</span>
+                              {m.text}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
                   {/* Tags */}
@@ -884,4 +1054,3 @@ export default function MessagesPage() {
     </div>
   );
 }
-

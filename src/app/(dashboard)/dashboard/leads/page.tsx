@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import toast from 'react-hot-toast';
-import { AlertTriangle, Clock, Eye, Flame, Mail, MessageSquare, Phone, Plus, Search, Send, Star, Users } from 'lucide-react';
+import { AlertTriangle, Brain, ChevronDown, ChevronUp, Clock, Eye, Flame, Loader2, Mail, MessageSquare, Phone, Plus, Search, Send, Star, Trash2, Users } from 'lucide-react';
 import { Button } from '@/components/button';
 import { Card } from '@/components/card';
 import { useApi, getApiClient } from '@/hooks/useApi';
@@ -56,6 +56,10 @@ export default function LeadsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedLeadIds, setSelectedLeadIds] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState('');
+  const [leadMemory, setLeadMemory] = useState<string[]>([]);
+  const [memoryLoading, setMemoryLoading] = useState(false);
+  const [memoryOpen, setMemoryOpen] = useState(false);
+  const [clearingMemory, setClearingMemory] = useState(false);
 
   const refresh = () => {
     setLoading(true);
@@ -163,6 +167,8 @@ export default function LeadsPage() {
 
   const openLeadDetail = async (lead: Lead) => {
     setBusyAction(`view-${lead.id}`);
+    setMemoryOpen(false);
+    setLeadMemory([]);
     try {
       const response = await api.get(`/api/leads/${lead.id}`);
       setSelectedLead(response.data);
@@ -171,6 +177,26 @@ export default function LeadsPage() {
     } finally {
       setBusyAction('');
     }
+  };
+
+  const loadLeadMemory = async (leadId: string) => {
+    setMemoryLoading(true);
+    try {
+      const r = await api.get(`/api/leads/${leadId}/memory`);
+      setLeadMemory(r.data?.memory || []);
+    } catch { setLeadMemory([]); }
+    finally { setMemoryLoading(false); }
+  };
+
+  const clearLeadMemory = async (leadId: string) => {
+    if (!confirm('Is lead ki poori conversation memory delete ho jaayegi. Sure?')) return;
+    setClearingMemory(true);
+    try {
+      await api.delete(`/api/leads/${leadId}/memory`);
+      setLeadMemory([]);
+      toast.success('Memory cleared');
+    } catch { toast.error('Clear failed'); }
+    finally { setClearingMemory(false); }
   };
 
   const openConversation = async (sessionId: string) => {
@@ -565,6 +591,115 @@ export default function LeadsPage() {
             <p className="mb-1 font-semibold text-gray-950">Message</p>
             <p>{selectedLead.message || selectedLead.requirement || 'No message captured'}</p>
           </div>
+          {/* WhatsApp Flow Form Submissions */}
+          {(() => {
+            const subs: Array<{ submitted_at: string; fields: Record<string, string> }> =
+              (selectedLead.metadata?.flow_submissions) || [];
+            if (subs.length === 0) return null;
+            return (
+              <div className="mt-4">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
+                    <span className="inline-block w-2 h-2 rounded-full bg-green-500" />
+                    WhatsApp Form Submissions ({subs.length})
+                  </p>
+                  <button
+                    onClick={() => {
+                      const rows = subs.flatMap(s =>
+                        Object.entries(s.fields).map(([k, v]) => `"${new Date(s.submitted_at).toLocaleString()}","${k}","${v}"`)
+                      );
+                      const csv = ['Submitted At,Field,Value', ...rows].join('\n');
+                      const a = document.createElement('a');
+                      a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+                      a.download = `form_data_${selectedLead.id}.csv`;
+                      a.click();
+                    }}
+                    className="text-xs text-blue-600 hover:underline font-medium">
+                    ↓ Download CSV
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  {subs.map((sub, i) => (
+                    <div key={i} className="rounded-lg border border-green-100 bg-green-50 p-3">
+                      <p className="text-[10px] text-gray-500 mb-2 font-medium">
+                        Submitted: {new Date(sub.submitted_at).toLocaleString('en-IN')}
+                      </p>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                        {Object.entries(sub.fields).map(([k, v]) => (
+                          <div key={k}>
+                            <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">
+                              {k.replace(/_/g, ' ')}
+                            </span>
+                            <p className="text-xs text-gray-800 font-medium mt-0.5">{String(v)}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+          {/* 🧠 Persistent Lead Memory */}
+          <div className="mt-4 rounded-lg border border-gray-200 overflow-hidden">
+            <button
+              onClick={() => {
+                const next = !memoryOpen;
+                setMemoryOpen(next);
+                if (next && leadMemory.length === 0) loadLeadMemory(selectedLead.id);
+              }}
+              className="w-full flex items-center justify-between px-4 py-2.5 bg-gray-50 hover:bg-gray-100 transition text-sm font-semibold text-gray-700">
+              <span className="flex items-center gap-2">
+                <Brain className="w-4 h-4 text-purple-500" />
+                AI Conversation Memory
+                {leadMemory.length > 0 && (
+                  <span className="text-[10px] bg-purple-100 text-purple-700 rounded-full px-2 py-0.5 font-bold">
+                    {leadMemory.length} entries
+                  </span>
+                )}
+              </span>
+              {memoryOpen ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+            </button>
+
+            {memoryOpen && (
+              <div className="px-4 py-3 bg-white">
+                {memoryLoading ? (
+                  <div className="flex items-center gap-2 py-4 justify-center">
+                    <Loader2 className="w-4 h-4 animate-spin text-purple-500" />
+                    <span className="text-sm text-gray-400">Loading memory...</span>
+                  </div>
+                ) : leadMemory.length === 0 ? (
+                  <div className="py-4 text-center">
+                    <Brain className="w-8 h-8 text-gray-200 mx-auto mb-2" />
+                    <p className="text-xs text-gray-400">Koi memory nahi — AI is lead se baat karegi toh yaad rakhegi</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="space-y-2 max-h-48 overflow-y-auto mb-3">
+                      {leadMemory.map((entry, i) => (
+                        <div key={i} className="flex items-start gap-2">
+                          <span className="w-5 h-5 rounded-full bg-purple-100 text-purple-600 text-[10px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
+                            {i + 1}
+                          </span>
+                          <p className="text-xs text-gray-700 leading-relaxed">{entry}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => clearLeadMemory(selectedLead.id)}
+                      disabled={clearingMemory}
+                      className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-700 disabled:opacity-50 transition font-medium">
+                      {clearingMemory
+                        ? <Loader2 className="w-3 h-3 animate-spin" />
+                        : <Trash2 className="w-3 h-3" />}
+                      Memory clear karo
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
           <select value={selectedLead.status} onChange={(event) => updateStage(selectedLead, event.target.value).then(() => setSelectedLead({ ...selectedLead, status: event.target.value }))} className="input-field mt-4 max-w-xs">
             {stages.map((stage) => <option key={stage.key} value={stage.key}>{stage.label}</option>)}
           </select>
@@ -660,6 +795,11 @@ function LeadCard({
         {lead.email && <span className="inline-flex items-center gap-1"><Mail className="h-3.5 w-3.5" />{lead.email}</span>}
         {lead.budget && <span>Budget: {lead.budget}</span>}
         {lead.timeline && <span>Timeline: {lead.timeline}</span>}
+        {lead.source === 'whatsapp_flow' && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-green-100 text-green-700 px-2 py-0.5 font-semibold text-[10px]">
+            📋 Form Submitted
+          </span>
+        )}
       </div>
       {lead.score_reason && <p className="mt-3 rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-600">{lead.score_reason}</p>}
       <div className="mt-4 flex flex-wrap gap-2">

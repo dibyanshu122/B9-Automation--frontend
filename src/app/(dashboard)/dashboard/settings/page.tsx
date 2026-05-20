@@ -630,7 +630,7 @@ export default function SettingsPage() {
             onChange={(e) => { setPreferredModel(e.target.value); setAiDirty(true); }}
             className="input-field max-w-xs"
           >
-            <option value="auto">Auto (recommended) — B9 picks best model per task</option>
+            <option value="auto">B9 Agentic Core — Auto (recommended)</option>
             <option value="groq">Groq only (llama-3.1-8b, fastest)</option>
             <option value="gemini">Gemini only (flash-lite, long context)</option>
           </select>

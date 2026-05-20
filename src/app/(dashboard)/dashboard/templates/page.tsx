@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 import { Button } from '@/components/button';
 import { Card } from '@/components/card';
 import { useApi } from '@/hooks/useApi';
+import { useAuthStore } from '@/store/authStore';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -37,15 +38,15 @@ const CAT_ACTIVE: Record<string, string> = {
 };
 const LANGUAGES = [
   { code: 'en_US', label: 'English' },
-  { code: 'hi',    label: 'Hindi — हिन्दी' },
-  { code: 'gu',    label: 'Gujarati — ગુજરાતી' },
-  { code: 'ta',    label: 'Tamil — தமிழ்' },
-  { code: 'te',    label: 'Telugu — తెలుగు' },
-  { code: 'bn',    label: 'Bengali — বাংলা' },
-  { code: 'mr',    label: 'Marathi — मराठी' },
-  { code: 'kn',    label: 'Kannada — ಕನ್ನಡ' },
-  { code: 'ml',    label: 'Malayalam — മലയാളം' },
-  { code: 'pa',    label: 'Punjabi — ਪੰਜਾਬੀ' },
+  { code: 'hi',    label: 'Hindi' },
+  { code: 'gu',    label: 'Gujarati' },
+  { code: 'ta',    label: 'Tamil' },
+  { code: 'te',    label: 'Telugu' },
+  { code: 'bn',    label: 'Bengali' },
+  { code: 'mr',    label: 'Marathi' },
+  { code: 'kn',    label: 'Kannada' },
+  { code: 'ml',    label: 'Malayalam' },
+  { code: 'pa',    label: 'Punjabi' },
 ];
 const HEADER_TYPES = ['NONE', 'TEXT', 'IMAGE', 'VIDEO', 'DOCUMENT', 'LOCATION'] as const;
 type HeaderType = typeof HEADER_TYPES[number];
@@ -422,6 +423,7 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [editorMode, setEditorMode] = useState<'beginner' | 'advanced'>('beginner');
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const handleMediaUpload = async (file: File) => {
@@ -448,6 +450,7 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
     if (isOpen) {
       setForm(prefill ? { ...EMPTY_FORM, ...prefill } : EMPTY_FORM);
       setErrors({});
+      setEditorMode(prefill ? 'advanced' : 'beginner');
     }
   }, [isOpen, prefill]);
 
@@ -575,7 +578,24 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
 
                 {/* Template type */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Template Type</label>
+                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                    <label className="block text-sm font-semibold text-gray-700">Template Type</label>
+                    <div className="flex rounded-lg border border-gray-200 bg-gray-50 p-0.5 text-xs font-semibold">
+                      <button type="button" onClick={() => setEditorMode('beginner')}
+                        className={`rounded-md px-2.5 py-1 ${editorMode === 'beginner' ? 'bg-white text-orange-700 shadow-sm' : 'text-gray-500'}`}>
+                        Beginner
+                      </button>
+                      <button type="button" onClick={() => setEditorMode('advanced')}
+                        className={`rounded-md px-2.5 py-1 ${editorMode === 'advanced' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`}>
+                        Advanced
+                      </button>
+                    </div>
+                  </div>
+                  {editorMode === 'beginner' && (
+                    <div className="mb-3 rounded-xl border border-orange-100 bg-orange-50 px-3 py-2 text-xs text-orange-800">
+                      Fill name, category, language and body. Advanced controls stay available, but AI draft is recommended for fastest setup.
+                    </div>
+                  )}
                   <div className="flex gap-2 flex-wrap">
                     {([
                       { v: 'standard', label: '📝 Standard' },
@@ -1068,7 +1088,7 @@ function DeactivateButton({ template, onDone }: { template: any; onDone: () => v
       // Use DELETE via axios directly
       const axios = (await import('axios')).default;
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      const token = typeof window !== 'undefined' ? useAuthStore.getState().token : null;
       await axios.delete(
         `${apiUrl}/api/automation/whatsapp/templates/${template.id}`,
         {
@@ -1194,15 +1214,25 @@ function parseTemplateToForm(t: any): Partial<FormState> {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function TemplatesPage() {
-  const { get } = useApi();
+  const { get, post } = useApi();
   const [templates, setTemplates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'APPROVED' | 'PENDING' | 'REJECTED'>('ALL');
   const [activeTab, setActiveTab] = useState<'mine' | 'library'>('mine');
+  const [rejectionModal, setRejectionModal] = useState<any | null>(null);
   const [showPicker, setShowPicker] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [prefill, setPrefill] = useState<Partial<FormState> | null>(null);
+  const [showAiDraft, setShowAiDraft] = useState(false);
+  const [aiDesc, setAiDesc] = useState('');
+  const [aiCategory, setAiCategory] = useState('MARKETING');
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiLang, setAiLang] = useState('en_US');
+  const [aiMediaFile, setAiMediaFile] = useState<File | null>(null);
+  const [aiMediaHandle, setAiMediaHandle] = useState('');
+  const [aiMediaUploading, setAiMediaUploading] = useState(false);
+  const [aiMediaPreview, setAiMediaPreview] = useState('');
   const [previewTpl, setPreviewTpl] = useState<any>(null);
 
   const loadTemplates = () => {
@@ -1266,9 +1296,21 @@ export default function TemplatesPage() {
           <h1 className="text-2xl font-bold text-gray-900">WhatsApp Templates</h1>
           <p className="mt-1 text-sm text-gray-500">Create and manage message templates for your WhatsApp Business account</p>
         </div>
-        <Button onClick={() => setShowPicker(true)} className="flex items-center gap-2 flex-shrink-0">
-          <Plus className="h-4 w-4" /> Create Template
-        </Button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setShowAiDraft(true)}
+            className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-xl text-white transition hover:opacity-90"
+            style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e1b4b 100%)' }}>
+            ✨ Generate Template with AI
+          </button>
+          <Button variant="secondary" onClick={() => setShowPicker(true)} className="flex items-center gap-2 flex-shrink-0">
+            <Plus className="h-4 w-4" /> Create Manually
+          </Button>
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-orange-200 bg-orange-50 p-4">
+        <p className="text-sm font-bold text-orange-950">Recommended path: AI draft -&gt; preview -&gt; submit to Meta</p>
+        <p className="mt-1 text-xs text-orange-700">Advanced options like carousel, auth OTP, LTO, media headers, and library templates are still available in manual mode.</p>
       </div>
 
       {/* Tabs */}
@@ -1362,6 +1404,13 @@ export default function TemplatesPage() {
                     <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold border ${STATUS_STYLES[t.status] || 'bg-gray-100 text-gray-500 border-gray-200'}`}>
                       {STATUS_ICONS[t.status]}{t.status}
                     </span>
+                    {t.status === 'REJECTED' && (
+                      <button
+                        onClick={() => setRejectionModal(t)}
+                        className="mt-1 flex items-center gap-1 text-[9px] font-bold text-red-600 bg-red-50 border border-red-200 rounded-full px-2 py-0.5 hover:bg-red-100 transition">
+                        ⚠️ Why rejected?
+                      </button>
+                    )}
                   </div>
                   <div className="col-span-2">
                     <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${CAT_STYLE[t.category] || 'bg-gray-100 text-gray-600'}`}>{t.category}</span>
@@ -1380,10 +1429,17 @@ export default function TemplatesPage() {
                       className="text-xs font-semibold text-gray-500 border border-gray-200 rounded-lg px-2 py-1 hover:bg-gray-100 hover:text-gray-800 transition whitespace-nowrap">
                       Preview
                     </button>
-                    <button onClick={() => editTemplate(t)}
-                      className="text-xs font-semibold text-blue-600 border border-blue-200 rounded-lg px-2 py-1 hover:bg-blue-50 transition whitespace-nowrap">
-                      Edit
-                    </button>
+                    {t.status === 'REJECTED' ? (
+                      <button onClick={() => editTemplate(t)}
+                        className="text-xs font-semibold text-red-600 border border-red-200 rounded-lg px-2 py-1 hover:bg-red-50 transition whitespace-nowrap">
+                        Fix &amp; Resubmit
+                      </button>
+                    ) : (
+                      <button onClick={() => editTemplate(t)}
+                        className="text-xs font-semibold text-blue-600 border border-blue-200 rounded-lg px-2 py-1 hover:bg-blue-50 transition whitespace-nowrap">
+                        Edit
+                      </button>
+                    )}
                     <DeactivateButton template={t} onDone={loadTemplates} />
                   </div>
                 </div>
@@ -1403,6 +1459,94 @@ export default function TemplatesPage() {
       )}
       <CreateTemplateModal isOpen={modalOpen} onClose={() => { setModalOpen(false); setPrefill(null); }} onSuccess={handleTemplateCreated} prefill={prefill} />
       {previewTpl && <TemplatePreviewModal template={previewTpl} onClose={() => setPreviewTpl(null)} />}
+
+      {/* ── Rejection Reason Modal ────────────────────────────────────────── */}
+      {rejectionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+          onClick={() => setRejectionModal(null)}>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md" onClick={e => e.stopPropagation()}>
+
+            {/* Header */}
+            <div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-red-100 bg-red-50 rounded-t-xl">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-600 text-sm font-bold flex-shrink-0">✕</div>
+                <div>
+                  <p className="font-bold text-red-900 text-sm">Template Rejected by Meta</p>
+                  <p className="text-[11px] text-red-600 font-mono mt-0.5">{rejectionModal.name}</p>
+                </div>
+              </div>
+              <button onClick={() => setRejectionModal(null)}
+                className="p-1.5 rounded-lg hover:bg-red-100 text-red-400 hover:text-red-600 transition flex-shrink-0">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="px-5 py-4 space-y-4">
+
+              {/* Rejection Reason */}
+              <div>
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Meta reason</p>
+                <div className="rounded-lg bg-red-50 border border-red-200 px-3 py-2.5">
+                  <p className="text-sm text-red-800 leading-relaxed">
+                    {rejectionModal.rejected_reason || 'Meta did not provide a specific reason. Common causes include misleading content, restricted category, or variable format issues.'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Quality Score */}
+              {rejectionModal.quality_score && (
+                <div>
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Quality Score</p>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-2 bg-red-400 rounded-full transition-all"
+                        style={{ width: `${Math.min(100, parseFloat(rejectionModal.quality_score) * 100)}%` }} />
+                    </div>
+                    <span className="text-sm font-bold text-red-600">{rejectionModal.quality_score}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Common fix tips */}
+              <div>
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Common fixes</p>
+                <ul className="space-y-1.5">
+                  {[
+                    'Use the correct variable format — {{1}} with digits only',
+                    'Guaranteed returns ya misleading claims mat write',
+                    'A sample URL is required for image or video headers',
+                    'Keep button text within 25 characters',
+                    'Choose the correct category — MARKETING vs UTILITY',
+                  ].map((tip, i) => (
+                    <li key={i} className="flex items-start gap-2 text-xs text-gray-600">
+                      <span className="text-orange-400 mt-0.5 flex-shrink-0">→</span>
+                      {tip}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-gray-100">
+              <button onClick={() => setRejectionModal(null)}
+                className="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  editTemplate(rejectionModal);
+                  setRejectionModal(null);
+                }}
+                className="flex items-center gap-2 px-5 py-2 text-sm font-bold text-white rounded-lg transition"
+                style={{ background: 'linear-gradient(135deg, #dc2626, #b91c1c)' }}>
+                ✏️ Edit &amp; Resubmit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Fixed-position hover preview — renders outside table, no overlap issues */}
       {hoveredTpl && (() => {
@@ -1444,6 +1588,176 @@ export default function TemplatesPage() {
           </div>
         );
       })()}
+
+      {/* ── AI Template Generator Modal ────────────────────────────────────── */}
+      {showAiDraft && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
+          onClick={() => { if (!aiGenerating) setShowAiDraft(false); }}>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg" onClick={e => e.stopPropagation()}>
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center text-white text-sm font-bold">✨</div>
+                <div>
+                  <p className="font-bold text-gray-900 text-sm">AI Template Generator</p>
+                  <p className="text-[10px] text-gray-400">Describe → AI generates → Meta pe submit</p>
+                </div>
+              </div>
+              <button onClick={() => setShowAiDraft(false)} disabled={aiGenerating}
+                className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 disabled:opacity-40">✕</button>
+            </div>
+
+            {/* Body */}
+            <div className="px-5 py-4 space-y-4">
+              {/* Description */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">Describe the template use case *</label>
+                <textarea
+                  value={aiDesc}
+                  onChange={e => setAiDesc(e.target.value)}
+                  rows={3}
+                  disabled={aiGenerating}
+                  placeholder="Example: Diwali sale — 30% off, valid until Oct 31. Add an image header and a Shop Now button."
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 resize-none disabled:bg-gray-50"
+                />
+                <p className="text-[10px] text-gray-400 mt-1">
+                  Tips: "image header", "video header", "carousel 3 products", "OTP template", "offer expires" write → AI can choose the right template type
+                </p>
+              </div>
+
+              {/* Category + Language row */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Category</label>
+                  <select value={aiCategory} onChange={e => setAiCategory(e.target.value)}
+                    disabled={aiGenerating}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none bg-white disabled:bg-gray-50">
+                    <option value="MARKETING">Marketing</option>
+                    <option value="UTILITY">Utility</option>
+                    <option value="AUTHENTICATION">Authentication (OTP)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Language</label>
+                  <select value={aiLang} onChange={e => setAiLang(e.target.value)}
+                    disabled={aiGenerating}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none bg-white disabled:bg-gray-50">
+                    <option value="en_US">English</option>
+                    <option value="hi">Hindi</option>
+                    <option value="gu">Gujarati</option>
+                    <option value="mr">Marathi</option>
+                    <option value="ta">Tamil</option>
+                    <option value="te">Telugu</option>
+                    <option value="bn">Bengali</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Optional image/video upload */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                  Image / Video (optional)
+                  <span className="ml-1 font-normal text-gray-400">— if this template needs header media</span>
+                </label>
+                {aiMediaPreview ? (
+                  <div className="flex items-center gap-3 rounded-lg border border-gray-200 p-2">
+                    {aiMediaPreview.startsWith('data:video') || aiMediaFile?.type.startsWith('video') ? (
+                      <div className="w-12 h-12 rounded bg-gray-800 flex items-center justify-center text-white text-xl">▶</div>
+                    ) : (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={aiMediaPreview} alt="preview" className="w-12 h-12 rounded object-cover border" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-gray-700 truncate">{aiMediaFile?.name}</p>
+                      <p className="text-[10px] text-gray-400">
+                        {aiMediaHandle ? '✓ Meta pe uploaded' : aiMediaUploading ? 'Uploading...' : 'Ready to upload'}
+                      </p>
+                    </div>
+                    <button onClick={() => { setAiMediaFile(null); setAiMediaPreview(''); setAiMediaHandle(''); }}
+                      className="text-gray-400 hover:text-red-500 transition p-1">✕</button>
+                  </div>
+                ) : (
+                  <label className="flex items-center gap-2 border-2 border-dashed border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-500 hover:border-orange-300 hover:text-orange-600 transition cursor-pointer">
+                    <span>📎</span>
+                    <span>Upload image / video / document</span>
+                    <input type="file" className="hidden" accept="image/jpeg,image/png,image/webp,video/mp4,application/pdf"
+                      disabled={aiGenerating}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        setAiMediaFile(file);
+                        setAiMediaPreview(URL.createObjectURL(file));
+                        setAiMediaUploading(true);
+                        try {
+                          const fd = new FormData();
+                          fd.append('file', file);
+                          const r = await post('/api/automation/whatsapp/upload-media', fd);
+                          if (r.data?.handle) {
+                            setAiMediaHandle(r.data.handle);
+                            toast.success('Media uploaded to Meta ✓');
+                          }
+                        } catch { toast.error('Media upload failed — you can still generate without it'); }
+                        finally { setAiMediaUploading(false); }
+                        e.target.value = '';
+                      }} />
+                  </label>
+                )}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-gray-100">
+              <button onClick={() => setShowAiDraft(false)} disabled={aiGenerating}
+                className="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40">
+                Cancel
+              </button>
+              <button
+                disabled={aiGenerating || aiDesc.trim().length < 5 || aiMediaUploading}
+                onClick={async () => {
+                  setAiGenerating(true);
+                  try {
+                    const r = await post('/api/automation/whatsapp/templates/generate', {
+                      description: aiDesc,
+                      category: aiCategory,
+                      language: aiLang,
+                      auto_submit: false,
+                      header_media_handle: aiMediaHandle,
+                    });
+                    const draft = r.data?.template_draft;
+                    if (draft) {
+                      setPrefill({
+                        name: draft.name || '',
+                        category: draft.category || aiCategory,
+                        language: draft.language || aiLang,
+                        headerType: draft.header_type || 'NONE',
+                        headerText: draft.header_text || '',
+                        headerMediaHandle: aiMediaHandle || draft.header_media_handle || '',
+                        bodyText: draft.body_text || '',
+                        examples: draft.body_variables || [],
+                        footerText: draft.footer_text || '',
+                        buttons: draft.buttons || [],
+                        templateType: draft.template_type || 'standard',
+                        carouselCards: draft.carousel_cards || [],
+                      } as any);
+                      setShowAiDraft(false);
+                      setShowPicker(false);
+                      setModalOpen(true);
+                      toast.success('AI draft ready — Review it and submit!');
+                    }
+                  } catch { toast.error('AI generation failed. Try again.'); }
+                  finally { setAiGenerating(false); }
+                }}
+                className="flex items-center gap-2 px-5 py-2 text-sm font-bold text-white rounded-lg disabled:opacity-40 transition"
+                style={{ background: 'linear-gradient(135deg, #ea580c, #d97706)' }}>
+                {aiGenerating
+                  ? <><span className="animate-spin inline-block">⏳</span> Generating...</>
+                  : <><span>✨</span> Generate Draft</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

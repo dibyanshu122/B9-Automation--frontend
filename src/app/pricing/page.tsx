@@ -103,7 +103,7 @@ export default function PricingPage() {
                 >
                   Annual
                   <span className="absolute -top-8 right-0 text-xs font-semibold bg-emerald-500/20 text-emerald-300 px-2 py-1 rounded whitespace-nowrap">
-                    2 months free
+                    Yearly discount
                   </span>
                 </button>
               </div>
@@ -124,6 +124,8 @@ export default function PricingPage() {
           >
             {PLANS.map((plan) => {
               const price = isAnnual && plan.annual_price ? plan.annual_price : plan.price;
+              const annualMonthlyEquivalent = plan.annual_price ? Math.round(plan.annual_price / 12) : null;
+              const annualSaving = plan.annual_price ? (plan.price * 12) - plan.annual_price : 0;
               const isPopular = plan.type === 'GROWTH';
 
               return (
@@ -153,8 +155,8 @@ export default function PricingPage() {
                     <p className="text-xs text-gray-500 mt-2">
                       {plan.annual_price
                         ? isAnnual
-                          ? `Billed ₹${plan.annual_price.toLocaleString('en-IN')}/year — save 2 months`
-                          : `Annual: ₹${plan.annual_price.toLocaleString('en-IN')}/yr`
+                          ? `Equivalent to ₹${annualMonthlyEquivalent?.toLocaleString('en-IN')}/month — save ₹${annualSaving.toLocaleString('en-IN')}/year`
+                          : `Annual: ₹${plan.annual_price.toLocaleString('en-IN')}/year`
                         : 'Free forever'}
                     </p>
                   </div>

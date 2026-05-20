@@ -163,7 +163,7 @@ export default function BillingPage() {
                 {currentPlan.billing_cycle === 'annual' ? (
                   <p className="mt-2 text-lg font-medium text-primary-600">
                     Rs {PLANS.find((p) => p.type === currentPlan.plan)?.annual_price || 0} / year
-                    <span className="ml-2 text-sm text-emerald-600 font-semibold">2 months free</span>
+                    <span className="ml-2 text-sm text-emerald-600 font-semibold">yearly discount</span>
                   </p>
                 ) : (
                   <p className="mt-2 text-lg font-medium text-primary-600">
@@ -242,7 +242,7 @@ export default function BillingPage() {
           </div>
           <div className="flex items-center gap-3">
             <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 rounded-full px-2 py-1">
-              Annual = 2 months free
+              Annual = best yearly price
             </span>
             <div className="inline-flex rounded-lg border border-gray-200 bg-gray-100 p-1">
               <button
@@ -274,48 +274,113 @@ export default function BillingPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
-          {PLANS.map((plan) => {
-            const displayPrice =
-              billingCycle === 'yearly' ? plan.annual_price ?? plan.price : plan.price;
+          {PLANS.map((plan: any) => {
+            const isAnnual = billingCycle === 'yearly';
+            // annual_price = total yearly amount charged by backend/Razorpay.
+            const displayPrice = isAnnual && plan.annual_price ? plan.annual_price : plan.price;
+            const annualMonthlyEquivalent = plan.annual_price ? Math.round(plan.annual_price / 12) : null;
+            const annualSaving = plan.annual_price ? (plan.price * 12) - plan.annual_price : 0;
+            const isCurrent = plan.type === currentPlan?.plan;
+            const badge = (plan as any).badge as string | null | undefined;
 
             return (
               <Card
                 key={plan.type}
-                className={`flex flex-col ${
-                  plan.type === currentPlan?.plan ? 'ring-2 ring-primary-500' : ''
-                }`}
+                className={`relative flex flex-col ${isCurrent ? 'ring-2 ring-primary-500' : ''} ${badge === 'Most Popular' ? 'border-primary-400' : ''}`}
               >
+                {/* Badge */}
+                {badge && (
+                  <div className={`absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-0.5 text-[10px] font-bold whitespace-nowrap
+                    ${badge === 'Most Popular' ? 'bg-primary-500 text-white' :
+                      badge === 'Best Value' ? 'bg-green-500 text-white' :
+                      badge === 'Enterprise' ? 'bg-purple-600 text-white' : 'bg-gray-700 text-white'}`}>
+                    {badge}
+                  </div>
+                )}
+
+                {/* Current plan indicator */}
+                {isCurrent && (
+                  <div className="mb-2 rounded-full bg-primary-50 px-2 py-0.5 text-center text-[10px] font-bold text-primary-600 border border-primary-200">
+                    ✓ Current Plan
+                  </div>
+                )}
+
                 <h3 className="text-lg font-bold text-gray-900">{plan.name}</h3>
+
+                {/* Price display */}
                 <div className="my-2">
-                  <p className="text-2xl font-bold text-primary-500">Rs {displayPrice}</p>
-                  <p className="text-xs font-medium text-gray-500">
-                    /{billingCycle === 'yearly' && plan.annual_price ? 'year' : 'month'}
-                  </p>
-                  {billingCycle === 'yearly' && plan.annual_price && plan.price > 0 && (
-                    <p className="mt-1 text-xs font-semibold text-green-600">
-                      Annual billing selected
-                    </p>
+                  {plan.price === 0 ? (
+                    <p className="text-2xl font-bold text-gray-900">₹0</p>
+                  ) : (
+                    <>
+                      <div className="flex items-end gap-1">
+                        <p className="text-2xl font-bold text-primary-500">₹{displayPrice.toLocaleString('en-IN')}</p>
+                        <p className="mb-0.5 text-xs font-medium text-gray-500">{isAnnual && plan.annual_price ? '/year' : '/month'}</p>
+                      </div>
+                      {isAnnual && plan.annual_price && (
+                        <div className="mt-1 space-y-0.5">
+                          <p className="text-[11px] text-gray-500">
+                            Equivalent to ₹{annualMonthlyEquivalent?.toLocaleString('en-IN')}/month
+                          </p>
+                          <p className="text-[11px] font-semibold text-green-600">
+                            Save ₹{annualSaving.toLocaleString('en-IN')}/year
+                          </p>
+                        </div>
+                      )}
+                      {!isAnnual && plan.annual_price && (
+                        <p className="mt-0.5 text-[11px] text-gray-400">
+                          Annual ₹{plan.annual_price.toLocaleString('en-IN')}/year
+                        </p>
+                      )}
+                    </>
                   )}
                 </div>
-                <p className="mb-4 text-sm text-gray-600">{plan.description}</p>
 
-                {plan.type !== currentPlan?.plan && plan.price > 0 && (
+                <p className="mb-3 text-xs text-gray-500 leading-relaxed">{plan.description}</p>
+
+                {/* AI engine tag */}
+                {(plan as any).ai_label && plan.price > 0 && (
+                  <div className="mb-3 flex items-center gap-1.5 rounded-lg bg-gray-50 border border-gray-100 px-2 py-1.5">
+                    <span className="text-[10px]">🤖</span>
+                    <span className="text-[10px] font-semibold text-gray-600">{(plan as any).ai_label}</span>
+                  </div>
+                )}
+
+                {/* CTA Button */}
+                {!isCurrent && plan.price > 0 && (
                   <Button
                     variant="primary"
-                    className="mb-4 w-full"
+                    className={`mb-4 w-full text-sm ${badge === 'Most Popular' ? '' : 'bg-gray-900 hover:bg-gray-800'}`}
                     onClick={() => handleUpgrade(plan.type)}
                     loading={upgrading === plan.type}
                     disabled={!!upgrading}
                   >
-                    {upgrading === plan.type ? 'Opening checkout…' : `Upgrade to ${plan.name}`}
+                    {upgrading === plan.type ? 'Opening…' : plan.cta || `Upgrade to ${plan.name}`}
                   </Button>
                 )}
+                {isCurrent && (
+                  <div className="mb-4 rounded-xl bg-gray-50 py-2 text-center text-xs font-semibold text-gray-500">
+                    Active
+                  </div>
+                )}
+                {plan.price === 0 && !isCurrent && (
+                  <div className="mb-4 rounded-xl bg-gray-100 py-2 text-center text-xs font-semibold text-gray-500">
+                    Free Forever
+                  </div>
+                )}
 
-                <div className="space-y-2">
-                  {plan.features.slice(0, 4).map((feature, i) => (
+                {/* Features list */}
+                <div className="space-y-1.5 mt-auto">
+                  {plan.features.map((feature: string, i: number) => (
                     <div key={i} className="flex items-start gap-2">
-                      <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-500" />
-                      <span className="text-sm text-gray-700">{feature}</span>
+                      {feature.includes('✓') || feature.includes('✅') ? (
+                        <Check className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-primary-500" />
+                      ) : feature.startsWith('No ') || feature.startsWith('Without') ? (
+                        <X className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-gray-300" />
+                      ) : (
+                        <Check className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-green-500" />
+                      )}
+                      <span className="text-xs text-gray-700 leading-relaxed">{feature.replace(' ✓', '').replace(' ✅', '')}</span>
                     </div>
                   ))}
                 </div>

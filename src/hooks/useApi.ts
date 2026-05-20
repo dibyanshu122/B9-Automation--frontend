@@ -56,17 +56,14 @@ export const getApiClient = (): AxiosInstance => {
       const status = error.response?.status;
 
       if (status === 401) {
-        // Only logout if token is genuinely missing from storage
-        // (avoids logging out users whose store hasn't hydrated yet)
-        let hasStoredToken = false;
-        try {
-          const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('auth-store') : null;
-          hasStoredToken = raw ? Boolean(JSON.parse(raw)?.state?.token) : false;
-        } catch {}
-        if (!hasStoredToken) {
+        // Token is expired or invalid — clear it and redirect to login
+        const currentToken = useAuthStore.getState().token;
+        if (currentToken) {
           useAuthStore.getState().logout();
           _dedupeToast('Session expired. Please login again.', 5000, 30000);
-          if (typeof window !== 'undefined') window.location.href = '/login';
+          if (typeof window !== 'undefined') {
+            setTimeout(() => { window.location.href = '/login'; }, 1000);
+          }
         }
       } else if (status === 402) {
         const detail = error.response?.data?.detail;

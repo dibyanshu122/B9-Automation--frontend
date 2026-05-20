@@ -17,12 +17,12 @@ const baseHeaders = [
 // Marketing pages intentionally have no CSP so Spline, analytics etc work freely
 const dashboardCSP = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://accounts.google.com https://www.googletagmanager.com https://checkout.razorpay.com",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://accounts.google.com https://www.googletagmanager.com https://checkout.razorpay.com https://connect.facebook.net",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
   "img-src 'self' data: blob: https:",
-  `connect-src 'self' ${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'} https://accounts.google.com wss: https://api.razorpay.com`,
-  "frame-src https://accounts.google.com https://api.razorpay.com https://checkout.razorpay.com",
+  `connect-src 'self' ${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'} https://accounts.google.com https://connect.facebook.net https://graph.facebook.com wss: https://api.razorpay.com`,
+  "frame-src https://accounts.google.com https://www.facebook.com https://web.facebook.com https://api.razorpay.com https://checkout.razorpay.com",
   "worker-src 'self' blob:",
   "object-src 'none'",
   ...(isDev ? [] : ['upgrade-insecure-requests']),
@@ -34,15 +34,18 @@ const nextConfig: NextConfig = {
   typescript: { ignoreBuildErrors: true },
 
   images: {
+    // Next.js 15.5.x LRUCache bug — disable optimization in dev to avoid cache errors
+    unoptimized: isDev,
     remotePatterns: [
       { protocol: 'https', hostname: '*.supabase.co' },
       { protocol: 'https', hostname: 'supabase.co' },
-      { protocol: 'https', hostname: 'lh3.googleusercontent.com' },  // Google profile pics
+      { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
       { protocol: 'https', hostname: 'prod.spline.design' },
       { protocol: 'https', hostname: 'b9automation.com' },
       { protocol: 'https', hostname: 'cdn.b9automation.com' },
     ],
     formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 60,
   },
 
   headers: async () => [

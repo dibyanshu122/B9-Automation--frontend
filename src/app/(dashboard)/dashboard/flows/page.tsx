@@ -6,7 +6,7 @@ import {
   AlertCircle, CheckCircle2, ChevronDown, Clock,
   Copy, Layers, Loader2, Plus, Save, Trash2, X,
   Type, AlignLeft, Circle, CheckSquare, Calendar, ToggleLeft,
-  Smartphone, Eye, ArrowRight, Settings2,
+  Smartphone, Eye, ArrowRight, Settings2, GitBranch, Sparkles, Wand2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/button';
@@ -20,11 +20,16 @@ type ComponentType =
   | 'TextHeading' | 'TextBody' | 'TextCaption'
   | 'TextInput' | 'TextArea' | 'Dropdown'
   | 'RadioButtonsGroup' | 'CheckboxGroup'
-  | 'DatePicker' | 'OptIn' | 'Footer';
+  | 'DatePicker' | 'OptIn' | 'Footer' | 'Condition';
 
 interface FlowComponent {
   _id: string; // internal UI id
   type: ComponentType;
+  // Condition fields
+  conditionField?: string;   // which input field to check (name of another component)
+  conditionValue?: string;   // value to compare against
+  trueScreen?: string;       // screen ID to go to when condition is true
+  falseScreen?: string;      // screen ID to go to when condition is false
   text?: string;          // TextHeading / TextBody / TextCaption / OptIn label
   name?: string;          // input field name (for form inputs)
   label?: string;         // input label
@@ -70,6 +75,7 @@ const COMPONENT_PALETTE: { type: ComponentType; label: string; icon: React.React
   { type: 'DatePicker',        label: 'Date Picker',   icon: <Calendar className="w-4 h-4" />,     group: 'Input' },
   { type: 'OptIn',             label: 'Opt-In',        icon: <ToggleLeft className="w-4 h-4" />,   group: 'Input' },
   { type: 'Footer',            label: 'Button/Footer', icon: <ArrowRight className="w-4 h-4" />,   group: 'Navigation' },
+  { type: 'Condition',         label: 'If / Condition',icon: <GitBranch className="w-4 h-4" />,   group: 'Logic' },
 ];
 
 const uid = () => Math.random().toString(36).slice(2, 9);
@@ -88,9 +94,185 @@ const defaultComponent = (type: ComponentType): FlowComponent => {
     case 'DatePicker':        return { ...base, name: 'field_' + uid(), label: 'Select date', required: true };
     case 'OptIn':             return { ...base, name: 'opt_' + uid(), text: 'I agree to the terms' };
     case 'Footer':            return { ...base, buttonLabel: 'Continue', isComplete: false };
+    case 'Condition':         return { ...base, conditionField: '', conditionValue: '', trueScreen: '', falseScreen: '' };
     default:                  return base;
   }
 };
+
+// ─── AI Generate Modal ────────────────────────────────────────────────────────
+
+const FLOW_CATEGORIES = [
+  { value: 'LEAD_GENERATION', label: 'Lead Generation' },
+  { value: 'APPOINTMENT_BOOKING', label: 'Appointment Booking' },
+  { value: 'CUSTOMER_SUPPORT', label: 'Customer Support' },
+  { value: 'SURVEY', label: 'Survey / Feedback' },
+  { value: 'OTHER', label: 'Other' },
+];
+
+const EXAMPLE_PROMPTS = [
+  'Lead form for coaching center — naam, phone, class (9th/10th/11th-12th), subject',
+  'Appointment booking for clinic — patient name, phone, date, doctor choice',
+  'Real estate inquiry — name, phone, budget, BHK type, preferred location',
+  'Feedback form — rating (1-5), what they liked, suggestions, email',
+  'Job application — name, phone, role applied for, experience years, city',
+];
+
+const INDIA_FLOW_PRESETS = [
+  { label: 'Coaching', name: 'Coaching Lead Form', category: 'LEAD_GENERATION', prompt: 'Coaching center lead form - student name, parent phone, class 9th/10th/11th/12th, subject choice, preferred demo date.' },
+  { label: 'Real Estate', name: 'Real Estate Inquiry', category: 'LEAD_GENERATION', prompt: 'Real estate inquiry form - name, phone, budget, BHK type, preferred location, buying timeline.' },
+  { label: 'Clinic', name: 'Clinic Appointment', category: 'APPOINTMENT_BOOKING', prompt: 'Clinic appointment booking - patient name, phone, doctor/speciality, preferred date, symptoms.' },
+  { label: 'D2C Store', name: 'Product Order Form', category: 'LEAD_GENERATION', prompt: 'D2C product order form - customer name, phone, product interest, quantity, city, delivery address.' },
+  { label: 'Education', name: 'Admission Enquiry', category: 'LEAD_GENERATION', prompt: 'School admission enquiry - parent name, phone, student age, class applying for, location, callback preference.' },
+];
+
+function AiGenerateModal({
+  isOpen,
+  onClose,
+  onGenerated,
+  post,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onGenerated: (screens: FlowScreen[]) => void;
+  post: (url: string, data: unknown) => Promise<{ data: unknown }>;
+}) {
+  const [desc, setDesc] = useState('');
+  const [category, setCategory] = useState('LEAD_GENERATION');
+  const [loading, setLoading] = useState(false);
+
+  const generate = async () => {
+    if (!desc.trim()) { toast.error('Describe the form you need'); return; }
+    setLoading(true);
+    try {
+      const r = await post('/api/automation/whatsapp/flows/generate-ai', { description: desc.trim(), category });
+      const raw = (r.data as { screens?: unknown }).screens;
+      if (!Array.isArray(raw) || raw.length === 0) throw new Error('Empty response');
+      // Convert raw AI output to FlowScreen[] with _id fields
+      const screens: FlowScreen[] = (raw as unknown[]).map((s: unknown) => {
+        const screen = s as Record<string, unknown>;
+        const comps = ((screen.components as unknown[]) || []).map((c: unknown) => {
+          const comp = c as Record<string, unknown>;
+          const fc: FlowComponent = { _id: uid(), type: (comp.type as ComponentType) || 'TextBody' };
+          if (comp.text) fc.text = comp.text as string;
+          if (comp.name) fc.name = comp.name as string;
+          if (comp.label) fc.label = comp.label as string;
+          if (comp['input-type']) fc['input-type'] = comp['input-type'] as string;
+          if (comp.required !== undefined) fc.required = comp.required as boolean;
+          if (comp['helper-text']) fc['helper-text'] = comp['helper-text'] as string;
+          if (Array.isArray(comp.options)) fc.options = comp.options as { id: string; title: string }[];
+          if (comp.buttonLabel) fc.buttonLabel = comp.buttonLabel as string;
+          if (comp.nextScreen) fc.nextScreen = comp.nextScreen as string;
+          if (comp.isComplete !== undefined) fc.isComplete = comp.isComplete as boolean;
+          return fc;
+        });
+        return {
+          _id: uid(),
+          id: (screen.id as string) || `SCREEN_${uid()}`,
+          title: (screen.title as string) || (screen.id as string) || 'Screen',
+          terminal: !!screen.terminal,
+          components: comps,
+        };
+      });
+      onGenerated(screens);
+      toast.success(`✓ ${screens.length} screen(s) generated! You can edit it now.`);
+      onClose();
+      setDesc('');
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail || (e as Error)?.message || 'Generation failed';
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+              <Wand2 className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <p className="font-bold text-gray-900 text-sm">B9 Agentic Core — Form Generator</p>
+              <p className="text-[10px] text-gray-400">Describe it, and AI will create a valid Meta Flow</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="p-5 space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1.5">Describe the form use case *</label>
+            <textarea
+              value={desc}
+              onChange={e => setDesc(e.target.value)}
+              placeholder="Example: Lead capture form for coaching - student name, phone, class (9th/10th), subject choice (Math/Science/English)"
+              rows={4}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 resize-none"
+              disabled={loading}
+            />
+            <p className="text-[10px] text-gray-400 mt-1">More detail creates a better form.</p>
+          </div>
+
+          {/* Example prompts */}
+          <div>
+            <p className="text-[10px] font-semibold text-gray-500 mb-2">Examples (click to use):</p>
+            <div className="space-y-1">
+              {EXAMPLE_PROMPTS.slice(0, 3).map((ex, i) => (
+                <button key={i} onClick={() => setDesc(ex)}
+                  className="w-full text-left text-[10px] text-violet-700 bg-violet-50 hover:bg-violet-100 rounded-lg px-3 py-1.5 transition truncate border border-violet-100">
+                  {ex}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1.5">Category</label>
+            <select
+              value={category}
+              onChange={e => setCategory(e.target.value)}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white"
+              disabled={loading}
+            >
+              {FLOW_CATEGORIES.map(c => (
+                <option key={c.value} value={c.value}>{c.label}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-2.5 px-5 py-4 border-t border-gray-100">
+          <button onClick={onClose} disabled={loading}
+            className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition">
+            Cancel
+          </button>
+          <Button onClick={generate} disabled={loading || !desc.trim()}
+            className="flex items-center gap-2 px-5 py-2 text-sm bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white rounded-lg font-semibold shadow-sm">
+            {loading ? (
+              <><Loader2 className="w-4 h-4 animate-spin" /> Generating...</>
+            ) : (
+              <><Sparkles className="w-4 h-4" /> Generate Form</>
+            )}
+          </Button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
 
 // ─── Flow JSON Builder ────────────────────────────────────────────────────────
 
@@ -102,18 +284,33 @@ function buildFlowJson(screens: FlowScreen[]): object {
     routing[s.id] = next ? [next] : [];
 
     const formInputTypes: ComponentType[] = ['TextInput', 'TextArea', 'Dropdown', 'RadioButtonsGroup', 'CheckboxGroup', 'DatePicker', 'OptIn'];
+    const conditionNodes = s.components.filter(c => c.type === 'Condition');
     const formChildren = s.components.filter(c => formInputTypes.includes(c.type));
-    const textChildren = s.components.filter(c => !formInputTypes.includes(c.type) && c.type !== 'Footer');
+    const textChildren = s.components.filter(c => !formInputTypes.includes(c.type) && c.type !== 'Footer' && c.type !== 'Condition');
+
+    // Build routing additions from condition nodes
+    conditionNodes.forEach(cond => {
+      if (cond.trueScreen) routing[s.id] = [...(routing[s.id] || []), cond.trueScreen].filter((v, i, a) => a.indexOf(v) === i);
+      if (cond.falseScreen) routing[s.id] = [...(routing[s.id] || []), cond.falseScreen].filter((v, i, a) => a.indexOf(v) === i);
+    });
 
     const buildComp = (c: FlowComponent): object => {
+      // For Dropdown/Radio with a matching Condition node, add on_select_action
+      const cond = conditionNodes.find(cn => cn.conditionField === c.name);
+      const onSelectAction = cond ? {
+        'on-select-action': {
+          name: 'navigate',
+          next: { type: 'screen', name: `\${form.flow_form.${c.name}} == "${cond.conditionValue}" ? "${cond.trueScreen}" : "${cond.falseScreen}"` },
+        },
+      } : {};
       switch (c.type) {
         case 'TextHeading': return { type: 'TextHeading', text: c.text || '' };
         case 'TextBody':    return { type: 'TextBody', text: c.text || '', markdown: true };
         case 'TextCaption': return { type: 'TextCaption', text: c.text || '' };
         case 'TextInput':   return { type: 'TextInput', name: c.name, label: c.label, 'input-type': c['input-type'] || 'text', required: c.required ?? true, ...(c['helper-text'] ? { 'helper-text': c['helper-text'] } : {}) };
         case 'TextArea':    return { type: 'TextArea', name: c.name, label: c.label, required: c.required ?? false };
-        case 'Dropdown':    return { type: 'Dropdown', name: c.name, label: c.label, required: c.required ?? true, 'data-source': (c.options || []).map(o => ({ id: o.id, title: o.title })) };
-        case 'RadioButtonsGroup': return { type: 'RadioButtonsGroup', name: c.name, label: c.label, required: c.required ?? true, 'data-source': (c.options || []).map(o => ({ id: o.id, title: o.title })) };
+        case 'Dropdown':    return { type: 'Dropdown', name: c.name, label: c.label, required: c.required ?? true, 'data-source': (c.options || []).map(o => ({ id: o.id, title: o.title })), ...onSelectAction };
+        case 'RadioButtonsGroup': return { type: 'RadioButtonsGroup', name: c.name, label: c.label, required: c.required ?? true, 'data-source': (c.options || []).map(o => ({ id: o.id, title: o.title })), ...onSelectAction };
         case 'CheckboxGroup': return { type: 'CheckboxGroup', name: c.name, label: c.label, required: c.required ?? true, 'data-source': (c.options || []).map(o => ({ id: o.id, title: o.title })), ...(c.min_selected_items ? { min_selected_items: c.min_selected_items } : {}), ...(c.max_selected_items ? { max_selected_items: c.max_selected_items } : {}) };
         case 'DatePicker':  return { type: 'DatePicker', name: c.name, label: c.label, required: c.required ?? true };
         case 'OptIn':       return { type: 'OptIn', name: c.name, label: c.text || 'I agree', required: true };
@@ -255,6 +452,12 @@ function PreviewComponent({ c }: { c: FlowComponent }) {
         {c.buttonLabel || 'Continue'}
       </div>
     );
+    case 'Condition':   return (
+      <div className="mt-1 rounded border border-dashed border-amber-300 bg-amber-50 px-2 py-1 text-[9px] text-amber-700">
+        <span className="font-bold">IF</span> {c.conditionField || '?'} = {c.conditionValue || '?'}<br/>
+        ✅ → {c.trueScreen || '?'} &nbsp; ❌ → {c.falseScreen || '?'}
+      </div>
+    );
     default: return null;
   }
 }
@@ -356,13 +559,52 @@ function ComponentEditor({ c, screens, screenId, onChange, onDelete }: {
           )}
         </>
       )}
+
+      {/* Condition */}
+      {c.type === 'Condition' && (
+        <div className="space-y-2">
+          <p className="text-[10px] text-gray-500">Routes user to different screens based on their answer.</p>
+          <div>
+            <p className="text-[10px] font-semibold text-gray-500 mb-1">Check field (input name):</p>
+            <input value={c.conditionField || ''} onChange={e => onChange({ ...c, conditionField: e.target.value })} className={inp} placeholder="e.g. category, interests" />
+            <p className="text-[9px] text-gray-400 mt-0.5">Must match the `name` of a Dropdown/Radio field on this screen</p>
+          </div>
+          <div>
+            <p className="text-[10px] font-semibold text-gray-500 mb-1">Equals value:</p>
+            <input value={c.conditionValue || ''} onChange={e => onChange({ ...c, conditionValue: e.target.value })} className={inp} placeholder="e.g. option_1_id" />
+          </div>
+          <div>
+            <p className="text-[10px] font-semibold text-gray-500 mb-1">✅ If TRUE → go to screen:</p>
+            <select value={c.trueScreen || ''} onChange={e => onChange({ ...c, trueScreen: e.target.value })} className={inp}>
+              <option value="">Select screen...</option>
+              {screens.filter(s => s._id !== screenId).map(s => (
+                <option key={s._id} value={s.id}>{s.title || s.id}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <p className="text-[10px] font-semibold text-gray-500 mb-1">❌ If FALSE → go to screen:</p>
+            <select value={c.falseScreen || ''} onChange={e => onChange({ ...c, falseScreen: e.target.value })} className={inp}>
+              <option value="">Select screen...</option>
+              {screens.filter(s => s._id !== screenId).map(s => (
+                <option key={s._id} value={s.id}>{s.title || s.id}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 // ─── Flow Designer ────────────────────────────────────────────────────────────
 
-function FlowDesigner({ flow, onBack, onFlowUpdated }: { flow: WaFlow; onBack: () => void; onFlowUpdated: () => void }) {
+function FlowDesigner({
+  flow, onBack, onFlowUpdated, initialOpenAi = false, onAiModalOpened,
+}: {
+  flow: WaFlow; onBack: () => void; onFlowUpdated: () => void;
+  initialOpenAi?: boolean; onAiModalOpened?: () => void;
+}) {
   const { get, post } = useApi();
   const [screens, setScreens] = useState<FlowScreen[]>([
     { _id: uid(), id: 'SCREEN_1', title: 'Screen 1', terminal: false, components: [] },
@@ -372,6 +614,7 @@ function FlowDesigner({ flow, onBack, onFlowUpdated }: { flow: WaFlow; onBack: (
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [showPreview, setShowPreview] = useState(true);
+  const [showAiModal, setShowAiModal] = useState(false);
 
   // Load existing flow document
   useEffect(() => {
@@ -408,7 +651,13 @@ function FlowDesigner({ flow, onBack, onFlowUpdated }: { flow: WaFlow; onBack: (
         }
       })
       .catch(() => {})
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+        if (initialOpenAi) {
+          setShowAiModal(true);
+          onAiModalOpened?.();
+        }
+      });
   }, []); // eslint-disable-line
 
   const addScreen = () => {
@@ -502,6 +751,14 @@ function FlowDesigner({ flow, onBack, onFlowUpdated }: { flow: WaFlow; onBack: (
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {flow.status === 'DRAFT' && (
+            <button
+              onClick={() => setShowAiModal(true)}
+              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-violet-200 text-violet-700 bg-violet-50 hover:bg-violet-100 transition"
+              title="Generate a WhatsApp Flow with B9 Agentic Core">
+              <Sparkles className="w-3.5 h-3.5" /> Generate with AI
+            </button>
+          )}
           <button onClick={() => setShowPreview(v => !v)}
             className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border transition ${showPreview ? 'bg-orange-50 border-orange-300 text-orange-700' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
             <Eye className="w-3.5 h-3.5" /> Preview
@@ -516,6 +773,21 @@ function FlowDesigner({ flow, onBack, onFlowUpdated }: { flow: WaFlow; onBack: (
           )}
         </div>
       </div>
+
+      {/* AI Generate Modal */}
+      <AnimatePresence>
+        {showAiModal && (
+          <AiGenerateModal
+            isOpen={showAiModal}
+            onClose={() => setShowAiModal(false)}
+            onGenerated={(generated) => {
+              setScreens(generated);
+              setActiveScreen(0);
+            }}
+            post={post}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Live warning */}
       {flow.status === 'PUBLISHED' && (
@@ -558,7 +830,7 @@ function FlowDesigner({ flow, onBack, onFlowUpdated }: { flow: WaFlow; onBack: (
           {/* Component palette */}
           <div className="flex-1 overflow-y-auto p-3">
             <p className="text-[10px] font-bold uppercase tracking-wide text-gray-500 mb-2">Add Component</p>
-            {['Text', 'Input', 'Navigation'].map(group => (
+            {['Text', 'Input', 'Navigation', 'Logic'].map(group => (
               <div key={group} className="mb-3">
                 <p className="text-[9px] text-gray-400 font-semibold uppercase mb-1">{group}</p>
                 <div className="space-y-1">
@@ -659,26 +931,32 @@ export default function FlowsPage() {
   const [flows, setFlows] = useState<WaFlow[]>([]);
   const [loading, setLoading] = useState(true);
   const [notConnected, setNotConnected] = useState(false);
+  const [flowError, setFlowError] = useState('');
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState('');
   const [newCategory, setNewCategory] = useState('LEAD_GENERATION');
   const [creating, setCreating] = useState(false);
   const [designing, setDesigning] = useState<WaFlow | null>(null);
   const [acting, setActing] = useState<string | null>(null);
+  const [createWithAi, setCreateWithAi] = useState(false);
 
   const load = () => {
     setLoading(true);
+    setNotConnected(false);
+    setFlowError('');
     get('/api/automation/whatsapp/flows')
       .then(r => setFlows(r.data?.data || []))
       .catch((e: any) => {
-        if (e?.response?.status === 400) setNotConnected(true);
+        const detail = e?.response?.data?.detail || 'WhatsApp Flows did not load. Please retry.';
+        if ([400, 401, 403].includes(e?.response?.status)) setNotConnected(true);
+        setFlowError(detail);
       })
       .finally(() => setLoading(false));
   };
 
   useEffect(() => { load(); }, []); // eslint-disable-line
 
-  const createFlow = async () => {
+  const createFlow = async (useAi = false) => {
     if (!newName.trim()) { toast.error('Flow name required'); return; }
     setCreating(true);
     try {
@@ -686,7 +964,12 @@ export default function FlowsPage() {
       const newFlow: WaFlow = { id: r.data.id, name: newName.trim(), status: 'DRAFT', categories: [newCategory] };
       setFlows(prev => [...prev, newFlow]);
       setNewName(''); setShowCreate(false);
-      toast.success('Flow created! Opening designer...');
+      if (useAi) {
+        toast.success('Flow created. Opening AI designer...');
+        setCreateWithAi(true);
+      } else {
+        toast.success('Flow created! Opening designer...');
+      }
       setDesigning(newFlow);
     } catch (e: any) { toast.error(e.response?.data?.detail || 'Failed to create flow'); }
     finally { setCreating(false); }
@@ -705,9 +988,24 @@ export default function FlowsPage() {
 
   const copyId = (id: string) => { navigator.clipboard.writeText(id); toast.success('Flow ID copied!'); };
 
+  const openPreset = (preset: typeof INDIA_FLOW_PRESETS[number]) => {
+    setNewName(preset.name);
+    setNewCategory(preset.category);
+    setShowCreate(true);
+    toast('Preset selected. Click Generate with AI, then use the prompt examples to create the form.', { icon: '✨' });
+  };
+
   // Show designer if editing
   if (designing) {
-    return <FlowDesigner flow={designing} onBack={() => { setDesigning(null); load(); }} onFlowUpdated={load} />;
+    return (
+      <FlowDesigner
+        flow={designing}
+        onBack={() => { setDesigning(null); setCreateWithAi(false); load(); }}
+        onFlowUpdated={load}
+        initialOpenAi={createWithAi}
+        onAiModalOpened={() => setCreateWithAi(false)}
+      />
+    );
   }
 
   return (
@@ -724,18 +1022,40 @@ export default function FlowsPage() {
           </p>
         </div>
         {!notConnected && (
-          <Button onClick={() => setShowCreate(true)} className="flex items-center gap-2">
-            <Plus className="w-4 h-4" /> New Flow
+          <Button onClick={() => setShowCreate(true)} className="flex items-center gap-2 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700">
+            <Sparkles className="w-4 h-4" /> Generate Form with AI
           </Button>
         )}
       </div>
+
+      {!notConnected && (
+        <div className="rounded-xl border border-violet-200 bg-violet-50 p-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-sm font-bold text-violet-950">Recommended path: create a WhatsApp form with AI</p>
+              <p className="mt-1 text-xs text-violet-700">Choose an India SMB preset. The manual designer and advanced controls remain available.</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {INDIA_FLOW_PRESETS.map((preset) => (
+                <button key={preset.label} onClick={() => openPreset(preset)}
+                  className="rounded-lg border border-violet-200 bg-white px-3 py-1.5 text-xs font-semibold text-violet-700 hover:border-violet-400 hover:bg-violet-100 transition">
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Not connected */}
       {notConnected && (
         <div className="flex flex-col items-center gap-3 rounded-xl border-2 border-dashed border-gray-200 py-14 text-center">
           <AlertCircle className="w-10 h-10 text-amber-400" />
-          <p className="font-semibold text-gray-700">WhatsApp not connected</p>
-          <p className="text-sm text-gray-400">Connect your WhatsApp account in Integrations first.</p>
+          <p className="font-semibold text-gray-700">Connect WhatsApp</p>
+          <p className="max-w-md text-sm text-gray-400">{flowError || 'Connect your WhatsApp account in Integrations first.'}</p>
+          <button onClick={load} className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+            Retry
+          </button>
           <a href="/dashboard/integrations" className="mt-1 text-sm font-semibold text-orange-600 hover:underline">
             Go to Integrations →
           </a>
@@ -752,9 +1072,9 @@ export default function FlowsPage() {
         <div className="flex flex-col items-center gap-3 rounded-xl border-2 border-dashed border-gray-200 py-14 text-center">
           <Layers className="w-10 h-10 text-purple-300" />
           <p className="font-semibold text-gray-500">No flows yet</p>
-          <p className="text-sm text-gray-400">Create your first interactive form for WhatsApp</p>
-          <Button onClick={() => setShowCreate(true)} className="mt-2 flex items-center gap-2">
-            <Plus className="w-4 h-4" /> Create First Flow
+          <p className="text-sm text-gray-400">Create your first interactive form with AI, then edit it manually.</p>
+          <Button onClick={() => setShowCreate(true)} className="mt-2 flex items-center gap-2 bg-gradient-to-r from-violet-500 to-purple-600">
+            <Sparkles className="w-4 h-4" /> Generate First Flow with AI
           </Button>
         </div>
       )}
@@ -837,9 +1157,14 @@ export default function FlowsPage() {
               </div>
               <div className="flex justify-end gap-2 mt-5">
                 <Button variant="secondary" onClick={() => setShowCreate(false)}>Cancel</Button>
-                <Button onClick={createFlow} disabled={creating || !newName.trim()} className="flex items-center gap-2">
+                <Button variant="secondary" onClick={() => createFlow(false)} disabled={creating || !newName.trim()} className="flex items-center gap-2">
                   {creating && <Loader2 className="w-4 h-4 animate-spin" />}
-                  Create & Design
+                  Manually Design
+                </Button>
+                <Button onClick={() => createFlow(true)} disabled={creating || !newName.trim()}
+                  className="flex items-center gap-2 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700">
+                  {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                  Generate with AI
                 </Button>
               </div>
             </motion.div>

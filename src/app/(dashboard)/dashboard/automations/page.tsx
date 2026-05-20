@@ -46,6 +46,7 @@ import {
 import { Button } from '@/components/button';
 import { UpgradeModal } from '@/components/upgrade-modal';
 import { useApi } from '@/hooks/useApi';
+import { useAuthStore } from '@/store/authStore';
 import { usePlanAccess } from '@/hooks/usePlanAccess';
 import { AutomationRun, AutomationWorkflow, IntegrationCatalogItem } from '@/types';
 import { DEFAULT_INDUSTRY_PACK, IndustryPack } from '@/lib/industry-packs';
@@ -122,6 +123,7 @@ const baseLibrary: LibraryBlock[] = [
   { type: 'trigger', title: 'New Instagram Message', description: 'Runs on every incoming Instagram DM.', config: { trigger_type: 'new_instagram_message', source: 'instagram' } },
   { type: 'trigger', title: 'Payment Success', description: 'Fires after a successful Razorpay payment.', config: { trigger_type: 'payment_success' } },
   { type: 'trigger', title: 'IndiaMART Lead', description: 'Auto-polls IndiaMART every 15 min for new buyer leads.', config: { trigger_type: 'indiamart' } },
+  { type: 'ai', title: '🤖 Agentic AI (Auto)', description: 'TRUE agentic AI — automatically decides which tools to call (send message, catalog, payment, follow-up). No manual wiring needed.', config: { tool: 'agentic_agent', max_steps: '5', send_mode: 'live' } },
   { type: 'ai', title: 'AI Agent', description: 'Gemini Flash reply using lead, message and knowledge context.', config: { tool: 'ai_agent', tone: 'Friendly', response_length: 'Short', use_knowledge_base: 'true', use_previous_data: 'true' } },
   { type: 'ai', title: 'Conversation Flow', description: 'Uses uploaded chatbot flow PDF to decide the next reply.', config: { tool: 'conversation_flow_pdf', strict_mode: 'true', fallback_instruction: 'Ask one clarification question or hand over to team if flow is unclear.' } },
   { type: 'ai', title: 'Document Search', description: 'Find the right answer from uploaded docs.', config: { tool: 'document_routing' } },
@@ -174,7 +176,7 @@ const visibleLibrary: LibraryBlock[] = [
   { type: 'condition', title: 'If Flow → Handover', description: 'Branch YES when AI decides human agent is needed.', config: { field: 'flow.intent', operator: 'equals', value: 'handover' } },
   { type: 'condition', title: 'If Hot Lead', description: 'Branch YES if AI scored this lead as HOT.', config: { field: 'lead_score', operator: 'greater_than', value: '7', then_action: 'notify_owner', else_action: 'create_task' } },
   { type: 'condition', title: 'Decide Next Step', description: 'Ask AI a Yes/No question to choose the next path.', config: { tool: 'ai_condition', condition_prompt: 'Does this lead want to book a demo or meeting?' } },
-  { type: 'action', title: 'Schedule Reminder', description: 'Schedule a WhatsApp follow-up reminder to send automatically after X hours or days.', config: { tool: 'schedule_followup', hours: '24', days: '0', message: 'Hi {{lead.name}}, just checking in! Kya koi help chahiye? 😊' } },
+  { type: 'action', title: 'Schedule Reminder', description: 'Schedule a WhatsApp follow-up reminder to send automatically after X hours or days.', config: { tool: 'schedule_followup', hours: '24', days: '0', message: 'Hi {{lead.name}}, just checking in! Do you need any help?' } },
   { type: 'action', title: 'Wait 1 Hour', description: 'Pause the flow for 1 hour before the next step.', config: { tool: 'wait_node', delay_minutes: 60 } },
   // ── Actions ───────────────────────────────────────────────────────────────
   { type: 'action', title: 'Send WhatsApp', description: 'Send WhatsApp message or approved template to the lead.', config: { tool: 'send_whatsapp_message', recipient: '{{lead.phone}}', message_body: '{{ai.response}}', message_mode: 'text', send_mode: 'draft', language_code: 'en_US' } },
@@ -212,13 +214,13 @@ const visibleLibrary: LibraryBlock[] = [
 ];
 
 const samplePrompts: Record<string, string> = {
-  real_estate: 'Mera naam Amit hai. 3BHK dekh raha hoon, budget 65 lakh hai. Saturday site visit chahiye. Phone 9876543210.',
-  coaching: 'Class 12 Physics demo chahiye. Mera naam Rahul hai aur phone 9876543210 hai.',
-  gym: 'Gym trial class book karni hai. Weight loss plan aur fees batao. Phone 9876543210.',
-  salon: 'Hair spa ka price kya hai aur appointment Sunday ko mil sakta hai? Phone 9876543210.',
-  healthcare: 'Mujhe doctor se milna hai. Pet dard hai kal se. Phone 9876543210.',
-  it_agency: 'Mujhe CRM software demo chahiye. Budget 5000 dollars hai. Phone 9876543210.',
-  custom: 'Pricing aur demo chahiye. Mera phone 9876543210 hai.',
+  real_estate: 'My name is Amit. I am looking for a 3BHK, my budget is 65 lakh, and I want a Saturday site visit. Phone 9876543210.',
+  coaching: 'I want a Class 12 Physics demo. My name is Rahul and my phone is 9876543210.',
+  gym: 'I want to book a gym trial class. Please share the weight loss plan and fees. Phone 9876543210.',
+  salon: 'What is the price for a hair spa and can I get an appointment on Sunday? Phone 9876543210.',
+  healthcare: 'I want to meet a doctor. I have had stomach pain since yesterday. Phone 9876543210.',
+  it_agency: 'I want a CRM software demo. My budget is 5000 dollars. Phone 9876543210.',
+  custom: 'I want pricing and a demo. My phone is 9876543210.',
 };
 
 const providerOptions = {
@@ -969,12 +971,49 @@ export default function AutomationsPage() {
         >
           <Play className="h-3.5 w-3.5" /> {testing ? 'Running…' : 'Test'}
         </Button>
+        {/* Go Live — set all send nodes to live at once */}
+        {nodes.some(n => ((n as any).data?.config?.send_mode === 'draft') && (n as any).data?.config?.tool?.includes('whatsapp')) && (
+          <Button
+            size="sm"
+            variant="secondary"
+            className="text-emerald-600 border-emerald-200 hover:bg-emerald-50"
+            onClick={() => {
+              setNodes(prev => prev.map(n => {
+                const cfg = (n as any).data?.config || {};
+                if (cfg.tool?.includes('whatsapp') || cfg.tool?.includes('catalog') || cfg.tool?.includes('payment')) {
+                  return { ...n, data: { ...(n as any).data, config: { ...cfg, send_mode: 'live' } } };
+                }
+                return n;
+              }));
+              toast.success('All WhatsApp nodes set to LIVE ✅');
+            }}
+            title="Set all WhatsApp send nodes to live mode"
+          >
+            🚀 Go Live
+          </Button>
+        )}
         <Button size="sm" onClick={saveWorkflow} loading={saving}>
           <Save className="h-3.5 w-3.5" /> Save
         </Button>
       </div>
 
       {/* ── Blocker strip — only when builder is open (not in list view) ── */}
+      <div className="shrink-0 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-sm font-bold text-violet-950">Build an automation for my business</p>
+            <p className="mt-1 text-xs text-violet-700">Generate a full workflow with AI. The canvas stays editable, and advanced nodes/tools remain available.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowGenerateModal(true)}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2 text-sm font-bold text-white hover:bg-violet-700 transition"
+          >
+            <Sparkles className="h-4 w-4" /> Generate Automation with AI
+          </button>
+        </div>
+      </div>
+
       {!showWorkflowList && effectiveValidation.blockers.length > 0 && (
         <div className="shrink-0 flex flex-wrap gap-2 rounded-xl border border-amber-100 bg-amber-50 px-4 py-2">
           {effectiveValidation.blockers.slice(0, 3).map((b) => (
@@ -1231,7 +1270,7 @@ export default function AutomationsPage() {
                     </div>
                     <label className="block text-xs font-semibold text-violet-900">
                       Yes/No question for AI
-                      <textarea value={selectedNode.config.condition_prompt || ''} onChange={(e) => updateSelectedConfig('condition_prompt', e.target.value)} rows={2} className="input-field mt-1 resize-none text-xs" placeholder="Kya user demo book karna chahta hai? / Is this a serious buying intent?" />
+                      <textarea value={selectedNode.config.condition_prompt || ''} onChange={(e) => updateSelectedConfig('condition_prompt', e.target.value)} rows={2} className="input-field mt-1 resize-none text-xs" placeholder="Does the user want to book a demo? / Is this a serious buying intent?" />
                     </label>
                     <p className="text-[10px] text-violet-600">AI checks the current message and context, returns YES or NO. Use <code className="font-mono">{'{{name}}'}</code> or <code className="font-mono">{'{{phone}}'}</code> in the question.</p>
                     <div className="flex gap-1.5 pt-1 text-[10px] font-bold">
@@ -1489,7 +1528,13 @@ export default function AutomationsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-lg rounded-2xl border border-violet-200 bg-white shadow-2xl">
             <div className="border-b border-gray-100 px-6 py-4">
-              <p className="font-bold text-gray-900 text-lg">✨ Generate Flow with AI</p>
+              <div className="flex items-center justify-between">
+                <p className="font-bold text-gray-900 text-lg">✨ Generate Flow with AI</p>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white"
+                  style={{ background: 'linear-gradient(135deg, #1e293b, #1e1b4b)' }}>
+                  B9 Agentic Core
+                </span>
+              </div>
               <p className="text-xs text-gray-400 mt-0.5">Describe your chatbot in plain language — AI will build the entire flow</p>
             </div>
             <div className="p-6 space-y-4">
@@ -1500,7 +1545,7 @@ export default function AutomationsPage() {
                   onChange={e => setGenerateDesc(e.target.value)}
                   rows={5}
                   className="input-field resize-none text-sm"
-                  placeholder={`Examples:\n• "Mera coaching center hai. Pehle poochho konsi class — 9th ya 10th. Phir fee details do."\n• "Real estate chatbot. Ask budget, location preference, then book a site visit."\n• "Salon booking — show services, collect name/phone, confirm appointment"`}
+                  placeholder={`Examples:\n• "I run a coaching center. First ask which class — 9th ya 10th. Then share fee details."\n• "Real estate chatbot. Ask budget, location preference, then book a site visit."\n• "Salon booking — show services, collect name/phone, confirm appointment"`}
                 />
               </div>
               <div>
@@ -2255,7 +2300,7 @@ function ActionBlockSettings({
   const loadTemplates = () => {
     if (templatesLoaded || templatesLoading) return;
     setTemplatesLoading(true);
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
+    const token = useAuthStore.getState().token;
     const base = process.env.NEXT_PUBLIC_API_URL || '';
     fetch(`${base}/api/automation/whatsapp/templates`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -2931,7 +2976,7 @@ function ActionBlockSettings({
           </div>
           <label className="block text-sm font-semibold text-gray-700">
             Reminder message
-            <textarea value={config.message || 'Hi {{lead.name}}, just checking in! Kya koi help chahiye? 😊'} onChange={e => onChange('message', e.target.value)} rows={3} className="input-field mt-2 resize-none text-sm" />
+            <textarea value={config.message || 'Hi {{lead.name}}, just checking in! Do you need any help?'} onChange={e => onChange('message', e.target.value)} rows={3} className="input-field mt-2 resize-none text-sm" />
           </label>
           <div className="rounded-lg bg-white p-2 text-[10px] text-gray-500">
             Variables: <code className="rounded bg-sky-50 px-1">{'{{lead.name}}'}</code> <code className="rounded bg-sky-50 px-1">{'{{order_form.product_choice}}'}</code> <code className="rounded bg-sky-50 px-1">{'{{payment.amount}}'}</code>
@@ -3112,7 +3157,7 @@ const OUTPUT_TYPES = [
 
 function AiBlockSettings({ config, onChange }: { config: Record<string, any>; onChange: (key: string, value: string) => void }) {
   const { post } = useApi();
-  const [testMessage, setTestMessage] = useState('Mera naam Rahul hai. Class 12 Physics demo chahiye. Phone 9876543210.');
+  const [testMessage, setTestMessage] = useState('My name is Rahul. I want a Class 12 Physics demo. Phone 9876543210.');
   const [testResult, setTestResult] = useState<{ extracted: Record<string, string>; confidence: number; variables: string[]; ai_response?: string; error?: string } | null>(null);
   const [testLoading, setTestLoading] = useState(false);
   const [testError, setTestError] = useState('');
@@ -3189,7 +3234,7 @@ function AiBlockSettings({ config, onChange }: { config: Record<string, any>; on
           onChange={(e) => onChange('custom_prompt', e.target.value)}
           rows={3}
           className="input-field mt-2 resize-none text-sm"
-          placeholder="Describe what AI should extract or do. E.g. 'Is message se class, subject aur phone number nikaal do.'"
+          placeholder="Describe what AI should extract or do. E.g. 'Extract class, subject, and phone number from this message.'"
         />
       </div>
 
@@ -3224,7 +3269,7 @@ function AiBlockSettings({ config, onChange }: { config: Record<string, any>; on
               <p className="text-xs font-bold text-emerald-700 mb-1">AI reads your script PDF step by step</p>
               <div className="rounded-lg bg-emerald-100 px-3 py-2 text-[10px] text-emerald-800 space-y-1">
                 <p className="font-semibold">📄 How to write your Flow PDF:</p>
-                <p>STEP 1 — Reply: "Konsi class chahiye?" Options: 9th-10th, 11th-12th</p>
+                <p>STEP 1 — Reply: "Which class do you need?" Options: 9th-10th, 11th-12th</p>
                 <p>STEP 2A — If 9th-10th: Reply: "Fee ₹X/month." Options: Enroll, Demo</p>
                 <p className="text-emerald-600 font-semibold">Max 3 options per step • 20 chars per option</p>
                 <a href="/dashboard/documents" className="text-emerald-700 underline font-semibold">Upload flow PDF →</a>

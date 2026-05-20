@@ -22,9 +22,24 @@ import { ProgressBar } from '@/components/progress-bar';
 import { useApi } from '@/hooks/useApi';
 
 const industries = [
-  { key: 'coaching', label: 'Coaching' },
-  { key: 'real_estate', label: 'Real Estate' },
-  { key: 'gym', label: 'Gym' },
+  { key: 'coaching',    label: '🎓 Coaching Center' },
+  { key: 'real_estate', label: '🏠 Real Estate' },
+  { key: 'ecommerce',   label: '🛒 D2C / Ecommerce' },
+  { key: 'healthcare',  label: '🏥 Clinic / Doctor' },
+  { key: 'salon',       label: '💇 Salon / Gym' },
+  { key: 'indiamart',   label: '🇮🇳 IndiaMART Business' },
+  { key: 'it_agency',   label: '💻 IT / Agency' },
+  { key: 'general',     label: '🏢 General Business' },
+];
+
+const INDIA_PRESETS = [
+  { key: 'india_coaching',    label: '🎓 Coaching Center',      desc: 'Admission → class buttons → fees → demo booking → follow-up' },
+  { key: 'india_realestate',  label: '🏠 Real Estate',          desc: 'Enquiry → qualify → brochure → site visit → agent handover' },
+  { key: 'india_clinic',      label: '🏥 Clinic / Doctor',       desc: 'Appointment → department → booking form → reminder' },
+  { key: 'india_ecommerce',   label: '🛒 D2C Ecommerce',        desc: 'Catalog → order form → Razorpay → GST invoice' },
+  { key: 'india_indiamart',   label: '🇮🇳 IndiaMART Leads',     desc: 'Lead import → qualify → WA follow-up → Sheet + CRM' },
+  { key: 'india_salon',       label: '💇 Salon / Gym',          desc: 'Service buttons → booking form → confirmation → reminder' },
+  { key: 'india_support',     label: '🆘 Customer Support',     desc: 'Complaint detect → stop AI → owner alert → handover' },
 ];
 
 export default function LaunchCenterPage() {
@@ -132,13 +147,13 @@ export default function LaunchCenterPage() {
           <p className="mt-2 text-sm text-gray-600">
             Use this before a client demo. It creates a hot lead, WhatsApp draft, automation run, and task.
           </p>
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          <div className="mt-5 grid gap-2 sm:grid-cols-4">
             {industries.map((item) => (
               <button
                 key={item.key}
                 type="button"
                 onClick={() => setIndustry(item.key)}
-                className={`rounded-xl border px-4 py-3 text-left text-sm font-bold transition ${
+                className={`rounded-xl border px-3 py-2.5 text-left text-xs font-bold transition ${
                   industry === item.key ? 'border-primary-300 bg-orange-50 text-primary-700' : 'border-gray-100 bg-white text-gray-700 hover:border-orange-200'
                 }`}
               >
@@ -146,7 +161,7 @@ export default function LaunchCenterPage() {
               </button>
             ))}
           </div>
-          <Button className="mt-5" onClick={runDemo} loading={running}>
+          <Button className="mt-4" onClick={runDemo} loading={running}>
             <TestTube2 className="h-4 w-4" />
             Run Safe Demo Flow
           </Button>
@@ -164,6 +179,28 @@ export default function LaunchCenterPage() {
               </div>
             </div>
           )}
+        </Card>
+
+        {/* India Killer Presets */}
+        <Card className="border-green-100 shadow-sm" hoverable={false}>
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-xl">🇮🇳</span>
+            <h2 className="text-xl font-bold text-gray-950">India Killer Presets</h2>
+          </div>
+          <p className="text-sm text-gray-500 mb-4">One-click ready workflows for Indian businesses — edit any node before launching.</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {INDIA_PRESETS.map((preset) => (
+              <a
+                key={preset.key}
+                href={`/dashboard/automations?template=${preset.key}`}
+                className="flex flex-col gap-1 rounded-xl border border-gray-100 bg-white p-4 hover:border-green-200 hover:bg-green-50 transition"
+              >
+                <p className="text-sm font-bold text-gray-900">{preset.label}</p>
+                <p className="text-xs text-gray-500">{preset.desc}</p>
+                <span className="mt-1 text-[10px] font-semibold text-green-600">→ Open in Workflow Builder</span>
+              </a>
+            ))}
+          </div>
         </Card>
 
         <Card className="border-orange-100 shadow-sm" hoverable={false}>

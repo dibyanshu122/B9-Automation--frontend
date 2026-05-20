@@ -7,6 +7,7 @@ export type SidebarItem = {
   name: string;
   href: string;
   icon: string;
+  badge?: string;
 };
 
 export type SidebarGroup = {
@@ -15,63 +16,57 @@ export type SidebarGroup = {
   icon: string;
   href?: string;
   children?: SidebarItem[];
+  position?: 'main' | 'bottom';
 };
 
 export const SIDEBAR_GROUPS: SidebarGroup[] = [
-  // ── Core (always visible) ─────────────────────────────────
   { id: 'dashboard', name: 'Dashboard', icon: 'LayoutDashboard', href: '/dashboard' },
   { id: 'assistants', name: 'AI Assistants', icon: 'Brain', href: '/dashboard/assistants' },
-
-  // ── Expandable groups (indices 2–7) ──────────────────────
   {
-    id: 'workspace-tools',
-    name: 'Workspace Tools',
+    id: 'sales',
+    name: 'Sales',
+    icon: 'Target',
+    children: [
+      { name: 'Leads', href: '/dashboard/leads', icon: 'Users' },
+      { name: 'Campaigns', href: '/dashboard/campaigns', icon: 'Megaphone' },
+      { name: 'Product Catalog', href: '/dashboard/catalog', icon: 'ShoppingCart' },
+      { name: 'QR Codes', href: '/dashboard/qr-codes', icon: 'QrCode' },
+      { name: 'Import Contacts', href: '/dashboard/imports', icon: 'Upload' },
+    ],
+  },
+  {
+    id: 'support',
+    name: 'Support',
+    icon: 'MessageSquare',
+    children: [
+      { name: 'Messages', href: '/dashboard/messages', icon: 'Send', badge: 'Start Here' },
+      { name: 'Auto Replies', href: '/dashboard/auto-replies', icon: 'Bot' },
+      { name: 'Opted Out', href: '/dashboard/opted-out', icon: 'UserX' },
+      { name: 'Tasks', href: '/dashboard/tasks', icon: 'CheckSquare' },
+    ],
+  },
+  {
+    id: 'automate',
+    name: 'Automate',
+    icon: 'Zap',
+    children: [
+      { name: 'Automations', href: '/dashboard/automations', icon: 'Workflow', badge: 'Start Here' },
+      { name: 'WhatsApp Flows', href: '/dashboard/flows', icon: 'Layers', badge: 'Start Here' },
+      { name: 'WA Templates', href: '/dashboard/templates', icon: 'Layout', badge: 'Start Here' },
+      { name: 'A/B Testing', href: '/dashboard/ab-testing', icon: 'FlaskConical' },
+      { name: 'Automation Logs', href: '/dashboard/logs', icon: 'ScrollText' },
+    ],
+  },
+  {
+    id: 'knowledge',
+    name: 'Knowledge',
     icon: 'Briefcase',
     children: [
       { name: 'Documents', href: '/dashboard/documents', icon: 'FileText' },
       { name: 'Chat', href: '/dashboard/chat', icon: 'MessageCircle' },
       { name: 'Widgets', href: '/dashboard/widgets', icon: 'Code' },
-    ],
-  },
-  {
-    id: 'messaging',
-    name: 'Messaging',
-    icon: 'MessageSquare',
-    children: [
-      { name: 'Messages', href: '/dashboard/messages', icon: 'Send' },
-      { name: 'WA Templates', href: '/dashboard/templates', icon: 'Layout' },
-      { name: 'Campaigns', href: '/dashboard/campaigns', icon: 'Megaphone' },
-      { name: 'Inbox Automation', href: '/dashboard/auto-replies', icon: 'Zap' },
-      { name: 'WhatsApp Flows', href: '/dashboard/flows', icon: 'Layers' },
-    ],
-  },
-  {
-    id: 'operations',
-    name: 'Operations',
-    icon: 'BarChart3',
-    children: [
-      { name: 'Leads', href: '/dashboard/leads', icon: 'Users' },
-      { name: 'Tasks', href: '/dashboard/tasks', icon: 'CheckSquare' },
-      { name: 'Notifications', href: '/dashboard/notifications', icon: 'Bell' },
       { name: 'Analytics', href: '/dashboard/analytics', icon: 'BarChart3' },
-    ],
-  },
-  {
-    id: 'automation',
-    name: 'Automation',
-    icon: 'Zap',
-    children: [
-      { name: 'Automations', href: '/dashboard/automations', icon: 'Workflow' },
-      { name: 'Automation Logs', href: '/dashboard/logs', icon: 'ScrollText' },
-    ],
-  },
-  {
-    id: 'data',
-    name: 'Contacts & Data',
-    icon: 'Database',
-    children: [
-      { name: 'Import Contacts', href: '/dashboard/imports', icon: 'Upload' },
-      { name: 'Product Catalog', href: '/dashboard/catalog', icon: 'ShoppingCart' },
+      { name: 'Notifications', href: '/dashboard/notifications', icon: 'Bell' },
     ],
   },
   {
@@ -79,16 +74,14 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
     name: 'Workspace',
     icon: 'Building2',
     children: [
-      { name: 'Team', href: '/dashboard/team', icon: 'Users' },
-      { name: 'Integrations', href: '/dashboard/integrations', icon: 'Plug' },
+      { name: 'Team', href: '/dashboard/team', icon: 'UserCog' },
+      { name: 'Integrations', href: '/dashboard/integrations', icon: 'Plug', badge: 'Start Here' },
       { name: 'API Keys', href: '/dashboard/api', icon: 'Key' },
+      { name: 'Billing', href: '/dashboard/billing', icon: 'CreditCard' },
+      { name: 'Settings', href: '/dashboard/settings', icon: 'Settings' },
     ],
   },
-
-  // ── Bottom (indices 8–10) — pinned with mt-auto ───────────
-  { id: 'launch', name: 'Launch Center', icon: 'Rocket', href: '/dashboard/launch' },
-  { id: 'billing', name: 'Billing', icon: 'CreditCard', href: '/dashboard/billing' },
-  { id: 'settings', name: 'Settings', icon: 'Settings', href: '/dashboard/settings' },
+  { id: 'launch', name: 'Launch Center', icon: 'Rocket', href: '/dashboard/launch', position: 'bottom' },
 ];
 
 export const SIDEBAR_ITEMS = SIDEBAR_GROUPS as any[];

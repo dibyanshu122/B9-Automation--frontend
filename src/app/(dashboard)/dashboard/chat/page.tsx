@@ -42,40 +42,40 @@ const CHAT_MODELS = [
 
 const automationActions = {
   coaching: [
-    { icon: Users, label: "Follow up today's admission leads", prompt: "Aaj ke new admission leads ke liye WhatsApp follow-up drafts banao." },
-    { icon: CalendarClock, label: 'Create demo class tasks', prompt: 'Hot student leads ke liye demo class call tasks create karo.' },
-    { icon: FileQuestion, label: 'Generate course FAQs', prompt: 'Uploaded coaching documents se student aur parent FAQs generate karo.' },
-    { icon: Send, label: 'Fee inquiry replies', prompt: 'Fee inquiry leads ke liye friendly Hinglish reply drafts banao.' },
+    { icon: Users, label: "Follow up today's admission leads", prompt: "Draft WhatsApp follow-up messages for today's new admission leads." },
+    { icon: CalendarClock, label: 'Create demo class tasks', prompt: 'Create demo class call tasks for hot student leads.' },
+    { icon: FileQuestion, label: 'Generate course FAQs', prompt: 'Generate student and parent FAQs from the uploaded coaching documents.' },
+    { icon: Send, label: 'Fee inquiry replies', prompt: 'Draft friendly reply messages for fee inquiry leads.' },
   ],
   real_estate: [
-    { icon: Users, label: "Follow up today's property leads", prompt: "Aaj ke real estate leads ko hot/warm/cold classify karke WhatsApp follow-up drafts banao." },
-    { icon: CalendarClock, label: 'Create site visit tasks', prompt: 'Hot property leads ke liye site visit booking tasks create karo.' },
-    { icon: FileText, label: 'Draft brochure replies', prompt: 'Brochure aur price list maangne wale leads ke liye WhatsApp replies banao.' },
-    { icon: Target, label: 'Find hot buyers', prompt: 'Budget aur urgency ke basis par hot property leads identify karo.' },
+    { icon: Users, label: "Follow up today's property leads", prompt: "Classify today's real estate leads as hot/warm/cold and draft WhatsApp follow-up messages." },
+    { icon: CalendarClock, label: 'Create site visit tasks', prompt: 'Create site visit booking tasks for hot property leads.' },
+    { icon: FileText, label: 'Draft brochure replies', prompt: 'Draft WhatsApp replies for leads requesting brochures and price lists.' },
+    { icon: Target, label: 'Find hot buyers', prompt: 'Identify hot property leads based on budget and urgency.' },
   ],
   gym: [
-    { icon: Users, label: 'Follow up trial leads', prompt: 'Gym trial class leads ke liye WhatsApp follow-up drafts banao.' },
-    { icon: CalendarClock, label: 'Create trial class tasks', prompt: 'Hot gym leads ke liye trial class booking tasks create karo.' },
-    { icon: Send, label: 'Membership offer drafts', prompt: 'Membership fee inquiries ke liye offer follow-up drafts banao.' },
-    { icon: Target, label: 'Score fitness leads', prompt: 'Gym leads ko hot/warm/cold classify karo.' },
+    { icon: Users, label: 'Follow up trial leads', prompt: 'Draft WhatsApp follow-up messages for gym trial class leads.' },
+    { icon: CalendarClock, label: 'Create trial class tasks', prompt: 'Create trial class booking tasks for hot gym leads.' },
+    { icon: Send, label: 'Membership offer drafts', prompt: 'Draft membership offer follow-up messages for fee inquiry leads.' },
+    { icon: Target, label: 'Score fitness leads', prompt: 'Classify gym leads as hot, warm, or cold.' },
   ],
   salon: [
-    { icon: Users, label: 'Follow up appointment leads', prompt: 'Salon appointment leads ke liye polite WhatsApp follow-up drafts banao.' },
-    { icon: CalendarClock, label: 'Create appointment tasks', prompt: 'Interested salon leads ke liye appointment tasks create karo.' },
-    { icon: Send, label: 'Service price replies', prompt: 'Salon service price inquiries ke liye friendly reply drafts banao.' },
-    { icon: FileQuestion, label: 'Generate service FAQs', prompt: 'Salon documents se service pricing aur appointment FAQs generate karo.' },
+    { icon: Users, label: 'Follow up appointment leads', prompt: 'Draft polite WhatsApp follow-up messages for salon appointment leads.' },
+    { icon: CalendarClock, label: 'Create appointment tasks', prompt: 'Create appointment tasks for interested salon leads.' },
+    { icon: Send, label: 'Service price replies', prompt: 'Draft friendly reply messages for salon service price inquiries.' },
+    { icon: FileQuestion, label: 'Generate service FAQs', prompt: 'Generate service pricing and appointment FAQs from salon documents.' },
   ],
   it_agency: [
-    { icon: Users, label: 'Follow up demo leads', prompt: 'Software demo leads ke liye email aur WhatsApp follow-up drafts banao.' },
-    { icon: FileText, label: 'Create proposal drafts', prompt: 'Recent qualified leads ke liye proposal drafts create karo.' },
-    { icon: CalendarClock, label: 'Create demo tasks', prompt: 'Hot B2B leads ke liye demo scheduling tasks create karo.' },
-    { icon: Target, label: 'Qualify project leads', prompt: 'Budget aur requirement ke basis par project leads qualify karo.' },
+    { icon: Users, label: 'Follow up demo leads', prompt: 'Draft email and WhatsApp follow-up messages for software demo leads.' },
+    { icon: FileText, label: 'Create proposal drafts', prompt: 'Create proposal drafts for recent qualified leads.' },
+    { icon: CalendarClock, label: 'Create demo tasks', prompt: 'Create demo scheduling tasks for hot B2B leads.' },
+    { icon: Target, label: 'Qualify project leads', prompt: 'Qualify project leads based on budget and requirements.' },
   ],
   custom: [
-    { icon: Users, label: "Follow up today's leads", prompt: "Aaj ke new leads ke liye WhatsApp follow-up drafts banao." },
-    { icon: Target, label: 'Find hot leads', prompt: 'Recent leads ko hot/warm/cold classify karo aur hot leads ki list banao.' },
-    { icon: FileText, label: 'Create proposal drafts', prompt: 'Qualified leads ke liye simple proposal drafts create karo.' },
-    { icon: FileQuestion, label: 'Generate FAQs', prompt: 'Uploaded documents se customer FAQs generate karo.' },
+    { icon: Users, label: "Follow up today's leads", prompt: "Draft WhatsApp follow-up messages for today's new leads." },
+    { icon: Target, label: 'Find hot leads', prompt: 'Classify recent leads as hot, warm, or cold and list the hot leads.' },
+    { icon: FileText, label: 'Create proposal drafts', prompt: 'Create simple proposal drafts for qualified leads.' },
+    { icon: FileQuestion, label: 'Generate FAQs', prompt: 'Generate customer FAQs from the uploaded documents.' },
   ],
 };
 
@@ -377,7 +377,13 @@ export default function ChatPage() {
                   <Bot className="w-4 h-4" />
                   <div>
                     <p className="font-medium">{assistant.name}</p>
-                    <p className="text-xs text-gray-500">{assistant.language}</p>
+                    <p className="text-xs text-gray-500 flex items-center gap-1.5">
+                      {assistant.language}
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full text-white hidden xl:inline"
+                        style={{ background: 'linear-gradient(135deg, #1e293b, #1e1b4b)' }}>
+                        DeepSeek
+                      </span>
+                    </p>
                   </div>
                 </div>
               </button>
@@ -502,9 +508,9 @@ export default function ChatPage() {
                 {chatMode === 'document' && (
                   <div className="mt-6 grid gap-3 text-left sm:grid-cols-3">
                     {[
-                      { icon: MessageCircle, label: 'Ask from documents', prompt: 'Fees, pricing, policy, or service details ask karo.' },
-                      { icon: FileText, label: 'Find source-backed answer', prompt: 'AI uploaded knowledge base se answer dega.' },
-                      { icon: Zap, label: 'Switch for actions', prompt: 'Business work karwana ho to Automation Mode use karo.' },
+                      { icon: MessageCircle, label: 'Ask from documents', prompt: 'Ask about fees, pricing, policy, or service details.' },
+                      { icon: FileText, label: 'Find source-backed answer', prompt: 'AI will answer from the uploaded knowledge base.' },
+                      { icon: Zap, label: 'Switch for actions', prompt: 'Use Automation Mode to perform business actions.' },
                     ].map((item) => {
                       const Icon = item.icon;
                       return (

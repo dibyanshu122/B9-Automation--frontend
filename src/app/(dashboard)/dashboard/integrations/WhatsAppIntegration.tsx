@@ -1,4 +1,5 @@
 import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
+import { useAuthStore } from '@/store/authStore';
 
 // Define types for the props
 interface InputFieldProps {
@@ -56,7 +57,7 @@ export default function WhatsAppIntegration() {
         const response = await fetch('/api/integrations/whatsapp', {
           headers: {
             // Make sure to include your auth token
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${useAuthStore.getState().token}`
           }
         });
         if (!response.ok) throw new Error('Failed to fetch settings');
@@ -93,7 +94,7 @@ export default function WhatsAppIntegration() {
         headers: {
           'Content-Type': 'application/json',
           // Make sure to include your auth token
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${useAuthStore.getState().token}`
         },
         body: JSON.stringify(settings),
       });

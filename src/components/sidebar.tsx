@@ -5,13 +5,15 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { SIDEBAR_GROUPS } from '@/lib/constants';
 import { useUIStore } from '@/store/uiStore';
+import { useAuthStore } from '@/store/authStore';
 import { Logo } from '@/components/logo';
 import {
   Bell, Brain, FileText, MessageCircle, Code, BarChart3, CreditCard,
   Settings, X, Menu, Briefcase, CheckSquare, Users, Workflow, Plug,
   Rocket, ChevronDown, ChevronsLeft, ChevronsRight, LayoutDashboard,
   ShoppingCart, Send, Layout, Upload, ScrollText, Key, Megaphone,
-  MessageSquare, Zap, Database, Building2, Layers,
+  MessageSquare, Zap, Database, Building2, Layers, QrCode, FlaskConical,
+  Bot, UserCog, UserX, Target,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { Button } from './button';
@@ -20,7 +22,8 @@ const ICONS = {
   Bell, LayoutDashboard, Brain, FileText, MessageCircle, Code, BarChart3,
   CreditCard, Settings, Briefcase, CheckSquare, Users, Workflow, Plug,
   Rocket, ChevronDown, ShoppingCart, Send, Layout, Upload, ScrollText,
-  Key, Megaphone, MessageSquare, Zap, Database, Building2, Layers,
+  Key, Megaphone, MessageSquare, Zap, Database, Building2, Layers, QrCode,
+  FlaskConical, Bot, UserCog, UserX, Target,
 };
 
 // Guaranteed dark bg — inline style bypasses Tailwind purge issues
@@ -30,7 +33,7 @@ function useUnreadCount() {
   const [count, setCount] = useState(0);
   useEffect(() => {
     const run = () => {
-      const token = localStorage.getItem('token');
+      const token = useAuthStore.getState().token;
       const base = process.env.NEXT_PUBLIC_API_URL || '';
       fetch(`${base}/api/automation/inbox`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -76,6 +79,8 @@ export const Sidebar = () => {
   useEffect(() => () => { if (leaveTimer.current) clearTimeout(leaveTimer.current); }, []);
 
   const expanded = sidebarPinned || hovered;
+  const mainGroups = SIDEBAR_GROUPS.filter((group) => group.position !== 'bottom');
+  const bottomGroups = SIDEBAR_GROUPS.filter((group) => group.position === 'bottom');
 
   const isActive = (href: string): boolean =>
     pathname === href || (href !== '/dashboard' && (pathname?.startsWith(href) ?? false));
@@ -156,7 +161,7 @@ export const Sidebar = () => {
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto overflow-x-hidden py-3 px-2 space-y-0.5">
-          {SIDEBAR_GROUPS.slice(0, 8).map((group) => {
+          {mainGroups.map((group) => {
             const Icon = ICONS[group.icon as keyof typeof ICONS];
             const open = openGroups.includes(group.id);
             const hasKids = !!(group.children?.length);
@@ -196,6 +201,11 @@ export const Sidebar = () => {
                             onClick={() => setSidebarOpen(false)}>
                             <CIcon className="w-4 h-4 shrink-0" />
                             <span className="flex-1 whitespace-nowrap overflow-hidden">{c.name}</span>
+                            {c.badge && (
+                              <span className="rounded-full bg-amber-400/15 px-1.5 py-0.5 text-[9px] font-bold text-amber-200 ring-1 ring-amber-300/20">
+                                {c.badge}
+                              </span>
+                            )}
                             {isMsg && unreadCount > 0 && (
                               <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-cyan-500 px-1 text-[9px] font-bold text-white shrink-0">
                                 {unreadCount}
@@ -224,7 +234,7 @@ export const Sidebar = () => {
 
         {/* Bottom: Launch / Billing / Settings + pin */}
         <div className="shrink-0 border-t border-white/10 py-2 px-2 space-y-0.5">
-          {SIDEBAR_GROUPS.slice(8).map((group) => {
+          {bottomGroups.map((group) => {
             const Icon = ICONS[group.icon as keyof typeof ICONS];
             const a = isActive(group.href || '');
             return (
@@ -267,7 +277,7 @@ export const Sidebar = () => {
           <Logo variant="dark" />
         </div>
         <nav className="p-3 space-y-0.5">
-          {SIDEBAR_GROUPS.slice(0, 8).map((group) => {
+          {mainGroups.map((group) => {
             const Icon = ICONS[group.icon as keyof typeof ICONS];
             const open = openGroups.includes(group.id);
             const hasKids = !!(group.children?.length);
@@ -293,6 +303,11 @@ export const Sidebar = () => {
                             onClick={() => setSidebarOpen(false)}>
                             <CIcon className="w-4 h-4 shrink-0" />
                             <span className="flex-1">{c.name}</span>
+                            {c.badge && (
+                              <span className="rounded-full bg-amber-400/15 px-1.5 py-0.5 text-[9px] font-bold text-amber-200 ring-1 ring-amber-300/20">
+                                {c.badge}
+                              </span>
+                            )}
                             {isMsg && unreadCount > 0 && (
                               <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-cyan-500 px-1 text-[9px] font-bold text-white">
                                 {unreadCount}
@@ -315,7 +330,7 @@ export const Sidebar = () => {
             );
           })}
           <div className="my-2 border-t border-white/10" />
-          {SIDEBAR_GROUPS.slice(8).map((group) => {
+          {bottomGroups.map((group) => {
             const Icon = ICONS[group.icon as keyof typeof ICONS];
             return (
               <Link key={group.id} href={group.href || '#'} className={item(isActive(group.href || ''))}

@@ -1,15 +1,29 @@
+// ── B9 Automation Pricing (Updated) ──────────────────────────────────────────
+// FREE:     ₹0/month
+// STARTER:  ₹1,499/month  (annual ₹999/month)
+// GROWTH:   ₹3,499/month  (annual ₹2,499/month)
+// PRO:      ₹6,999/month  (annual ₹4,999/month)
+// BUSINESS: ₹12,999/month (annual ₹9,999/month)
+//
+// AI Engine:
+//   FREE/STARTER → Gemini 2.5 Flash Lite  (shown as "B9 Agentic Core" on UI)
+//   GROWTH       → Groq 70B + Gemini      (shown as "B9 Agentic Core" on UI)
+//   PRO          → Real DeepSeek-V3 + Groq 70B  (shown as "DeepSeek V3")
+//   BUSINESS     → Real DeepSeek-V3 + R1 Reasoner (shown as "DeepSeek V3 + Reasoner")
+// ─────────────────────────────────────────────────────────────────────────────
+
 export const TOPUP_PACKS = {
   ai_queries: [
-    { key: 'ai_500', label: '+500 AI replies', amount: 500, price: 299, expiresAfterDays: 90, popular: false },
-    { key: 'ai_1000', label: '+1,000 AI replies', amount: 1000, price: 499, expiresAfterDays: 90, popular: true },
-    { key: 'ai_2500', label: '+2,500 AI replies', amount: 2500, price: 999, expiresAfterDays: 90, popular: false },
+    { key: 'ai_500',  label: '+500 AI replies',   amount: 500,  price: 299, expiresAfterDays: 90, popular: false },
+    { key: 'ai_1000', label: '+1,000 AI replies',  amount: 1000, price: 499, expiresAfterDays: 90, popular: true  },
+    { key: 'ai_2500', label: '+2,500 AI replies',  amount: 2500, price: 999, expiresAfterDays: 90, popular: false },
   ],
   automation_executions: [
-    { key: 'automation_5000', label: '+5000 automation executions', amount: 5000, price: 499 },
-    { key: 'automation_20000', label: '+20000 automation executions', amount: 20000, price: 1499 },
+    { key: 'automation_5000',  label: '+5,000 automation runs',  amount: 5000,  price: 499  },
+    { key: 'automation_20000', label: '+20,000 automation runs', amount: 20000, price: 1499 },
   ],
   storage: [
-    { key: 'storage_5gb', label: '+5GB storage', amount: 5, price: 199, billingCycle: 'monthly' },
+    { key: 'storage_5gb',  label: '+5GB storage',  amount: 5,  price: 199, billingCycle: 'monthly' },
     { key: 'storage_25gb', label: '+25GB storage', amount: 25, price: 799, billingCycle: 'monthly' },
   ],
 } as const;
@@ -20,116 +34,138 @@ export const PLAN_LIMITS = {
     name: 'Free',
     price: 0,
     annual_price: undefined,
-    description: 'For testing document chat before launch',
-    bestFor: 'Trying B9 with one PDF assistant',
+    description: 'Try B9 before you launch',
+    bestFor: 'Testing with one PDF assistant — no WhatsApp',
     watermark: 'B9 watermark enabled',
     integrations: 'No integrations',
     automation: 'No automation',
+    ai_engine: 'Gemini 2.5 Flash Lite',
+    ai_label: 'B9 Agentic Core',
     features: [
       '1 assistant',
       'PDF only',
-      '10 uploads',
-      '50MB storage',
+      '10 uploads, 500MB storage',
       '30 lifetime AI queries',
-      'Max 1 active chat session',
-      'Max 3 sources per assistant',
-      'No widget embed',
+      'No WhatsApp, no automation',
+      '1 team member',
     ],
     color: 'gray',
     cta: 'Start Free',
   },
+
   STARTER: {
     type: 'STARTER',
     name: 'Starter',
-    price: 799,
-    annual_price: 7990,
-    description: 'For a solo business launching one AI assistant',
-    bestFor: 'Solo founders, local businesses, creators',
+    price: 1499,
+    annual_price: 9999,
+    description: 'Launch your first AI-powered WhatsApp business',
+    bestFor: 'Solo founders, local shops, freelancers',
     watermark: 'B9 watermark enabled',
-    integrations: 'Google Sheets only',
-    automation: '1 active workflow, max 2 steps, 200 executions/day',
+    integrations: 'Google Sheets + WhatsApp Cloud API',
+    automation: '10 workflows, max 5 steps, 500 runs/day',
+    ai_engine: 'Gemini 2.5 Flash Lite',
+    ai_label: 'B9 Agentic Core',
+    badge: null,
     features: [
-      '1 assistant',
-      'PDF, Website URL, YouTube URL',
+      '2 assistants',
+      'PDF, Website, YouTube',
       '2GB storage, 100 uploads/month',
-      'Max 50MB/file, 5 YouTube videos',
-      '500 AI queries/month',
-      '1 widget, 1 domain',
-      '3 public share links',
-      'Max 2 team members',
-      '50 leads/day',
+      '1,000 AI queries/month',
+      '1 WhatsApp connection',
+      '10 automations (5 steps each)',
+      'IndiaMART sync ✓',
+      'QR Code generator ✓',
+      '500 leads/day, 2 team members',
+      'Google Sheets integration',
     ],
     color: 'blue',
-    cta: 'Upgrade to Starter',
+    cta: 'Start with Starter',
   },
+
   GROWTH: {
     type: 'GROWTH',
     name: 'Growth',
-    price: 1999,
-    annual_price: 19990,
-    description: 'Most popular for lead-generating websites',
-    bestFor: 'Growing teams using chat, leads, and follow-up workflows',
+    price: 3499,
+    annual_price: 24999,
+    description: 'Scale with AI automation across all channels',
+    bestFor: 'Growing businesses, agencies, multi-channel teams',
     watermark: 'Watermark removed',
-    integrations: 'Sheets, Gmail, Facebook Lead Ads, WhatsApp Cloud API',
-    automation: '3 active workflows, max 5 steps, 2000 executions/day',
+    integrations: 'All 12 integrations (Slack, Shopify, HubSpot, Zoho, Calendly, Zapier…)',
+    automation: 'Unlimited workflows + steps, 5,000 runs/day',
+    ai_engine: 'Groq llama-3.3-70B + Gemini fallback',
+    ai_label: 'B9 Agentic Core',
+    badge: 'Most Popular',
     features: [
-      '3 assistants',
+      '5 assistants',
       '10GB storage, 250 uploads/month',
-      '50 YouTube links, max 200MB/video',
-      '1200 AI queries/month',
-      '2 widgets, 2 domains',
-      'Lead, query, and chat history analytics',
-      '10 public share links',
-      'Max 5 team members',
-      '500 leads/day',
+      '3,000 AI queries/month',
+      '2 WhatsApp connections',
+      'Unlimited automations & steps',
+      'WhatsApp Flows (form builder) ✓',
+      'A/B Testing for campaigns ✓',
+      'Agentic AI loop (basic) ✓',
+      'All 12 integrations ✓',
+      'Analytics dashboard',
+      '1,000 leads/day, 5 team members',
     ],
     color: 'primary',
-    cta: 'Choose Growth',
+    cta: 'Start Growing',
   },
+
   PRO: {
     type: 'PRO',
     name: 'Pro',
-    price: 3999,
-    annual_price: 39990,
-    description: 'For serious automation and premium AI workflows',
-    bestFor: 'Businesses running multi-channel automations',
+    price: 6999,
+    annual_price: 49999,
+    description: 'Real DeepSeek AI with full agentic power',
+    bestFor: 'Power users, sales teams, high-volume automation',
     watermark: 'Watermark removed',
-    integrations: 'All connectors, API access, webhooks, web search',
-    automation: '5 active workflows, max 10 steps, 10000 executions/day',
+    integrations: 'All integrations + API access + Webhooks',
+    automation: 'Unlimited everything, 25,000 runs/day',
+    ai_engine: 'Real DeepSeek-V3 + Groq 70B',
+    ai_label: 'DeepSeek V3',
+    badge: 'Best Value',
     features: [
-      '5 assistants',
+      '15 assistants',
       '25GB storage, 500 uploads/month',
-      'Unlimited YouTube links with fair usage',
-      '2500 AI queries/month',
-      '5 widgets, 5 domains, premium 3D widget',
-      'Thinking mode and multi-source answers',
-      'AI confidence scoring',
-      'Advanced analytics',
-      'Max 15 team members',
+      '10,000 AI queries/month',
+      '5 WhatsApp connections',
+      'Real DeepSeek-V3 AI (not Gemini) ✓',
+      'Full Agentic Tool-Use Loop ✓',
+      'API access + Webhooks ✓',
+      'Web search + Thinking mode ✓',
+      'Premium 3D widget ✓',
+      'Priority AI queue ✓',
+      '5,000 leads/day, 15 team members',
     ],
     color: 'green',
-    cta: 'Upgrade to Pro',
+    cta: 'Go Pro',
   },
+
   BUSINESS: {
     type: 'BUSINESS',
     name: 'Business',
-    price: 7999,
-    annual_price: 79990,
-    description: 'For larger teams needing control and scale',
-    bestFor: 'Teams with high volume, white-label, and support needs',
-    watermark: 'Full white-label',
-    integrations: 'All connectors with priority AI queue',
-    automation: '15 active workflows, max 20 steps, 50000 executions/day',
+    price: 12999,
+    annual_price: 99999,
+    description: 'Unlimited scale with white-label and dedicated support',
+    bestFor: 'Large teams, agencies, enterprise clients',
+    watermark: 'Full white-label — your brand only',
+    integrations: 'All integrations + White-label + Custom domain',
+    automation: 'Unlimited everything',
+    ai_engine: 'DeepSeek-V3 + DeepSeek-R1 Reasoner',
+    ai_label: 'DeepSeek V3 + Reasoner',
+    badge: 'Enterprise',
     features: [
-      '10 assistants',
-      '100GB storage',
-      '7500 AI queries/month',
-      '15 domains',
-      'Team collaboration and role permissions',
-      'Dedicated support',
-      'Custom domain',
-      'Max 50 team members',
-      '10000 leads/day',
+      'Unlimited assistants',
+      '100GB storage, unlimited uploads',
+      'Unlimited AI queries',
+      '10 WhatsApp connections',
+      'DeepSeek-R1 Deep Reasoning ✓',
+      'White-label — your own branding ✓',
+      'Custom domain ✓',
+      'Role-based permissions ✓',
+      'Dedicated support + SLA ✓',
+      'Unlimited leads, 50 team members',
     ],
     color: 'purple',
     cta: 'Contact Sales',
@@ -156,7 +192,7 @@ export function checkUsageLimit(plan: string, metric: string, current: number, a
   const limits = getPlanLimits(plan) as any;
   const metricLimits: Record<string, number | undefined> = {
     assistants: Number(limits.features[0]?.match(/\d+/)?.[0] || 0),
-    ai_queries: Number(limits.features.find((item: string) => item.includes('queries'))?.match(/\d+/)?.[0] || 0),
+    ai_queries: Number(limits.features.find((item: string) => item.includes('queries'))?.match(/[\d,]+/)?.[0]?.replace(',', '') || 0),
   };
   const limit = metricLimits[metric];
   return typeof limit === 'number' && limit > 0 ? current + amount <= limit : true;
@@ -164,4 +200,14 @@ export function checkUsageLimit(plan: string, metric: string, current: number, a
 
 export function incrementUsage(current: number, amount = 1) {
   return current + amount;
+}
+
+// Helper: is this plan using real DeepSeek or Gemini illusion?
+export function getAiLabel(plan: string): string {
+  const limits = getPlanLimits(plan) as any;
+  return limits.ai_label || 'B9 Agentic Core';
+}
+
+export function isRealDeepSeek(plan: string): boolean {
+  return ['PRO', 'BUSINESS'].includes(plan?.toUpperCase());
 }

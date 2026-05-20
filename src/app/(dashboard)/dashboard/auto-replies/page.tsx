@@ -3,12 +3,13 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Bell, CheckCircle2, Clock, Edit2, Image, Info, Loader2, MessageSquare, Plus,
-  ToggleLeft, ToggleRight, Trash2, X, Zap, UserCheck, PhoneOff, Bot, ShieldAlert,
+  ToggleLeft, ToggleRight, Trash2, Upload, X, Zap, UserCheck, PhoneOff, Bot, ShieldAlert,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/button';
 import { useApi } from '@/hooks/useApi';
+import { useAuthStore } from '@/store/authStore';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -138,6 +139,8 @@ function RuleForm({ ruleType, existing, onClose, onSaved }: {
   const [mediaCaption, setMediaCaption] = useState(existing?.media_caption || '');
   const [skipAutomation, setSkipAutomation] = useState(existing?.skip_automation_on_welcome !== false);
   const [saving, setSaving] = useState(false);
+  const [mediaUploading, setMediaUploading] = useState(false);
+  const [mediaInputMode, setMediaInputMode] = useState<'url' | 'file'>('url');
 
   const save = async () => {
     if (!name.trim()) { toast.error('Name required'); return; }
@@ -217,17 +220,77 @@ function RuleForm({ ruleType, existing, onClose, onSaved }: {
                 {/* Media attachment — welcome and keyword_reply */}
                 {['welcome', 'keyword_reply'].includes(ruleType) && (
                   <div className="border border-gray-200 rounded-xl p-3 space-y-2 bg-gray-50">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <Image className="w-4 h-4 text-gray-500" />
-                      <span className="text-sm font-semibold text-gray-700">Attach Media <span className="text-xs font-normal text-gray-400">(optional)</span></span>
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-1.5">
+                        <Image className="w-4 h-4 text-gray-500" />
+                        <span className="text-sm font-semibold text-gray-700">Attach Media <span className="text-xs font-normal text-gray-400">(optional)</span></span>
+                      </div>
+                      {/* Toggle: upload file vs paste URL */}
+                      <div className="flex rounded-lg border border-gray-200 overflow-hidden text-[11px]">
+                        <button type="button" onClick={() => setMediaInputMode('file')}
+                          className={`px-2.5 py-1 font-semibold transition ${mediaInputMode === 'file' ? 'bg-primary-500 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>
+                          Upload File
+                        </button>
+                        <button type="button" onClick={() => setMediaInputMode('url')}
+                          className={`px-2.5 py-1 font-semibold transition ${mediaInputMode === 'url' ? 'bg-primary-500 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>
+                          Paste URL
+                        </button>
+                      </div>
                     </div>
-                    <input value={mediaUrl} onChange={e => setMediaUrl(e.target.value)}
-                      placeholder="https://example.com/image.jpg or video URL"
-                      className={inputCls} />
+
+                    {mediaInputMode === 'file' ? (
+                      <div className="space-y-2">
+                        <label className={`flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-300 rounded-xl p-4 cursor-pointer hover:border-primary-400 hover:bg-orange-50 transition ${mediaUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                          {mediaUploading
+                            ? <><Loader2 className="w-6 h-6 animate-spin text-primary-500" /><span className="text-xs text-gray-500">Uploading to WhatsApp...</span></>
+                            : mediaUrl
+                              ? <><span className="text-xs text-green-600 font-semibold">✅ File uploaded!</span><span className="text-[10px] text-gray-400 break-all text-center">{mediaUrl.slice(0, 60)}...</span><span className="text-[10px] text-primary-500">Click to replace</span></>
+                              : <><Upload className="w-5 h-5 text-gray-400" /><span className="text-xs text-gray-600 font-medium">Click to upload image, video, or PDF</span><span className="text-[10px] text-gray-400">JPEG, PNG, MP4, PDF — max 15MB</span></>
+                          }
+                          <input type="file" className="hidden" accept="image/jpeg,image/png,image/webp,video/mp4,application/pdf"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              setMediaUploading(true);
+                              try {
+                                const fd = new FormData();
+                                fd.append('file', file);
+                                const token = useAuthStore.getState().token;
+                                const base = process.env.NEXT_PUBLIC_API_URL || '';
+                                const res = await fetch(`${base}/api/automation/upload-media-public`, {
+                                  method: 'POST',
+                                  headers: token ? { Authorization: `Bearer ${token}` } : {},
+                                  body: fd,
+                                });
+                                const data = await res.json();
+                                if (!res.ok) throw new Error(data.detail || 'Upload failed');
+                                // Use public_url if available, else handle
+                                const url = data.public_url || data.media_handle || '';
+                                setMediaUrl(url);
+                                const mime = file.type;
+                                setMediaType(mime.startsWith('video') ? 'video' : mime === 'application/pdf' ? 'document' : 'image');
+                                toast.success('Media uploaded!');
+                              } catch (err: any) {
+                                toast.error(err.message || 'Upload failed');
+                              } finally {
+                                setMediaUploading(false);
+                              }
+                            }} />
+                        </label>
+                        {mediaUrl && (
+                          <button type="button" onClick={() => setMediaUrl('')}
+                            className="text-[10px] text-red-500 hover:underline">Remove media</button>
+                        )}
+                      </div>
+                    ) : (
+                      <input value={mediaUrl} onChange={e => setMediaUrl(e.target.value)}
+                        placeholder="https://example.com/image.jpg or video URL"
+                        className={inputCls} />
+                    )}
+
                     {mediaUrl && (
                       <>
-                        <select value={mediaType} onChange={e => setMediaType(e.target.value)}
-                          className={inputCls}>
+                        <select value={mediaType} onChange={e => setMediaType(e.target.value)} className={inputCls}>
                           <option value="image">Image</option>
                           <option value="video">Video</option>
                           <option value="document">Document</option>
@@ -237,7 +300,7 @@ function RuleForm({ ruleType, existing, onClose, onSaved }: {
                           placeholder="Caption (optional)" className={inputCls} />
                       </>
                     )}
-                    <p className="text-[10px] text-gray-400">Media is sent along with the reply message. Image/video requires a publicly accessible URL.</p>
+                    <p className="text-[10px] text-gray-400">File is uploaded to WhatsApp and sent with the reply.</p>
                   </div>
                 )}
 
@@ -418,7 +481,7 @@ export default function AutoRepliesPage() {
       const payload = { title: qrTitle.trim(), message: qrMessage.trim(), shortcut: qrShortcut.trim() || undefined };
       if (editingQr) {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-        const token = localStorage.getItem('token');
+        const token = useAuthStore.getState().token;
         const axios = (await import('axios')).default;
         await axios.put(`${apiUrl}/api/auto-replies/quick-replies/${editingQr.id}`, payload, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
         toast.success('Quick reply updated');
@@ -436,7 +499,7 @@ export default function AutoRepliesPage() {
     if (!confirm('Delete this quick reply?')) return;
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-      const token = localStorage.getItem('token');
+      const token = useAuthStore.getState().token;
       const axios = (await import('axios')).default;
       await axios.delete(`${apiUrl}/api/auto-replies/quick-replies/${id}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
       toast.success('Deleted'); loadQrs();
@@ -450,6 +513,7 @@ export default function AutoRepliesPage() {
       .catch(() => toast.error('Failed to load rules'))
       .finally(() => setLoading(false));
   };
+
 
   useEffect(() => { load(); }, []); // eslint-disable-line
   useEffect(() => { if (activeTab === 'quick_replies') loadQrs(); }, [activeTab]); // eslint-disable-line
@@ -466,7 +530,7 @@ export default function AutoRepliesPage() {
     try {
       const axios = (await import('axios')).default;
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-      const token = localStorage.getItem('token');
+      const token = useAuthStore.getState().token;
       await axios.delete(`${apiUrl}/api/auto-replies/rules/${id}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
       toast.success('Rule deleted');
       load();
@@ -567,6 +631,7 @@ export default function AutoRepliesPage() {
 
       {/* Icebreaker tab */}
       {activeTab === 'icebreaker' && <IcebreakerPanel />}
+
 
       {/* ── Quick Replies tab ──────────────────────────────────────────────── */}
       {activeTab === 'quick_replies' && (

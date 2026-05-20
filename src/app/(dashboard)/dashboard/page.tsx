@@ -31,6 +31,7 @@ import { useApi } from '@/hooks/useApi';
 import { useAuthStore } from '@/store/authStore';
 import { useQuota } from '@/hooks/useQuota';
 import { usePlanAccess } from '@/hooks/usePlanAccess';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { BusinessProfile } from '@/types';
 import { DEFAULT_INDUSTRY_PACK, IndustryPack } from '@/lib/industry-packs';
 
@@ -60,6 +61,7 @@ export default function DashboardPage() {
   const { user } = useAuthStore();
   const { quota } = useQuota();
   const planAccess = usePlanAccess();
+  const push = usePushNotifications();
 
   // Derive plan limits — prefer live quota response, fall back to static map
   const planKey = ((quota?.plan || user?.plan || 'FREE') as string).toUpperCase();
@@ -88,6 +90,10 @@ export default function DashboardPage() {
   const [command, setCommand] = useState('');
   const [topUpOpen, setTopUpOpen] = useState(false);
   const [statsError, setStatsError] = useState(false);
+  const [liveStats, setLiveStats] = useState<{
+    leads_hour?: number; leads_today?: number;
+    wa_messages_hour?: number; automations_today?: number; pending_tasks?: number;
+  }>({});
 
   const activePack = onboarding?.industry_pack || selectedPack;
   const businessName = onboarding?.profile?.business_name || activePack.workspace_name || `${activePack.label} Workspace`;
@@ -154,6 +160,17 @@ export default function DashboardPage() {
 
   useEffect(() => {
     loadDashboard();
+
+    // Live SSE counter — updates every 30s without page refresh
+    const token = typeof window !== 'undefined' ? useAuthStore.getState().token : null;
+    if (!token) return;
+    const base = process.env.NEXT_PUBLIC_API_URL || '';
+    const es = new EventSource(`${base}/api/analytics/live?token=${token}`);
+    es.onmessage = (e) => {
+      try { setLiveStats(JSON.parse(e.data)); } catch { /* ignore */ }
+    };
+    es.onerror = () => es.close();
+    return () => es.close();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const runCommand = () => {
@@ -167,6 +184,23 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      {/* Push notification opt-in banner — shown only when not subscribed + supported */}
+      {push.supported && !push.subscribed && push.permission !== 'denied' && (
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm text-blue-800">
+          <div className="flex items-center gap-2">
+            <span>🔔</span>
+            <span className="font-medium">Get instant alerts for new leads and payments — even when the tab is closed.</span>
+          </div>
+          <button
+            onClick={push.subscribe}
+            disabled={push.loading}
+            className="shrink-0 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-blue-700 disabled:opacity-50 transition"
+          >
+            {push.loading ? 'Enabling…' : 'Enable Notifications'}
+          </button>
+        </div>
+      )}
+
       {statsError && (
         <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-200/60 bg-amber-50/80 px-4 py-2.5 text-sm text-amber-800">
           <span>⚠️ Stats could not load — showing cached data.</span>
@@ -304,11 +338,11 @@ export default function DashboardPage() {
       <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-6">
         {[
           { label: 'Conversations', value: quota?.queries_used ?? 0, icon: MessageCircle, href: '/dashboard/chat', help: 'Customer conversations handled by your AI.', action: 'Open Chat' },
-          { label: 'Leads Captured', value: automationStats.leads_captured, icon: Users, href: '/dashboard/leads', help: 'Contacts captured from chatbot, widget, or automation.', action: 'View Leads', badge: quota?.leads_today ? `${quota.leads_today} today` : null },
+          { label: 'Leads Captured', value: automationStats.leads_captured, icon: Users, href: '/dashboard/leads', help: 'Contacts captured from chatbot, widget, or automation.', action: 'View Leads', badge: liveStats.leads_hour ? `🔴 ${liveStats.leads_hour} last hour` : quota?.leads_today ? `${quota.leads_today} today` : null },
           { label: 'Hot Leads', value: automationStats.hot_leads, icon: Target, href: '/dashboard/leads', help: 'Leads most likely to convert based on budget, urgency, and intent.', action: 'Prioritize Now' },
           { label: 'Website Leads', value: automationStats.website_leads, icon: Globe, href: '/dashboard/leads', help: 'Leads captured from the website widget.', action: 'Open Leads' },
           { label: 'WhatsApp Leads', value: automationStats.whatsapp_leads, icon: Users, href: '/dashboard/leads', help: 'Leads captured from WhatsApp bot conversations.', action: 'Open Leads' },
-          { label: 'Automations Run', value: automationStats.automations_run, icon: Workflow, href: '/dashboard/automations', help: 'AI workflows executed for leads, content, tasks, and follow-ups.', action: 'Build Workflow' },
+          { label: 'Automations Run', value: liveStats.automations_today ?? automationStats.automations_run, icon: Workflow, href: '/dashboard/automations', help: 'AI workflows executed for leads, content, tasks, and follow-ups.', action: 'Build Workflow', badge: liveStats.wa_messages_hour ? `💬 ${liveStats.wa_messages_hour} WA msgs/hr` : null },
           { label: 'WhatsApp Drafts', value: automationStats.whatsapp_drafts, icon: MessageCircle, href: '/dashboard/messages', help: 'Messages ready to send once WhatsApp is connected or approved.', action: 'Review Drafts' },
           { label: 'Pending Tasks', value: automationStats.pending_tasks, icon: CheckSquare, href: '/dashboard/tasks', help: 'Follow-up tasks waiting for owner or team action.', action: 'Open Tasks' },
         ].map((stat) => {

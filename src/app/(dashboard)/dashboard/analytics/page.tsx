@@ -6,7 +6,7 @@ import { ProgressBar } from '@/components/progress-bar';
 import { useApi } from '@/hooks/useApi';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import toast from 'react-hot-toast';
-import { Activity, Bot, Clock, IndianRupee, MessageCircle, Sparkles, Target, Users, Zap } from 'lucide-react';
+import { Activity, Bot, CheckCheck, Clock, IndianRupee, MessageCircle, MessageSquare, Send, Sparkles, Target, TrendingUp, Users, Zap } from 'lucide-react';
 
 type UsageTrend = {
   date: string;
@@ -20,19 +20,23 @@ export default function AnalyticsPage() {
   const [trends, setTrends] = useState<UsageTrend[]>([]);
   const [funnel, setFunnel] = useState<any>(null);
   const [templatePerf, setTemplatePerf] = useState<any>(null);
+  const [waStats, setWaStats] = useState<any>(null);
+  const [waDays, setWaDays] = useState(30);
+  const [waLoading, setWaLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const { get } = useApi();
 
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
-        const [dashRes, trendsRes, impactRes, readinessRes, funnelRes, templatesRes] = await Promise.all([
+        const [dashRes, trendsRes, impactRes, readinessRes, funnelRes, templatesRes, waRes] = await Promise.all([
           get('/api/analytics/dashboard'),
           get('/api/analytics/usage-trends'),
           get('/api/analytics/business-impact').catch(() => ({ data: null })),
           get('/api/automation/readiness').catch(() => ({ data: null })),
           get('/api/analytics/funnel').catch(() => ({ data: null })),
           get('/api/analytics/template-performance').catch(() => ({ data: null })),
+          get(`/api/analytics/whatsapp?days=${waDays}`).catch(() => ({ data: null })),
         ]);
         setDashboard(dashRes.data);
         setTrends(trendsRes.data);
@@ -40,6 +44,7 @@ export default function AnalyticsPage() {
         setReadiness(readinessRes.data);
         setFunnel(funnelRes.data);
         setTemplatePerf(templatesRes.data);
+        setWaStats(waRes.data);
       } catch {
         toast.error('Failed to load analytics');
       } finally {
@@ -48,7 +53,17 @@ export default function AnalyticsPage() {
     };
 
     fetchAnalytics();
-  }, [get]);
+  }, [get]); // eslint-disable-line
+
+  // Reload WA stats when date range changes
+  useEffect(() => {
+    if (loading) return; // skip during initial full load
+    setWaLoading(true);
+    get(`/api/analytics/whatsapp?days=${waDays}`)
+      .then(r => setWaStats(r.data))
+      .catch(() => {})
+      .finally(() => setWaLoading(false));
+  }, [waDays]); // eslint-disable-line
 
   if (loading) {
     return (
@@ -252,6 +267,125 @@ export default function AnalyticsPage() {
           </div>
         </section>
       )}
+
+      {/* WhatsApp Analytics */}
+      <section>
+        <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+          <div className="flex items-center gap-2">
+            <MessageSquare className="w-5 h-5 text-green-600" />
+            <h2 className="text-lg font-bold text-gray-950">WhatsApp Analytics</h2>
+            {waLoading && <span className="w-4 h-4 border-2 border-green-400 border-t-transparent rounded-full animate-spin" />}
+          </div>
+          <div className="flex items-center gap-1 rounded-lg border border-gray-200 p-0.5 bg-gray-50">
+            {[7, 14, 30, 90].map(d => (
+              <button key={d}
+                onClick={() => setWaDays(d)}
+                className={`px-3 py-1 text-xs font-semibold rounded-md transition ${waDays === d ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+                {d}d
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* KPI row */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 mb-6">
+          {[
+            { label: 'Messages Sent', value: waStats?.total_sent ?? '—', icon: Send, color: 'text-blue-600 bg-blue-50' },
+            { label: 'Delivery Rate', value: waStats ? `${waStats.delivery_rate}%` : '—', icon: CheckCheck, color: 'text-green-600 bg-green-50' },
+            { label: 'Read Rate', value: waStats ? `${waStats.read_rate}%` : '—', icon: TrendingUp, color: 'text-purple-600 bg-purple-50' },
+            { label: 'Messages Received', value: waStats?.total_inbound ?? '—', icon: MessageCircle, color: 'text-orange-600 bg-orange-50' },
+          ].map(kpi => {
+            const Icon = kpi.icon;
+            return (
+              <Card key={kpi.label} className="border-green-100 shadow-sm" hoverable={false}>
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="text-xs font-medium text-gray-500">{kpi.label}</p>
+                    <p className="mt-1 text-2xl font-bold text-gray-950">{kpi.value}</p>
+                  </div>
+                  <div className={`rounded-lg p-2.5 ${kpi.color}`}>
+                    <Icon className="h-4 w-4" />
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Daily volume chart */}
+          <Card className="border-green-100 shadow-sm" hoverable={false}>
+            <h3 className="text-sm font-bold text-gray-950 mb-4">Daily Message Volume (last {Math.min(waDays, 14)} days)</h3>
+            {(waStats?.daily_chart || []).length === 0 ? (
+              <div className="flex h-48 items-center justify-center bg-gray-50 rounded-xl">
+                <p className="text-sm text-gray-400">No WhatsApp messages in this period</p>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={waStats.daily_chart} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#dcfce7" />
+                  <XAxis dataKey="date" tick={{ fontSize: 10 }} tickFormatter={v => v.slice(5)} />
+                  <YAxis tick={{ fontSize: 10 }} />
+                  <Tooltip />
+                  <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
+                  <Bar dataKey="sent" name="Sent" fill="#22c55e" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="received" name="Received" fill="#86efac" radius={[3, 3, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </Card>
+
+          {/* Delivery funnel */}
+          <Card className="border-green-100 shadow-sm" hoverable={false}>
+            <h3 className="text-sm font-bold text-gray-950 mb-4">Delivery Funnel</h3>
+            {!waStats || waStats.total_sent === 0 ? (
+              <div className="flex h-48 items-center justify-center bg-gray-50 rounded-xl">
+                <p className="text-sm text-gray-400">Send messages to see delivery stats</p>
+              </div>
+            ) : (
+              <div className="space-y-3 mt-2">
+                {[
+                  { label: 'Sent', count: waStats.total_sent, color: '#3b82f6', pct: 100 },
+                  { label: 'Delivered', count: waStats.delivered, color: '#22c55e', pct: waStats.delivery_rate },
+                  { label: 'Read', count: waStats.read, color: '#a855f7', pct: waStats.read_rate },
+                  { label: 'Failed', count: waStats.failed, color: '#ef4444', pct: waStats.fail_rate },
+                ].map(step => (
+                  <div key={step.label}>
+                    <div className="flex items-center justify-between text-xs font-semibold text-gray-700 mb-1">
+                      <span>{step.label}</span>
+                      <span>{step.count} <span className="text-gray-400 font-normal">({step.pct}%)</span></span>
+                    </div>
+                    <div className="h-5 rounded-full bg-gray-100 overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{ width: `${Math.max(2, step.pct)}%`, backgroundColor: step.color }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Top templates */}
+            {(waStats?.templates || []).length > 0 && (
+              <div className="mt-5">
+                <h4 className="text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Top Templates</h4>
+                <div className="space-y-1">
+                  {waStats.templates.map((t: any) => (
+                    <div key={t.name} className="flex items-center justify-between text-xs gap-2">
+                      <span className="text-gray-700 truncate max-w-[140px]">{t.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-400">{t.total} sent</span>
+                        <span className={`font-bold ${t.rate >= 80 ? 'text-green-600' : t.rate >= 50 ? 'text-amber-600' : 'text-red-500'}`}>{t.rate}%</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </Card>
+        </div>
+      </section>
 
       {/* Automation Template Performance */}
       {templatePerf && (templatePerf.workflows || []).length > 0 && (

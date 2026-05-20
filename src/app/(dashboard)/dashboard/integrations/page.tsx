@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import {
   AlertCircle,
@@ -11,6 +11,7 @@ import {
   Database,
   ExternalLink,
   Instagram,
+  Loader2,
   Mail,
   Plug,
   RefreshCw,
@@ -135,6 +136,47 @@ const actionTemplates = [
 ];
 
 const setupFields: Record<string, Array<{ key: string; label: string; placeholder: string; help?: string; secret?: boolean }>> = {
+  indiamart: [
+    { key: 'crm_key', label: 'IndiaMART CRM key', placeholder: 'CRM key from IndiaMART Lead Manager', secret: true },
+    { key: 'mobile', label: 'Registered mobile number', placeholder: '9876543210' },
+  ],
+  slack: [
+    { key: 'webhook_url', label: 'Slack incoming webhook URL', placeholder: 'https://hooks.slack.com/services/...', secret: true },
+    { key: 'channel_name', label: 'Alert channel', placeholder: '#new-leads' },
+  ],
+  hubspot: [
+    { key: 'access_token', label: 'HubSpot private app token', placeholder: 'pat-na1-...', secret: true },
+    { key: 'auto_sync_leads', label: 'Auto sync leads', placeholder: 'true' },
+  ],
+  zoho: [
+    { key: 'access_token', label: 'Zoho access token', placeholder: '1000.xxxxx', secret: true },
+    { key: 'refresh_token', label: 'Zoho refresh token', placeholder: '1000.xxxxx', secret: true },
+    { key: 'region', label: 'Region', placeholder: 'com, in, eu, au' },
+  ],
+  twilio: [
+    { key: 'account_sid', label: 'Account SID', placeholder: 'ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' },
+    { key: 'auth_token', label: 'Auth token', placeholder: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', secret: true },
+    { key: 'from_number', label: 'From number', placeholder: '+14155552671' },
+  ],
+  calendly: [
+    { key: 'personal_access_token', label: 'Personal access token', placeholder: 'calendly_pat_...', secret: true },
+    { key: 'send_wa_confirmation', label: 'Send WhatsApp confirmation', placeholder: 'true' },
+  ],
+  'google-calendar': [
+    { key: 'api_key', label: 'OAuth access token', placeholder: 'ya29....', secret: true },
+    { key: 'calendar_id', label: 'Calendar ID', placeholder: 'primary or team-calendar@group.calendar.google.com' },
+    { key: 'auto_create_events', label: 'Auto create events', placeholder: 'true' },
+  ],
+  zapier: [
+    { key: 'zap_webhook_url', label: 'Zapier catch hook URL', placeholder: 'https://hooks.zapier.com/hooks/catch/...' },
+    { key: 'events', label: 'Events', placeholder: 'new_lead,payment_received' },
+  ],
+  meta_catalog: [
+    { key: 'catalog_id', label: 'Meta catalog ID', placeholder: '123456789012345' },
+    { key: 'business_id', label: 'Meta business ID', placeholder: '123456789012345' },
+    { key: 'access_token_last4', label: 'Access token last 4 characters', placeholder: 'AB12', secret: true, help: 'Keep the full Meta token server-side.' },
+    { key: 'sync_mode', label: 'Sync mode', placeholder: 'manual or scheduled' },
+  ],
 };
 
 const requiredEnv: Record<string, string[]> = {
@@ -182,6 +224,14 @@ export default function IntegrationsPage() {
   const [waBusinessProfile, setWaBusinessProfile] = useState<any>(null);
   const [bpEditing, setBpEditing] = useState(false);
   const [bpForm, setBpForm] = useState({ about: '', address: '', description: '', email: '', websites: '', vertical: '' });
+
+  /* ── Shopify state ── */
+  const [shopifyConnected, setShopifyConnected] = useState(false);
+  const [shopifyDomain, setShopifyDomain] = useState('');
+  const [shopifySecret, setShopifySecret] = useState('');
+  const [shopifyWebhookUrl, setShopifyWebhookUrl] = useState('');
+  const [shopifySaving, setShopifySaving] = useState(false);
+  const [shopifySendConfirm, setShopifySendConfirm] = useState(true);
 
   /* ── Razorpay state ── */
   const [rzpConnected, setRzpConnected] = useState(false);
@@ -238,6 +288,28 @@ export default function IntegrationsPage() {
   const [metaCatalogLoading, setMetaCatalogLoading] = useState('');
   const [showMetaCatalog, setShowMetaCatalog] = useState(false);
 
+  /* ── New integration connection states (slack, hubspot, zoho, twilio, calendly, zapier, google-calendar, indiamart) ── */
+  const [extraConn, setExtraConn] = useState<Record<string, { connected: boolean; config: Record<string, string> }>>({});
+  const [extraSaving, setExtraSaving] = useState('');
+
+  const loadExtraConnection = async (provider: string) => {
+    try {
+      const r = await get(`/api/${provider}/connection`);
+      setExtraConn(prev => ({ ...prev, [provider]: { connected: r.data?.connected || false, config: r.data || {} } }));
+    } catch { setExtraConn(prev => ({ ...prev, [provider]: { connected: false, config: {} } })); }
+  };
+
+  const saveExtraConnection = async (provider: string, connectPath: string, body: Record<string, string>) => {
+    setExtraSaving(provider);
+    try {
+      await post(`/api/${connectPath}`, body);
+      toast.success(`${provider} connected!`);
+      await loadExtraConnection(provider);
+      await refresh();
+    } catch (e: any) { toast.error(e?.response?.data?.detail || `Failed to connect ${provider}`); }
+    finally { setExtraSaving(''); }
+  };
+
   /* ── Detect OAuth popup return ── */
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -273,16 +345,70 @@ export default function IntegrationsPage() {
       window.opener?.postMessage({ type: 'instagram_error', error: params.get('instagram_error') }, window.location.origin);
       window.close();
     }
+    // Load Meta FB SDK for Embedded Signup popup
+    if (!document.getElementById('fb-sdk')) {
+      const s = document.createElement('script');
+      s.id = 'fb-sdk';
+      s.src = 'https://connect.facebook.net/en_US/sdk.js';
+      s.async = true;
+      s.defer = true;
+      document.body.appendChild(s);
+      (window as any).fbAsyncInit = () => {
+        const appId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || '';
+        if (appId && (window as any).FB) {
+          (window as any).FB.init({ appId, cookie: true, xfbml: false, version: 'v20.0' });
+        }
+      };
+    }
+    // Meta Embedded Signup callback handling
+    if (params.get('meta_step') === 'select_assets') {
+      toast.success('Meta connected! Finalizing WhatsApp setup…');
+      // Auto-call finalize with empty body (backend will auto-discover WABA)
+      const token = useAuthStore.getState().token;
+      const base = process.env.NEXT_PUBLIC_API_URL || '';
+      fetch(`${base}/api/meta/onboarding/finalize`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data.connected) {
+            toast.success(`✅ WhatsApp connected! Number: ${data.display_phone_number || 'configured'}`);
+            window.history.replaceState({}, '', '/dashboard/integrations');
+          } else {
+            toast.error(data.detail || 'Could not finalize WhatsApp setup');
+          }
+        })
+        .catch(() => toast.error('Could not finalize WhatsApp setup'));
+    }
+    if (params.get('meta_error')) {
+      toast.error(`Meta connection failed: ${params.get('meta_error')}`);
+      window.history.replaceState({}, '', '/dashboard/integrations');
+    }
   }, []);
 
   const refresh = () => {
-    Promise.all([
+    Promise.allSettled([
       get('/api/automation/integrations/catalog').catch(() => ({ data: [] })),
-      get('/api/automation/action-drafts').catch(() => ({ data: [] })),
-    ]).then(([catRes, draftRes]) => {
-      setCatalog(catRes.data || []);
-      setDrafts((draftRes.data || []).slice(0, 8));
+    ]).then(([catRes]) => {
+      const catalogData = catRes.status === 'fulfilled' ? catRes.value.data : [];
+      const items: IntegrationCatalogItem[] = Array.isArray(catalogData) ? catalogData : (catalogData?.data || []);
+      setCatalog(items);
+      // Sync connected state from catalog — no extra API calls needed
+      const connected = (p: string) => items.some((i: any) => (i.provider === p || i.channel === p) && i.connected);
+      setWhatsappConnected(connected('whatsapp') || connected('meta'));
+      setGsOAuthConnected(connected('google_sheets'));
+      setGmailOAuthConnected(connected('gmail'));
+      setFacebookConnected(connected('facebook'));
+      setInstagramConnected(connected('instagram'));
     });
+
+    get('/api/automation/action-drafts').then((draftRes) => {
+      const draftsData = draftRes.data || [];
+      const draftItems = Array.isArray(draftsData) ? draftsData : (draftsData?.data || []);
+      setDrafts(draftItems.slice(0, 8));
+    }).catch(() => setDrafts([]));
   };
 
   useEffect(() => {
@@ -291,7 +417,38 @@ export default function IntegrationsPage() {
       setRzpConnected(r.data?.connected || false);
       setRzpKeyIdMasked(r.data?.key_id_masked || '');
     }).catch(() => {});
+    get('/api/shopify/connection').then(r => {
+      setShopifyConnected(r.data?.connected || false);
+      setShopifyDomain(r.data?.shop_domain || '');
+      setShopifySendConfirm(r.data?.send_order_confirmation ?? true);
+    }).catch(() => {});
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const saveShopify = async () => {
+    if (!shopifyDomain.trim()) { toast.error('Shop domain required'); return; }
+    setShopifySaving(true);
+    try {
+      const res = await post('/api/shopify/connect', {
+        shop_domain: shopifyDomain.trim(),
+        webhook_secret: shopifySecret.trim(),
+        send_order_confirmation: shopifySendConfirm,
+        auto_create_leads: true,
+      });
+      setShopifyConnected(true);
+      setShopifyWebhookUrl(res.data?.webhook_url || '');
+      toast.success('Shopify connected!');
+    } catch (e: any) { toast.error(e?.response?.data?.detail || 'Failed to connect Shopify'); }
+    finally { setShopifySaving(false); }
+  };
+
+  const disconnectShopify = async () => {
+    await post('/api/shopify/disconnect', {}).catch(() => {});
+    setShopifyConnected(false);
+    setShopifyDomain('');
+    setShopifySecret('');
+    setShopifyWebhookUrl('');
+    toast.success('Shopify disconnected');
+  };
 
   const saveRazorpay = async () => {
     if (!rzpKeyId.trim() || !rzpSecret.trim()) {
@@ -321,6 +478,11 @@ export default function IntegrationsPage() {
     const feature = featureForProvider(item.provider);
     if (!planAccess.canUse(feature)) {
       setLockedFeature(feature);
+      return;
+    }
+    if (item.provider === 'meta_catalog') {
+      loadMetaCatalogStatus();
+      setShowMetaCatalog(true);
       return;
     }
     setSetupError('');
@@ -361,22 +523,35 @@ export default function IntegrationsPage() {
     } else if (item.provider === 'instagram') {
       loadInstagramStatus();
       setInstagramAccounts([]);
+    } else if (['slack','hubspot','zoho','twilio','calendly','zapier','google-calendar','indiamart'].includes(item.provider)) {
+      loadExtraConnection(item.provider);
+      const fields = setupFields[item.provider] || [];
+      const existing = extraConn[item.provider]?.config || {};
+      setConfigForm(fields.reduce<Record<string,string>>((acc, f) => { acc[f.key] = String(existing[f.key] || ''); return acc; }, {}));
     } else if (item.provider === 'meta' || item.provider === 'whatsapp') {
       const cfg = (item.config || {}) as Record<string, unknown>;
+      // Pre-fill with existing config first
       setConfigForm({
         mode: 'live',
         phone_number_id: String(cfg.phone_number_id || ''),
         waba_id: String(cfg.waba_id || ''),
         business_account_id: String(cfg.business_account_id || cfg.waba_id || ''),
         permanent_access_token: '',
-        verify_token: String(cfg.verify_token || ''),
-        app_secret: '',
         default_assistant_id: String(cfg.default_assistant_id || ''),
         sync_leads: String(cfg.sync_leads ?? 'true'),
       });
+      // Fetch webhook URL from backend (verify_token + app_secret handled server-side)
+      get('/api/integrations/whatsapp/defaults').then(r => {
+        if (r.data?.webhook_url) setWhatsappWebhookUrl(r.data.webhook_url);
+      }).catch(() => {});
       loadWhatsAppStatus();
     } else {
-      const fields = setupFields[item.provider] || [];
+      const fields = setupFields[item.provider] || [
+        { key: 'account_name', label: 'Account or workspace name', placeholder: `${item.label} workspace` },
+        { key: 'external_id', label: 'External account ID', placeholder: 'Provider account ID' },
+        { key: 'secret_hint', label: 'Secret/token last 4 characters', placeholder: 'AB12', secret: true, help: 'Keep full credentials in backend environment variables or the secure connector flow.' },
+        { key: 'notes', label: 'Setup notes', placeholder: 'Default channel, owner, mapping, or sync notes' },
+      ];
       const existingConfig = (item.config || {}) as Record<string, unknown>;
       setConfigForm(fields.reduce<Record<string, string>>((acc, f) => { acc[f.key] = String(existingConfig[f.key] || ''); return acc; }, {}));
     }
@@ -965,6 +1140,91 @@ export default function IntegrationsPage() {
     setLoading(`${item.provider}:connect`);
     setSetupError('');
     try {
+      const boolValue = (key: string, fallback = true) => {
+        const value = String(configForm[key] ?? '').trim().toLowerCase();
+        if (!value) return fallback;
+        return !['false', '0', 'no', 'off'].includes(value);
+      };
+      const eventList = (configForm.events || 'new_lead,payment_received')
+        .split(',')
+        .map((v) => v.trim())
+        .filter(Boolean);
+      const liveConnectors: Record<string, { endpoint: string; payload: Record<string, unknown>; success: string }> = {
+        indiamart: {
+          endpoint: '/api/indiamart/connect',
+          payload: { crm_key: configForm.crm_key || '', mobile: configForm.mobile || '' },
+          success: 'IndiaMART connected',
+        },
+        slack: {
+          endpoint: '/api/slack/connect',
+          payload: {
+            webhook_url: configForm.webhook_url || '',
+            channel_name: configForm.channel_name || '#general',
+            notify_on_new_lead: true,
+            notify_on_payment: true,
+          },
+          success: 'Slack connected',
+        },
+        twilio: {
+          endpoint: '/api/twilio/connect',
+          payload: {
+            account_sid: configForm.account_sid || '',
+            auth_token: configForm.auth_token || '',
+            from_number: configForm.from_number || '',
+          },
+          success: 'Twilio connected',
+        },
+        calendly: {
+          endpoint: '/api/calendly/connect',
+          payload: {
+            personal_access_token: configForm.personal_access_token || '',
+            send_wa_confirmation: boolValue('send_wa_confirmation', true),
+          },
+          success: 'Calendly connected',
+        },
+        hubspot: {
+          endpoint: '/api/hubspot/connect',
+          payload: {
+            access_token: configForm.access_token || '',
+            auto_sync_leads: boolValue('auto_sync_leads', true),
+          },
+          success: 'HubSpot connected',
+        },
+        zoho: {
+          endpoint: '/api/zoho/connect',
+          payload: {
+            access_token: configForm.access_token || '',
+            refresh_token: configForm.refresh_token || '',
+            region: configForm.region || 'com',
+          },
+          success: 'Zoho connected',
+        },
+        zapier: {
+          endpoint: '/api/zapier/connect',
+          payload: {
+            zap_webhook_url: configForm.zap_webhook_url || '',
+            events: eventList.length ? eventList : ['new_lead', 'payment_received'],
+          },
+          success: 'Zapier connected',
+        },
+        'google-calendar': {
+          endpoint: '/api/google-calendar/connect',
+          payload: {
+            api_key: configForm.api_key || '',
+            calendar_id: configForm.calendar_id || 'primary',
+            auto_create_events: boolValue('auto_create_events', true),
+          },
+          success: 'Google Calendar connected',
+        },
+      };
+      const live = liveConnectors[item.provider];
+      if (live) {
+        await post(live.endpoint, live.payload);
+        toast.success(live.success);
+        closeModal();
+        refresh();
+        return;
+      }
       const hasConfig = Object.values(configForm).some((v) => v.trim());
       await post('/api/automation/integrations', {
         provider: item.provider, channel: item.channel,
@@ -1148,13 +1408,32 @@ export default function IntegrationsPage() {
     (resource === 'message' && (op === 'send' || op === 'reply')) ||
     (resource === 'draft' && (op === 'create' || op === 'send'));
 
+  const fieldsFor = (item: IntegrationCatalogItem) =>
+    setupFields[item.provider] || [
+      { key: 'account_name', label: 'Account or workspace name', placeholder: `${item.label} workspace` },
+      { key: 'external_id', label: 'External account ID', placeholder: 'Provider account ID' },
+      { key: 'secret_hint', label: 'Secret/token last 4 characters', placeholder: 'AB12', secret: true, help: 'Keep full credentials in backend environment variables or the secure connector flow.' },
+      { key: 'notes', label: 'Setup notes', placeholder: 'Default channel, owner, mapping, or sync notes' },
+    ];
+
   const accentFor = (provider: string, channel: string) => {
     const key = `${provider}:${channel}`.toLowerCase();
-    if (key.includes('whatsapp')) return { bar: 'from-emerald-500 to-green-400', icon: 'bg-emerald-50 text-emerald-700 ring-emerald-100', hover: 'hover:border-emerald-200 hover:shadow-emerald-500/10' };
-    if (key.includes('gmail') || key.includes('email')) return { bar: 'from-pink-500 to-rose-400', icon: 'bg-pink-50 text-pink-700 ring-pink-100', hover: 'hover:border-pink-200 hover:shadow-pink-500/10' };
-    if (key.includes('sheet') || key.includes('google_sheets')) return { bar: 'from-blue-500 to-cyan-400', icon: 'bg-blue-50 text-blue-700 ring-blue-100', hover: 'hover:border-blue-200 hover:shadow-blue-500/10' };
-    if (key.includes('facebook') || key.includes('instagram')) return { bar: 'from-purple-500 to-violet-400', icon: 'bg-purple-50 text-purple-700 ring-purple-100', hover: 'hover:border-purple-200 hover:shadow-purple-500/10' };
-    if (key.includes('calendar') || key.includes('calendly')) return { bar: 'from-amber-500 to-yellow-400', icon: 'bg-amber-50 text-amber-700 ring-amber-100', hover: 'hover:border-amber-200 hover:shadow-amber-500/10' };
+    if (key.includes('whatsapp') || key.includes('meta:whatsapp')) return { bar: 'from-emerald-500 to-green-400', icon: 'bg-emerald-50 text-emerald-700 ring-emerald-100', hover: 'hover:border-emerald-200 hover:shadow-emerald-500/10' };
+    if (key.includes('instagram')) return { bar: 'from-pink-500 to-fuchsia-400', icon: 'bg-pink-50 text-pink-700 ring-pink-100', hover: 'hover:border-pink-200 hover:shadow-pink-500/10' };
+    if (key.includes('facebook')) return { bar: 'from-blue-600 to-blue-400', icon: 'bg-blue-50 text-blue-700 ring-blue-100', hover: 'hover:border-blue-200 hover:shadow-blue-500/10' };
+    if (key.includes('gmail') || key.includes('email')) return { bar: 'from-red-500 to-rose-400', icon: 'bg-red-50 text-red-700 ring-red-100', hover: 'hover:border-red-200 hover:shadow-red-500/10' };
+    if (key.includes('sheet') || key.includes('google_sheets')) return { bar: 'from-green-500 to-emerald-400', icon: 'bg-green-50 text-green-700 ring-green-100', hover: 'hover:border-green-200 hover:shadow-green-500/10' };
+    if (key.includes('razorpay') || key.includes('payment')) return { bar: 'from-blue-500 to-cyan-400', icon: 'bg-blue-50 text-blue-700 ring-blue-100', hover: 'hover:border-blue-200 hover:shadow-blue-500/10' };
+    if (key.includes('shopify') || key.includes('ecommerce')) return { bar: 'from-green-600 to-lime-400', icon: 'bg-green-50 text-green-700 ring-green-100', hover: 'hover:border-green-200 hover:shadow-green-500/10' };
+    if (key.includes('indiamart')) return { bar: 'from-amber-500 to-orange-400', icon: 'bg-amber-50 text-amber-700 ring-amber-100', hover: 'hover:border-amber-200 hover:shadow-amber-500/10' };
+    if (key.includes('slack')) return { bar: 'from-purple-600 to-violet-400', icon: 'bg-purple-50 text-purple-700 ring-purple-100', hover: 'hover:border-purple-200 hover:shadow-purple-500/10' };
+    if (key.includes('hubspot')) return { bar: 'from-orange-500 to-amber-400', icon: 'bg-orange-50 text-orange-700 ring-orange-100', hover: 'hover:border-orange-200 hover:shadow-orange-500/10' };
+    if (key.includes('zoho')) return { bar: 'from-red-600 to-rose-400', icon: 'bg-red-50 text-red-700 ring-red-100', hover: 'hover:border-red-200 hover:shadow-red-500/10' };
+    if (key.includes('twilio') || key.includes('sms')) return { bar: 'from-red-500 to-pink-400', icon: 'bg-red-50 text-red-700 ring-red-100', hover: 'hover:border-red-200 hover:shadow-red-500/10' };
+    if (key.includes('calendly')) return { bar: 'from-blue-500 to-indigo-400', icon: 'bg-blue-50 text-blue-700 ring-blue-100', hover: 'hover:border-blue-200 hover:shadow-blue-500/10' };
+    if (key.includes('calendar')) return { bar: 'from-blue-400 to-sky-300', icon: 'bg-sky-50 text-sky-700 ring-sky-100', hover: 'hover:border-sky-200 hover:shadow-sky-500/10' };
+    if (key.includes('zapier')) return { bar: 'from-orange-600 to-red-400', icon: 'bg-orange-50 text-orange-700 ring-orange-100', hover: 'hover:border-orange-200 hover:shadow-orange-500/10' };
+    if (key.includes('catalog')) return { bar: 'from-sky-500 to-cyan-400', icon: 'bg-sky-50 text-sky-700 ring-sky-100', hover: 'hover:border-sky-200 hover:shadow-sky-500/10' };
     return { bar: 'from-cyan-500 to-sky-400', icon: 'bg-cyan-50 text-cyan-700 ring-cyan-100', hover: 'hover:border-cyan-200 hover:shadow-cyan-500/10' };
   };
 
@@ -1179,6 +1458,28 @@ export default function IntegrationsPage() {
       </div>
 
       {/* ── Getting Started wizard — only shown when no channels connected ── */}
+      <div className="rounded-xl border border-blue-200 bg-blue-50 p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-sm font-bold uppercase tracking-wide text-blue-700">Start Here</p>
+            <h2 className="mt-1 text-xl font-bold text-gray-950">WhatsApp official Meta connect - 3 step setup</h2>
+            <p className="mt-1 max-w-2xl text-sm text-blue-800">Users connect through official Meta consent. Manual token setup remains available below for advanced users.</p>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-3 lg:w-[520px]">
+            {[
+              { label: '1. Connect via Meta', done: whatsappConnected },
+              { label: '2. Select WABA/phone', done: whatsappConnected && Boolean(configForm.phone_number_id || configForm.waba_id) },
+              { label: '3. Send test message', done: whatsappConnected && Boolean(configForm.test_to?.trim()) },
+            ].map((step) => (
+              <div key={step.label} className={`rounded-xl border px-3 py-2 text-xs font-semibold ${step.done ? 'border-emerald-200 bg-white text-emerald-700' : 'border-blue-200 bg-white/70 text-blue-700'}`}>
+                <span className={`mr-1 inline-block h-2 w-2 rounded-full ${step.done ? 'bg-emerald-500' : 'bg-amber-400'}`} />
+                {step.label}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {!whatsappConnected && !instagramConnected && !facebookConnected && !gsOAuthConnected && (
         <div className="rounded-2xl border-2 border-dashed border-primary-200 bg-primary-50 p-5">
           <div className="flex items-center gap-3 mb-4">
@@ -1250,22 +1551,23 @@ export default function IntegrationsPage() {
               </div>
               <h2 className="mt-4 font-bold text-gray-950">{item.label}</h2>
               <p className="mt-2 min-h-12 text-sm text-gray-600">{item.description}</p>
-              {/* Show connected account details when connected */}
-              {item.connected && (
-                <p className="mt-1 text-xs font-semibold text-gray-500 truncate">
-                  {item.provider === 'meta' || item.provider === 'whatsapp'
-                    ? whatsappConnected && (item.config as any)?.phone_number_id ? `📞 ${(item.config as any)?.display_phone_number || (item.config as any)?.phone_number_id}` : ''
-                    : item.provider === 'instagram'
-                    ? instagramUsername ? `@${instagramUsername}` : ''
-                    : item.provider === 'facebook'
-                    ? facebookAccountName ? `🏢 ${facebookAccountName}` : ''
-                    : item.provider === 'google_sheets'
-                    ? gsConnectedEmail ? `📧 ${gsConnectedEmail}` : ''
-                    : item.provider === 'gmail'
-                    ? gmailSenderEmail ? `📧 ${gmailSenderEmail}` : ''
-                    : ''}
-                </p>
-              )}
+              {/* Connected account detail — read directly from item.config (no extra state) */}
+              {item.connected && (() => {
+                const cfg = (item.config || {}) as any;
+                const detail =
+                  (item.provider === 'meta' || item.provider === 'whatsapp')
+                    ? cfg.display_phone_number || cfg.phone_number_id ? `📞 ${cfg.display_phone_number || cfg.phone_number_id}` : ''
+                  : item.provider === 'instagram'
+                    ? cfg.instagram_username || cfg.username ? `@${cfg.instagram_username || cfg.username}` : ''
+                  : item.provider === 'facebook'
+                    ? cfg.page_name || cfg.account_name ? `🏢 ${cfg.page_name || cfg.account_name}` : ''
+                  : item.provider === 'google_sheets'
+                    ? cfg.email || cfg.connected_email ? `📧 ${cfg.email || cfg.connected_email}` : ''
+                  : item.provider === 'gmail'
+                    ? cfg.sender_email || cfg.email ? `📧 ${cfg.sender_email || cfg.email}` : ''
+                  : '';
+                return detail ? <p className="mt-1 text-xs font-semibold text-gray-500 truncate">{detail}</p> : null;
+              })()}
               <div className="mt-4 flex items-center gap-2 text-xs font-semibold">
                 <span className={`h-2 w-2 rounded-full ${item.connected ? 'bg-emerald-500' : 'bg-amber-500'}`} />
                 <span className="text-gray-600">{item.status.split('_').join(' ')}</span>
@@ -1278,107 +1580,8 @@ export default function IntegrationsPage() {
           );
         })}
 
-        {/* ── Meta Product Catalog card ── */}
-        <Card
-          className={`relative overflow-hidden border-gray-200 shadow-sm transition hover:shadow-lg ${metaCatalogConnected ? 'hover:border-blue-200 hover:shadow-blue-500/10' : 'hover:border-violet-200 hover:shadow-violet-500/10'}`}
-          hoverable={false}
-        >
-          <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${metaCatalogConnected ? 'from-blue-500 to-violet-500' : 'from-violet-400 to-pink-400'}`} />
-          <div className="flex items-start justify-between gap-3">
-            <div className="rounded-lg bg-violet-50 p-3 ring-1 ring-violet-100 text-violet-700 text-xl">🛍</div>
-            <span className={`rounded-full px-2 py-1 text-xs font-semibold ${metaCatalogConnected ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-600'}`}>
-              {metaCatalogConnected ? 'Connected' : 'Available'}
-            </span>
-          </div>
-          <h2 className="mt-4 font-bold text-gray-950">Meta Product Catalog</h2>
-          <p className="mt-2 min-h-12 text-sm text-gray-600">
-            Connect your Facebook Business Catalog — products sync automatically to B9 and can be sent via WhatsApp automation.
-          </p>
-          {metaCatalogConnected && (
-            <div className="mt-3 space-y-1">
-              <p className="text-xs text-gray-500">📦 <span className="font-semibold text-gray-700">{metaCatalogProductCount} products</span> synced</p>
-              {metaCatalogLastSynced && <p className="text-xs text-gray-400">Last sync: {new Date(metaCatalogLastSynced).toLocaleString()}</p>}
-              {metaCatalogName && <p className="text-xs text-violet-600 font-medium">{metaCatalogName}</p>}
-            </div>
-          )}
-          <div className="mt-4 flex items-center gap-2 text-xs font-semibold">
-            <span className={`h-2 w-2 rounded-full ${metaCatalogConnected ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-            <span className="text-gray-600">{metaCatalogConnected ? 'catalog synced' : 'not connected'}</span>
-          </div>
-          <Button
-            variant={metaCatalogConnected ? 'secondary' : 'primary'}
-            className="mt-4 w-full"
-            onClick={() => { setShowMetaCatalog(true); loadMetaCatalogStatus(); }}
-          >
-            <Plug className="h-4 w-4" />{metaCatalogConnected ? 'Manage Catalog' : 'Connect Catalog'}
-          </Button>
-        </Card>
       </section>
 
-      {/* ── Razorpay Integration Card ── */}
-      <Card className="border-green-100 shadow-sm" hoverable={false}>
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-green-50 p-3 ring-1 ring-green-200">
-              <span className="text-xl">💳</span>
-            </div>
-            <div>
-              <h2 className="font-bold text-gray-950">Razorpay — Payment Links</h2>
-              <p className="text-sm text-gray-500">Send payment links to customers via WhatsApp automations. Money goes directly to your Razorpay account.</p>
-            </div>
-          </div>
-          <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${rzpConnected ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
-            {rzpConnected ? '✓ Connected' : 'Not connected'}
-          </span>
-        </div>
-
-        {rzpConnected ? (
-          <div className="mt-4 flex items-center justify-between rounded-lg bg-emerald-50 border border-emerald-100 px-4 py-3">
-            <div>
-              <p className="text-sm font-semibold text-emerald-800">Razorpay connected</p>
-              <p className="text-xs text-emerald-600 font-mono mt-0.5">{rzpKeyIdMasked}</p>
-            </div>
-            <Button variant="outline" onClick={disconnectRazorpay} className="text-xs text-red-500 border-red-200 hover:bg-red-50">
-              Disconnect
-            </Button>
-          </div>
-        ) : (
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Key ID <span className="text-gray-400">(starts with rzp_)</span></label>
-              <input
-                type="text"
-                value={rzpKeyId}
-                onChange={e => setRzpKeyId(e.target.value)}
-                placeholder="rzp_live_xxxxxxxxxxxx"
-                className="input-field w-full"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Key Secret</label>
-              <input
-                type="password"
-                value={rzpSecret}
-                onChange={e => setRzpSecret(e.target.value)}
-                placeholder="••••••••••••••••••••"
-                className="input-field w-full"
-              />
-            </div>
-            <div className="sm:col-span-2 flex items-center gap-3">
-              <Button onClick={saveRazorpay} disabled={rzpSaving || !rzpKeyId.trim() || !rzpSecret.trim()} className="flex items-center gap-2">
-                {rzpSaving ? 'Saving…' : '💳 Connect Razorpay'}
-              </Button>
-              <a href="https://dashboard.razorpay.com/app/keys" target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline">
-                Get API keys from Razorpay dashboard →
-              </a>
-            </div>
-          </div>
-        )}
-
-        <p className="mt-3 text-xs text-gray-400">
-          Use <code className="bg-gray-100 px-1 rounded">rzp_test_</code> keys for testing, <code className="bg-gray-100 px-1 rounded">rzp_live_</code> for real payments.
-        </p>
-      </Card>
 
       <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
         <Card className="border-blue-100 shadow-sm" hoverable={false}>
@@ -1953,14 +2156,50 @@ export default function IntegrationsPage() {
 
             {(selectedIntegration.provider === 'meta' || selectedIntegration.provider === 'whatsapp') && (
               <div className="mt-5 space-y-5">
+                {/* 2 connect options at top of modal */}
+                {!selectedIntegration.connected && (
+                  <div className="space-y-2">
+                    <button
+                      onClick={async () => {
+                        try {
+                          const base = process.env.NEXT_PUBLIC_API_URL || '';
+                          const token = useAuthStore.getState().token;
+                          const r = await fetch(`${base}/api/meta/onboarding/init`, { headers: { Authorization: `Bearer ${token}` } });
+                          const data = await r.json();
+                          if (!data.app_id) { toast.error('Meta app not configured'); return; }
+                          if ((window as any).FB) {
+                            (window as any).FB.login((response: any) => {
+                              if (response.authResponse) {
+                                window.location.href = `${base}/api/meta/onboarding/callback?code=${response.authResponse.code}&state=${data.state}`;
+                              }
+                            }, { config_id: data.config_id, response_type: 'code', override_default_response_type: true });
+                          } else {
+                            const params = new URLSearchParams({ client_id: data.app_id, redirect_uri: `${base}/api/meta/onboarding/callback`, state: data.state, scope: 'whatsapp_business_management,whatsapp_business_messaging,business_management', response_type: 'code' });
+                            window.open(`https://www.facebook.com/dialog/oauth?${params}`, '_blank', 'width=600,height=700');
+                          }
+                        } catch (e: any) { toast.error(e?.message || 'Could not start Meta connection'); }
+                      }}
+                      className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#1877F2] hover:bg-[#166FE5] text-white text-sm font-bold py-2.5 transition"
+                    >
+                      <span className="text-base">𝐟</span> Connect via Facebook Login
+                      <span className="text-[10px] bg-white/20 rounded px-1.5 py-0.5 font-semibold">Recommended</span>
+                    </button>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-px bg-gray-200" />
+                      <span className="text-[10px] text-gray-400 font-medium">OR</span>
+                      <div className="flex-1 h-px bg-gray-200" />
+                    </div>
+                    <p className="text-xs font-semibold text-gray-500 text-center">Enter credentials manually ↓</p>
+                  </div>
+                )}
                 <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-xs font-bold uppercase tracking-wide text-gray-500">WhatsApp Business</p>
-                      <p className="mt-1 text-sm text-gray-600">{whatsappConnected ? 'Connected' : 'Not Connected'}</p>
+                      <p className="mt-1 text-sm text-gray-600">{selectedIntegration.connected ? 'Connected' : 'Not Connected'}</p>
                     </div>
-                    <span className={`rounded-full px-3 py-1 text-xs font-bold ${whatsappConnected ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                      {whatsappConnected ? 'Connected' : 'Not Connected'}
+                    <span className={`rounded-full px-3 py-1 text-xs font-bold ${selectedIntegration.connected ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                      {selectedIntegration.connected ? 'Connected' : 'Not Connected'}
                     </span>
                   </div>
                   <label className="mt-4 block text-sm font-semibold text-gray-700">
@@ -1983,40 +2222,47 @@ export default function IntegrationsPage() {
                       </ol>
                     </div>
 
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <label className="text-sm font-semibold text-gray-700">
-                        Phone Number ID
-                        <input value={configForm.phone_number_id || ''} onChange={(e) => setConfigForm({...configForm, phone_number_id: e.target.value})} className="input-field mt-1" placeholder="102345678901234" />
+                    {/* Required fields */}
+                    <div className="space-y-3">
+                      <label className="block text-sm font-semibold text-gray-700">
+                        Phone Number ID <span className="text-red-500">*</span>
+                        <input value={configForm.phone_number_id || ''} onChange={(e) => setConfigForm({...configForm, phone_number_id: e.target.value})} className="input-field mt-1" placeholder="e.g. 102345678901234" />
                       </label>
-                      <label className="text-sm font-semibold text-gray-700">
-                        WhatsApp Business Account ID
-                        <input value={configForm.waba_id || ''} onChange={(e) => setConfigForm({...configForm, waba_id: e.target.value})} className="input-field mt-1" placeholder="102345678901234" />
+                      <label className="block text-sm font-semibold text-gray-700">
+                        WhatsApp Business Account ID (WABA ID) <span className="text-red-500">*</span>
+                        <input value={configForm.waba_id || ''} onChange={(e) => setConfigForm({...configForm, waba_id: e.target.value})} className="input-field mt-1" placeholder="e.g. 102345678901234" />
                       </label>
-                      <label className="text-sm font-semibold text-gray-700">
-                        Permanent Access Token
-                        <input value={configForm.permanent_access_token || ''} onChange={(e) => setConfigForm({...configForm, permanent_access_token: e.target.value})} className="input-field mt-1" placeholder="EAA..." type="password" />
+                      <label className="block text-sm font-semibold text-gray-700">
+                        Permanent Access Token <span className="text-red-500">*</span>
+                        <input value={configForm.permanent_access_token || ''} onChange={(e) => setConfigForm({...configForm, permanent_access_token: e.target.value})} className="input-field mt-1" placeholder="EAAxxxx..." type="password" />
+                        <p className="text-[10px] text-gray-400 mt-0.5">Meta Business Suite → System Users → Generate token</p>
                       </label>
-                      <label className="text-sm font-semibold text-gray-700">
-                        Webhook Verify Token
-                        <input value={configForm.verify_token || ''} onChange={(e) => setConfigForm({...configForm, verify_token: e.target.value})} className="input-field mt-1" placeholder="your_verify_token" />
+
+                      {/* Test number + send test */}
+                      <label className="block text-sm font-semibold text-gray-700">
+                        Test Phone Number
+                        <div className="flex gap-2 mt-1">
+                          <input value={configForm.test_to || ''} onChange={(e) => setConfigForm({...configForm, test_to: e.target.value})} className="input-field flex-1" placeholder="919876543210 (with country code)" />
+                          <button type="button"
+                            disabled={!configForm.test_to || !configForm.phone_number_id || !configForm.permanent_access_token}
+                            onClick={testWhatsAppConnection}
+                            className="px-3 py-2 text-xs font-bold rounded-lg border border-green-300 text-green-700 hover:bg-green-50 disabled:opacity-40 transition whitespace-nowrap">
+                            Send Test
+                          </button>
+                        </div>
+                        <p className="text-[10px] text-gray-400 mt-0.5">Enter your number → click Send Test → check if message arrived</p>
                       </label>
-                      <label className="text-sm font-semibold text-gray-700">
-                        App Secret optional
-                        <input value={configForm.app_secret || ''} onChange={(e) => setConfigForm({...configForm, app_secret: e.target.value})} className="input-field mt-1" placeholder="optional" type="password" />
-                      </label>
-                      <label className="text-sm font-semibold text-gray-700">
-                        Default Assistant ID optional
-                        <input value={configForm.default_assistant_id || ''} onChange={(e) => setConfigForm({...configForm, default_assistant_id: e.target.value})} className="input-field mt-1" placeholder="assistant_id" />
-                      </label>
-                      <label className="text-sm font-semibold text-gray-700">
-                        Test recipient
-                        <input value={configForm.test_to || ''} onChange={(e) => setConfigForm({...configForm, test_to: e.target.value})} className="input-field mt-1" placeholder="919876543210" />
-                      </label>
-                      <label className="flex items-center gap-2 pt-6 text-sm font-semibold text-gray-700">
-                        <input type="checkbox" checked={configForm.sync_leads !== 'false'} onChange={(e) => setConfigForm({...configForm, sync_leads: String(e.target.checked)})} />
-                        Save inbound messages as leads
+
+                      {/* Sync leads toggle */}
+                      <label className="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 cursor-pointer">
+                        <input type="checkbox" checked={configForm.sync_leads !== 'false'} onChange={(e) => setConfigForm({...configForm, sync_leads: String(e.target.checked)})} className="rounded" />
+                        <div>
+                          <p className="text-sm font-semibold text-gray-700">Save inbound messages as leads</p>
+                          <p className="text-[10px] text-gray-400">Incoming WhatsApp messages will automatically create leads in CRM</p>
+                        </div>
                       </label>
                     </div>
+
                   </div>
 
                 <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
@@ -2126,18 +2372,136 @@ export default function IntegrationsPage() {
             )}
 
             {/* ════ GENERIC providers ════ */}
-            {selectedIntegration.provider !== 'google_sheets' && selectedIntegration.provider !== 'gmail' && selectedIntegration.provider !== 'facebook' && selectedIntegration.provider !== 'instagram' && selectedIntegration.provider !== 'meta' && selectedIntegration.provider !== 'whatsapp' && (
+            {/* ── Razorpay ── */}
+            {selectedIntegration.provider === 'razorpay' && (
+              <div className="mt-5 space-y-4">
+                {rzpConnected ? (
+                  <div className="rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3 flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-emerald-800">✓ Razorpay connected</p>
+                      <p className="text-xs text-emerald-600 font-mono mt-0.5">{rzpKeyIdMasked}</p>
+                    </div>
+                    <Button variant="outline" onClick={disconnectRazorpay} className="text-xs text-red-500 border-red-200 hover:bg-red-50">Disconnect</Button>
+                  </div>
+                ) : (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label className="text-sm font-semibold text-gray-700">
+                      Key ID (starts with rzp_)
+                      <input type="text" value={rzpKeyId} onChange={e => setRzpKeyId(e.target.value)} placeholder="rzp_live_xxxxxxxxxxxx" className="input-field mt-1 w-full" />
+                    </label>
+                    <label className="text-sm font-semibold text-gray-700">
+                      Key Secret
+                      <input type="password" value={rzpSecret} onChange={e => setRzpSecret(e.target.value)} placeholder="••••••••••••••••" className="input-field mt-1 w-full" />
+                    </label>
+                    <div className="sm:col-span-2 flex items-center gap-3">
+                      <Button onClick={saveRazorpay} disabled={rzpSaving || !rzpKeyId.trim() || !rzpSecret.trim()}>
+                        {rzpSaving ? 'Saving…' : '💳 Connect Razorpay'}
+                      </Button>
+                      <a href="https://dashboard.razorpay.com/app/keys" target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline">Get API keys →</a>
+                    </div>
+                    <p className="sm:col-span-2 text-xs text-gray-400">Use <code className="bg-gray-100 px-1 rounded">rzp_test_</code> keys for testing, <code className="bg-gray-100 px-1 rounded">rzp_live_</code> for real payments.</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── Shopify ── */}
+            {selectedIntegration.provider === 'shopify' && (
+              <div className="mt-5 space-y-4">
+                {shopifyConnected ? (
+                  <div className="space-y-3">
+                    <div className="rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3 flex items-center justify-between">
+                      <div>
+                        <p className="text-xs font-semibold text-emerald-700">Connected Store</p>
+                        <p className="text-sm font-bold text-gray-900 mt-0.5">{shopifyDomain}</p>
+                      </div>
+                    </div>
+                    {shopifyWebhookUrl && (
+                      <div className="rounded-xl bg-gray-50 border border-gray-200 px-4 py-3">
+                        <p className="text-xs font-semibold text-gray-600 mb-1">Webhook URL (add in Shopify → Settings → Notifications)</p>
+                        <p className="text-xs font-mono text-gray-800 break-all">{`${process.env.NEXT_PUBLIC_API_URL || ''}${shopifyWebhookUrl}`}</p>
+                      </div>
+                    )}
+                    <Button variant="outline" onClick={disconnectShopify} className="text-xs text-red-500 border-red-200 hover:bg-red-50">Disconnect Shopify</Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <label className="block text-sm font-semibold text-gray-700">
+                      Shop Domain *
+                      <input value={shopifyDomain} onChange={e => setShopifyDomain(e.target.value)} placeholder="mystore.myshopify.com" className="input-field mt-1 w-full" />
+                    </label>
+                    <label className="block text-sm font-semibold text-gray-700">
+                      Webhook Signing Secret
+                      <input type="password" value={shopifySecret} onChange={e => setShopifySecret(e.target.value)} placeholder="From Shopify → Notifications → Webhooks" className="input-field mt-1 w-full" />
+                    </label>
+                    <label className="flex items-center gap-2 text-sm text-gray-700">
+                      <input type="checkbox" checked={shopifySendConfirm} onChange={e => setShopifySendConfirm(e.target.checked)} className="accent-green-600" />
+                      Auto-send WhatsApp order confirmation on new orders
+                    </label>
+                    <Button onClick={saveShopify} disabled={shopifySaving || !shopifyDomain.trim()} className="bg-green-600 hover:bg-green-700">
+                      {shopifySaving ? 'Connecting…' : '🛍️ Connect Shopify'}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── Slack / HubSpot / Zoho / Twilio / Calendly / Zapier / Google Calendar / IndiaMART ── */}
+            {['slack','hubspot','zoho','twilio','calendly','zapier','google-calendar','indiamart'].includes(selectedIntegration.provider) && (
+              <div className="mt-5 space-y-4">
+                {extraConn[selectedIntegration.provider]?.connected && (
+                  <div className="rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3 flex items-center gap-2">
+                    <span className="text-emerald-600 font-bold text-sm">✓ Connected</span>
+                  </div>
+                )}
+                <div className="grid gap-3">
+                  {(setupFields[selectedIntegration.provider] || []).map(f => (
+                    <label key={f.key} className="block text-sm font-semibold text-gray-700">
+                      {f.label}
+                      <input
+                        type={f.secret ? 'password' : 'text'}
+                        value={configForm[f.key] || ''}
+                        onChange={e => setConfigForm({ ...configForm, [f.key]: e.target.value })}
+                        placeholder={f.placeholder}
+                        className="input-field mt-1 w-full"
+                      />
+                      {f.help && <span className="mt-1 block text-xs font-normal text-gray-500">{f.help}</span>}
+                    </label>
+                  ))}
+                </div>
+                <div className="flex gap-2 mt-2">
+                  <Button
+                    onClick={() => {
+                      const p = selectedIntegration.provider;
+                      const connectMap: Record<string, string> = {
+                        slack: 'slack/connect', hubspot: 'hubspot/connect', zoho: 'zoho/connect',
+                        twilio: 'twilio/connect', calendly: 'calendly/connect', zapier: 'zapier/connect',
+                        'google-calendar': 'google-calendar/connect', indiamart: 'indiamart/connect',
+                      };
+                      saveExtraConnection(p, connectMap[p] || `${p}/connect`, configForm);
+                    }}
+                    disabled={extraSaving === selectedIntegration.provider}
+                    loading={extraSaving === selectedIntegration.provider}
+                  >
+                    <Plug className="h-4 w-4" /> {extraConn[selectedIntegration.provider]?.connected ? 'Update' : 'Connect'}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {selectedIntegration.provider !== 'razorpay' && selectedIntegration.provider !== 'shopify' && !['slack','hubspot','zoho','twilio','calendly','zapier','google-calendar','indiamart'].includes(selectedIntegration.provider) && selectedIntegration.provider !== 'google_sheets' && selectedIntegration.provider !== 'gmail' && selectedIntegration.provider !== 'facebook' && selectedIntegration.provider !== 'instagram' && selectedIntegration.provider !== 'meta' && selectedIntegration.provider !== 'whatsapp' && (
               <>
                 <div className="mt-5 rounded-xl border border-amber-100 bg-amber-50 p-4 text-sm text-amber-900">
                   <p className="font-bold">Secret-safe setup</p>
                   <p className="mt-1">Full access tokens stay secure on the server. This form saves business configuration and masked metadata only.</p>
                 </div>
                 <div className="mt-5 grid gap-4 md:grid-cols-2">
-                  {(setupFields[selectedIntegration.provider] || []).map((field) => (
+                  {fieldsFor(selectedIntegration).map((field) => (
                     <label key={field.key} className={field.key.includes('template') ? 'md:col-span-2 text-sm font-semibold text-gray-700' : 'text-sm font-semibold text-gray-700'}>
                       {field.label}
                       <input value={configForm[field.key] || ''} onChange={(e) => setConfigForm({ ...configForm, [field.key]: e.target.value })}
-                        className="input-field mt-2" placeholder={field.placeholder} maxLength={field.secret ? 8 : undefined} />
+                        type={field.secret ? 'password' : 'text'}
+                        className="input-field mt-2" placeholder={field.placeholder} />
                       {field.help && <span className="mt-1 block text-xs font-normal text-gray-500">{field.help}</span>}
                     </label>
                   ))}
@@ -2299,6 +2663,8 @@ export default function IntegrationsPage() {
           </div>
         </div>
       )}
+
     </div>
   );
 }
+

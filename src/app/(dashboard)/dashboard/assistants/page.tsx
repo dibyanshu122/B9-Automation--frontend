@@ -35,7 +35,7 @@ export default function AssistantsPage() {
 
   const fetchUserProfile = async () => {
     try {
-      const response = await get('/api/users/me');
+      const response = await get('/api/auth/me');
       if (response.data?.name) {
         setUserName(response.data.name);
       } else if (response.data?.email) {
