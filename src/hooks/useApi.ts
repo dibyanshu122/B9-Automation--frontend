@@ -56,14 +56,24 @@ export const getApiClient = (): AxiosInstance => {
       const status = error.response?.status;
 
       if (status === 401) {
-        // Token is expired or invalid — clear it and redirect to login
         const currentToken = useAuthStore.getState().token;
         if (currentToken) {
-          useAuthStore.getState().logout();
-          _dedupeToast('Session expired. Please login again.', 5000, 30000);
-          if (typeof window !== 'undefined') {
-            setTimeout(() => { window.location.href = '/login'; }, 1000);
+          // Only logout if the JWT is actually expired — not on every 401
+          // (backend cold-starts, endpoint-specific 401s should not log users out)
+          let tokenExpired = false;
+          try {
+            const payload = JSON.parse(atob(currentToken.split('.')[1]));
+            tokenExpired = payload.exp && payload.exp * 1000 < Date.now();
+          } catch { tokenExpired = false; }
+
+          if (tokenExpired) {
+            useAuthStore.getState().logout();
+            _dedupeToast('Session expired. Please login again.', 5000, 30000);
+            if (typeof window !== 'undefined') {
+              setTimeout(() => { window.location.href = '/login'; }, 1000);
+            }
           }
+          // Non-expired token + 401 = endpoint permission issue, not session expiry — don't logout
         }
       } else if (status === 402) {
         const detail = error.response?.data?.detail;

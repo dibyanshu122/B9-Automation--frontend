@@ -30,8 +30,8 @@ export default function AnalyticsPage() {
     const fetchAnalytics = async () => {
       try {
         const [dashRes, trendsRes, impactRes, readinessRes, funnelRes, templatesRes, waRes] = await Promise.all([
-          get('/api/analytics/dashboard'),
-          get('/api/analytics/usage-trends'),
+          get('/api/analytics/dashboard').catch(() => ({ data: null })),
+          get('/api/analytics/usage-trends').catch(() => ({ data: null })),
           get('/api/analytics/business-impact').catch(() => ({ data: null })),
           get('/api/automation/readiness').catch(() => ({ data: null })),
           get('/api/analytics/funnel').catch(() => ({ data: null })),
