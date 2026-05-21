@@ -98,8 +98,10 @@ export default function OnboardingPage() {
         language: form.language,
       });
       setStepIndex(setupSteps.length - 1);
-      toast.success('Your B9 Automation workspace is ready');
-      window.setTimeout(() => router.replace('/dashboard'), 850);
+      toast.success('Your B9 Automation workspace is ready!');
+      // Clear skip flag since onboarding is now complete
+      if (typeof window !== 'undefined') localStorage.removeItem('onboarding_skipped');
+      window.setTimeout(() => router.replace('/dashboard?welcome=1'), 850);
     } catch (error: any) {
       toast.error(error.response?.data?.detail || 'Onboarding setup failed');
       setLoading(false);
@@ -245,10 +247,15 @@ export default function OnboardingPage() {
             </Button>
             <button
               type="button"
-              onClick={() => router.push('/dashboard')}
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  localStorage.setItem('onboarding_skipped', 'true');
+                }
+                router.replace('/dashboard');
+              }}
               className="mt-2 w-full text-center text-xs text-slate-400 hover:text-slate-200 transition"
             >
-              Skip for now → Go to Dashboard
+              Skip for now — set up later in Settings
             </button>
           </motion.form>
         </div>

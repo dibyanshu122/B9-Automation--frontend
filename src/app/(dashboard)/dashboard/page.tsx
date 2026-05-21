@@ -2,26 +2,21 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 import {
-  BarChart3,
   CheckCircle2,
   CheckSquare,
   ChevronRight,
   FileText,
   Globe,
   MessageCircle,
-  Plug,
-  Plus,
   Search,
-  Send,
   ShieldCheck,
   Sparkles,
   Target,
   Users,
   Workflow,
-  Zap,
 } from 'lucide-react';
 import { Button } from '@/components/button';
 import { Card } from '@/components/card';
@@ -90,6 +85,11 @@ export default function DashboardPage() {
   const [command, setCommand] = useState('');
   const [topUpOpen, setTopUpOpen] = useState(false);
   const [statsError, setStatsError] = useState(false);
+  const searchParams = useSearchParams();
+  const [showWelcome, setShowWelcome] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return searchParams?.get('welcome') === '1' && !localStorage.getItem('welcome_dismissed');
+  });
   const [liveStats, setLiveStats] = useState<{
     leads_hour?: number; leads_today?: number;
     wa_messages_hour?: number; automations_today?: number; pending_tasks?: number;
@@ -184,6 +184,35 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      {/* Welcome checklist — shown once after onboarding */}
+      {showWelcome && (
+        <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-5">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-sm font-bold text-indigo-800">🎉 Workspace ready! Here are your next 4 steps:</p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                {[
+                  { step: '1', label: 'Test your AI assistant', href: '/dashboard/chat', icon: '💬' },
+                  { step: '2', label: 'Upload business knowledge', href: '/dashboard/documents', icon: '📄' },
+                  { step: '3', label: 'Connect WhatsApp', href: '/dashboard/integrations', icon: '📱' },
+                  { step: '4', label: 'Build your first automation', href: '/dashboard/automations', icon: '⚡' },
+                ].map((item) => (
+                  <Link key={item.step} href={item.href}
+                    className="flex items-center gap-2 rounded-lg border border-indigo-100 bg-white px-3 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100 transition">
+                    <span>{item.icon}</span>
+                    <span>{item.step}. {item.label}</span>
+                    <ChevronRight className="ml-auto h-3.5 w-3.5 opacity-50" />
+                  </Link>
+                ))}
+              </div>
+            </div>
+            <button onClick={() => {
+              setShowWelcome(false);
+              if (typeof window !== 'undefined') localStorage.setItem('welcome_dismissed', 'true');
+            }} className="shrink-0 text-indigo-400 hover:text-indigo-700 text-lg leading-none">✕</button>
+          </div>
+        </div>
+      )}
       {/* Push notification opt-in banner — shown only when not subscribed + supported */}
       {push.supported && !push.subscribed && push.permission !== 'denied' && (
         <div className="flex items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm text-blue-800">
@@ -243,10 +272,6 @@ export default function DashboardPage() {
         <div className="absolute bottom-0 right-28 h-40 w-40 rounded-full bg-sky-500/10 blur-3xl" />
         <div className="relative grid gap-5 lg:grid-cols-[1.28fr_0.72fr]">
           <div>
-            <div className="mb-3 inline-flex max-w-full items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-sm font-semibold text-cyan-100">
-              <Zap className="h-4 w-4" />
-              <span className="truncate">{businessName} Command Center</span>
-            </div>
             <h1 className="max-w-4xl text-3xl font-bold tracking-tight sm:text-4xl">
               Manage customer conversations, leads, and follow-ups from one AI command center.
             </h1>
@@ -498,7 +523,7 @@ export default function DashboardPage() {
         </section>
       )}
 
-      <section className="grid gap-6 xl:grid-cols-[1fr_0.85fr]">
+      <section className="grid gap-6">
         <Card className="border-gray-200 shadow-sm" hoverable={false}>
           <div className="flex items-center justify-between gap-4">
             <div>
@@ -515,9 +540,7 @@ export default function DashboardPage() {
               <div key={action} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:shadow-md">
                 <div className="flex items-center justify-between">
                   <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                  <span className="rounded-full border border-blue-100 bg-blue-50 px-2 py-1 text-[10px] font-bold uppercase text-primary-700">
-                    Action {index + 1}
-                  </span>
+                  <span className="h-2 w-2 rounded-full bg-primary-200" />
                 </div>
                 <p className="mt-3 text-sm font-semibold text-gray-800">{action}</p>
               </div>
@@ -525,62 +548,6 @@ export default function DashboardPage() {
           </div>
         </Card>
 
-        <Card className="border-gray-200 shadow-sm" hoverable={false}>
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="text-xl font-bold text-gray-950">Setup Health</h2>
-            <HelpTip text="Green items are ready. Unfinished items show what to fix before launch." />
-          </div>
-          <div className="mt-5 grid gap-5 md:grid-cols-[160px_1fr] md:items-center">
-            <SetupHealthRing score={readinessScore} />
-            <div className="space-y-3">
-              {(readiness?.checks || health?.checks || []).slice(0, 6).map((item: any) => (
-                <div key={item.key} className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white px-3 py-2 shadow-sm">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold ${item.done ? 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100' : 'bg-gray-100 text-gray-500 ring-1 ring-gray-200'}`}>
-                      {item.done ? <CheckCircle2 className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-                    </span>
-                    <span className="truncate text-sm font-medium text-gray-800">{item.label}</span>
-                  </div>
-                  <span className="text-xs font-semibold text-gray-500">{item.done ? 'Ready' : item.action || 'Setup'}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </Card>
-      </section>
-
-      <section>
-        <Card className="border-gray-200 shadow-sm" hoverable={false}>
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="text-xl font-bold text-gray-950">Automation Control Room</h2>
-            <HelpTip text="Jump into the exact area needed to run leads, WhatsApp, workflows, and integrations." />
-          </div>
-          <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3">
-            {[
-              { href: '/dashboard/leads', label: 'Lead Inbox', icon: Users, help: 'View hot/warm/cold leads and chat history.' },
-              { href: '/dashboard/automations', label: 'Workflow Builder', icon: Workflow, help: 'Create and test business automations.' },
-              { href: '/dashboard/messages', label: 'WhatsApp', icon: Send, help: 'Review drafts and provider status.' },
-              { href: '/dashboard/documents', label: 'Knowledge Base', icon: FileText, help: 'Upload business documents for AI answers.' },
-              { href: '/dashboard/integrations', label: 'Connections', icon: Plug, help: 'Connect Sheets, CRM, Calendar, and email.' },
-              { href: '/dashboard/analytics', label: 'ROI Analytics', icon: BarChart3, help: 'See hours saved, leads, and pipeline value.' },
-            ].map((action) => {
-              const Icon = action.icon;
-              return (
-                <Link key={action.href} href={action.href} title={action.help}>
-                  <div className="group flex h-24 flex-col justify-between rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-cyan-200 hover:bg-cyan-50 hover:shadow-md">
-                    <div className="flex items-center justify-between">
-                      <span className="rounded-lg bg-cyan-50 p-2 text-cyan-700 ring-1 ring-cyan-100">
-                        <Icon className="h-4 w-4" />
-                      </span>
-                      <ChevronRight className="h-4 w-4 text-gray-400 transition group-hover:translate-x-0.5 group-hover:text-primary-600" />
-                    </div>
-                    <p className="text-sm font-bold text-gray-950">{action.label}</p>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </Card>
       </section>
     </div>
   );
@@ -605,24 +572,6 @@ function UsageMeter({ label, used, limit, suffix = '' }: { label: string; used: 
   );
 }
 
-function SetupHealthRing({ score }: { score: number }) {
-  const safeScore = Math.max(0, Math.min(100, Math.round(score || 0)));
-
-  return (
-    <div className="flex flex-col items-center justify-center">
-      <div className="b9-health-ring relative h-36 w-36 rounded-full" style={{ '--score': safeScore } as React.CSSProperties}>
-        <div className="b9-health-liquid" style={{ '--score': safeScore } as React.CSSProperties} />
-        <div className="absolute inset-8 flex flex-col items-center justify-center rounded-full border border-white/10 bg-slate-950/80 text-center backdrop-blur">
-          <span className="text-3xl font-bold text-white">{safeScore}%</span>
-          <span className="mt-1 text-[10px] font-bold uppercase tracking-wide text-cyan-100">Health</span>
-        </div>
-      </div>
-      <p className="mt-3 text-center text-xs font-medium text-slate-400">
-        Complete the checklist to unlock live-ready automation.
-      </p>
-    </div>
-  );
-}
 
 function getZeroStateCopy(label: string) {
   const copy: Record<string, string> = {

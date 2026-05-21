@@ -53,6 +53,8 @@ export default function DashboardLayout({
   useEffect(() => {
     if (!hasHydrated || !user || !token) return;
     // Only check onboarding ONCE when the user first loads the dashboard, not on every route change
+    const skipped = typeof window !== 'undefined' && localStorage.getItem('onboarding_skipped') === 'true';
+    if (skipped) return;
     get('/api/automation/onboarding/status')
       .then((response) => {
         if (!response.data?.is_complete) {
