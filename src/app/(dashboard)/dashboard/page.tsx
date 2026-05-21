@@ -43,12 +43,12 @@ interface OnboardingStatus {
 }
 
 // Plan limits lookup — used as fallback when quota API returns 0 or fails
-const PLAN_LIMITS_FALLBACK: Record<string, { queries: number; storage_mb: number }> = {
-  FREE:     { queries: 30,   storage_mb: 50 },
-  STARTER:  { queries: 500,  storage_mb: 2048 },
-  GROWTH:   { queries: 1200, storage_mb: 10240 },
-  PRO:      { queries: 2500, storage_mb: 25600 },
-  BUSINESS: { queries: 7500, storage_mb: 102400 },
+const PLAN_LIMITS_FALLBACK: Record<string, { queries: number; storage_mb: number; automations_day: number; leads_day: number }> = {
+  FREE:     { queries: 30,    storage_mb: 50,     automations_day: 0,      leads_day: 0 },
+  STARTER:  { queries: 1000,  storage_mb: 2048,   automations_day: 500,    leads_day: 100 },
+  GROWTH:   { queries: 5000,  storage_mb: 10240,  automations_day: 5000,   leads_day: 1000 },
+  PRO:      { queries: 20000, storage_mb: 25600,  automations_day: 25000,  leads_day: 5000 },
+  BUSINESS: { queries: 50000, storage_mb: 102400, automations_day: 100000, leads_day: 999999 },
 };
 
 export default function DashboardPage() {
@@ -85,6 +85,9 @@ export default function DashboardPage() {
   const [command, setCommand] = useState('');
   const [topUpOpen, setTopUpOpen] = useState(false);
   const [statsError, setStatsError] = useState(false);
+  const [pushDismissed, setPushDismissed] = useState(() =>
+    typeof window !== 'undefined' && localStorage.getItem('push_banner_dismissed') === 'true'
+  );
   const searchParams = useSearchParams();
   const [showWelcome, setShowWelcome] = useState(() => {
     if (typeof window === 'undefined') return false;
@@ -213,20 +216,26 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
-      {/* Push notification opt-in banner — shown only when not subscribed + supported */}
-      {push.supported && !push.subscribed && push.permission !== 'denied' && (
+      {/* Push notification opt-in banner — shown only when not subscribed + supported + not dismissed */}
+      {push.supported && !push.subscribed && push.permission !== 'denied' && !pushDismissed && (
         <div className="flex items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm text-blue-800">
           <div className="flex items-center gap-2">
             <span>🔔</span>
             <span className="font-medium">Get instant alerts for new leads and payments — even when the tab is closed.</span>
           </div>
-          <button
-            onClick={push.subscribe}
-            disabled={push.loading}
-            className="shrink-0 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-blue-700 disabled:opacity-50 transition"
-          >
-            {push.loading ? 'Enabling…' : 'Enable Notifications'}
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={push.subscribe}
+              disabled={push.loading}
+              className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-blue-700 disabled:opacity-50 transition"
+            >
+              {push.loading ? 'Enabling…' : 'Enable'}
+            </button>
+            <button onClick={() => {
+              setPushDismissed(true);
+              if (typeof window !== 'undefined') localStorage.setItem('push_banner_dismissed', 'true');
+            }} className="text-blue-400 hover:text-blue-700 text-base leading-none px-1">✕</button>
+          </div>
         </div>
       )}
 
@@ -249,7 +258,7 @@ export default function DashboardPage() {
               <span className="font-semibold">
                 {isCritical ? 'Critical:' : 'Low credits:'} Only {Math.max(0, remaining).toLocaleString('en-IN')} AI credits left this month.
               </span>
-              <span className="hidden sm:inline text-xs opacity-75">Add your own free Groq key to get unlimited credits.</span>
+              <span className="hidden sm:inline text-xs opacity-75">Add your own Groq key for extra AI usage at no cost.</span>
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -304,7 +313,9 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm text-gray-300">Launch readiness</p>
-                <p className="mt-1 text-5xl font-black">{readinessScore}%</p>
+                <p className="mt-1 text-5xl font-black">
+                  {readiness === null ? <span className="text-3xl text-gray-400">—</span> : `${readinessScore}%`}
+                </p>
               </div>
               <ShieldCheck className="h-11 w-11 text-emerald-300" />
             </div>
@@ -336,14 +347,20 @@ export default function DashboardPage() {
               <p className="mt-1 text-sm text-gray-500">Usage resets by billing period except Free lifetime queries.</p>
             </div>
             <div className="flex gap-2">
-              <Button variant="secondary" onClick={() => setTopUpOpen(true)}>Buy top-up</Button>
-              <Link href="/dashboard/billing"><Button>Upgrade</Button></Link>
+              {/* Show Buy top-up only when credits are low */}
+              {quota && (quota.queries_used / (quota.queries_limit || planFallback.queries)) > 0.7 && (
+                <Button variant="secondary" onClick={() => setTopUpOpen(true)}>Buy top-up</Button>
+              )}
+              {/* Show Upgrade only when not on top plan */}
+              {planAccess.currentPlan !== 'BUSINESS' && (
+                <Link href="/dashboard/billing"><Button variant="secondary">Upgrade</Button></Link>
+              )}
             </div>
           </div>
           <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <UsageMeter label="AI queries" used={quota?.queries_used || 0} limit={quota?.queries_limit || planFallback.queries} />
-            <UsageMeter label="Automation runs" used={quota?.automation_executions_used || quota?.usage?.automation_executions_used || 0} limit={quota?.automation_executions_limit || planAccess.billing?.quotas?.automation_executions_day || 0} />
-            <UsageMeter label="Leads today" used={quota?.leads_today || quota?.usage?.leads_today || 0} limit={quota?.leads_limit || planAccess.billing?.quotas?.leads_day || 0} />
+            <UsageMeter label="Automation runs" used={quota?.automation_executions_used || quota?.usage?.automation_executions_used || 0} limit={quota?.automation_executions_limit || planAccess.billing?.quotas?.automation_executions_day || planFallback.automations_day} />
+            <UsageMeter label="Leads today" used={quota?.leads_today || quota?.usage?.leads_today || 0} limit={quota?.leads_limit || planAccess.billing?.quotas?.leads_day || planFallback.leads_day} />
             <UsageMeter label="Storage" used={Math.round(quota?.storage_used_mb || 0)} limit={quota?.storage_limit_mb || planFallback.storage_mb} suffix="MB" />
           </div>
         </Card>
@@ -364,9 +381,7 @@ export default function DashboardPage() {
         {[
           { label: 'Conversations', value: quota?.queries_used ?? 0, icon: MessageCircle, href: '/dashboard/chat', help: 'Customer conversations handled by your AI.', action: 'Open Chat' },
           { label: 'Leads Captured', value: automationStats.leads_captured, icon: Users, href: '/dashboard/leads', help: 'Contacts captured from chatbot, widget, or automation.', action: 'View Leads', badge: liveStats.leads_hour ? `🔴 ${liveStats.leads_hour} last hour` : quota?.leads_today ? `${quota.leads_today} today` : null },
-          { label: 'Hot Leads', value: automationStats.hot_leads, icon: Target, href: '/dashboard/leads', help: 'Leads most likely to convert based on budget, urgency, and intent.', action: 'Prioritize Now' },
-          { label: 'Website Leads', value: automationStats.website_leads, icon: Globe, href: '/dashboard/leads', help: 'Leads captured from the website widget.', action: 'Open Leads' },
-          { label: 'WhatsApp Leads', value: automationStats.whatsapp_leads, icon: Users, href: '/dashboard/leads', help: 'Leads captured from WhatsApp bot conversations.', action: 'Open Leads' },
+          { label: 'Leads Breakdown', value: automationStats.hot_leads, icon: Target, href: '/dashboard/leads', help: `Hot: ${automationStats.hot_leads} | Web: ${automationStats.website_leads} | WhatsApp: ${automationStats.whatsapp_leads}`, action: 'View All Leads', sublabel: `${automationStats.hot_leads} hot · ${automationStats.website_leads} web · ${automationStats.whatsapp_leads} WA` },
           { label: 'Automations Run', value: liveStats.automations_today ?? automationStats.automations_run, icon: Workflow, href: '/dashboard/automations', help: 'AI workflows executed for leads, content, tasks, and follow-ups.', action: 'Build Workflow', badge: liveStats.wa_messages_hour ? `💬 ${liveStats.wa_messages_hour} WA msgs/hr` : null },
           { label: 'WhatsApp Drafts', value: automationStats.whatsapp_drafts, icon: MessageCircle, href: '/dashboard/messages', help: 'Messages ready to send once WhatsApp is connected or approved.', action: 'Review Drafts' },
           { label: 'Pending Tasks', value: automationStats.pending_tasks, icon: CheckSquare, href: '/dashboard/tasks', help: 'Follow-up tasks waiting for owner or team action.', action: 'Open Tasks' },
@@ -387,6 +402,9 @@ export default function DashboardPage() {
                       )}
                     </div>
                     <p className="mt-3 text-4xl font-black leading-none text-gray-950">{stat.value}</p>
+                    {(stat as any).sublabel && (
+                      <p className="mt-1 text-xs text-gray-400">{(stat as any).sublabel}</p>
+                    )}
                     {stat.value === 0 && (
                       <p className="mt-2 text-xs font-medium text-gray-400">Waiting for first activity</p>
                     )}
