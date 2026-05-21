@@ -218,9 +218,9 @@ export default function DashboardPage() {
             <div className="flex items-center gap-2">
               <span className={`h-2 w-2 rounded-full animate-pulse ${isCritical ? 'bg-red-500' : 'bg-amber-500'}`} />
               <span className="font-semibold">
-                {isCritical ? 'Critical:' : 'Low credits:'} Only {Math.max(0, remaining).toLocaleString('en-IN')} AI replies left this month.
+                {isCritical ? 'Critical:' : 'Low credits:'} Only {Math.max(0, remaining).toLocaleString('en-IN')} AI credits left this month.
               </span>
-              <span className="hidden sm:inline text-xs opacity-75">Add your own free Groq key to get unlimited replies.</span>
+              <span className="hidden sm:inline text-xs opacity-75">Add your own free Groq key to get unlimited credits.</span>
             </div>
             <div className="flex items-center gap-2">
               <button

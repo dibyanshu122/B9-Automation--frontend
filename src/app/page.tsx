@@ -52,7 +52,7 @@ const faqs = [
   },
   {
     q: 'Is there a free plan?',
-    a: 'Yes! Our free plan includes 30 AI queries, 1 assistant, and 50MB storage — forever. Upgrade anytime for more power. No hidden charges, cancel anytime.',
+    a: 'Yes! Our free plan includes 30 AI credits, 1 assistant, and 50MB storage — forever. Upgrade anytime for more power. No hidden charges, cancel anytime.',
   },
   {
     q: 'Do you offer onboarding or support?',

@@ -201,8 +201,8 @@ export default function PricingPage() {
             {[
               'WhatsApp Meta conversation charges are not included.',
               'Fair usage applies to unlimited links and public chats.',
-              'Top-ups are available for AI queries, executions, and storage.',
-              'Thinking mode consumes 3 queries per successful response.',
+              'Top-ups are available for AI credits, executions, and storage.',
+              'Thinking mode consumes 3 credits per successful response.',
             ].map((note) => (
               <div key={note} className="flex gap-2">
                 <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-500" />
@@ -235,7 +235,7 @@ export default function PricingPage() {
                   ['Integrations', ['None', 'Sheets', 'Sheets, Gmail, FB, WhatsApp', 'All', 'All']],
                   ['Automation', ['None', '1 workflow / 2 steps', '3 workflows / 5 steps', '5 workflows / 10 steps', '15 workflows / 20 steps']],
                   ['Branding', ['Watermark', 'Watermark', 'Removed', 'Removed', 'White-label']],
-                  ['AI queries', ['30 lifetime', '500/month', '1200/month', '2500/month', '7500/month']],
+                  ['AI credits', ['30 lifetime', '1,000/month', '5,000/month', '20,000/month', '50,000/month']],
                   ['API & webhooks', ['No', 'No', 'No', 'Yes', 'Yes']],
                 ].map(([label, values]) => (
                   <tr key={label as string} className="border-b border-white/[0.05] last:border-b-0">

@@ -315,7 +315,7 @@ export default function ChatPage() {
         const limitMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
-          content: `⚠️ **AI reply limit reached.** You've used all your AI replies for this month.\n\n→ [Buy a top-up](/dashboard/billing) (₹299 for 500 replies)\n→ [Add your free Groq key](/dashboard/settings) for unlimited replies at zero cost`,
+          content: `⚠️ **AI credit limit reached.** You've used all your AI credits for this month.\n\n→ [Buy a top-up](/dashboard/billing) (₹299 for 500 credits)\n→ [Add your free Groq key](/dashboard/settings) for unlimited credits at zero cost`,
           timestamp: new Date().toISOString(),
         };
         setMessages((prev) => [...prev, limitMessage]);
