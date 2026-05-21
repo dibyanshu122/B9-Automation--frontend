@@ -2167,7 +2167,8 @@ export default function IntegrationsPage() {
                           const r = await fetch(`${base}/api/meta/onboarding/init`, { headers: { Authorization: `Bearer ${token}` } });
                           const data = await r.json();
                           if (!data.app_id) { toast.error('Meta app not configured'); return; }
-                          if ((window as any).FB) {
+                          // FB.login() requires HTTPS — use it only in production, OAuth popup on localhost
+                          if ((window as any).FB && window.location.protocol === 'https:') {
                             (window as any).FB.login((response: any) => {
                               if (response.authResponse) {
                                 window.location.href = `${base}/api/meta/onboarding/callback?code=${response.authResponse.code}&state=${data.state}`;
