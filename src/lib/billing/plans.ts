@@ -14,9 +14,9 @@
 
 export const TOPUP_PACKS = {
   ai_queries: [
-    { key: 'ai_500',  label: '+500 AI replies',   amount: 500,  price: 299, expiresAfterDays: 90, popular: false },
-    { key: 'ai_1000', label: '+1,000 AI replies',  amount: 1000, price: 499, expiresAfterDays: 90, popular: true  },
-    { key: 'ai_2500', label: '+2,500 AI replies',  amount: 2500, price: 999, expiresAfterDays: 90, popular: false },
+    { key: 'ai_500',  label: '+500 AI credits',   amount: 500,  price: 299, expiresAfterDays: 90, popular: false },
+    { key: 'ai_1000', label: '+1,000 AI credits',  amount: 1000, price: 499, expiresAfterDays: 90, popular: true  },
+    { key: 'ai_2500', label: '+2,500 AI credits',  amount: 2500, price: 999, expiresAfterDays: 90, popular: false },
   ],
   automation_executions: [
     { key: 'automation_5000',  label: '+5,000 automation runs',  amount: 5000,  price: 499  },
@@ -45,7 +45,7 @@ export const PLAN_LIMITS = {
       '1 assistant',
       'PDF only',
       '10 uploads, 500MB storage',
-      '30 lifetime AI queries',
+      '30 lifetime AI credits',
       'No WhatsApp, no automation',
       '1 team member',
     ],
@@ -70,7 +70,7 @@ export const PLAN_LIMITS = {
       '2 assistants',
       'PDF, Website, YouTube',
       '2GB storage, 100 uploads/month',
-      '1,000 AI queries/month',
+      '1,000 AI credits/month',
       '1 WhatsApp connection',
       '10 automations (5 steps each)',
       'IndiaMART sync ✓',
@@ -98,7 +98,7 @@ export const PLAN_LIMITS = {
     features: [
       '5 assistants',
       '10GB storage, 250 uploads/month',
-      '3,000 AI queries/month',
+      '5,000 AI credits/month',
       '2 WhatsApp connections',
       'Unlimited automations & steps',
       'WhatsApp Flows (form builder) ✓',
@@ -128,7 +128,7 @@ export const PLAN_LIMITS = {
     features: [
       '15 assistants',
       '25GB storage, 500 uploads/month',
-      '10,000 AI queries/month',
+      '20,000 AI credits/month',
       '5 WhatsApp connections',
       'Real DeepSeek-V3 AI (not Gemini) ✓',
       'Full Agentic Tool-Use Loop ✓',
@@ -158,7 +158,7 @@ export const PLAN_LIMITS = {
     features: [
       'Unlimited assistants',
       '100GB storage, unlimited uploads',
-      'Unlimited AI queries',
+      '50,000 AI credits/month fair use',
       '10 WhatsApp connections',
       'DeepSeek-R1 Deep Reasoning ✓',
       'White-label — your own branding ✓',
