@@ -1,298 +1,276 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
-import { Logo } from '@/components/logo';
-import { MarketingNav } from '@/components/marketing-shell';
-import { Mail, MessageSquare, Zap, Database, BarChart3, Lock, Cloud, BookOpen, Wifi, Code2, Settings, Send, Linkedin, Instagram, Youtube, Globe } from 'lucide-react';
+import { MarketingNav, MarketingCta, MarketingFooter } from '@/components/marketing-shell';
+import { MessageSquare, Camera, Facebook, Mail, Sheet, CreditCard, Factory, ShoppingCart, Webhook, ArrowRight, CheckCircle2 } from 'lucide-react';
 
 const INTEGRATIONS = [
   {
-    name: 'Email (SMTP)',
-    description: 'Send automated emails to your customers with full tracking and analytics.',
-    icon: Mail,
-    category: 'Communication',
-    status: 'Active',
-  },
-  {
-    name: 'WhatsApp',
-    description: 'Connect WhatsApp Business to send messages, handle conversations, and automate responses.',
+    name: 'WhatsApp Business',
+    emoji: '💬',
     icon: MessageSquare,
-    category: 'Communication',
-    status: 'Active',
+    category: 'Messaging',
+    color: 'emerald',
+    desc: 'Official Meta Cloud API — send messages, run agentic AI, broadcast campaigns.',
+    bullets: [
+      'Send & receive messages via Meta Cloud API',
+      'Template campaigns to segmented lead lists',
+      'Agentic AI auto-reply (intent → catalog → payment)',
+    ],
+    href: '/features/whatsapp-agentic-ai',
   },
   {
-    name: 'Webhooks',
-    description: 'Trigger workflows and receive events from external applications in real-time.',
-    icon: Send,
-    category: 'Developer Tools',
-    status: 'Active',
+    name: 'Instagram DM',
+    emoji: '📸',
+    icon: Camera,
+    category: 'Messaging',
+    color: 'pink',
+    desc: 'Auto-reply to Instagram DMs, capture leads, and route to AI assistant.',
+    bullets: [
+      'Lead capture from DMs with name, phone, intent',
+      'Quick reply buttons for common questions',
+      'AI assistant routing based on DM content',
+    ],
+    href: '/features/instagram-dm',
   },
   {
-    name: 'REST API',
-    description: 'Full-featured API to build custom integrations and automate any workflow.',
-    icon: Code2,
-    category: 'Developer Tools',
-    status: 'Active',
+    name: 'Facebook Lead Ads',
+    emoji: '📘',
+    icon: Facebook,
+    category: 'Lead Generation',
+    color: 'blue',
+    desc: 'Real-time lead form capture directly into your CRM with instant WhatsApp follow-up.',
+    bullets: [
+      'Instant CRM sync when form is submitted',
+      'Automatic WhatsApp follow-up message',
+      'Google Sheets export for sales teams',
+    ],
+    href: '/features/facebook-lead-ads',
+  },
+  {
+    name: 'Gmail',
+    emoji: '📧',
+    icon: Mail,
+    category: 'Email',
+    color: 'red',
+    desc: 'Sync your inbox, draft AI replies, and create CRM leads from emails.',
+    bullets: [
+      'Sync inbox and draft AI-powered replies',
+      'Create leads from inbound email enquiries',
+      'Send email notifications from automations',
+    ],
+    href: '/features/crm',
   },
   {
     name: 'Google Sheets',
-    description: 'Sync data between B9 and Google Sheets automatically.',
-    icon: Database,
-    category: 'Data & Storage',
-    status: 'Active',
+    emoji: '📊',
+    icon: Sheet,
+    category: 'Data',
+    color: 'teal',
+    desc: 'Auto-push every captured lead to your sheet in real time with custom field mapping.',
+    bullets: [
+      'Real-time sync on every new lead captured',
+      'Custom field mapping (name, phone, score, source)',
+      'Bulk export existing leads to Sheets anytime',
+    ],
+    href: '/features/crm',
   },
   {
-    name: 'Zapier',
-    description: 'Connect B9 with 5000+ apps through Zapier automation platform.',
-    icon: Zap,
-    category: 'Integration Platforms',
-    status: 'Active',
+    name: 'Razorpay',
+    emoji: '💳',
+    icon: CreditCard,
+    category: 'Payments',
+    color: 'violet',
+    desc: 'Payment links via WhatsApp — AI detects buy intent and collects money automatically.',
+    bullets: [
+      'Auto payment link on detected buy intent',
+      'GST invoice generated on payment confirmation',
+      'Lead status updated to "won" after payment',
+    ],
+    href: '/features/payments',
   },
   {
-    name: 'Make',
-    description: 'Build complex workflows connecting B9 with dozens of other tools.',
-    icon: Settings,
-    category: 'Integration Platforms',
-    status: 'Active',
+    name: 'IndiaMART',
+    emoji: '🏭',
+    icon: Factory,
+    category: 'Lead Generation',
+    color: 'orange',
+    desc: 'Auto-import B2B enquiries from IndiaMART into CRM with instant WhatsApp follow-up.',
+    bullets: [
+      'Auto-import IndiaMART buyer enquiries',
+      'WhatsApp follow-up sent within seconds',
+      'Lead scored and placed in CRM pipeline',
+    ],
+    href: '/features/crm',
   },
   {
-    name: 'Slack',
-    description: 'Receive notifications and manage conversations directly from Slack.',
-    icon: Wifi,
-    category: 'Communication',
-    status: 'Active',
+    name: 'Shopify',
+    emoji: '🛒',
+    icon: ShoppingCart,
+    category: 'E-commerce',
+    color: 'green',
+    desc: 'Order webhooks, WhatsApp order confirmations, and customer sync to CRM.',
+    bullets: [
+      'Order placed → WhatsApp confirmation sent instantly',
+      'Customer auto-created in CRM on first order',
+      'Abandoned cart → WhatsApp follow-up automation',
+    ],
+    href: '/features/catalog',
   },
   {
-    name: 'Google Drive',
-    description: 'Access and manage documents stored in Google Drive.',
-    icon: Cloud,
-    category: 'Data & Storage',
-    status: 'Active',
-  },
-  {
-    name: 'OpenAI',
-    description: 'Leverage GPT models for advanced AI-powered automations.',
-    icon: BookOpen,
-    category: 'AI & Machine Learning',
-    status: 'Active',
-  },
-  {
-    name: 'Analytics',
-    description: 'Export automation metrics to your favorite analytics tool.',
-    icon: BarChart3,
-    category: 'Analytics',
-    status: 'Active',
-  },
-  {
-    name: 'Security & SSO',
-    description: 'Enterprise-grade authentication and access control for teams.',
-    icon: Lock,
-    category: 'Security',
-    status: 'Active',
+    name: 'Webhooks / REST API',
+    emoji: '🪝',
+    icon: Webhook,
+    category: 'Developer',
+    color: 'gray',
+    desc: 'Connect any external tool via HTTP webhooks or the REST API v1 with 22 scopes.',
+    bullets: [
+      'Receive events from any HTTP endpoint',
+      'REST API v1 with 22 permission scopes',
+      'Request logs, rate limiting, code examples',
+    ],
+    href: '/features/api',
   },
 ];
 
+const COLOR_MAP: Record<string, { card: string; icon: string; badge: string; bullet: string }> = {
+  emerald: { card: 'hover:border-emerald-500/30 hover:bg-emerald-500/[0.03]', icon: 'bg-emerald-500/10 text-emerald-400', badge: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400', bullet: 'text-emerald-500' },
+  pink:    { card: 'hover:border-pink-500/30 hover:bg-pink-500/[0.03]',       icon: 'bg-pink-500/10 text-pink-400',       badge: 'bg-pink-500/10 border-pink-500/20 text-pink-400',       bullet: 'text-pink-500'    },
+  blue:    { card: 'hover:border-blue-500/30 hover:bg-blue-500/[0.03]',       icon: 'bg-blue-500/10 text-blue-400',       badge: 'bg-blue-500/10 border-blue-500/20 text-blue-400',       bullet: 'text-blue-500'    },
+  red:     { card: 'hover:border-red-500/30 hover:bg-red-500/[0.03]',         icon: 'bg-red-500/10 text-red-400',         badge: 'bg-red-500/10 border-red-500/20 text-red-400',         bullet: 'text-red-500'     },
+  teal:    { card: 'hover:border-teal-500/30 hover:bg-teal-500/[0.03]',       icon: 'bg-teal-500/10 text-teal-400',       badge: 'bg-teal-500/10 border-teal-500/20 text-teal-400',       bullet: 'text-teal-500'    },
+  violet:  { card: 'hover:border-violet-500/30 hover:bg-violet-500/[0.03]',   icon: 'bg-violet-500/10 text-violet-400',   badge: 'bg-violet-500/10 border-violet-500/20 text-violet-400',   bullet: 'text-violet-500'  },
+  orange:  { card: 'hover:border-orange-500/30 hover:bg-orange-500/[0.03]',   icon: 'bg-orange-500/10 text-orange-400',   badge: 'bg-orange-500/10 border-orange-500/20 text-orange-400',   bullet: 'text-orange-500'  },
+  green:   { card: 'hover:border-green-500/30 hover:bg-green-500/[0.03]',     icon: 'bg-green-500/10 text-green-400',     badge: 'bg-green-500/10 border-green-500/20 text-green-400',     bullet: 'text-green-500'   },
+  gray:    { card: 'hover:border-white/20 hover:bg-white/[0.03]',             icon: 'bg-white/10 text-gray-300',          badge: 'bg-white/10 border-white/20 text-gray-300',          bullet: 'text-gray-400'    },
+};
+
 export default function IntegrationsPage() {
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-slate-950 text-white">
       <MarketingNav variant="dark" />
 
       {/* Hero */}
-      <section className="relative px-4 py-20 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-3xl text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 mb-6 backdrop-blur-sm">
-            <Zap className="h-4 w-4 text-blue-400" />
-            <span className="text-sm text-gray-300">Ecosystem</span>
+      <section className="bg-gradient-to-b from-slate-950 to-slate-900 border-b border-white/[0.06] px-4 py-24 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 mb-6">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-xs font-bold text-emerald-400 uppercase tracking-widest">Integrations</span>
           </div>
-          <h1 className="text-5xl font-bold text-white mb-6">Integrations & API</h1>
-          <p className="text-lg text-gray-400 max-w-2xl mx-auto">
-            Connect B9 with your favorite tools and build custom automations. Choose from pre-built integrations or use
-            our REST API for unlimited possibilities.
+          <h1 className="max-w-3xl text-5xl font-bold text-white leading-tight">
+            9 live integrations. All working today.
+          </h1>
+          <p className="mt-5 max-w-2xl text-lg text-gray-400">
+            B9 connects to the tools Indian businesses actually use — WhatsApp, Instagram, Facebook, Gmail, Google Sheets, Razorpay, IndiaMART, Shopify, and REST API. Every integration on this page is live in production.
+          </p>
+          <div className="mt-8 flex gap-3">
+            <Link href="/signup" className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-black hover:bg-gray-100 transition-colors">
+              Start Free <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link href="/how-it-works" className="inline-flex items-center gap-2 rounded-xl border border-white/20 px-5 py-2.5 text-sm font-bold text-white hover:bg-white/[0.06] transition-colors">
+              How It Works
+            </Link>
+          </div>
+          <p className="mt-4 text-xs text-gray-600">
+            Need more? Use REST API or Webhooks to connect any tool.
           </p>
         </div>
       </section>
 
-      {/* Integrations Grid */}
-      <section className="px-4 py-16 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl">
-          <div className="mb-12">
-            <h2 className="text-2xl font-bold text-white mb-8">Available Integrations</h2>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {INTEGRATIONS.map((integration) => {
-                const Icon = integration.icon;
-                return (
-                  <div
-                    key={integration.name}
-                    className="group rounded-xl border border-white/10 bg-white/[0.02] p-6 hover:border-white/20 hover:bg-white/[0.04] transition-all duration-300"
-                  >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-blue-500/20">
-                          <Icon className="h-5 w-5 text-blue-400" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-white">{integration.name}</h3>
-                          <p className="text-xs text-gray-500">{integration.category}</p>
-                        </div>
+      {/* Integrations grid */}
+      <section className="px-4 py-20 sm:px-6 lg:px-8 bg-slate-950">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {INTEGRATIONS.map((intg) => {
+              const colors = COLOR_MAP[intg.color] ?? COLOR_MAP.gray;
+              const Icon = intg.icon;
+
+              return (
+                <Link
+                  key={intg.name}
+                  href={intg.href}
+                  className={`group rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 transition-all duration-200 flex flex-col ${colors.card}`}
+                >
+                  {/* Header row */}
+                  <div className="flex items-start justify-between mb-5">
+                    <div className="flex items-center gap-3">
+                      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${colors.icon}`}>
+                        <Icon className="h-5 w-5" />
                       </div>
-                      <div className="px-2 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-medium">
-                        {integration.status}
+                      <div>
+                        <h3 className="font-bold text-white text-sm">{intg.name}</h3>
+                        <p className="text-[11px] text-gray-500">{intg.category}</p>
                       </div>
                     </div>
-                    <p className="text-sm text-gray-400">{integration.description}</p>
+                    <span className={`flex items-center gap-1.5 shrink-0 rounded-full border px-2 py-1 text-[10px] font-bold ${colors.badge}`}>
+                      <span className="h-1.5 w-1.5 rounded-full bg-current animate-pulse" />
+                      LIVE
+                    </span>
                   </div>
-                );
-              })}
-            </div>
+
+                  {/* Description */}
+                  <p className="text-sm text-gray-400 leading-relaxed mb-4">{intg.desc}</p>
+
+                  {/* Bullets */}
+                  <div className="space-y-2 flex-1">
+                    {intg.bullets.map((b) => (
+                      <div key={b} className="flex items-start gap-2">
+                        <CheckCircle2 className={`h-3.5 w-3.5 shrink-0 mt-0.5 ${colors.bullet}`} />
+                        <span className="text-xs text-gray-400 leading-relaxed">{b}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Learn more */}
+                  <div className="mt-5 flex items-center gap-1 text-xs font-semibold text-gray-500 group-hover:text-white transition-colors">
+                    Learn more <ArrowRight className="h-3 w-3" />
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* Bottom note */}
+          <div className="mt-10 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 text-center">
+            <p className="text-sm text-gray-400">
+              <span className="font-semibold text-white">Need a different integration?</span>{' '}
+              Use{' '}
+              <Link href="/features/api" className="text-primary-400 hover:text-primary-300 underline underline-offset-2">
+                REST API v1
+              </Link>{' '}
+              or{' '}
+              <Link href="/features/api" className="text-primary-400 hover:text-primary-300 underline underline-offset-2">
+                Webhooks
+              </Link>{' '}
+              to connect any tool — CRMs, custom backends, Shopify apps, or anything with an HTTP endpoint.
+            </p>
           </div>
         </div>
       </section>
 
-      {/* API Section */}
-      <section className="px-4 py-16 sm:px-6 lg:px-8 border-t border-white/10">
-        <div className="mx-auto max-w-6xl">
-          <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 items-center">
-            <div>
-              <h2 className="text-3xl font-bold text-white mb-6">Powerful REST API</h2>
-              <ul className="space-y-4">
-                {['Complete API documentation', 'Authentication & authorization', 'Webhooks & real-time events', 'Rate limiting & quotas', 'SDKs in multiple languages', 'Comprehensive error handling'].map((feature) => (
-                  <li key={feature} className="flex items-center gap-3 text-gray-300">
-                    <div className="h-1.5 w-1.5 rounded-full bg-blue-400" />
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-8 flex gap-3">
-                <a
-                  href="/api-docs"
-                  className="px-6 py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors"
-                >
-                  View API Docs
-                </a>
-                <a
-                  href="/signup"
-                  className="px-6 py-3 rounded-lg border border-white/20 text-white font-semibold hover:bg-white/10 transition-colors"
-                >
-                  Get API Key
-                </a>
+      {/* Trust section */}
+      <section className="border-t border-white/[0.06] bg-slate-900/50 px-4 py-16 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
+            {[
+              { emoji: '🔒', title: 'Tokens encrypted at rest', desc: 'All WhatsApp, Instagram, Facebook, and Razorpay tokens stored with PBKDF2-HMAC-256 encryption.' },
+              { emoji: '✅', title: 'Official APIs only', desc: 'We use only official Meta Cloud API, Razorpay webhooks, and Google OAuth — no unofficial methods.' },
+              { emoji: '🛡️', title: 'Meta-compliant messaging', desc: '24-hour window enforcement, durable opt-out, and STOP detection built in to every integration.' },
+            ].map((item) => (
+              <div key={item.title} className="flex gap-4">
+                <span className="text-2xl shrink-0">{item.emoji}</span>
+                <div>
+                  <h3 className="font-bold text-white text-sm">{item.title}</h3>
+                  <p className="mt-1 text-xs text-gray-400 leading-5">{item.desc}</p>
+                </div>
               </div>
-            </div>
-            <div className="rounded-xl border border-white/10 bg-white/[0.02] p-8">
-              <pre className="text-sm text-gray-300 overflow-x-auto">
-                <code>{`curl -X GET \\
-  https://api.b9automation.com/v1/automations \\
-  -H "Authorization: Bearer YOUR_API_KEY"
-
-{
-  "data": [
-    {
-      "id": "auto_123",
-      "name": "Welcome Email",
-      "status": "active",
-      "trigger": "lead_captured"
-    }
-  ],
-  "pagination": {
-    "page": 1,
-    "limit": 10,
-    "total": 42
-  }
-}`}</code>
-              </pre>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="px-4 py-16 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-4xl text-center">
-          <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-white/5 to-white/[0.02] p-12">
-            <h2 className="text-3xl font-bold text-white mb-4">Ready to integrate?</h2>
-            <p className="text-lg text-gray-400 mb-8">Start building powerful automations with B9 today.</p>
-            <div className="flex gap-3 justify-center flex-wrap">
-              <button className="px-8 py-3 rounded-lg bg-white text-black font-semibold hover:bg-gray-100 transition-colors">
-                Get Started Free
-              </button>
-              <button className="px-8 py-3 rounded-lg border border-white/20 text-white font-semibold hover:bg-white/10 transition-colors">
-                Schedule Demo
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* FOOTER */}
-      <footer className="border-t border-white/[0.06] bg-black">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr] gap-12 pb-12 border-b border-white/[0.04]">
-            <div>
-              <div className="mb-4">
-                <Logo variant="dark" />
-              </div>
-              <p className="text-sm text-gray-600 mt-4 max-w-xs leading-relaxed">Connect B9 with your favorite tools and build custom automations.</p>
-            </div>
-
-            <div>
-              <h4 className="text-xs font-semibold tracking-widest uppercase text-gray-500 mb-5">Product</h4>
-              <ul className="space-y-3 text-sm text-gray-600">
-                {Object.entries({
-                  Features: '/features',
-                  Pricing: '/pricing',
-                  Blog: '/blog',
-                  Changelog: '/changelog',
-                  Integrations: '/integrations',
-                  'API Docs': '/api-docs',
-                }).map(([link, href]) => (
-                  <li key={link}>
-                    <a href={href} className="hover:text-gray-300 transition-colors">
-                      {link}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-xs font-semibold tracking-widest uppercase text-gray-500 mb-5">Company</h4>
-              <ul className="space-y-3 text-sm text-gray-600">
-                {[['About', '/about'], ['Blog', '/blog'], ['Careers', '#']].map(([label, href]) => (
-                  <li key={label}>
-                    <a href={href} className="hover:text-gray-300 transition-colors">
-                      {label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-xs font-semibold tracking-widest uppercase text-gray-500 mb-5">Follow</h4>
-              <div className="flex gap-4">
-                {[
-                  { icon: Linkedin, href: '#' },
-                  { icon: Instagram, href: '#' },
-                  { icon: Youtube, href: '#' },
-                  { icon: Globe, href: '#' },
-                ].map(({ icon: Icon, href }, idx) => (
-                  <a key={idx} href={href} className="text-gray-600 hover:text-white transition-colors">
-                    <Icon className="h-5 w-5" />
-                  </a>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-700 pt-8">
-            <p>© 2026 B9 Automation. All rights reserved.</p>
-            <div className="flex gap-6">
-              <a href="/privacy" className="hover:text-gray-300">Privacy</a>
-              <a href="/terms" className="hover:text-gray-300">Terms</a>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <MarketingCta variant="dark" />
+      <MarketingFooter variant="dark" />
     </div>
   );
 }

@@ -4,140 +4,130 @@ import { ArrowRight, CheckCircle2 } from 'lucide-react';
 
 const SECTIONS = [
   {
-    id: 'whatsapp',
-    icon: '💬',
+    id: 'whatsapp-ai',
+    icon: '🤖',
     color: 'from-emerald-500/10 to-green-500/5 border-emerald-500/20',
     badge: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-    title: 'WhatsApp Automation',
-    tagline: 'Auto-reply to every WhatsApp message with AI',
-    description: 'Connect your WhatsApp Business account via Meta Cloud API. Every incoming message triggers your automation — AI reads it, generates a reply from your knowledge base, and sends it back automatically.',
+    title: 'WhatsApp Agentic AI',
+    tagline: 'How Agentic AI handles every customer message',
+    description: 'When a customer messages your WhatsApp number, the Agentic AI receives it, classifies the intent (buy, question, complaint, opt-out), calls the right tools — catalog, payment link, knowledge base — and sends a reply automatically. No human needed for most queries.',
     useCases: [
-      'Coaching institute: student says "demo chahiye" → AI replies with batch details + booking link',
-      'Real estate: buyer asks "2BHK price?" → AI replies with current listings',
-      'Salon: "appointment available?" → AI checks and confirms slot',
-      'E-commerce: "order status?" → AI replies with tracking info',
+      'Customer asks "what is the price?" → AI searches knowledge base → sends answer with pricing PDF',
+      'Customer says "I want to buy" → AI sends product catalog → creates Razorpay payment link',
+      'Customer sends "STOP" → opt-out recorded → all future sends blocked immediately',
+      'After-hours message → AI replies from knowledge base + schedules human follow-up for morning',
     ],
-    steps: ['Go to Integrations → WhatsApp → enter Phone Number ID + Access Token', 'Build: New WhatsApp Message → AI Agent → Send WhatsApp', 'Save workflow → set Send Mode to Live → Test'],
-    href: '/features/whatsapp-automation',
+    steps: [
+      'Connect Meta WhatsApp Business Account in Integrations with Phone Number ID + Access Token',
+      'Upload your knowledge base (PDFs, URLs, product catalog) in Documents',
+      'Activate Agentic AI from Settings — it handles all incoming messages automatically',
+    ],
+    href: '/features/whatsapp-agentic-ai',
   },
   {
-    id: 'instagram',
-    icon: '📸',
-    color: 'from-pink-500/10 to-purple-500/5 border-pink-500/20',
-    badge: 'bg-pink-500/10 text-pink-400 border-pink-500/20',
-    title: 'Instagram DM Automation',
-    tagline: 'Reply to Instagram DMs instantly with AI',
-    description: 'Connect your Instagram Professional account. When a follower or customer sends a DM, your automation fires — AI reads the message, answers from your knowledge base, and captures them as a lead.',
-    useCases: [
-      'Fashion brand: "price of this outfit?" → AI replies with price + buy link',
-      'Fitness coach: "how to join?" → AI sends program details + fee structure',
-      'Restaurant: "table for 4?" → AI confirms availability and takes booking',
-      'Course creator: "syllabus?" → AI sends full course outline',
-    ],
-    steps: ['Go to Integrations → Instagram → connect Professional account via OAuth', 'Build: New Instagram Message → AI Agent → Send Instagram DM', 'Save and Test'],
-    href: '/features/instagram-dm',
-  },
-  {
-    id: 'facebook',
-    icon: '📘',
-    color: 'from-blue-500/10 to-blue-600/5 border-blue-500/20',
-    badge: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-    title: 'Facebook Lead Ads + Messenger',
-    tagline: 'Capture Facebook leads and reply to Messenger messages',
-    description: 'Two powerful features in one. Capture leads from Facebook Lead Ad forms automatically into your CRM. Also, when someone messages your Facebook Page, AI replies instantly.',
-    useCases: [
-      'Lead Ad: user fills "demo request" form → instantly gets WhatsApp message with details',
-      'Messenger: "how much does it cost?" → AI replies with pricing',
-      'Lead Ad + Sheet: every new lead synced to Google Sheet for sales team',
-      'Qualify leads: AI asks follow-up questions to score Hot/Warm/Cold',
-    ],
-    steps: ['Go to Integrations → Facebook → connect via OAuth', 'For Lead Ads: New Facebook Lead → AI Agent → Send WhatsApp', 'For Messenger: New Facebook Message → AI Agent → Send Facebook Message'],
-    href: '/features/facebook-lead-ads',
-  },
-  {
-    id: 'widget',
-    icon: '🌐',
-    color: 'from-cyan-500/10 to-sky-500/5 border-cyan-500/20',
-    badge: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
-    title: 'Website AI Chatbot Widget',
-    tagline: 'Add an AI chatbot to any website in 2 minutes',
-    description: 'Upload your business documents (PDFs, URLs, YouTube videos). Get a one-line embed code. Paste it on your website. Visitors chat with your AI, get answers from your knowledge, and are captured as leads.',
-    useCases: [
-      'School website: "admission fees?" → AI answers from fee structure PDF',
-      'Agency: "what services do you offer?" → AI explains from your service docs',
-      'Doctor: "consultation timings?" → AI answers 24/7',
-      'Startup: lead capture widget → visitor gives name + phone → saved to CRM',
-    ],
-    steps: ['Upload documents in Documents section', 'Go to Widgets → create widget → copy embed code', 'Paste on your website before </body> tag'],
-    href: '/features/ai-chatbot',
-  },
-  {
-    id: 'automation-builder',
-    icon: '🎯',
+    id: 'templates-flows',
+    icon: '✨',
     color: 'from-violet-500/10 to-purple-500/5 border-violet-500/20',
     badge: 'bg-violet-500/10 text-violet-400 border-violet-500/20',
-    title: 'Visual Automation Builder',
-    tagline: 'Build powerful workflows without code',
-    description: 'Drag and drop triggers, AI agents, and actions onto a canvas. Connect them to build workflows that run 24/7. Multiple triggers can feed into one AI agent, or one trigger can fan out to multiple actions.',
+    title: 'Templates & Flows',
+    tagline: 'Build Meta-approved templates with AI in seconds',
+    description: 'The AI Template Builder turns a plain English description into a fully-formed Meta WhatsApp template — with variables, header, footer, and buttons — ready to submit for approval. Build interactive WhatsApp Forms for lead capture, bookings, and surveys with the visual Flow Designer.',
     useCases: [
-      'WhatsApp + Instagram + Facebook → same AI → same WhatsApp reply (3 triggers, 1 AI, 1 action)',
-      'New lead → AI qualifies → if Hot: notify owner → if Warm: send follow-up next day',
-      'Facebook lead → save to Google Sheet + send WhatsApp (1 trigger, 2 parallel actions)',
-      'Website lead → AI reply → wait 1 hour → send follow-up message',
+      'Type "Diwali sale 20% off, valid till Oct 25, promo code DIWALI20" → AI drafts complete template',
+      'Build a lead capture form with name, phone, city, budget — no coding required',
+      'Submit template to Meta directly from dashboard — see approval status in real time',
+      'Rejected template shows exact rejection reason with one-click resubmit',
     ],
-    steps: ['Open Automations → New Workflow', 'Drag a Trigger from the library → connect to AI Agent node', 'Add action nodes (Send WhatsApp, Save Sheet, Notify) → Save → Test'],
+    steps: [
+      'Open Templates → click "AI Draft Template" → describe your campaign in plain English',
+      'AI generates template with correct variables, header, buttons and category',
+      'Review, edit if needed, then submit to Meta — approval typically takes a few minutes',
+    ],
+    href: '/features/ai-template-builder',
+  },
+  {
+    id: 'automation-canvas',
+    icon: '🎯',
+    color: 'from-blue-500/10 to-blue-600/5 border-blue-500/20',
+    badge: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+    title: 'Automation Canvas',
+    tagline: '37-node drag-drop visual builder for any workflow',
+    description: 'The visual canvas lets you build any automation by connecting triggers, AI nodes, conditions, and actions. Describe your flow in plain English and AI generates the full canvas instantly. Test in draft mode before going live.',
+    useCases: [
+      'New WhatsApp lead → AI qualifies budget → if hot: send catalog → payment link → mark won',
+      'Facebook Lead Ad → save to Google Sheets + send WhatsApp welcome in parallel',
+      'Daily at 9am → check overdue follow-ups → send WhatsApp reminder to each lead',
+      'Payment confirmed → send GST invoice + trigger onboarding WhatsApp sequence',
+    ],
+    steps: [
+      'Open Automations → click "Generate with AI" → describe your flow in plain English',
+      'AI builds the full canvas — review nodes, edit config, adjust conditions',
+      'Click Test to run in draft mode → verify each step → Activate to go live',
+    ],
     href: '/features/visual-automation-builder',
   },
   {
-    id: 'sheets',
-    icon: '📊',
-    color: 'from-green-500/10 to-emerald-500/5 border-green-500/20',
-    badge: 'bg-green-500/10 text-green-400 border-green-500/20',
-    title: 'Google Sheets Sync',
-    tagline: 'Every lead automatically saved to your Google Sheet',
-    description: 'Connect Google Sheets via OAuth. Every lead captured from any channel (website, WhatsApp, Facebook, Instagram) is automatically saved as a row in your sheet with name, phone, email, source, and AI reply.',
+    id: 'campaigns',
+    icon: '📣',
+    color: 'from-orange-500/10 to-amber-500/5 border-orange-500/20',
+    badge: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
+    title: 'Broadcast Campaigns',
+    tagline: 'Reach the right leads at the right time at scale',
+    description: 'Filter your CRM by lead score (hot/warm/cold), apply tags, pick an approved template, schedule delivery — and send to thousands. A/B test two message variants, track delivery and open rates, retry failed sends automatically.',
     useCases: [
-      'Sales team: all leads in one sheet, sorted by source and date',
-      'Teacher: student inquiry form responses auto-saved',
-      'Bulk automation: import 500 leads from sheet → send WhatsApp to each',
-      'Reports: daily lead count, channel breakdown, conversion tracking',
+      'Diwali sale blast: filter warm + hot leads → send "DIWALI20" promo template → track opens',
+      'Win-back sequence: cold leads inactive 30 days → send re-engagement template',
+      'A/B test: 50% get short message, 50% get long — see which converts better',
+      'Schedule off-hours: set campaign for 9am Monday → system sends automatically',
     ],
-    steps: ['Go to Integrations → Google Sheets → Connect via Google OAuth', 'Add "Save to Google Sheet" action node in any automation', 'Map columns: Name, Phone, AI Reply, Source, Status'],
-    href: '/features',
+    steps: [
+      'Go to Campaigns → New Campaign → filter recipients by score, tag, or phone list',
+      'Choose an APPROVED WhatsApp template and map variables (name, amount, date)',
+      'Schedule for a future time or send immediately — track delivery in real time',
+    ],
+    href: '/features/campaigns',
   },
   {
-    id: 'leads',
+    id: 'leads-crm',
     icon: '👥',
-    color: 'from-amber-500/10 to-orange-500/5 border-amber-500/20',
-    badge: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-    title: 'Lead Management CRM',
-    tagline: 'All your leads in one pipeline with AI scoring',
-    description: 'Every lead from every channel appears in your CRM. AI scores them as Hot, Warm, or Cold based on urgency and buying intent. Move them through pipeline stages, assign tasks, and track conversations.',
+    color: 'from-teal-500/10 to-cyan-500/5 border-teal-500/20',
+    badge: 'bg-teal-500/10 text-teal-400 border-teal-500/20',
+    title: 'Leads & CRM',
+    tagline: 'Capture, score, and follow up on every lead automatically',
+    description: 'Every lead from every channel — WhatsApp, Instagram, Facebook, website widget — lands in your CRM. AI scores them 0–10 based on buying intent, moves them through pipeline stages, and schedules follow-ups. Full conversation history on every lead.',
     useCases: [
-      'See all WhatsApp, Instagram, Facebook, website leads in one place',
-      'Hot leads automatically highlighted — call them first',
-      'One-click: send follow-up WhatsApp to any lead',
-      'Assign tasks: "Call Rahul before 5pm" with due date',
+      'WhatsApp lead says "I want 2BHK" → AI scores 9/10 hot → notifies owner instantly',
+      'Facebook Lead Ad form submitted → lead in CRM in seconds → WhatsApp sent automatically',
+      'Website widget visitor fills form → lead captured → AI follow-up scheduled for next morning',
+      'Bulk export CSV → import to your existing sales tool or share with team',
     ],
-    steps: ['Leads appear automatically from all connected channels', 'Click any lead → see full conversation history', 'Use filters: Hot leads, by source, by date, by status'],
-    href: '/dashboard/leads',
+    steps: [
+      'Connect your channels (WhatsApp, Instagram, Facebook, Widget) — leads auto-populate',
+      'AI scores incoming leads automatically based on conversation intent',
+      'Set follow-up schedules from the lead detail view — or let automation handle it',
+    ],
+    href: '/features/crm',
   },
   {
-    id: 'analytics',
-    icon: '📈',
-    color: 'from-rose-500/10 to-red-500/5 border-rose-500/20',
-    badge: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
-    title: 'Analytics & Insights',
-    tagline: 'See exactly what is working and what is not',
-    description: 'Real-time dashboard showing leads captured, conversations handled, automation runs, WhatsApp messages sent, hot leads, and estimated revenue potential. Know your best lead source and optimize.',
+    id: 'integrations',
+    icon: '🔌',
+    color: 'from-indigo-500/10 to-blue-500/5 border-indigo-500/20',
+    badge: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
+    title: 'Integrations',
+    tagline: 'Connect all your business tools — 9 live integrations',
+    description: 'B9 connects to the tools Indian businesses actually use: WhatsApp, Instagram, Facebook, Gmail, Google Sheets, Razorpay, IndiaMART, Shopify, and Webhooks/REST API. Every integration is live today — no "Coming Soon".',
     useCases: [
-      'See: 45 leads this week, 12 hot, ₹3.4L revenue potential',
-      'Compare: WhatsApp vs Instagram vs Website — which sends most leads?',
-      'Track: automation run success rate, AI response accuracy',
-      'Top questions customers are asking — update your knowledge base',
+      'Razorpay: customer pays via WhatsApp link → CRM updated to "won" → invoice sent automatically',
+      'Google Sheets: every new lead auto-pushed to your sales team sheet in real time',
+      'IndiaMART: B2B enquiries auto-imported → WhatsApp follow-up sent within seconds',
+      'REST API: connect any custom tool — 22 scopes, versioned routes, request logs',
     ],
-    steps: ['Open Analytics from the sidebar', 'View 30-day trend charts and business impact metrics', 'Check launch readiness score before going live'],
-    href: '/dashboard/analytics',
+    steps: [
+      'Go to Integrations in the dashboard → click the integration you want to connect',
+      'Follow the OAuth flow or paste your API credentials — tokens stored encrypted',
+      'Map fields to your CRM and build automation flows on top of the connection',
+    ],
+    href: '/integrations',
   },
 ];
 
@@ -154,14 +144,18 @@ export default function HowItWorksPage() {
             <span className="text-xs font-bold text-primary-400 uppercase tracking-widest">How It Works</span>
           </div>
           <h1 className="text-4xl font-black text-white sm:text-5xl">
-            Everything you can do with B9 Automation
+            From WhatsApp message to closed deal — fully automated
           </h1>
           <p className="mt-5 text-lg text-slate-400 max-w-2xl mx-auto">
-            From WhatsApp automation to lead management — here is exactly how to use every feature, with real business examples.
+            B9 is India's WhatsApp Agentic OS. Here is exactly how each part works — with real business examples from coaching, real estate, D2C, and B2B.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             {SECTIONS.map((s) => (
-              <a key={s.id} href={`#${s.id}`} className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-300 hover:border-white/20 hover:text-white transition">
+              <a
+                key={s.id}
+                href={`#${s.id}`}
+                className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-300 hover:border-white/20 hover:text-white transition"
+              >
                 <span>{s.icon}</span>{s.title}
               </a>
             ))}
@@ -180,7 +174,7 @@ export default function HowItWorksPage() {
                   <div className="flex items-center gap-3 mb-4">
                     <span className="text-3xl">{section.icon}</span>
                     <span className={`rounded-full border px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider ${section.badge}`}>
-                      Feature
+                      Live
                     </span>
                   </div>
                   <h2 className="text-2xl font-black text-white mb-2">{section.title}</h2>
@@ -197,7 +191,10 @@ export default function HowItWorksPage() {
                     ))}
                   </div>
 
-                  <Link href={section.href} className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-primary-400 hover:text-primary-300 transition">
+                  <Link
+                    href={section.href}
+                    className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-primary-400 hover:text-primary-300 transition"
+                  >
                     Learn more <ArrowRight className="h-4 w-4" />
                   </Link>
                 </div>
@@ -217,7 +214,7 @@ export default function HowItWorksPage() {
                   </div>
                   <div className="mt-6 rounded-xl bg-white/[0.04] border border-white/[0.06] p-4">
                     <p className="text-xs text-slate-500">
-                      <span className="font-bold text-slate-400">Tip:</span> Start with a test message after saving your workflow. Check the Run Test section on the canvas to see each step execute in real time.
+                      <span className="font-bold text-slate-400">Tip:</span> Test every workflow in draft mode first. Check the Run Test section on the canvas to see each step execute in real time before going live.
                     </p>
                   </div>
                 </div>

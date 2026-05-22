@@ -118,24 +118,24 @@ export default function ChatPage() {
   }, []);
 
   useEffect(() => {
-    const fetchAssistants = async () => {
-      try {
-        const response = await get('/api/assistants');
+    // Run once on mount — get/searchParams are stable refs but shouldn't be in deps
+    // to avoid multiple fetches on re-renders
+    const assistantFromUrl = searchParams?.get('assistant') ?? null;
+    const modeFromUrl = searchParams?.get('mode') ?? null;
+
+    get('/api/assistants')
+      .then((response) => {
         const assistantList = response.data as Assistant[];
         setAssistants(assistantList);
-
-        const assistantFromUrl = searchParams?.get('assistant');
-        const fallbackAssistant = assistantList[0]?.id || '';
-        setAssistantId(assistantFromUrl || fallbackAssistant);
-      } catch (error: any) {
+        const fallback = assistantList[0]?.id || '';
+        setAssistantId(assistantFromUrl || fallback);
+        if (modeFromUrl === 'automation') setChatMode('automation');
+      })
+      .catch((error: any) => {
         toast.error(error.response?.data?.detail || 'Failed to load assistants');
-      } finally {
-        setAssistantsLoading(false);
-      }
-    };
-
-    fetchAssistants();
-  }, [get, searchParams]);
+      })
+      .finally(() => setAssistantsLoading(false));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     get('/api/automation/onboarding/status')
@@ -315,7 +315,7 @@ export default function ChatPage() {
         const limitMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
-          content: `⚠️ **AI credit limit reached.** You've used all your AI credits for this month.\n\n→ [Buy a top-up](/dashboard/billing) (₹299 for 500 credits)\n→ [Add your free Groq key](/dashboard/settings) for unlimited credits at zero cost`,
+          content: `⚠️ **AI credit limit reached.** You've used all your AI credits for this month.\n\n→ [Buy a top-up](/dashboard/billing) (₹299 for 500 credits)\n→ [Add your own Groq key in Settings](/dashboard/settings) for extra AI usage at no cost`,
           timestamp: new Date().toISOString(),
         };
         setMessages((prev) => [...prev, limitMessage]);
@@ -379,9 +379,8 @@ export default function ChatPage() {
                     <p className="font-medium">{assistant.name}</p>
                     <p className="text-xs text-gray-500 flex items-center gap-1.5">
                       {assistant.language}
-                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full text-white hidden xl:inline"
-                        style={{ background: 'linear-gradient(135deg, #1e293b, #1e1b4b)' }}>
-                        DeepSeek
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700 hidden xl:inline">
+                        B9 AI
                       </span>
                     </p>
                   </div>

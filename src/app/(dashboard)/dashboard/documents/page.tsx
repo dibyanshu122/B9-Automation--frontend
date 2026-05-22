@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Card } from '@/components/card';
 import { Button } from '@/components/button';
 import { getApiClient, useApi } from '@/hooks/useApi';
 import { Assistant, Document } from '@/types';
-import { CheckCircle2, FileText, Loader2, Upload, Trash2, Eye, Bot, ScanLine, Sparkles } from 'lucide-react';
+import { CheckCircle2, FileText, Loader2, MessageCircle, Upload, Trash2, Eye, Bot, ScanLine, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function DocumentsPage() {
@@ -16,6 +17,8 @@ export default function DocumentsPage() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStage, setUploadStage] = useState('');
   const [uploadMode, setUploadMode] = useState<'pdf' | 'flow_pdf' | 'url' | 'youtube' | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Document | null>(null);
+  const [lastUploadedAssistantId, setLastUploadedAssistantId] = useState<string | null>(null);
   const [urlCrawl, setUrlCrawl] = useState(false);
   const [previewDocument, setPreviewDocument] = useState<Document | null>(null);
   const [uploadData, setUploadData] = useState({
@@ -112,7 +115,8 @@ export default function DocumentsPage() {
         setUploadProgress(100);
         setUploadStage('Completed');
         setDocuments([...documents, response.data]);
-        toast.success('Document uploaded successfully!');
+        setLastUploadedAssistantId(uploadData.assistant_id);
+        toast.success('Document uploaded! Now test it in Chat.');
         setUploadMode(null);
         setUploadData((data) => ({ ...data, file: null, url: '' }));
       }
@@ -127,12 +131,12 @@ export default function DocumentsPage() {
     }
   };
 
-  const handleDelete = async (documentId: string) => {
-    if (!confirm('Delete this document?')) return;
-
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await deleteReq(`/api/documents/${documentId}`);
-      setDocuments(documents.filter(d => d.id !== documentId));
+      await deleteReq(`/api/documents/${deleteTarget.id}`);
+      setDocuments(documents.filter(d => d.id !== deleteTarget.id));
+      setDeleteTarget(null);
       toast.success('Document deleted');
     } catch {
       toast.error('Failed to delete document');
@@ -168,15 +172,17 @@ export default function DocumentsPage() {
             variant={uploadMode === 'pdf' ? 'primary' : 'secondary'}
             disabled={!uploadData.assistant_id}
             onClick={() => setUploadMode(uploadMode === 'pdf' ? null : 'pdf')}
+            title="Upload business knowledge — FAQs, pricing, services, policies"
           >
-            PDF
+            Knowledge PDF
           </Button>
           <Button
             variant={uploadMode === 'flow_pdf' ? 'primary' : 'secondary'}
             disabled={!uploadData.assistant_id}
             onClick={() => setUploadMode(uploadMode === 'flow_pdf' ? null : 'flow_pdf')}
+            title="Upload a chatbot conversation script for automation flows"
           >
-            Chatbot Flow PDF
+            Flow Script PDF
           </Button>
           <Button
             variant={uploadMode === 'url' ? 'primary' : 'secondary'}
@@ -197,20 +203,21 @@ export default function DocumentsPage() {
 
       {/* Upload Form */}
       {uploadMode && (
-        <Card className="relative overflow-hidden border-orange-300/20 bg-slate-950/80">
-          <div className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full bg-orange-500/20 blur-3xl" />
-          <div className="relative mb-5 flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-orange-500/15 text-orange-300">
+        <Card className="border-gray-200 shadow-sm">
+          <div className="mb-5 flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
               <Upload className="h-5 w-5" />
             </div>
             <div>
               <h3 className="text-lg font-bold text-gray-900">
-                Upload {uploadMode === 'flow_pdf' ? 'CHATBOT FLOW PDF' : uploadMode.toUpperCase()}
+                {uploadMode === 'flow_pdf' ? 'Upload Flow Script PDF' : uploadMode === 'pdf' ? 'Upload Knowledge PDF' : uploadMode === 'youtube' ? 'Add YouTube Video' : 'Add Website URL'}
               </h3>
               <p className="text-sm text-gray-500">
                 {uploadMode === 'flow_pdf'
-                  ? 'Upload a PDF containing your chatbot conversation flow, rules, questions, and response steps.'
-                  : 'B9 will scan, process, and add this to your assistant knowledge.'}
+                  ? 'Use this for chatbot conversation scripts — steps, questions, and reply rules. Not for general knowledge.'
+                  : uploadMode === 'pdf'
+                  ? 'Upload FAQs, pricing, policies, services — anything the AI should know to answer customers.'
+                  : 'B9 will scan and add this content to your assistant knowledge.'}
               </p>
             </div>
           </div>
@@ -360,6 +367,20 @@ export default function DocumentsPage() {
         </Card>
       )}
 
+      {/* Test in Chat banner — shown after successful upload */}
+      {lastUploadedAssistantId && (
+        <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+          <div className="flex items-center gap-2 text-sm text-emerald-800">
+            <CheckCircle2 className="h-4 w-4" />
+            <span className="font-medium">Document uploaded! Your assistant can now answer questions from it.</span>
+          </div>
+          <Link href={`/dashboard/chat?assistant=${lastUploadedAssistantId}`}
+            className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 shrink-0">
+            <MessageCircle className="h-3.5 w-3.5" /> Test in Chat
+          </Link>
+        </div>
+      )}
+
       {/* Documents List */}
       <div className="space-y-3">
         {documentsLoading ? (
@@ -393,15 +414,21 @@ export default function DocumentsPage() {
         ) : (
           documents.map((doc) => (
             <Card key={doc.id} className="flex items-center justify-between">
-              <div className="flex items-center gap-4 flex-1">
-                <FileText className="w-8 h-8 text-primary-500" />
-                <div>
-                  <h3 className="font-bold text-gray-900">{doc.title}</h3>
-                  <p className="text-gray-600 text-sm">
+              <div className="flex items-center gap-4 flex-1 min-w-0">
+                <FileText className="w-8 h-8 text-indigo-500 shrink-0" />
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-bold text-gray-900 truncate">{doc.title}</h3>
+                    {doc.is_indexed
+                      ? <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">Ready</span>
+                      : <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">Processing...</span>
+                    }
+                  </div>
+                  <p className="text-gray-500 text-sm">
                     {(doc.purpose || doc.source_purpose) === 'conversation_flow'
-                      ? 'Chatbot Flow PDF'
+                      ? 'Flow Script'
                       : doc.source_type === 'WEBSITE'
-                        ? `Website${(doc.source_metadata?.pages_scraped || doc.pages) > 1 ? ` · ${doc.source_metadata?.pages_scraped || doc.pages} pages scraped` : ' · 1 page'}`
+                        ? `Website${(doc.source_metadata?.pages_scraped || doc.pages) > 1 ? ` · ${doc.source_metadata?.pages_scraped || doc.pages} pages` : ' · 1 page'}`
                         : doc.source_type}
                     {doc.source_type !== 'WEBSITE' && (doc.pages || 0) > 0 && ` · ${doc.pages} pages`}
                   </p>
@@ -430,13 +457,10 @@ export default function DocumentsPage() {
                   type="button"
                   variant="ghost"
                   size="sm"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    handleDelete(doc.id);
-                  }}
+                  onClick={(event) => { event.stopPropagation(); setDeleteTarget(doc); }}
                   title="Delete document"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="w-4 h-4 text-red-400" />
                 </Button>
               </div>
             </Card>
@@ -499,6 +523,22 @@ export default function DocumentsPage() {
                   : 'The document is being read and indexed. Refresh this page in a moment to check the status.'
                 }
               </p>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <Card className="w-full max-w-sm">
+            <h2 className="text-lg font-bold text-gray-900">Delete Document?</h2>
+            <p className="mt-2 text-sm text-gray-600">
+              <strong>{deleteTarget.title}</strong> will be permanently removed. The AI will no longer have access to this knowledge.
+            </p>
+            <div className="mt-5 flex gap-2">
+              <Button variant="secondary" className="flex-1" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+              <Button className="flex-1 bg-red-600 hover:bg-red-700 text-white" onClick={handleDelete}>Delete</Button>
             </div>
           </Card>
         </div>

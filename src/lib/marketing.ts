@@ -6,7 +6,7 @@ import {
   Building2,
   CheckCircle2,
   Code2,
-  ExternalLink,
+  CreditCard,
   FileText,
   Globe,
   Globe2,
@@ -18,166 +18,231 @@ import {
   Search,
   Share2,
   ShieldCheck,
+  ShoppingBag,
   Sparkles,
   UploadCloud,
   Users,
-  Youtube,
+  Workflow,
+  Zap,
+  ZapOff,
 } from 'lucide-react';
 
 export const marketingNav = [
-  { label: 'How It Works', href: '/how-it-works' },
+  { label: 'Features', href: '/features' },
   { label: 'Pricing', href: '/pricing' },
   { label: 'Blog', href: '/blog' },
 ];
 
+// ── All features shown in nav dropdown ───────────────────────────────────────
 export const allFeatures = [
-  { icon: Bot, title: 'AI Chatbot', description: 'Website chatbot powered by your knowledge base', href: '/features/ai-chatbot' },
-  { icon: MessageCircle, title: 'WhatsApp Automation', description: 'Automated messages, sequences & broadcasts', href: '/features/whatsapp-automation' },
-  { icon: Building2, title: 'Facebook Lead Ads', description: 'Auto-capture leads from Facebook forms into CRM', href: '/features/facebook-lead-ads' },
-  { icon: Sparkles, title: 'Instagram DM', description: 'Auto-reply to DMs and capture them as leads', href: '/features/instagram-dm' },
-  { icon: Globe, title: 'Visual Automation Builder', description: 'Drag-and-drop canvas: Trigger → AI → Action', href: '/features/visual-automation-builder' },
-  { icon: Mail, title: 'Email Automation', description: 'Email sequences and automated responses', href: '/features' },
-  { icon: FileText, title: 'Document AI', description: 'Extract, analyze & answer from documents', href: '/features' },
-  { icon: Brain, title: 'Analytics & Insights', description: 'Track conversations, leads, and ROI', href: '/features' },
-  { icon: CheckCircle2, title: 'Enterprise Security', description: 'Bank-level encryption & compliance', href: '/features' },
-  { icon: Users, title: 'Team Collaboration', description: 'Manage teams and permissions', href: '/features' },
-  { icon: ArrowRight, title: 'Multi-language', description: 'Support for multiple languages', href: '/features' },
-  { icon: ExternalLink, title: 'API Access', description: 'Full API for custom integrations', href: '/features' },
+  { icon: Bot,          title: 'Agentic WhatsApp AI',       description: 'AI receives, qualifies, sells, and follows up on WhatsApp',          href: '/features/whatsapp-agentic-ai' },
+  { icon: MessageCircle,title: 'WhatsApp Automation',       description: 'Automated reply sequences, rule engine, keyword triggers',            href: '/features/whatsapp-automation' },
+  { icon: Sparkles,     title: 'AI Template Builder',       description: 'Describe a campaign, AI drafts approved Meta template instantly',     href: '/features/ai-template-builder' },
+  { icon: Workflow,     title: 'Visual Flow Canvas',        description: '37-node drag-and-drop canvas: Trigger → AI → Action',                href: '/features/visual-automation-builder' },
+  { icon: Building2,    title: 'Facebook Lead Ads',         description: 'Auto-capture leads from Facebook forms into CRM',                    href: '/features/facebook-lead-ads' },
+  { icon: Globe2,       title: 'Instagram DM Automation',   description: 'Auto-reply to Instagram DMs and capture leads',                      href: '/features/instagram-dm' },
+  { icon: BarChart3,    title: 'Broadcast Campaigns',       description: 'Bulk WhatsApp campaigns with A/B testing and analytics',             href: '/features/campaigns' },
+  { icon: CreditCard,   title: 'Razorpay Payments',        description: 'Send payment links via WhatsApp, track orders and invoices',          href: '/features/payments' },
+  { icon: FileText,     title: 'Meta Templates',           description: 'Create, submit, and manage WhatsApp approved templates',              href: '/features/templates' },
+  { icon: Users,        title: 'Leads & CRM',              description: 'Lead pipeline, scoring, memory, and lifecycle tracking',             href: '/features/crm' },
+  { icon: Globe,        title: 'Website Widget',           description: 'Embed AI sales assistant on your website — captures leads instantly', href: '/features/widget' },
+  { icon: Code2,        title: 'REST API',                 description: 'Full API v1 with 22 scopes for custom integrations',                  href: '/features/api' },
 ];
 
+// ── 6-grid feature highlights on landing page ─────────────────────────────────
 export const featureHighlights = [
   {
     icon: Bot,
-    title: 'AI Assistant',
-    description: 'Train a customer-ready chatbot from your documents, FAQs, help center, videos, and links.',
-  },
-  {
-    icon: FileText,
-    title: 'Document Chat',
-    description: 'Ask questions across PDFs, DOCX, PPTX, TXT, Markdown, and get answers with source citations.',
-  },
-  {
-    icon: Mic2,
-    title: 'Audio & Video Intelligence',
-    description: 'Upload recordings or paste YouTube links, transcribe them, and chat with timestamped answers.',
-  },
-  {
-    icon: Share2,
-    title: 'Share & Embed',
-    description: 'Share knowledge links or embed a branded AI widget on your website with one script.',
-  },
-  {
-    icon: Search,
-    title: 'Smart Retrieval',
-    description: 'Search across files, URLs, and assistants with fast grounded responses for every user query.',
-  },
-  {
-    icon: BarChart3,
-    title: 'Usage Analytics',
-    description: 'Track conversations, documents, queries, sessions, and quota usage from the SaaS dashboard.',
-  },
-];
-
-export const useCases = [
-  {
-    icon: Users,
-    title: 'Support Teams',
-    description: 'Answer product, pricing, policy, and onboarding questions from your own docs.',
-  },
-  {
-    icon: Building2,
-    title: 'Founders & Agencies',
-    description: 'Create client-facing knowledge bots without writing custom AI infrastructure.',
-  },
-  {
-    icon: Brain,
-    title: 'Students & Researchers',
-    description: 'Study notes, papers, reports, and lecture recordings with cited AI answers.',
-  },
-  {
-    icon: Globe2,
-    title: 'Creators & Educators',
-    description: 'Turn courses, videos, and guides into interactive assistants for your audience.',
-  },
-];
-
-export const workflowSteps = [
-  {
-    icon: UploadCloud,
-    title: 'Upload knowledge',
-    description: 'Add PDFs, URLs, YouTube videos, docs, and support material.',
+    title: 'Agentic AI Core',
+    description: 'B9 AI receives customer messages, classifies intent (buy/question/complaint/opt-out), searches your knowledge, sends catalog or payment link — fully automated.',
   },
   {
     icon: Sparkles,
-    title: 'B9 Automation indexes it',
-    description: 'Content is extracted, organized, and prepared for grounded AI answers.',
+    title: 'AI Template + Flow Builder',
+    description: 'Type "Diwali sale 20% off" — B9 AI drafts an approved Meta template with variables, header, footer, and CTA buttons. WhatsApp Forms built in minutes.',
+  },
+  {
+    icon: Workflow,
+    title: '37-Node Automation Canvas',
+    description: 'Visual drag-and-drop builder with triggers, AI nodes, conditions, loops, waits, catalog, payment, handover, and 30+ action types. No code needed.',
+  },
+  {
+    icon: BarChart3,
+    title: 'Campaigns & Broadcast',
+    description: 'Send template campaigns to hot/warm/cold leads. A/B test messages, schedule for peak hours, preview recipient count before sending.',
+  },
+  {
+    icon: CreditCard,
+    title: 'Razorpay Payment Flows',
+    description: 'Send Razorpay payment links via WhatsApp. AI detects buy intent and auto-creates links. GST invoice generation included.',
+  },
+  {
+    icon: Users,
+    title: 'Smart Lead CRM',
+    description: 'Auto-score leads (hot/warm/cold), track conversation memory, pipeline stages, follow-up scheduler, bulk export, and Google Sheets sync.',
+  },
+  {
+    icon: Zap,
+    title: 'Rule Engine',
+    description: 'Keyword replies, welcome messages, out-of-office auto-replies, opt-out handling, keyword alerts, and auto-assign — all no-code.',
+  },
+  {
+    icon: Globe,
+    title: 'Website Sales Widget',
+    description: 'Embed an AI sales assistant that captures leads, qualifies prospects, and sends WhatsApp follow-ups — right from your website.',
+  },
+  {
+    icon: ShoppingBag,
+    title: 'Product Catalog',
+    description: 'Upload your product catalog. AI recommends and sends catalog cards on WhatsApp when customer asks about products.',
+  },
+  {
+    icon: FileText,
+    title: 'Knowledge Base AI',
+    description: 'Upload PDFs, URLs, and YouTube videos. AI answers customer questions with source citations from your documents.',
+  },
+  {
+    icon: ZapOff,
+    title: 'Meta Compliance Built-in',
+    description: '24-hour window enforced automatically. Opt-out logged durably. Only approved templates sent after window closes. No accidental spam.',
+  },
+  {
+    icon: Code2,
+    title: 'API + Webhooks',
+    description: 'Full REST API v1 with 22 scopes. Connect CRMs, custom tools, Shopify, IndiaMART, or any external platform.',
+  },
+];
+
+// ── Use cases ─────────────────────────────────────────────────────────────────
+export const useCases = [
+  {
+    icon: Users,
+    title: 'Coaching Centers',
+    description: 'AI qualifies leads, books demo classes, sends fee details, and follows up via WhatsApp — automatically.',
+  },
+  {
+    icon: Building2,
+    title: 'Real Estate',
+    description: 'Property details, site visit booking, and payment collection — all on WhatsApp without any manual effort.',
+  },
+  {
+    icon: Brain,
+    title: 'D2C & E-commerce',
+    description: 'Product catalog on WhatsApp, order confirmation, payment links, and delivery follow-ups — zero code.',
+  },
+  {
+    icon: Globe2,
+    title: 'Agencies & SaaS',
+    description: 'Build client automation flows, manage multiple WhatsApp numbers, and track lead performance per client.',
+  },
+];
+
+// ── How it works steps ────────────────────────────────────────────────────────
+export const workflowSteps = [
+  {
+    icon: Globe,
+    title: 'Connect WhatsApp',
+    description: 'Link your WhatsApp Business number via official Meta Cloud API OAuth. Takes 2 minutes.',
+  },
+  {
+    icon: UploadCloud,
+    title: 'Upload Your Knowledge',
+    description: 'Add pricing PDFs, product catalog, FAQs, URLs, or YouTube videos. AI indexes everything.',
+  },
+  {
+    icon: Sparkles,
+    title: 'Describe Automation',
+    description: 'Type "When someone asks about price, send catalog and ask for their phone number." B9 AI drafts the full flow.',
   },
   {
     icon: MessageCircle,
-    title: 'Ask or embed',
-    description: 'Chat inside the dashboard or publish a widget on your website.',
+    title: 'Go Live',
+    description: 'Review the AI-drafted templates, flows, and automation. Click activate. B9 handles everything 24/7.',
   },
 ];
 
+// ── Trust points ──────────────────────────────────────────────────────────────
 export const trustPoints = [
-  { icon: ShieldCheck, title: 'Private by default', description: 'Your content stays under your account unless you share it.' },
-  { icon: LockKeyhole, title: 'Not for training', description: 'Customer data is used only to answer their own questions.' },
-  { icon: CheckCircle2, title: 'Answers with sources', description: 'Responses can cite documents, pages, URLs, or video timestamps.' },
+  {
+    icon: ShieldCheck,
+    title: 'Official Meta API',
+    description: 'WhatsApp via Meta Cloud API only. No unofficial workarounds, no ban risk.',
+  },
+  {
+    icon: LockKeyhole,
+    title: 'Encrypted Tokens',
+    description: 'All WhatsApp, payment, and API tokens stored with PBKDF2 encryption. Never plaintext.',
+  },
+  {
+    icon: CheckCircle2,
+    title: 'Opt-out Compliant',
+    description: 'STOP messages handled instantly and durably. We block all future sends permanently — no re-send risk.',
+  },
 ];
 
+// ── Blog posts ────────────────────────────────────────────────────────────────
 export const blogPosts = [
   {
-    title: 'How to create an AI knowledge assistant for your business',
-    date: 'Apr 30, 2026',
-    category: 'Guide',
-    description: 'A practical playbook for turning FAQs, PDFs, URLs, and videos into a useful AI assistant.',
+    title: 'How Indian SMBs are using WhatsApp AI to close leads 3x faster',
+    date: 'May 20, 2026',
+    category: 'Case Study',
+    description: 'Real coaching centers, real estate firms, and D2C brands share how B9 automated their entire WhatsApp lead funnel.',
   },
   {
-    title: 'Document chat: why source citations matter',
-    date: 'Apr 28, 2026',
+    title: 'B9 Agentic Core: how the AI decides what to do with each WhatsApp message',
+    date: 'May 18, 2026',
     category: 'Product',
-    description: 'Learn how grounded answers reduce hallucinations and help teams trust AI responses.',
+    description: 'Deep dive into intent classification, tool routing, and how B9 AI decides to send catalog vs payment link vs handover.',
   },
   {
-    title: 'Using YouTube and video content as a searchable knowledge base',
-    date: 'Apr 24, 2026',
-    category: 'AI Workflow',
-    description: 'Convert webinars, demos, and training videos into searchable support content.',
+    title: 'How to create WhatsApp-approved templates with AI in 60 seconds',
+    date: 'May 15, 2026',
+    category: 'Guide',
+    description: 'Step-by-step guide to using B9\'s AI Template Builder to draft, submit, and use approved Meta templates.',
   },
   {
-    title: 'Choosing the right SaaS plan for AI support automation',
-    date: 'Apr 21, 2026',
-    category: 'Pricing',
-    description: 'How to think about queries, uploads, storage, widgets, and analytics while scaling.',
+    title: 'WATI vs AiSensy vs B9: honest comparison for Indian businesses',
+    date: 'May 12, 2026',
+    category: 'Comparison',
+    description: 'Feature-by-feature comparison of top WhatsApp automation platforms. Which one actually handles agentic AI flows?',
   },
 ];
 
-export const changelog = [
-  {
-    version: 'v0.5',
-    date: 'Apr 30, 2026',
-    title: 'Production dashboard polish',
-    items: ['Cleaner white dashboard theme', 'Faster quota loading', 'Groq-compatible chat provider config'],
-  },
-  {
-    version: 'v0.4',
-    date: 'Apr 29, 2026',
-    title: 'SaaS user journey',
-    items: ['Signup/login flow', 'Free plan quota setup', 'Assistants, documents, chat, billing pages'],
-  },
-  {
-    version: 'v0.3',
-    date: 'Apr 28, 2026',
-    title: 'Knowledge ingestion',
-    items: ['PDF upload', 'URL ingestion', 'YouTube link support', 'Document list and indexing states'],
-  },
-];
-
+// ── Supported file formats ─────────────────────────────────────────────────────
 export const supportedFormats = [
   { icon: FileText, label: 'PDF' },
   { icon: FileText, label: 'DOCX' },
   { icon: FileText, label: 'PPTX' },
-  { icon: Code2, label: 'TXT / MD' },
-  { icon: PlayCircle, label: 'Audio / Video' },
-  { icon: Youtube, label: 'YouTube' },
+  { icon: FileText, label: 'TXT' },
+  { icon: Globe, label: 'URL' },
+  { icon: PlayCircle, label: 'YouTube' },
+  { icon: Mic2, label: 'Audio/Video' },
+];
+
+// ── Changelog ─────────────────────────────────────────────────────────────────
+export const changelog = [
+  {
+    version: 'v1.0',
+    date: 'May 21, 2026',
+    title: '20-Part production audit complete',
+    items: [
+      'Agentic AI loop with DeepSeek/Groq fallback',
+      'Duplicate reply prevention via orchestrator flag',
+      'WhatsApp 24h compliance enforced backend',
+      'Campaign template-only enforcement',
+      'API v1 with 22 scopes + key auth',
+    ],
+  },
+  {
+    version: 'v0.9',
+    date: 'May 15, 2026',
+    title: 'Inbox & Campaigns',
+    items: ['Template send from inbox fixed', 'Campaign recipient cap per plan', 'Bulk delete + export fixed', 'Phone filter added to leads'],
+  },
+  {
+    version: 'v0.8',
+    date: 'May 10, 2026',
+    title: 'WhatsApp Flows + Templates',
+    items: ['AI Flow generator (async, non-blocking)', 'Meta-valid condition routing', 'Template cache 60s TTL', 'Backend validation for button mixing'],
+  },
 ];

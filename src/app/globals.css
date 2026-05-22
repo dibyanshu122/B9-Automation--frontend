@@ -128,51 +128,41 @@ select:focus-visible {
          rounded-lg shadow-sm hover:shadow-md transition-shadow;
 }
 
-/* B9 Automation command-center foundation */
+/* ── Design tokens ────────────────────────────────────────────────────────── */
+:root {
+  --color-primary: #4F46E5;
+  --color-primary-hover: #4338CA;
+  --color-primary-light: #EEF2FF;
+  --color-accent: #F97316;       /* orange — kept for warnings/highlights */
+  --color-bg: #FFFFFF;
+  --color-bg-subtle: #F9FAFB;
+  --color-border: #E5E7EB;
+  --color-text: #1F2937;
+  --color-text-secondary: #6B7280;
+  --color-text-muted: #9CA3AF;
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-card-hover: 0 4px 12px rgba(0,0,0,0.12);
+  --radius-card: 8px;
+}
+
+/* B9 Automation dashboard foundation */
 .b9-command-shell {
   --mouse-x: 50%;
   --mouse-y: 35%;
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  background:
-    radial-gradient(circle at var(--mouse-x) var(--mouse-y), rgba(59, 130, 246, 0.10), transparent 32rem),
-    radial-gradient(circle at 85% 10%, rgba(6, 182, 212, 0.10), transparent 30rem),
-    radial-gradient(circle at 12% 72%, rgba(139, 92, 246, 0.07), transparent 30rem),
-    radial-gradient(circle at 55% 90%, rgba(16, 185, 129, 0.05), transparent 25rem),
-    #f1f5f9;
-  color: #0f172a;
+  background: #FFFFFF;
+  color: var(--color-text);
   scroll-behavior: smooth;
 }
 
 .b9-command-shell::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -2;
-  background:
-    linear-gradient(rgba(148, 163, 184, 0.12) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(148, 163, 184, 0.12) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.78), transparent 82%);
-  opacity: 0.5;
-  transform: perspective(900px) rotateX(58deg) translateY(-20%);
-  transform-origin: top;
-  will-change: transform;
+  display: none;
 }
 
 .b9-command-shell::after {
-  content: '';
-  position: absolute;
-  inset: -25%;
-  z-index: -3;
-  background:
-    radial-gradient(circle, rgba(59, 130, 246, 0.14), transparent 30%),
-    radial-gradient(circle at 70% 30%, rgba(6, 182, 212, 0.14), transparent 26%),
-    radial-gradient(circle at 35% 70%, rgba(139, 92, 246, 0.08), transparent 28%);
-  filter: blur(52px);
-  animation: b9MeshFloat 18s ease-in-out infinite alternate;
-  will-change: transform;
+  display: none;
 }
 
 .b9-glass {
@@ -469,11 +459,15 @@ select:focus-visible {
 
 .b9-command-shell .card,
 .b9-command-shell .bg-white {
-  border-color: #e2e8f0 !important;
-  background-color: rgba(255, 255, 255, 0.92) !important;
-  color: #0f172a;
-  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
-  backdrop-filter: blur(16px);
+  border-color: var(--color-border) !important;
+  background-color: #ffffff !important;
+  color: var(--color-text);
+  box-shadow: var(--shadow-card);
+  border-radius: var(--radius-card);
+}
+
+.b9-command-shell .card:hover {
+  box-shadow: var(--shadow-card-hover);
 }
 
 .b9-command-shell .text-gray-950,

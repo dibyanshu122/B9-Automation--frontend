@@ -295,23 +295,37 @@ function buildFlowJson(screens: FlowScreen[]): object {
     });
 
     const buildComp = (c: FlowComponent): object => {
-      // For Dropdown/Radio with a matching Condition node, add on_select_action
+      // For Dropdown/Radio with a matching Condition node, add per-option on-select-action
+      // Meta Flow v7.0: routing is per data-source option, not a field-level ternary
       const cond = conditionNodes.find(cn => cn.conditionField === c.name);
-      const onSelectAction = cond ? {
-        'on-select-action': {
-          name: 'navigate',
-          next: { type: 'screen', name: `\${form.flow_form.${c.name}} == "${cond.conditionValue}" ? "${cond.trueScreen}" : "${cond.falseScreen}"` },
-        },
-      } : {};
+      const buildOptionsWithRouting = (opts: { id: string; title: string }[], fieldCond: typeof cond) => {
+        if (!fieldCond) return opts.map(o => ({ id: o.id, title: o.title }));
+        return opts.map(o => {
+          const targetScreen = o.id === fieldCond.conditionValue ? fieldCond.trueScreen : fieldCond.falseScreen;
+          if (targetScreen) {
+            return {
+              id: o.id,
+              title: o.title,
+              'on-select-action': {
+                name: 'navigate',
+                next: { type: 'screen', name: targetScreen },
+                payload: {},
+              },
+            };
+          }
+          return { id: o.id, title: o.title };
+        });
+      };
+
       switch (c.type) {
         case 'TextHeading': return { type: 'TextHeading', text: c.text || '' };
         case 'TextBody':    return { type: 'TextBody', text: c.text || '', markdown: true };
         case 'TextCaption': return { type: 'TextCaption', text: c.text || '' };
         case 'TextInput':   return { type: 'TextInput', name: c.name, label: c.label, 'input-type': c['input-type'] || 'text', required: c.required ?? true, ...(c['helper-text'] ? { 'helper-text': c['helper-text'] } : {}) };
         case 'TextArea':    return { type: 'TextArea', name: c.name, label: c.label, required: c.required ?? false };
-        case 'Dropdown':    return { type: 'Dropdown', name: c.name, label: c.label, required: c.required ?? true, 'data-source': (c.options || []).map(o => ({ id: o.id, title: o.title })), ...onSelectAction };
-        case 'RadioButtonsGroup': return { type: 'RadioButtonsGroup', name: c.name, label: c.label, required: c.required ?? true, 'data-source': (c.options || []).map(o => ({ id: o.id, title: o.title })), ...onSelectAction };
-        case 'CheckboxGroup': return { type: 'CheckboxGroup', name: c.name, label: c.label, required: c.required ?? true, 'data-source': (c.options || []).map(o => ({ id: o.id, title: o.title })), ...(c.min_selected_items ? { min_selected_items: c.min_selected_items } : {}), ...(c.max_selected_items ? { max_selected_items: c.max_selected_items } : {}) };
+        case 'Dropdown':    return { type: 'Dropdown', name: c.name, label: c.label, required: c.required ?? true, 'data-source': buildOptionsWithRouting(c.options || [], cond) };
+        case 'RadioButtonsGroup': return { type: 'RadioButtonsGroup', name: c.name, label: c.label, required: c.required ?? true, 'data-source': buildOptionsWithRouting(c.options || [], cond) };
+        case 'CheckboxGroup': return { type: 'CheckboxGroup', name: c.name, label: c.label, required: c.required ?? true, 'data-source': (c.options || []).map(o => ({ id: o.id, title: o.title })), ...(c['min_selected_items'] ? { min_selected_items: c['min_selected_items'] } : {}), ...(c['max_selected_items'] ? { max_selected_items: c['max_selected_items'] } : {}) };
         case 'DatePicker':  return { type: 'DatePicker', name: c.name, label: c.label, required: c.required ?? true };
         case 'OptIn':       return { type: 'OptIn', name: c.name, label: c.text || 'I agree', required: true };
         default:            return { type: c.type };
@@ -570,8 +584,9 @@ function ComponentEditor({ c, screens, screenId, onChange, onDelete }: {
             <p className="text-[9px] text-gray-400 mt-0.5">Must match the `name` of a Dropdown/Radio field on this screen</p>
           </div>
           <div>
-            <p className="text-[10px] font-semibold text-gray-500 mb-1">Equals value:</p>
-            <input value={c.conditionValue || ''} onChange={e => onChange({ ...c, conditionValue: e.target.value })} className={inp} placeholder="e.g. option_1_id" />
+            <p className="text-[10px] font-semibold text-gray-500 mb-1">Option ID that routes to True screen:</p>
+            <input value={c.conditionValue || ''} onChange={e => onChange({ ...c, conditionValue: e.target.value })} className={inp} placeholder="e.g. 1 or opt_1 (the option's ID value)" />
+            <p className="text-[9px] text-gray-400 mt-0.5">Other options route to the False screen. Each option routes individually.</p>
           </div>
           <div>
             <p className="text-[10px] font-semibold text-gray-500 mb-1">✅ If TRUE → go to screen:</p>
@@ -982,7 +997,13 @@ export default function FlowsPage() {
       await del(`/api/automation/whatsapp/flows/${id}`);
       toast.success('Deleted');
       setFlows(prev => prev.filter(f => f.id !== id));
-    } catch (e: any) { toast.error(e.response?.data?.detail || 'Delete failed'); }
+    } catch (e: any) {
+      if (e?.response?.status === 403) {
+        toast.error('Only workspace admins can delete flows.');
+      } else {
+        toast.error(e.response?.data?.detail || 'Delete failed');
+      }
+    }
     finally { setActing(null); }
   };
 
@@ -1062,9 +1083,31 @@ export default function FlowsPage() {
         </div>
       )}
 
-      {/* Loading */}
+      {/* Loading skeleton */}
       {!notConnected && loading && (
-        <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
+        <div className="space-y-3">
+          <div className="grid grid-cols-12 gap-2 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-white rounded-xl"
+            style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e1b4b 100%)' }}>
+            <div className="col-span-4">Flow Name</div>
+            <div className="col-span-2">Category</div>
+            <div className="col-span-2">Status</div>
+            <div className="col-span-4 text-right">Actions</div>
+          </div>
+          {[1,2,3].map(i => (
+            <div key={i} className="grid grid-cols-12 gap-2 items-center px-4 py-3 bg-white border border-gray-200 rounded-xl">
+              <div className="col-span-4 space-y-1.5">
+                <div className="h-4 w-40 bg-gray-200 rounded animate-pulse" />
+                <div className="h-3 w-28 bg-gray-100 rounded animate-pulse" />
+              </div>
+              <div className="col-span-2"><div className="h-5 w-24 bg-gray-100 rounded-full animate-pulse" /></div>
+              <div className="col-span-2"><div className="h-5 w-16 bg-gray-100 rounded-full animate-pulse" /></div>
+              <div className="col-span-4 flex justify-end gap-2">
+                <div className="h-7 w-20 bg-gray-100 rounded-lg animate-pulse" />
+                <div className="h-7 w-20 bg-gray-100 rounded-lg animate-pulse" />
+              </div>
+            </div>
+          ))}
+        </div>
       )}
 
       {/* Empty */}

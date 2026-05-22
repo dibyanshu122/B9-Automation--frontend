@@ -108,6 +108,16 @@ function WaPreview({ template, vars }: { template: any; vars: string[] }) {
     return val ? `*${val}*` : `{{${n}}}`;
   });
 
+  const renderSafeWhatsAppText = (text: string) => {
+    const parts = text.split(/(\*[^*\n]+\*)/g);
+    return parts.map((part, index) => {
+      if (part.startsWith('*') && part.endsWith('*') && part.length > 2) {
+        return <strong key={index}>{part.slice(1, -1)}</strong>;
+      }
+      return <span key={index}>{part}</span>;
+    });
+  };
+
   return (
     <div className="rounded-xl bg-[#e5ddd5] p-3">
       <p className="text-[10px] text-gray-500 text-center mb-2">WhatsApp Preview</p>
@@ -121,8 +131,9 @@ function WaPreview({ template, vars }: { template: any; vars: string[] }) {
           <div className="px-3 pt-3 pb-1 font-bold text-sm text-gray-900">{header.text}</div>
         )}
         <div className="px-3 py-2.5">
-          <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap"
-            dangerouslySetInnerHTML={{ __html: rendered.replace(/\*(.+?)\*/g, '<strong>$1</strong>').replace(/\n/g, '<br/>') }} />
+          <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">
+            {renderSafeWhatsAppText(rendered)}
+          </p>
           {footer && <p className="text-[10px] text-gray-400 mt-1.5">{footer}</p>}
           <p className="text-[9px] text-gray-400 text-right mt-1">12:30 ✓✓</p>
         </div>
@@ -583,6 +594,7 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
   const [excelPhones, setExcelPhones] = useState<string[]>([]);
   const [templates, setTemplates] = useState<any[]>([]);
   const [loadingTpl, setLoadingTpl] = useState(false);
+  const [tplLoadError, setTplLoadError] = useState('');
   const [selected, setSelected] = useState<any>(null);
   const [vars, setVars] = useState<string[]>([]);
   const [scheduled, setScheduled] = useState('');
@@ -592,10 +604,20 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
 
   useEffect(() => {
     setLoadingTpl(true);
+    setTplLoadError('');
+    const timeout = setTimeout(() => setTplLoadError('Taking too long — check your WhatsApp connection.'), 15000);
     get('/api/automation/whatsapp/templates')
-      .then(r => setTemplates((r.data?.templates || []).filter((t: any) => t.status === 'APPROVED')))
-      .catch(() => toast.error('Could not load templates'))
+      .then(r => {
+        clearTimeout(timeout);
+        setTemplates((r.data?.templates || []).filter((t: any) => t.status === 'APPROVED'));
+      })
+      .catch((e: any) => {
+        clearTimeout(timeout);
+        const msg = e?.response?.data?.detail || 'Could not load templates. Check WhatsApp connection.';
+        setTplLoadError(msg);
+      })
       .finally(() => setLoadingTpl(false));
+    return () => clearTimeout(timeout);
   }, []); // eslint-disable-line
 
   const onSelect = (tpl: any) => {
@@ -951,9 +973,14 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
               {/* Dropdown list */}
               {dropdownOpen && (
                 <div className="absolute left-0 right-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-xl shadow-lg max-h-56 overflow-y-auto">
-                  {templates.length === 0 ? (
+                  {tplLoadError ? (
+                    <div className="p-3 text-sm text-red-600">
+                      <p className="font-semibold">Failed to load templates</p>
+                      <p className="text-xs mt-1">{tplLoadError}</p>
+                    </div>
+                  ) : templates.length === 0 ? (
                     <div className="p-3 text-sm text-amber-600">
-                      No templates found. <a href="/dashboard/templates" className="font-semibold underline" onClick={() => setDropdownOpen(false)}>Create templates →</a>
+                      No approved templates found. <a href="/dashboard/templates" className="font-semibold underline" onClick={() => setDropdownOpen(false)}>Create templates →</a>
                     </div>
                   ) : (
                     templates.map(tpl => (

@@ -192,6 +192,7 @@ export default function IntegrationsPage() {
   const authToken = useAuthStore((s: any) => s.token);
   const planAccess = usePlanAccess();
   const [catalog, setCatalog] = useState<IntegrationCatalogItem[]>([]);
+  const [catalogLoading, setCatalogLoading] = useState(true);
   const [drafts, setDrafts] = useState<OutboundMessage[]>([]);
   const [loading, setLoading] = useState('');
   const [selectedIntegration, setSelectedIntegration] = useState<IntegrationCatalogItem | null>(null);
@@ -275,7 +276,9 @@ export default function IntegrationsPage() {
   const [instagramWebhookSubscription, setInstagramWebhookSubscription] = useState<{ ok?: boolean; message?: string } | null>(null);
   const [instagramUsername, setInstagramUsername] = useState('');
   const [instagramAutoCreateLeads, setInstagramAutoCreateLeads] = useState(true);
+  const [instagramDefaultAssistantId, setInstagramDefaultAssistantId] = useState('');
   const [instagramOAuthLoading, setInstagramOAuthLoading] = useState(false);
+  const [integrationAssistants, setIntegrationAssistants] = useState<{id: string; name: string}[]>([]);
 
   /* ── Meta Catalog state ── */
   const [metaCatalogConnected, setMetaCatalogConnected] = useState(false);
@@ -389,12 +392,14 @@ export default function IntegrationsPage() {
   }, []);
 
   const refresh = () => {
+    setCatalogLoading(true);
     Promise.allSettled([
       get('/api/automation/integrations/catalog').catch(() => ({ data: [] })),
     ]).then(([catRes]) => {
       const catalogData = catRes.status === 'fulfilled' ? catRes.value.data : [];
       const items: IntegrationCatalogItem[] = Array.isArray(catalogData) ? catalogData : (catalogData?.data || []);
       setCatalog(items);
+      setCatalogLoading(false);
       // Sync connected state from catalog — no extra API calls needed
       const connected = (p: string) => items.some((i: any) => (i.provider === p || i.channel === p) && i.connected);
       setWhatsappConnected(connected('whatsapp') || connected('meta'));
@@ -523,6 +528,10 @@ export default function IntegrationsPage() {
     } else if (item.provider === 'instagram') {
       loadInstagramStatus();
       setInstagramAccounts([]);
+      // Load assistants for DM routing selection
+      if (integrationAssistants.length === 0) {
+        get('/api/assistants').then(r => setIntegrationAssistants((r.data || []).map((a: any) => ({ id: a.id, name: a.name })))).catch(() => {});
+      }
     } else if (['slack','hubspot','zoho','twilio','calendly','zapier','google-calendar','indiamart'].includes(item.provider)) {
       loadExtraConnection(item.provider);
       const fields = setupFields[item.provider] || [];
@@ -1457,62 +1466,6 @@ export default function IntegrationsPage() {
         </div>
       </div>
 
-      {/* ── Getting Started wizard — only shown when no channels connected ── */}
-      <div className="rounded-xl border border-blue-200 bg-blue-50 p-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="text-sm font-bold uppercase tracking-wide text-blue-700">Start Here</p>
-            <h2 className="mt-1 text-xl font-bold text-gray-950">WhatsApp official Meta connect - 3 step setup</h2>
-            <p className="mt-1 max-w-2xl text-sm text-blue-800">Users connect through official Meta consent. Manual token setup remains available below for advanced users.</p>
-          </div>
-          <div className="grid gap-2 sm:grid-cols-3 lg:w-[520px]">
-            {[
-              { label: '1. Connect via Meta', done: whatsappConnected },
-              { label: '2. Select WABA/phone', done: whatsappConnected && Boolean(configForm.phone_number_id || configForm.waba_id) },
-              { label: '3. Send test message', done: whatsappConnected && Boolean(configForm.test_to?.trim()) },
-            ].map((step) => (
-              <div key={step.label} className={`rounded-xl border px-3 py-2 text-xs font-semibold ${step.done ? 'border-emerald-200 bg-white text-emerald-700' : 'border-blue-200 bg-white/70 text-blue-700'}`}>
-                <span className={`mr-1 inline-block h-2 w-2 rounded-full ${step.done ? 'bg-emerald-500' : 'bg-amber-400'}`} />
-                {step.label}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {!whatsappConnected && !instagramConnected && !facebookConnected && !gsOAuthConnected && (
-        <div className="rounded-2xl border-2 border-dashed border-primary-200 bg-primary-50 p-5">
-          <div className="flex items-center gap-3 mb-4">
-            <span className="text-2xl">🚀</span>
-            <div>
-              <h2 className="font-bold text-gray-950">Connect your first channel — 3 steps</h2>
-              <p className="text-sm text-gray-600">Once connected, your AI can auto-reply to customers 24/7.</p>
-            </div>
-          </div>
-          <div className="grid gap-3 md:grid-cols-3">
-            <div className="rounded-xl bg-white p-3 border border-primary-100">
-              <p className="text-xs font-bold text-emerald-700 mb-1">✓ Step 1 — Done</p>
-              <p className="text-sm font-semibold text-gray-900">Create your account</p>
-            </div>
-            <div className="rounded-xl bg-white p-3 border-2 border-primary-300">
-              <p className="text-xs font-bold text-primary-600 mb-1">→ Step 2 — Do this now</p>
-              <p className="text-sm font-semibold text-gray-900 mb-2">Connect WhatsApp, Instagram, or Facebook</p>
-              <div className="flex flex-wrap gap-2">
-                {catalog.filter(c => ['meta','facebook','instagram'].includes(c.provider) && !c.connected).slice(0,3).map(c => (
-                  <button key={c.provider} onClick={() => openSetup(c)} className="rounded-lg bg-primary-600 px-2 py-1 text-xs font-bold text-white hover:bg-primary-700">
-                    Connect {c.label.split(' ')[0]}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="rounded-xl bg-white p-3 border border-gray-100 opacity-60">
-              <p className="text-xs font-bold text-gray-400 mb-1">○ Step 3 — After connecting</p>
-              <p className="text-sm font-semibold text-gray-900">Build your first automation</p>
-              <a href="/dashboard/automations" className="mt-1 inline-block text-xs font-bold text-primary-600 hover:underline">Open Automation Builder →</a>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ── Integration Health Banner ── */}
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
@@ -1536,18 +1489,33 @@ export default function IntegrationsPage() {
 
       {/* Catalog grid */}
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {catalogLoading && catalog.length === 0 && Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm animate-pulse">
+            <div className="h-1 w-full rounded-full bg-gray-100 mb-4" />
+            <div className="flex items-start justify-between mb-4">
+              <div className="h-11 w-11 rounded-lg bg-gray-100" />
+              <div className="h-6 w-20 rounded-full bg-gray-100" />
+            </div>
+            <div className="h-4 w-3/4 rounded bg-gray-100 mb-2" />
+            <div className="h-3 w-full rounded bg-gray-100 mb-1" />
+            <div className="h-3 w-5/6 rounded bg-gray-100" />
+          </div>
+        ))}
         {catalog.map((item) => {
           const Icon = iconFor(item.channel);
           const feature = featureForProvider(item.provider);
           const available = planAccess.canUse(feature);
-          const badge = item.connected ? 'Connected' : available ? 'Available' : 'Upgrade required';
+          const badge = item.connected ? 'Connected' : available ? 'Not connected' : 'Upgrade required';
+          const statusLabel = String(item.status || (item.connected ? 'connected' : available ? 'not_connected' : 'upgrade_required'))
+            .split('_')
+            .join(' ');
           const accent = accentFor(item.provider, item.channel);
           return (
             <Card key={`${item.provider}-${item.channel}`} className={`relative overflow-hidden border-gray-200 shadow-sm transition hover:shadow-lg ${accent.hover}`} hoverable={false}>
               <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${accent.bar}`} />
               <div className="flex items-start justify-between gap-3">
                 <div className={`rounded-lg p-3 ring-1 ${accent.icon}`}><Icon className="h-5 w-5" /></div>
-                <span className={`rounded-full px-2 py-1 text-xs font-semibold ${item.connected ? 'bg-emerald-50 text-emerald-700' : available ? 'bg-gray-100 text-gray-600' : 'bg-amber-50 text-amber-700'}`}>{badge}</span>
+                <span className={`rounded-full px-2 py-1 text-xs font-semibold ${item.connected ? 'bg-emerald-50 text-emerald-700' : available ? 'bg-blue-50 text-blue-700' : 'bg-amber-50 text-amber-700'}`}>{badge}</span>
               </div>
               <h2 className="mt-4 font-bold text-gray-950">{item.label}</h2>
               <p className="mt-2 min-h-12 text-sm text-gray-600">{item.description}</p>
@@ -1570,7 +1538,7 @@ export default function IntegrationsPage() {
               })()}
               <div className="mt-4 flex items-center gap-2 text-xs font-semibold">
                 <span className={`h-2 w-2 rounded-full ${item.connected ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                <span className="text-gray-600">{item.status.split('_').join(' ')}</span>
+                <span className="text-gray-600">{statusLabel}</span>
               </div>
               <Button variant={item.connected ? 'secondary' : 'primary'} className="mt-4 w-full"
                 loading={loading === `${item.provider}:connect`} onClick={() => openSetup(item)}>
@@ -1973,9 +1941,23 @@ export default function IntegrationsPage() {
                         </div>
                         <Button variant="secondary" className="ml-auto" onClick={connectFacebook} loading={facebookOAuthLoading}>Reconnect</Button>
                       </div>
+                      {/* 5-step health checklist */}
+                      <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-5">
+                        {[
+                          { label: 'Account', done: true },
+                          { label: 'Page selected', done: !!facebookSelectedPageId },
+                          { label: 'Form selected', done: facebookSelectedFormIds.length > 0 },
+                          { label: 'Webhook', done: facebookWebhookSubscription?.ok === true },
+                          { label: 'Last sync', done: !!facebookLastSyncedAt },
+                        ].map(s => (
+                          <div key={s.label} className={`rounded-lg px-2 py-1.5 text-center text-[10px] font-bold ${s.done ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
+                            {s.done ? '✓' : '○'} {s.label}
+                          </div>
+                        ))}
+                      </div>
                       <label className="block text-sm font-semibold text-gray-700">
                         Webhook URL
-                        <input value={facebookWebhookUrl || 'http://localhost:8000/api/webhooks/facebook'} readOnly className="input-field mt-1 font-mono text-xs" />
+                        <input value={facebookWebhookUrl || 'https://b9-automation-backend.onrender.com/api/webhooks/facebook'} readOnly className="input-field mt-1 font-mono text-xs" />
                       </label>
                       {facebookWebhookSubscription && (
                         <p className={`rounded-lg p-2 text-xs ${facebookWebhookSubscription.ok === false ? 'bg-amber-50 text-amber-800' : 'bg-emerald-50 text-emerald-700'}`}>
@@ -2103,7 +2085,7 @@ export default function IntegrationsPage() {
                       </div>
                       <label className="block text-sm font-semibold text-gray-700">
                         Webhook URL
-                        <input value={instagramWebhookUrl || 'http://localhost:8000/api/webhooks/instagram'} readOnly className="input-field mt-1 font-mono text-xs" />
+                        <input value={instagramWebhookUrl || 'https://b9-automation-backend.onrender.com/api/webhooks/instagram'} readOnly className="input-field mt-1 font-mono text-xs" />
                       </label>
                       {instagramWebhookSubscription && (
                         <p className={`rounded-lg p-2 text-xs ${instagramWebhookSubscription.ok === false ? 'bg-amber-50 text-amber-800' : 'bg-emerald-50 text-emerald-700'}`}>
@@ -2137,10 +2119,31 @@ export default function IntegrationsPage() {
                       </option>
                     ))}
                   </select>
+                  {instagramAccounts.length === 0 && (
+                    <div className="mt-3 rounded-lg bg-amber-50 border border-amber-100 p-3 text-sm text-amber-800 space-y-1">
+                      <p className="font-semibold">No Instagram accounts found.</p>
+                      <p>To fix this:</p>
+                      <ol className="ml-4 list-decimal text-xs space-y-1">
+                        <li>Go to <strong>Instagram Settings → Account Type</strong> — switch to <strong>Professional</strong></li>
+                        <li>Go to <strong>Facebook Page → Settings → Linked Accounts</strong> — connect your Instagram</li>
+                        <li>Come back and click <strong>Load Accounts</strong> again</li>
+                      </ol>
+                    </div>
+                  )}
                   <label className="mt-4 flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm font-semibold text-gray-700">
                     <input type="checkbox" checked={instagramAutoCreateLeads} onChange={(e) => setInstagramAutoCreateLeads(e.target.checked)} />
                     Save incoming Instagram DMs as leads
                   </label>
+                  {integrationAssistants.length > 0 && (
+                    <div className="mt-3">
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">AI Assistant for DM replies</label>
+                      <select value={instagramDefaultAssistantId} onChange={e => setInstagramDefaultAssistantId(e.target.value)} className="input-field text-sm">
+                        <option value="">Use default assistant</option>
+                        {integrationAssistants.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                      </select>
+                      <p className="text-[10px] text-gray-400 mt-1">This assistant will auto-reply to incoming Instagram DMs.</p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
@@ -2205,7 +2208,7 @@ export default function IntegrationsPage() {
                   </div>
                   <label className="mt-4 block text-sm font-semibold text-gray-700">
                     Webhook URL
-                    <input value={whatsappWebhookUrl || 'http://localhost:8000/api/webhooks/whatsapp'} readOnly className="input-field mt-1 font-mono text-xs" />
+                    <input value={whatsappWebhookUrl || 'https://b9-automation-backend.onrender.com/api/webhooks/whatsapp'} readOnly className="input-field mt-1 font-mono text-xs" />
                   </label>
                 </div>
                 <div className="rounded-xl border border-gray-200 p-4">
@@ -2251,7 +2254,10 @@ export default function IntegrationsPage() {
                             Send Test
                           </button>
                         </div>
-                        <p className="text-[10px] text-gray-400 mt-0.5">Enter your number → click Send Test → check if message arrived</p>
+                        <p className="text-[10px] text-gray-400 mt-0.5">First send a WhatsApp message TO your B9 number, then test here within 24 hours.</p>
+                        {configForm.test_to && (
+                          <p className="text-[10px] text-emerald-600 mt-1">Ready to test — click &ldquo;Send Test&rdquo; in the button row below.</p>
+                        )}
                       </label>
 
                       {/* Sync leads toggle */}
@@ -2276,19 +2282,6 @@ export default function IntegrationsPage() {
                   </Button>
                 </div>
 
-                {/* Compact inline test */}
-                <div className="mt-3 flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5">
-                  <span className="text-xs font-semibold text-gray-500 shrink-0">Quick Test</span>
-                  <input
-                    value={configForm.test_to || ''}
-                    onChange={(e) => setConfigForm({...configForm, test_to: e.target.value})}
-                    placeholder="+91 98765 43210"
-                    className="flex-1 min-w-0 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-400"
-                  />
-                  <Button type="button" variant="secondary" onClick={testWhatsAppConnection} loading={loading === 'whatsapp:test'} className="shrink-0 text-xs py-1.5 px-3">
-                    <Send className="h-3.5 w-3.5" /> Send Test
-                  </Button>
-                </div>
 
               {/* ── Business Profile ── */}
               {whatsappConnected && (

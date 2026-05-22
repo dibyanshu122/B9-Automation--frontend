@@ -144,29 +144,28 @@ export default function CatalogPage() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-950 p-6">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="space-y-6">
 
         {/* Meta Catalog Sync Banner */}
         {metaConn.connected ? (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-violet-500/30 bg-violet-500/10 px-4 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3">
             <div className="flex items-center gap-2.5">
               <span className="text-lg">🛍</span>
               <div>
-                <p className="text-sm font-semibold text-violet-200">
+                <p className="text-sm font-semibold text-violet-800">
                   Meta Catalog connected
                   {metaConn.catalog_name ? ` — ${metaConn.catalog_name}` : ''}
                 </p>
-                <p className="text-xs text-violet-400">
+                <p className="text-xs text-violet-600">
                   {metaConn.product_count ?? 0} products synced
                   {metaConn.last_synced_at ? ` · ${new Date(metaConn.last_synced_at).toLocaleString()}` : ''}
                 </p>
-                {syncMsg && <p className="text-xs text-emerald-400 mt-0.5">{syncMsg}</p>}
-                {metaConn.sync_error && <p className="text-xs text-red-400 mt-0.5">{metaConn.sync_error}</p>}
+                {syncMsg && <p className="text-xs text-emerald-600 mt-0.5">{syncMsg}</p>}
+                {metaConn.sync_error && <p className="text-xs text-red-500 mt-0.5">{metaConn.sync_error}</p>}
               </div>
             </div>
             <div className="flex gap-2">
-              <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard/integrations')} className="text-xs border border-violet-500/30 text-violet-300">
+              <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard/integrations')} className="text-xs border border-violet-300 text-violet-700">
                 <Link2 className="h-3.5 w-3.5 mr-1" /> Settings
               </Button>
               <Button variant="primary" size="sm" onClick={handleMetaSync} disabled={syncing} className="text-xs bg-violet-600 hover:bg-violet-700">
@@ -176,14 +175,14 @@ export default function CatalogPage() {
             </div>
           </div>
         ) : (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-slate-900 px-4 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
             <div className="flex items-center gap-2.5">
               <span className="text-lg">🛍</span>
-              <p className="text-sm text-slate-400">
-                Have products on Facebook Business? <span className="text-violet-400 font-medium">Connect Meta Catalog</span> to sync them automatically.
+              <p className="text-sm text-gray-500">
+                Have products on Facebook Business? <span className="text-violet-600 font-medium">Connect Meta Catalog</span> to sync them automatically.
               </p>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard/integrations')} className="text-xs border border-violet-500/30 text-violet-300 shrink-0">
+            <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard/integrations')} className="text-xs border border-violet-300 text-violet-700 shrink-0">
               Connect in Integrations →
             </Button>
           </div>
@@ -192,12 +191,12 @@ export default function CatalogPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/20 border border-violet-500/30">
-              <Package className="h-5 w-5 text-violet-400" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 border border-violet-200">
+              <Package className="h-5 w-5 text-violet-600" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white">Product Catalog</h1>
-              <p className="text-xs text-slate-500">Manage products — send via WhatsApp automation</p>
+              <h1 className="text-xl font-bold text-gray-900">Product Catalog</h1>
+              <p className="text-xs text-gray-500">Manage products — send via WhatsApp automation</p>
             </div>
           </div>
           <Button variant="primary" size="sm" onClick={openNew}>
@@ -208,9 +207,9 @@ export default function CatalogPage() {
         {/* Filters */}
         <div className="flex flex-wrap gap-3">
           <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input
-              className="w-full rounded-lg border border-white/10 bg-slate-900 pl-9 pr-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-violet-500"
+              className="w-full rounded-lg border border-gray-200 bg-white pl-9 pr-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-200"
               placeholder="Search products..."
               value={search}
               onChange={e => setSearch(e.target.value)}
@@ -218,7 +217,7 @@ export default function CatalogPage() {
           </div>
           {categories.length > 0 && (
             <select
-              className="rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-sm text-slate-300 focus:outline-none focus:border-violet-500"
+              className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:border-violet-500"
               value={filterCategory}
               onChange={e => setFilterCategory(e.target.value)}
             >
@@ -229,19 +228,19 @@ export default function CatalogPage() {
         </div>
 
         {error && !showForm && (
-          <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm text-red-400">{error}</div>
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-600">{error}</div>
         )}
 
         {/* Product Grid */}
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[1, 2, 3].map(i => <div key={i} className="h-48 rounded-xl bg-slate-800/50 animate-pulse" />)}
+            {[1, 2, 3].map(i => <div key={i} className="h-48 rounded-xl bg-gray-100 animate-pulse" />)}
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <Package className="h-12 w-12 text-slate-700 mb-3" />
-            <p className="text-slate-400 font-medium">No products yet</p>
-            <p className="text-slate-600 text-sm mt-1">Add your first product to start sending catalogs via WhatsApp</p>
+            <Package className="h-12 w-12 text-gray-300 mb-3" />
+            <p className="text-gray-500 font-medium">No products yet</p>
+            <p className="text-gray-400 text-sm mt-1">Add your first product to start sending catalogs via WhatsApp</p>
             <Button variant="primary" size="sm" className="mt-4" onClick={openNew}>
               <Plus className="h-4 w-4 mr-1" /> Add Product
             </Button>
@@ -251,45 +250,45 @@ export default function CatalogPage() {
             {filtered.map(product => (
               <div
                 key={product.id}
-                className={`relative rounded-xl border bg-slate-900 p-5 transition-all hover:border-violet-500/40 ${product.is_active ? 'border-white/10' : 'border-white/5 opacity-60'}`}
+                className={`relative rounded-xl border bg-white p-5 transition-all hover:shadow-md hover:border-violet-300 ${product.is_active ? 'border-gray-200' : 'border-gray-100 opacity-60'}`}
               >
                 {product.image_url && (
                   <img src={product.image_url} alt={product.name} className="mb-3 h-32 w-full rounded-lg object-cover" />
                 )}
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="font-semibold text-white truncate">{product.name}</p>
+                    <p className="font-semibold text-gray-900 truncate">{product.name}</p>
                     {product.category && (
-                      <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-violet-500/10 px-2 py-0.5 text-[10px] font-medium text-violet-400">
+                      <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-medium text-violet-700 border border-violet-100">
                         <Tag className="h-2.5 w-2.5" />{product.category}
                       </span>
                     )}
                   </div>
                   <div className="flex shrink-0 gap-1">
-                    <button onClick={() => openEdit(product)} className="rounded-md p-1.5 text-slate-500 hover:bg-white/10 hover:text-slate-200 transition">
+                    <button onClick={() => openEdit(product)} className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition">
                       <Pencil className="h-3.5 w-3.5" />
                     </button>
                     <button
                       onClick={() => handleDelete(product.id)}
                       disabled={deletingId === product.id}
-                      className="rounded-md p-1.5 text-slate-500 hover:bg-red-500/10 hover:text-red-400 transition"
+                      className="rounded-md p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 transition"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 </div>
                 {product.description && (
-                  <p className="mt-2 text-xs text-slate-500 line-clamp-2">{product.description}</p>
+                  <p className="mt-2 text-xs text-gray-500 line-clamp-2">{product.description}</p>
                 )}
                 <div className="mt-3 flex items-center justify-between">
                   {product.price != null ? (
-                    <span className="flex items-center gap-0.5 text-sm font-bold text-emerald-400">
+                    <span className="flex items-center gap-0.5 text-sm font-bold text-emerald-600">
                       <IndianRupee className="h-3.5 w-3.5" />{product.price.toLocaleString('en-IN')}
                     </span>
                   ) : (
-                    <span className="text-xs text-slate-600">Price on request</span>
+                    <span className="text-xs text-gray-400">Price on request</span>
                   )}
-                  <span className={`text-[10px] font-semibold ${product.is_active ? 'text-emerald-500' : 'text-slate-600'}`}>
+                  <span className={`text-[10px] font-semibold ${product.is_active ? 'text-emerald-600' : 'text-gray-400'}`}>
                     {product.is_active ? 'Active' : 'Inactive'}
                   </span>
                 </div>
@@ -297,33 +296,32 @@ export default function CatalogPage() {
             ))}
           </div>
         )}
-      </div>
 
       {/* Add/Edit Modal */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900 shadow-2xl max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between border-b border-white/10 px-5 py-4 flex-shrink-0">
-              <h2 className="text-sm font-bold text-white">{editingId ? 'Edit Product' : 'Add Product'}</h2>
-              <button onClick={() => setShowForm(false)} className="text-slate-500 hover:text-white">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white shadow-2xl max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4 flex-shrink-0">
+              <h2 className="text-sm font-bold text-gray-900">{editingId ? 'Edit Product' : 'Add Product'}</h2>
+              <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-700">
                 <X className="h-4 w-4" />
               </button>
             </div>
             <div className="p-5 space-y-4 overflow-y-auto flex-1 min-h-0">
-              {error && <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400">{error}</div>}
+              {error && <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">{error}</div>}
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-400">Product Name *</label>
+                <label className="mb-1 block text-xs font-medium text-gray-600">Product Name *</label>
                 <input
-                  className="w-full rounded-lg border border-white/10 bg-slate-800 px-3 py-2 text-sm text-white focus:border-violet-500 focus:outline-none"
+                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-200"
                   placeholder="e.g. Premium Coaching Package"
                   value={form.name}
                   onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-400">Description</label>
+                <label className="mb-1 block text-xs font-medium text-gray-600">Description</label>
                 <textarea
-                  className="w-full rounded-lg border border-white/10 bg-slate-800 px-3 py-2 text-sm text-white focus:border-violet-500 focus:outline-none resize-none"
+                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-200 resize-none"
                   rows={3}
                   placeholder="Brief product description..."
                   value={form.description || ''}
@@ -332,20 +330,20 @@ export default function CatalogPage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-slate-400">Price (₹)</label>
+                  <label className="mb-1 block text-xs font-medium text-gray-600">Price (₹)</label>
                   <input
                     type="number"
                     min="0"
-                    className="w-full rounded-lg border border-white/10 bg-slate-800 px-3 py-2 text-sm text-white focus:border-violet-500 focus:outline-none"
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-200"
                     placeholder="e.g. 4999"
                     value={form.price ?? ''}
                     onChange={e => setForm(f => ({ ...f, price: e.target.value ? Number(e.target.value) : null }))}
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-slate-400">Category</label>
+                  <label className="mb-1 block text-xs font-medium text-gray-600">Category</label>
                   <input
-                    className="w-full rounded-lg border border-white/10 bg-slate-800 px-3 py-2 text-sm text-white focus:border-violet-500 focus:outline-none"
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-200"
                     placeholder="e.g. Coaching"
                     list="cat-list"
                     value={form.category || ''}
@@ -357,9 +355,9 @@ export default function CatalogPage() {
                 </div>
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-400">Image URL (optional)</label>
+                <label className="mb-1 block text-xs font-medium text-gray-600">Image URL (optional)</label>
                 <input
-                  className="w-full rounded-lg border border-white/10 bg-slate-800 px-3 py-2 text-sm text-white focus:border-violet-500 focus:outline-none"
+                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-200"
                   placeholder="https://..."
                   value={form.image_url || ''}
                   onChange={e => setForm(f => ({ ...f, image_url: e.target.value }))}
@@ -368,14 +366,14 @@ export default function CatalogPage() {
               <label className="flex items-center gap-2 cursor-pointer">
                 <div
                   onClick={() => setForm(f => ({ ...f, is_active: !f.is_active }))}
-                  className={`relative h-5 w-9 rounded-full transition-colors ${form.is_active ? 'bg-emerald-500' : 'bg-slate-700'}`}
+                  className={`relative h-5 w-9 rounded-full transition-colors ${form.is_active ? 'bg-emerald-500' : 'bg-gray-300'}`}
                 >
-                  <span className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white transition-transform ${form.is_active ? 'translate-x-4' : ''}`} />
+                  <span className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white transition-transform shadow-sm ${form.is_active ? 'translate-x-4' : ''}`} />
                 </div>
-                <span className="text-xs text-slate-400">Active (visible in catalog)</span>
+                <span className="text-xs text-gray-600">Active (visible in catalog)</span>
               </label>
             </div>
-            <div className="flex gap-2 border-t border-white/10 px-5 py-4 flex-shrink-0">
+            <div className="flex gap-2 border-t border-gray-100 px-5 py-4 flex-shrink-0">
               <Button variant="ghost" size="sm" className="flex-1" onClick={() => setShowForm(false)}>Cancel</Button>
               <Button variant="primary" size="sm" className="flex-1" onClick={handleSave} disabled={saving}>
                 {saving ? 'Saving...' : (<><Check className="h-4 w-4 mr-1" />{editingId ? 'Update' : 'Add Product'}</>)}

@@ -39,7 +39,7 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
     name: 'Support',
     icon: 'MessageSquare',
     children: [
-      { name: 'Messages', href: '/dashboard/messages', icon: 'Send', badge: 'Start Here' },
+      { name: 'Messages', href: '/dashboard/messages', icon: 'Send' },
       { name: 'Auto Replies', href: '/dashboard/auto-replies', icon: 'Bot' },
       { name: 'Opted Out', href: '/dashboard/opted-out', icon: 'UserX' },
       { name: 'Tasks', href: '/dashboard/tasks', icon: 'CheckSquare' },
@@ -50,9 +50,9 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
     name: 'Automate',
     icon: 'Zap',
     children: [
-      { name: 'Automations', href: '/dashboard/automations', icon: 'Workflow', badge: 'Start Here' },
-      { name: 'WhatsApp Flows', href: '/dashboard/flows', icon: 'Layers', badge: 'Start Here' },
-      { name: 'WA Templates', href: '/dashboard/templates', icon: 'Layout', badge: 'Start Here' },
+      { name: 'Automations', href: '/dashboard/automations', icon: 'Workflow' },
+      { name: 'WhatsApp Flows', href: '/dashboard/flows', icon: 'Layers' },
+      { name: 'WA Templates', href: '/dashboard/templates', icon: 'Layout' },
       { name: 'A/B Testing', href: '/dashboard/ab-testing', icon: 'FlaskConical' },
       { name: 'Automation Logs', href: '/dashboard/logs', icon: 'ScrollText' },
     ],
@@ -75,7 +75,7 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
     icon: 'Building2',
     children: [
       { name: 'Team', href: '/dashboard/team', icon: 'UserCog' },
-      { name: 'Integrations', href: '/dashboard/integrations', icon: 'Plug', badge: 'Start Here' },
+      { name: 'Integrations', href: '/dashboard/integrations', icon: 'Plug' },
       { name: 'API Keys', href: '/dashboard/api', icon: 'Key' },
       { name: 'Billing', href: '/dashboard/billing', icon: 'CreditCard' },
       { name: 'Settings', href: '/dashboard/settings', icon: 'Settings' },

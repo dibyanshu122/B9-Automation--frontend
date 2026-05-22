@@ -181,7 +181,7 @@ export function TopUpModal({ isOpen, onClose }: TopUpModalProps) {
         </div>
 
         <p className="rounded-lg bg-blue-50 p-3 text-xs text-blue-800">
-          Tip: Add your own free <a href="https://console.groq.com" target="_blank" rel="noopener noreferrer" className="font-bold underline">Groq API key</a> in Settings to get unlimited AI replies at zero cost.
+          Tip: Add your own <a href="https://console.groq.com" target="_blank" rel="noopener noreferrer" className="font-bold underline">Groq API key</a> in Settings to use your own AI quota for replies.
         </p>
       </div>
     </Modal>

@@ -497,7 +497,10 @@ function UnifiedInbox() {
       }, 1500);
     } catch (err: any) {
       const detail = err?.response?.data?.detail || '';
-      if (detail.includes('paid plan') || detail.includes('upgrade')) {
+      if (detail.includes('24-hour') || detail.includes('window closed') || detail.includes('template')) {
+        toast.error('24h window closed — use an approved template to message this contact.');
+        setTplOpen(true);
+      } else if (detail.includes('paid plan') || detail.includes('upgrade')) {
         toast.error('Upgrade to STARTER plan to send live messages');
       } else {
         toast('Saved as draft — WhatsApp may not be connected', { icon: '📋' });

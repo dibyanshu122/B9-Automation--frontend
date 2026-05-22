@@ -183,9 +183,10 @@ export default function QrCodesPage() {
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={() => setShowCreate(false)} />
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
             <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-              className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-white rounded-xl shadow-2xl w-full max-w-md p-5">
+              className="bg-white rounded-xl shadow-2xl w-full max-w-md p-5 pointer-events-auto">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-base font-bold text-gray-900">Create QR Code</h2>
                 <button onClick={() => setShowCreate(false)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><X className="w-4 h-4" /></button>
@@ -207,6 +208,7 @@ export default function QrCodesPage() {
                 </Button>
               </div>
             </motion.div>
+            </div>
           </>
         )}
       </AnimatePresence>

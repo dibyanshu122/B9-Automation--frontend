@@ -1,6 +1,14 @@
 import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
+
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  display: 'swap',
+  variable: '--font-inter',
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://b9automation.com'),
@@ -78,7 +86,7 @@ export default function RootLayout({
         {/* DNS Prefetch for performance */}
         <link rel="dns-prefetch" href="https://api.brainai.in" />
       </head>
-      <body className="font-sans" suppressHydrationWarning>
+      <body className={`${inter.className} font-sans`} suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>

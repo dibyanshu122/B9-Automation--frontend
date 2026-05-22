@@ -241,9 +241,6 @@ export default function BillingPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 rounded-full px-2 py-1">
-              Annual = best yearly price
-            </span>
             <div className="inline-flex rounded-lg border border-gray-200 bg-gray-100 p-1">
               <button
                 type="button"
@@ -288,13 +285,10 @@ export default function BillingPage() {
                 key={plan.type}
                 className={`relative flex flex-col ${isCurrent ? 'ring-2 ring-primary-500' : ''} ${badge === 'Most Popular' ? 'border-primary-400' : ''}`}
               >
-                {/* Badge */}
-                {badge && (
-                  <div className={`absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-0.5 text-[10px] font-bold whitespace-nowrap
-                    ${badge === 'Most Popular' ? 'bg-primary-500 text-white' :
-                      badge === 'Best Value' ? 'bg-green-500 text-white' :
-                      badge === 'Enterprise' ? 'bg-purple-600 text-white' : 'bg-gray-700 text-white'}`}>
-                    {badge}
+                {/* Badge — only Most Popular */}
+                {badge === 'Most Popular' && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary-500 px-3 py-0.5 text-[10px] font-bold whitespace-nowrap text-white">
+                    Most Popular
                   </div>
                 )}
 

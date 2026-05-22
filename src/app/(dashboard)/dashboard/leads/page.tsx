@@ -42,12 +42,15 @@ export default function LeadsPage() {
   const api = getApiClient();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [inbox, setInbox] = useState<InboxItem[]>([]);
+  const [handoverQueue, setHandoverQueue] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'pipeline' | 'qualified' | 'inbox'>('pipeline');
   const [busyAction, setBusyAction] = useState('');
   const [chatHistory, setChatHistory] = useState<any | null>(null);
   const [conversation, setConversation] = useState<any | null>(null);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [leadIntelligence, setLeadIntelligence] = useState<any | null>(null);
+  const [leadIntelLoading, setLeadIntelLoading] = useState(false);
   const [paymentLinkTarget, setPaymentLinkTarget] = useState<{ phone: string; name: string } | null>(null);
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentDesc, setPaymentDesc] = useState('');
@@ -63,10 +66,11 @@ export default function LeadsPage() {
 
   const refresh = () => {
     setLoading(true);
-    Promise.all([get('/api/leads'), get('/api/leads/inbox')])
-      .then(([leadResponse, inboxResponse]) => {
+    Promise.all([get('/api/leads'), get('/api/leads/inbox'), get('/api/leads/handover-queue')])
+      .then(([leadResponse, inboxResponse, handoverResponse]) => {
         setLeads(leadResponse.data);
         setInbox(inboxResponse.data);
+        setHandoverQueue(handoverResponse.data?.items || []);
       })
       .catch((error) => toast.error(error.response?.data?.detail || 'Failed to load CRM data'))
       .finally(() => setLoading(false));
@@ -169,11 +173,18 @@ export default function LeadsPage() {
     setBusyAction(`view-${lead.id}`);
     setMemoryOpen(false);
     setLeadMemory([]);
+    setLeadIntelligence(null);
     try {
       const response = await api.get(`/api/leads/${lead.id}`);
       setSelectedLead(response.data);
+      setLeadIntelLoading(true);
+      api.get(`/api/leads/${lead.id}/intelligence`)
+        .then((intel) => setLeadIntelligence(intel.data))
+        .catch(() => setLeadIntelligence(null))
+        .finally(() => setLeadIntelLoading(false));
     } catch (error: any) {
       toast.error(error.response?.data?.detail || 'Failed to load lead');
+      setLeadIntelLoading(false);
     } finally {
       setBusyAction('');
     }
@@ -189,7 +200,7 @@ export default function LeadsPage() {
   };
 
   const clearLeadMemory = async (leadId: string) => {
-    if (!confirm('Is lead ki poori conversation memory delete ho jaayegi. Sure?')) return;
+    if (!confirm('This will permanently clear the conversation memory for this lead. Are you sure?')) return;
     setClearingMemory(true);
     try {
       await api.delete(`/api/leads/${leadId}/memory`);
@@ -282,6 +293,22 @@ export default function LeadsPage() {
         </div>
       </div>
 
+      {handoverQueue.length > 0 && (
+        <Card className="border-red-100 bg-red-50 shadow-sm" hoverable={false}>
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-sm font-black uppercase tracking-wide text-red-600">Handover Queue</p>
+              <h2 className="mt-1 text-xl font-bold text-gray-950">{handoverQueue.length} conversation{handoverQueue.length > 1 ? 's' : ''} need human review</h2>
+              <p className="mt-1 text-sm text-red-700">{handoverQueue[0]?.handover_reason || handoverQueue[0]?.latest_message || 'Review customer conversation and assign an owner.'}</p>
+            </div>
+            <Button variant="secondary" onClick={() => setActiveTab('inbox')}>
+              <AlertTriangle className="h-4 w-4" />
+              Open Inbox
+            </Button>
+          </div>
+        </Card>
+      )}
+
       <Card className="border-orange-100 shadow-sm" hoverable={false}>
         <div className="flex flex-wrap gap-3">
           <label className="relative flex-1 min-w-[180px]">
@@ -347,7 +374,13 @@ export default function LeadsPage() {
                     setLeads(prev => prev.filter(l => !selectedLeadIds.has(l.id)));
                     setSelectedLeadIds(new Set());
                     toast.success(`${selectedLeadIds.size} leads deleted`);
-                  } catch { toast.error('Bulk delete failed'); }
+                  } catch (e: any) {
+                    if (e?.response?.status === 403) {
+                      toast.error('Only workspace admins can bulk delete leads.');
+                    } else {
+                      toast.error('Bulk delete failed');
+                    }
+                  }
                   finally { setBulkLoading(''); }
                 }}
                 className="rounded-md border border-red-200 bg-red-50 px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-100 transition"
@@ -591,6 +624,54 @@ export default function LeadsPage() {
             <p className="mb-1 font-semibold text-gray-950">Message</p>
             <p>{selectedLead.message || selectedLead.requirement || 'No message captured'}</p>
           </div>
+          <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50 p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="flex items-center gap-2 text-sm font-bold text-blue-950">
+                <Brain className="h-4 w-4 text-blue-600" />
+                AI Lead Intelligence
+              </p>
+              {leadIntelLoading && <Loader2 className="h-4 w-4 animate-spin text-blue-500" />}
+            </div>
+            {leadIntelligence ? (
+              <div className="space-y-3">
+                <div className="grid gap-2 text-xs md:grid-cols-3">
+                  <div className="rounded-lg bg-white p-3">
+                    <p className="font-bold text-gray-500">Score</p>
+                    <p className="mt-1 text-sm font-black text-gray-900">{leadIntelligence.summary?.score_label || 'cold'} · {leadIntelligence.summary?.score ?? 0}/10</p>
+                  </div>
+                  <div className="rounded-lg bg-white p-3">
+                    <p className="font-bold text-gray-500">Handover</p>
+                    <p className="mt-1 text-sm font-black text-gray-900">{leadIntelligence.summary?.handover_requested ? 'Requested' : 'Not requested'}</p>
+                  </div>
+                  <div className="rounded-lg bg-white p-3">
+                    <p className="font-bold text-gray-500">Pending Tasks</p>
+                    <p className="mt-1 text-sm font-black text-gray-900">{leadIntelligence.summary?.pending_tasks || 0}</p>
+                  </div>
+                </div>
+                <div className="rounded-lg border border-blue-200 bg-white p-3">
+                  <p className="text-xs font-bold uppercase tracking-wide text-blue-500">Next best action</p>
+                  <p className="mt-1 text-sm font-bold text-gray-950">{leadIntelligence.next_action?.label}</p>
+                  <p className="mt-1 text-xs text-gray-500">{leadIntelligence.next_action?.reason}</p>
+                </div>
+                {leadIntelligence.summary?.ai_summary && (
+                  <p className="rounded-lg bg-white p-3 text-xs text-gray-700">{leadIntelligence.summary.ai_summary}</p>
+                )}
+                <div className="max-h-52 space-y-2 overflow-y-auto">
+                  {(leadIntelligence.timeline || []).slice(0, 8).map((event: any, idx: number) => (
+                    <div key={`${event.type}-${idx}`} className="rounded-lg bg-white px-3 py-2 text-xs">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-bold text-gray-800">{event.title || event.type}</span>
+                        <span className="text-gray-400">{event.created_at ? new Date(event.created_at).toLocaleString() : ''}</span>
+                      </div>
+                      {event.body && <p className="mt-1 line-clamp-2 text-gray-500">{event.body}</p>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-blue-700">{leadIntelLoading ? 'Loading intelligence...' : 'No intelligence timeline available yet.'}</p>
+            )}
+          </div>
           {/* WhatsApp Flow Form Submissions */}
           {(() => {
             const subs: Array<{ submitted_at: string; fields: Record<string, string> }> =
@@ -671,7 +752,7 @@ export default function LeadsPage() {
                 ) : leadMemory.length === 0 ? (
                   <div className="py-4 text-center">
                     <Brain className="w-8 h-8 text-gray-200 mx-auto mb-2" />
-                    <p className="text-xs text-gray-400">Koi memory nahi — AI is lead se baat karegi toh yaad rakhegi</p>
+                    <p className="text-xs text-gray-400">No memory yet — AI will remember key details as it chats with this lead.</p>
                   </div>
                 ) : (
                   <>
@@ -692,7 +773,7 @@ export default function LeadsPage() {
                       {clearingMemory
                         ? <Loader2 className="w-3 h-3 animate-spin" />
                         : <Trash2 className="w-3 h-3" />}
-                      Memory clear karo
+                      Clear Memory
                     </button>
                   </>
                 )}

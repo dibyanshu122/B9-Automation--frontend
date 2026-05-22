@@ -1099,7 +1099,12 @@ function DeactivateButton({ template, onDone }: { template: any; onDone: () => v
       toast.success(`Template "${template.name}" deleted`);
       onDone();
     } catch (e: any) {
-      toast.error(e.response?.data?.detail || 'Could not delete template');
+      const detail = e.response?.data?.detail || '';
+      if (e.response?.status === 403) {
+        toast.error('Template deletion requires admin access. Contact your workspace admin.');
+      } else {
+        toast.error(detail || 'Could not delete template');
+      }
     } finally {
       setLoading(false);
     }
@@ -1601,7 +1606,7 @@ export default function TemplatesPage() {
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center text-white text-sm font-bold">✨</div>
                 <div>
                   <p className="font-bold text-gray-900 text-sm">AI Template Generator</p>
-                  <p className="text-[10px] text-gray-400">Describe → AI generates → Meta pe submit</p>
+                  <p className="text-[10px] text-gray-400">Describe → AI generates → Submit to Meta for approval</p>
                 </div>
               </div>
               <button onClick={() => setShowAiDraft(false)} disabled={aiGenerating}
@@ -1671,7 +1676,7 @@ export default function TemplatesPage() {
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-gray-700 truncate">{aiMediaFile?.name}</p>
                       <p className="text-[10px] text-gray-400">
-                        {aiMediaHandle ? '✓ Meta pe uploaded' : aiMediaUploading ? 'Uploading...' : 'Ready to upload'}
+                        {aiMediaHandle ? '✓ Uploaded to Meta' : aiMediaUploading ? 'Uploading...' : 'Ready to upload'}
                       </p>
                     </div>
                     <button onClick={() => { setAiMediaFile(null); setAiMediaPreview(''); setAiMediaHandle(''); }}

@@ -125,15 +125,25 @@ const DEFAULT_HOURS = Object.fromEntries(
 function RuleForm({ ruleType, existing, onClose, onSaved }: {
   ruleType: string; existing?: Rule | null; onClose: () => void; onSaved: () => void;
 }) {
-  const { post, put } = useApi();
+  const { post, put, get } = useApi();
   const [name, setName] = useState(existing?.name || '');
   const [keywords, setKeywords] = useState((existing?.trigger_keywords || []).join(', '));
   const [matchExact, setMatchExact] = useState(existing?.match_exact || false);
   const [responseText, setResponseText] = useState(existing?.response_text || '');
   const [templateName, setTemplateName] = useState(existing?.template_name || '');
+  const [approvedTemplates, setApprovedTemplates] = useState<{name:string;language:string}[]>([]);
+  useEffect(() => {
+    get('/api/automation/whatsapp/templates')
+      .then(r => setApprovedTemplates((r.data?.templates || []).filter((t: any) => t.status === 'APPROVED')))
+      .catch(() => {});
+  }, []); // eslint-disable-line
   const [workingHours, setWorkingHours] = useState<any>(existing?.working_hours && Object.keys(existing.working_hours).length > 0 ? existing.working_hours : DEFAULT_HOURS);
   const [timezone, setTimezone] = useState(existing?.timezone || 'Asia/Kolkata');
-  const [alertEmail, setAlertEmail] = useState((existing as any)?.alert_email || '');
+  const [alertEmail, setAlertEmail] = useState(
+    ruleType === 'auto_assign'
+      ? ((existing as any)?.assign_label || '')
+      : ((existing as any)?.alert_email || '')
+  );
   const [mediaUrl, setMediaUrl] = useState(existing?.media_url || '');
   const [mediaType, setMediaType] = useState(existing?.media_type || 'image');
   const [mediaCaption, setMediaCaption] = useState(existing?.media_caption || '');
@@ -152,7 +162,10 @@ function RuleForm({ ruleType, existing, onClose, onSaved }: {
       response_text: responseText.trim() || null,
       template_name: templateName.trim() || null,
       working_hours: ruleType === 'out_of_office' ? workingHours : {},
-      timezone, alert_email: alertEmail.trim() || null,
+      timezone,
+      // keyword_alert uses alert_email; auto_assign uses assign_label (same UI field, different key)
+      alert_email: ruleType !== 'auto_assign' ? (alertEmail.trim() || null) : null,
+      assign_label: ruleType === 'auto_assign' ? (alertEmail.trim() || null) : null,
       media_url: mediaUrl.trim() || null,
       media_type: mediaUrl.trim() ? mediaType : null,
       media_caption: mediaCaption.trim() || null,
@@ -212,9 +225,16 @@ function RuleForm({ ruleType, existing, onClose, onSaved }: {
                   <textarea value={responseText} onChange={e => setResponseText(e.target.value)} rows={3}
                     placeholder="Hi! Thanks for reaching out. Our pricing starts at ₹999..."
                     className={`${inputCls} resize-none`} />
-                  <p className="text-xs text-gray-400 mt-1">Or use an approved WhatsApp template instead:</p>
-                  <input value={templateName} onChange={e => setTemplateName(e.target.value)}
-                    placeholder="Template name (APPROVED templates only)" className={`${inputCls} mt-1`} />
+                  <p className="text-xs text-gray-400 mt-1">Or select an approved WhatsApp template (overrides text above):</p>
+                  <select value={templateName} onChange={e => setTemplateName(e.target.value)} className={`${inputCls} mt-1`}>
+                    <option value="">— Use text reply above —</option>
+                    {approvedTemplates.map(t => (
+                      <option key={t.name} value={t.name}>{t.name} ({t.language})</option>
+                    ))}
+                  </select>
+                  {approvedTemplates.length === 0 && (
+                    <p className="text-[11px] text-gray-400 mt-0.5">No approved templates yet. <a href="/dashboard/templates" className="text-orange-500 underline">Create one →</a></p>
+                  )}
                 </div>
 
                 {/* Media attachment — welcome and keyword_reply */}
@@ -310,8 +330,8 @@ function RuleForm({ ruleType, existing, onClose, onSaved }: {
                     <input type="checkbox" id="skipAuto" checked={skipAutomation} onChange={e => setSkipAutomation(e.target.checked)}
                       className="rounded mt-0.5" />
                     <label htmlFor="skipAuto" className="text-sm text-blue-800 cursor-pointer">
-                      <span className="font-semibold">Skip automation workflows for new contacts</span>
-                      <p className="text-xs text-blue-600 mt-0.5">When this welcome message sends, automation workflows won't also run — preventing duplicate messages.</p>
+                      <span className="font-semibold">Skip lead automation for new contacts</span>
+                      <p className="text-xs text-blue-600 mt-0.5">When this welcome fires, the "New WhatsApp Lead" automation workflow won't also run — prevents duplicate messages for new contacts only. AI agentic replies are handled separately.</p>
                     </label>
                   </div>
                 )}
@@ -452,6 +472,17 @@ export default function AutoRepliesPage() {
   const { get, post } = useApi();
   const [activeTab, setActiveTab] = useState('keyword_reply');
   const [rules, setRules] = useState<Rule[]>([]);
+  const [dismissedInfoTabs, setDismissedInfoTabs] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem('ar_dismissed_info');
+      return new Set(saved ? JSON.parse(saved) : []);
+    } catch { return new Set(); }
+  });
+  const dismissInfo = (tab: string) => {
+    const next = new Set(dismissedInfoTabs).add(tab);
+    setDismissedInfoTabs(next);
+    try { localStorage.setItem('ar_dismissed_info', JSON.stringify([...next])); } catch { /* ignore */ }
+  };
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingRule, setEditingRule] = useState<Rule | null>(null);
@@ -571,8 +602,8 @@ export default function AutoRepliesPage() {
       {/* Tab description + add button */}
       {activeTab !== 'icebreaker' && activeTab !== 'quick_replies' && (
         <div className="space-y-3">
-          {/* Info box */}
-          {TAB_INFO[activeTab] && (() => {
+          {/* Info box — dismissible per tab */}
+          {TAB_INFO[activeTab] && !dismissedInfoTabs.has(activeTab) && (() => {
             const info = TAB_INFO[activeTab];
             const colors: Record<string, string> = {
               orange: 'bg-orange-50 border-orange-200 text-orange-900',
@@ -605,6 +636,9 @@ export default function AutoRepliesPage() {
                     )}
                     {info.tip && <p className={`text-xs mt-2 ${tipColors[info.color]}`}>{info.tip}</p>}
                   </div>
+                  <button onClick={() => dismissInfo(activeTab)} className="shrink-0 opacity-50 hover:opacity-100 transition p-0.5 rounded">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
             );
@@ -614,7 +648,7 @@ export default function AutoRepliesPage() {
           {activeTab === 'welcome' && tabRules.some(r => r.is_active && r.skip_automation_on_welcome !== false) && (
             <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-xs text-amber-800">
               <ShieldAlert className="w-4 h-4 shrink-0 text-amber-600" />
-              <span><strong>Active:</strong> Automation workflows will be skipped for new contacts — they'll receive only this welcome message.</span>
+              <span><strong>Active:</strong> The &quot;New WhatsApp Lead&quot; automation workflow will be skipped for new contacts — they&apos;ll receive this welcome message instead. Agentic AI replies are not affected.</span>
             </div>
           )}
 
@@ -650,7 +684,7 @@ export default function AutoRepliesPage() {
                     'Save greetings, pricing info, FAQs, follow-up messages',
                     'Add an optional shortcut command (e.g. /greet, /price)',
                     'Access via the ⚡ button in the inbox reply box',
-                    'Available to all agents in your workspace',
+                    'Saved to your account — only you can see and use them',
                   ].map((b, i) => (
                     <li key={i} className="text-xs opacity-80 flex items-start gap-1.5">
                       <span className="mt-1 w-1 h-1 rounded-full bg-current shrink-0 opacity-60" />

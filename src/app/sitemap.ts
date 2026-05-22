@@ -21,12 +21,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
   ];
 
   const featurePages: MetadataRoute.Sitemap = [
+    'whatsapp-agentic-ai',
+    'ai-template-builder',
+    'visual-automation-builder',
+    'campaigns',
+    'payments',
+    'templates',
+    'crm',
+    'widget',
     'whatsapp-automation',
     'instagram-dm',
     'facebook-lead-ads',
     'ai-chatbot',
-    'document-chat',
-    'visual-automation-builder',
+    'api',
+    'catalog',
   ].map((slug) => ({
     url: `${BASE_URL}/features/${slug}`,
     lastModified: now,

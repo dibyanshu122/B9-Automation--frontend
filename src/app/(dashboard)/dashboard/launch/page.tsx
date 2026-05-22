@@ -32,15 +32,7 @@ const industries = [
   { key: 'general',     label: '🏢 General Business' },
 ];
 
-const INDIA_PRESETS = [
-  { key: 'india_coaching',    label: '🎓 Coaching Center',      desc: 'Admission → class buttons → fees → demo booking → follow-up' },
-  { key: 'india_realestate',  label: '🏠 Real Estate',          desc: 'Enquiry → qualify → brochure → site visit → agent handover' },
-  { key: 'india_clinic',      label: '🏥 Clinic / Doctor',       desc: 'Appointment → department → booking form → reminder' },
-  { key: 'india_ecommerce',   label: '🛒 D2C Ecommerce',        desc: 'Catalog → order form → Razorpay → GST invoice' },
-  { key: 'india_indiamart',   label: '🇮🇳 IndiaMART Leads',     desc: 'Lead import → qualify → WA follow-up → Sheet + CRM' },
-  { key: 'india_salon',       label: '💇 Salon / Gym',          desc: 'Service buttons → booking form → confirmation → reminder' },
-  { key: 'india_support',     label: '🆘 Customer Support',     desc: 'Complaint detect → stop AI → owner alert → handover' },
-];
+
 
 export default function LaunchCenterPage() {
   const { get, post } = useApi();
@@ -94,10 +86,6 @@ export default function LaunchCenterPage() {
         <div className="absolute bottom-0 left-1/2 h-24 w-64 -translate-x-1/2 rounded-full bg-sky-500/10 blur-3xl" />
         <div className="relative grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
           <div>
-            <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-wide text-orange-100">
-              <Rocket className="h-3.5 w-3.5" />
-              Production launch center
-            </p>
             <h1 className="text-3xl font-bold sm:text-4xl">Make B9 Automation client-ready before you sell it.</h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-300">
               This page checks business value, security, live integrations, WhatsApp readiness, and the real owner journey: lead captured, message drafted, task created.
@@ -181,27 +169,6 @@ export default function LaunchCenterPage() {
           )}
         </Card>
 
-        {/* India Killer Presets */}
-        <Card className="border-green-100 shadow-sm" hoverable={false}>
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-xl">🇮🇳</span>
-            <h2 className="text-xl font-bold text-gray-950">India Killer Presets</h2>
-          </div>
-          <p className="text-sm text-gray-500 mb-4">One-click ready workflows for Indian businesses — edit any node before launching.</p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {INDIA_PRESETS.map((preset) => (
-              <a
-                key={preset.key}
-                href={`/dashboard/automations?template=${preset.key}`}
-                className="flex flex-col gap-1 rounded-xl border border-gray-100 bg-white p-4 hover:border-green-200 hover:bg-green-50 transition"
-              >
-                <p className="text-sm font-bold text-gray-900">{preset.label}</p>
-                <p className="text-xs text-gray-500">{preset.desc}</p>
-                <span className="mt-1 text-[10px] font-semibold text-green-600">→ Open in Workflow Builder</span>
-              </a>
-            ))}
-          </div>
-        </Card>
 
         <Card className="border-orange-100 shadow-sm" hoverable={false}>
           <div className="flex items-center gap-2">

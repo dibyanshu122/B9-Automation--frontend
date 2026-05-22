@@ -8,7 +8,7 @@ import { Logo } from '@/components/logo';
 import { SplineViewer } from '@/components/spline-viewer';
 import { featureHighlights, workflowSteps, trustPoints, blogPosts, allFeatures } from '@/lib/marketing';
 import {
-  ArrowRight, Bot, Brain, Building2, ChevronDown, FileText, MessageCircle, Sparkles, Users,
+  ArrowRight, Bot, Brain, Building2, ChevronDown, MessageCircle, Sparkles, Users,
   CheckCircle2, Globe, Mail, Linkedin, Instagram, Youtube, ExternalLink,
   Menu, X,
 } from 'lucide-react';
@@ -36,7 +36,7 @@ const faqs = [
   },
   {
     q: 'Which platforms does B9 integrate with?',
-    a: 'WhatsApp, Gmail, Google Sheets, Telegram, Slack, Calendly, Zoho CRM, HubSpot, Razorpay, Twilio, Google Drive, WordPress, and 100+ others via Webhooks and Zapier.',
+    a: 'WhatsApp (Official Meta Cloud API), Gmail, Google Sheets, Facebook Lead Ads, Instagram DM, Razorpay, and IndiaMART are live today. Webhook support lets you connect any external tool or API. More native integrations (Telegram, Slack, Calendly, Zoho) coming soon.',
   },
   {
     q: 'How does the AI learn my business?',
@@ -44,15 +44,15 @@ const faqs = [
   },
   {
     q: 'Can I use B9 for multiple businesses?',
-    a: 'Yes. Our Pro and Agency plans support multiple workspaces. Manage unlimited businesses from one dashboard.',
+    a: 'Yes. Our Growth, Pro, and Business plans support multiple assistants and workspaces. Agencies can manage client accounts from one dashboard — each with separate WhatsApp connections, leads, and automations.',
   },
   {
     q: 'Is my customer data safe?',
-    a: 'Absolutely. Data is encrypted at rest and in transit using 256-bit encryption. We never train our AI models on your data. Full GDPR, SOC2, and ISO 27001 compliance.',
+    a: 'Yes. All data is encrypted at rest and in transit (256-bit AES). We never train AI models on your data. WhatsApp tokens are stored encrypted using PBKDF2. We follow GDPR-ready practices: opt-out is durable, consent is logged, and SOC2/ISO 27001 are on our roadmap.',
   },
   {
     q: 'Is there a free plan?',
-    a: 'Yes! Our free plan includes 30 AI credits, 1 assistant, and 50MB storage — forever. Upgrade anytime for more power. No hidden charges, cancel anytime.',
+    a: 'Yes! Our free plan includes 30 AI credits, 1 PDF assistant, and 50MB storage. No WhatsApp or automation on the free plan. Upgrade to Starter (Rs. 1,499/mo) for WhatsApp + automation. No hidden charges, cancel anytime.',
   },
   {
     q: 'Do you offer onboarding or support?',
@@ -60,7 +60,7 @@ const faqs = [
   },
   {
     q: 'Can I build WhatsApp bot automation?',
-    a: 'Yes. B9 fully integrates with WhatsApp Business API. Build broadcast campaigns, automated sequences, intelligent routing, and approval workflows.',
+    a: 'Yes. B9 uses the official Meta WhatsApp Cloud API. Build broadcast campaigns, automated reply sequences, lead qualification bots, catalog+payment flows, and AI-generated Meta templates. 24-hour window rules are enforced automatically — only approved templates go out after the window closes.',
   },
   {
     q: 'What if I need a custom integration?',
@@ -69,50 +69,41 @@ const faqs = [
 ];
 
 const liveIntegrations = [
-  { label: 'WhatsApp Business', icon: '💬', desc: 'Send messages via Meta API' },
-  { label: 'Gmail', icon: '📧', desc: 'Sync & send emails' },
-  { label: 'Google Sheets', icon: '📊', desc: 'Push leads to sheets' },
-  { label: 'Facebook Lead Ads', icon: '📘', desc: 'Auto-capture form leads' },
-  { label: 'Instagram DM', icon: '📸', desc: 'Auto-reply to DMs' },
-  { label: 'Razorpay', icon: '💳', desc: 'Payment triggers' },
-  { label: 'Webhooks', icon: '🪝', desc: 'Any external tool' },
-];
-
-const comingIntegrations = [
-  { label: 'Telegram', icon: '🤖' },
-  { label: 'Slack', icon: '💼' },
-  { label: 'Calendly', icon: '📅' },
-  { label: 'Zoho CRM', icon: '🏠' },
-  { label: 'Zapier', icon: '🎯' },
-  { label: 'HubSpot', icon: '🟠' },
-  { label: 'Twilio SMS', icon: '📱' },
-  { label: 'Google Calendar', icon: '🗓' },
+  { label: 'WhatsApp Business', icon: '💬', desc: 'Official Meta Cloud API — send, receive, automate' },
+  { label: 'Instagram DM',     icon: '📸', desc: 'Auto-reply to DMs, capture as leads' },
+  { label: 'Facebook Lead Ads',icon: '📘', desc: 'Auto-capture form leads into CRM' },
+  { label: 'Gmail',            icon: '📧', desc: 'Sync inbox, create draft replies, send' },
+  { label: 'Google Sheets',    icon: '📊', desc: 'Push leads and data to sheets automatically' },
+  { label: 'Razorpay',         icon: '💳', desc: 'Payment links, invoices, webhook triggers' },
+  { label: 'IndiaMART',        icon: '🏭', desc: 'Auto-capture B2B leads from IndiaMART' },
+  { label: 'Shopify',          icon: '🛒', desc: 'Order webhooks, customer sync' },
+  { label: 'Webhooks / REST',  icon: '🪝', desc: 'Connect any external tool or API' },
 ];
 
 const extendedUseCases = [
   {
     industry: 'Coaching Centers',
     icon: Brain,
-    flow: 'Inquiry → AI qualifies → Schedules demo → Books slot → Sends WhatsApp reminder',
+    flow: 'Inquiry → AI qualifies (class/subject) → Demo booked via WhatsApp Flow → Fee WhatsApp sent → Razorpay payment link',
     stat: '3x More Demo Bookings',
   },
   {
     industry: 'Real Estate',
     icon: Building2,
-    flow: 'Inquiry → Shares property details → Schedule site visit → CRM auto-update',
+    flow: 'IndiaMART / Facebook lead → AI sends property details + catalog → Site visit booked → Follow-up until site visit',
     stat: '60% Faster Response',
   },
   {
-    industry: 'Gyms & Salons',
+    industry: 'D2C & E-commerce',
     icon: Users,
-    flow: 'Walk-in inquiry → Shows pricing → Books appointment → Sends reminder',
-    stat: 'Zero Missed Bookings',
+    flow: 'Shopify order → WhatsApp confirmation sent → Delivery follow-up → Review request → Upsell campaign',
+    stat: '2x Repeat Orders',
   },
   {
-    industry: 'Agencies',
+    industry: 'Clinics & Healthcare',
     icon: Sparkles,
-    flow: 'Lead visits → AI qualifies → Auto-sends proposal → Schedules follow-up',
-    stat: '5x Faster Onboarding',
+    flow: 'Inquiry → AI collects symptoms + preferred doctor → Appointment booked → Reminder 1 hour before',
+    stat: 'Zero Missed Appointments',
   },
 ];
 
@@ -131,14 +122,25 @@ export default function HomePage() {
     if (typeof window !== 'undefined') {
       const originalError = console.error.bind(console);
       console.error = (...args: any[]) => {
+        const first = args[0];
+        const isEmptyObjectError =
+          args.length === 1 &&
+          first &&
+          typeof first === 'object' &&
+          !Array.isArray(first) &&
+          Object.keys(first).length === 0;
         if (
-          args[0]?.message?.includes('buildTimeline') ||
-          args[0]?.toString?.().includes('spline') ||
-          args[0]?.toString?.().includes('Missing property')
+          isEmptyObjectError ||
+          first?.message?.includes('buildTimeline') ||
+          first?.toString?.().includes('spline') ||
+          first?.toString?.().includes('Missing property')
         ) {
           return;
         }
         originalError(...args);
+      };
+      return () => {
+        console.error = originalError;
       };
     }
   }, []);
@@ -325,26 +327,26 @@ export default function HomePage() {
         >
           <motion.div
             variants={fadeUp}
-            className="inline-flex items-center gap-1.5 self-start ml-1 rounded-full border border-white/10 bg-white/5 px-3 py-1 backdrop-blur-sm mb-6"
+            className="inline-flex items-center gap-1.5 self-start ml-1 rounded-full border border-orange-500/20 bg-orange-500/10 px-3 py-1 backdrop-blur-sm mb-6"
           >
-            <Sparkles className="h-3 w-3 text-gray-400" />
-            <span className="text-xs font-medium text-gray-400">AI Automation Platform</span>
+            <Sparkles className="h-3 w-3 text-orange-400" />
+            <span className="text-xs font-medium text-orange-400">India&apos;s WhatsApp Agentic Automation OS</span>
           </motion.div>
 
           <motion.h1
             variants={fadeUp}
             className="text-5xl sm:text-6xl lg:text-7xl font-bold leading-[1.05] tracking-tight"
           >
-            Automate Everything.
+            WhatsApp AI
             <br />
-            <span className="text-gray-500">Grow Faster.</span>
+            <span className="text-gray-500">for Indian Business.</span>
           </motion.h1>
 
           <motion.p
             variants={fadeUp}
             className="mt-8 text-lg text-gray-400 max-w-xl leading-relaxed"
           >
-            B9 Automation powers WhatsApp bots, lead capture, AI customer support, and document intelligence for modern Indian businesses. No code. Pure automation.
+            B9 Agentic Core drafts WhatsApp bots, Meta templates, lead qualification flows, broadcast campaigns, and payment follow-ups — just describe your business. No code required.
           </motion.p>
 
           <motion.div variants={fadeUp} className="mt-10 flex flex-col sm:flex-row gap-4">
@@ -404,7 +406,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="max-w-2xl mb-16">
             <SectionLabel>Core Capabilities</SectionLabel>
-            <h2 className="text-4xl lg:text-5xl font-bold leading-tight">Four powerful tools in one</h2>
+            <h2 className="text-4xl lg:text-5xl font-bold leading-tight">One AI. Complete WhatsApp stack.</h2>
           </div>
 
           <motion.div
@@ -416,28 +418,28 @@ export default function HomePage() {
           >
             {[
               {
-                title: 'AI Website Chatbot',
-                desc: 'Deploy a trained AI chatbot on your website. Answers customer questions 24/7 from your documents, FAQs, and knowledge base.',
-                tag: 'Live on your site',
+                title: 'WhatsApp Agentic AI',
+                desc: 'AI receives customer messages, understands intent, searches your knowledge, sends catalog, creates payment links, and books follow-ups — fully automated.',
+                tag: 'Agentic 24/7',
                 icon: Bot,
               },
               {
-                title: 'WhatsApp Automation',
-                desc: 'Send automated follow-ups, broadcast campaigns, and handle customer queries on WhatsApp without lifting a finger.',
-                tag: 'Send at scale',
-                icon: MessageCircle,
+                title: 'AI Template & Flow Builder',
+                desc: 'Describe a campaign in plain English. B9 AI drafts approved Meta templates and WhatsApp Forms in seconds — ready to submit to Meta.',
+                tag: 'No manual editing',
+                icon: Sparkles,
               },
               {
-                title: 'Smart Lead Capture',
-                desc: 'Capture, qualify, and route leads automatically. Integrate with your CRM, Google Sheets, or Zoho in one click.',
-                tag: 'Zero lost leads',
+                title: 'Lead + Payment Automation',
+                desc: 'Capture, qualify, and route leads automatically. Send Razorpay payment links, GST invoices, and WhatsApp receipts without lifting a finger.',
+                tag: 'Close faster',
                 icon: Users,
               },
               {
-                title: 'Document Intelligence',
-                desc: 'Upload PDFs, Word files, presentations, and URLs. Your AI reads everything and answers instantly with source citations.',
-                tag: 'Search everything',
-                icon: FileText,
+                title: 'Broadcast Campaigns',
+                desc: 'Reach hot/warm/cold leads with approved templates. A/B test subject lines, schedule for peak hours, track delivery and read rates.',
+                tag: 'At scale',
+                icon: MessageCircle,
               },
             ].map((card, i) => {
               const Icon = card.icon;
@@ -456,11 +458,12 @@ export default function HomePage() {
                   {i === 0 && (
                     <div className="mt-6 p-4 rounded-lg bg-black border border-white/10 text-xs space-y-2 font-mono">
                       <div className="text-gray-500">
-                        Customer: <span className="text-gray-300">"What are your pricing plans?"</span>
+                        Customer: <span className="text-gray-300">"Kya price hai?"</span>
                       </div>
                       <div className="text-gray-500">
-                        Bot: <span className="text-gray-300">"Our plans start at ₹999/mo..."</span>
+                        B9 AI: <span className="text-gray-300">Searches knowledge → Sends pricing → Asks name/phone → Saves lead → Sends payment link</span>
                       </div>
+                      <div className="text-[9px] text-gray-600">Intent: pricing · Action: catalog + lead capture · 4 steps · 2.1s</div>
                     </div>
                   )}
                 </motion.div>
@@ -617,15 +620,86 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* AGENTIC AI EXPLAINER */}
+      <section className="py-24 lg:py-32 border-b border-white/[0.06] bg-black">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16 max-w-3xl mx-auto">
+            <SectionLabel>B9 Agentic Core</SectionLabel>
+            <h2 className="text-4xl lg:text-5xl font-bold">Describe it. B9 builds it.</h2>
+            <p className="mt-4 text-gray-400 text-lg">
+              B9 Agentic AI drafts your entire automation — templates, flows, campaigns, follow-ups — from a plain-English description.
+            </p>
+          </div>
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-80px' }}
+            variants={stagger}
+            className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center"
+          >
+            {[
+              { step: '1', label: 'Connect Meta', desc: 'Link your WhatsApp Business number via official Meta OAuth' },
+              { step: '2', label: 'Upload Knowledge', desc: 'PDFs, catalog, pricing, FAQs — AI reads everything' },
+              { step: '3', label: 'Describe Automation', desc: '"Send catalog when someone asks about pricing"' },
+              { step: '4', label: 'AI Drafts Flow', desc: 'Templates, reply sequences, forms, payment links — generated instantly' },
+              { step: '5', label: 'Review & Go Live', desc: 'One click to activate. AI handles the rest 24/7' },
+            ].map((s, i) => (
+              <motion.div key={s.step} variants={fadeUp} className="relative">
+                {i < 4 && (
+                  <div className="hidden md:block absolute top-5 left-full w-4 h-px bg-white/10 z-10" />
+                )}
+                <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 text-center hover:border-white/20 transition-colors">
+                  <div className="w-8 h-8 rounded-full border border-white/20 bg-white/5 flex items-center justify-center text-sm font-bold text-gray-400 mx-auto mb-3">{s.step}</div>
+                  <p className="text-sm font-semibold text-white mb-1">{s.label}</p>
+                  <p className="text-xs text-gray-500 leading-relaxed">{s.desc}</p>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* META COMPLIANCE TRUST */}
+      <section className="py-16 border-b border-white/[0.06] bg-black">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="rounded-2xl border border-green-500/15 bg-green-500/[0.03] p-8">
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+              <div className="flex-shrink-0">
+                <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center">
+                  <CheckCircle2 className="h-6 w-6 text-green-400" />
+                </div>
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-bold text-green-400 uppercase tracking-wider mb-2">Built for Meta Compliance</p>
+                <h3 className="text-xl font-semibold text-white mb-3">WhatsApp rules enforced automatically</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {[
+                    { icon: '🔒', text: 'Official Meta Cloud API — no unofficial workarounds' },
+                    { icon: '⏱', text: '24-hour window enforced — templates only after window closes' },
+                    { icon: '🚫', text: 'Durable opt-out — STOP blocks all future sends permanently' },
+                    { icon: '✅', text: 'Only APPROVED templates used in campaigns and follow-ups' },
+                  ].map((item) => (
+                    <div key={item.text} className="flex items-start gap-2 bg-black/30 rounded-xl p-3">
+                      <span className="text-base flex-shrink-0">{item.icon}</span>
+                      <p className="text-xs text-gray-400 leading-relaxed">{item.text}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* INTEGRATIONS */}
       <section className="py-24 lg:py-32 border-b border-white/[0.06] bg-black">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
               <SectionLabel>Integrations</SectionLabel>
-              <h2 className="text-4xl lg:text-5xl font-bold">Connects to your stack</h2>
+              <h2 className="text-4xl lg:text-5xl font-bold">9 live integrations. All working today.</h2>
               <p className="mt-4 text-gray-400 text-lg max-w-2xl mx-auto">
-                WhatsApp, Gmail, Google Sheets, Facebook, Instagram and more — live today. More integrations shipping every month.
+                WhatsApp, Instagram, Facebook, Gmail, Google Sheets, Razorpay, IndiaMART, Shopify, and Webhooks — all live and production-ready.
               </p>
             </motion.div>
           </div>
@@ -634,14 +708,14 @@ export default function HomePage() {
           <div className="mb-4">
             <p className="text-xs font-bold uppercase tracking-widest text-emerald-500 mb-6 flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
-              Live Now
+              All Live — 9 Integrations
             </p>
             <motion.div
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
               variants={stagger}
-              className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 mb-10"
+              className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-3 mb-10"
             >
               {liveIntegrations.map((item) => (
                 <motion.div
@@ -663,31 +737,9 @@ export default function HomePage() {
             </motion.div>
           </div>
 
-          {/* Coming soon integrations — card grid */}
-          <div className="mt-8">
-            <p className="text-xs font-bold uppercase tracking-widest text-amber-500/70 mb-6 flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-500/70 inline-block" />
-              Coming Soon
-            </p>
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              variants={stagger}
-              className="grid grid-cols-2 gap-3 sm:grid-cols-4"
-            >
-              {comingIntegrations.map((item) => (
-                <motion.div
-                  key={item.label}
-                  variants={fadeUp}
-                  className="rounded-2xl border border-white/[0.05] bg-white/[0.02] p-4 opacity-60"
-                >
-                  <span className="text-2xl grayscale mb-2 block">{item.icon}</span>
-                  <p className="text-sm text-gray-500">{item.label}</p>
-                  <span className="mt-2 inline-block rounded-full bg-amber-500/10 text-amber-500/70 px-2 py-0.5 text-[9px] font-bold">Soon</span>
-                </motion.div>
-              ))}
-            </motion.div>
+          {/* More coming label */}
+          <div className="mt-8 text-center">
+            <p className="text-xs text-gray-600">More integrations shipping every month. <Link href="/features" className="text-gray-400 hover:text-white transition-colors underline">View roadmap →</Link></p>
           </div>
         </div>
       </section>
@@ -757,7 +809,7 @@ export default function HomePage() {
             >
               <SectionLabel>Security & Privacy</SectionLabel>
               <h2 className="text-4xl lg:text-5xl font-bold">Your data. Your rules. Always.</h2>
-              <p className="mt-4 text-gray-400 text-lg">Enterprise-grade security with GDPR, SOC2, and ISO 27001 compliance.</p>
+              <p className="mt-4 text-gray-400 text-lg">Built with encryption, access control, and GDPR-ready practices. SOC2 and ISO 27001 on our roadmap.</p>
             </motion.div>
           </div>
 
@@ -787,7 +839,7 @@ export default function HomePage() {
           </motion.div>
 
           <div className="flex flex-wrap gap-4 justify-center">
-            {['GDPR Ready', 'SOC2 Compliant', '256-bit Encryption', 'ISO 27001'].map((badge) => (
+            {['GDPR Ready', '256-bit Encryption', 'Opt-out Compliant', 'Meta Cloud API'].map((badge) => (
               <div
                 key={badge}
                 className="rounded-full border border-white/[0.08] px-4 py-2 text-xs text-gray-600 font-medium"
@@ -871,9 +923,9 @@ export default function HomePage() {
               <SectionLabel>Blog</SectionLabel>
               <h2 className="text-4xl font-bold">Latest updates</h2>
             </motion.div>
-            <a href="/blog" className="hidden sm:flex items-center gap-1 text-sm text-gray-600 hover:text-gray-300 transition-colors">
+            <Link href="/blog" className="hidden sm:flex items-center gap-1 text-sm text-gray-600 hover:text-gray-300 transition-colors">
               Read all <ExternalLink className="h-4 w-4" />
-            </a>
+            </Link>
           </div>
 
           <motion.div
@@ -1065,3 +1117,4 @@ export default function HomePage() {
     </div>
   );
 }
+

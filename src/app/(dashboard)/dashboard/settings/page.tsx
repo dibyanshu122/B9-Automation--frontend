@@ -48,6 +48,7 @@ export default function SettingsPage() {
   const [groqKey, setGroqKey] = useState('');
   const [geminiKey, setGeminiKey] = useState('');
   const [preferredModel, setPreferredModel] = useState('auto');
+  const [agenticMaxSteps, setAgenticMaxSteps] = useState(4);
   const [savingAiKeys, setSavingAiKeys] = useState(false);
   const [testingProvider, setTestingProvider] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<Record<string, boolean | null>>({});
@@ -85,6 +86,7 @@ export default function SettingsPage() {
         setAiKeys(aiRes.data);
         setByokEnabled(aiRes.data.byok_enabled ?? false);
         setPreferredModel(aiRes.data.preferred_model ?? 'auto');
+        setAgenticMaxSteps(aiRes.data.agentic_max_steps ?? 4);
       }
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -206,7 +208,7 @@ export default function SettingsPage() {
   const saveAiKeys = async () => {
     setSavingAiKeys(true);
     try {
-      const body: any = { byok_enabled: byokEnabled, preferred_model: preferredModel };
+      const body: any = { byok_enabled: byokEnabled, preferred_model: preferredModel, agentic_max_steps: agenticMaxSteps };
       if (groqKey.trim()) body.groq_api_key = groqKey.trim();
       if (geminiKey.trim()) body.gemini_api_key = geminiKey.trim();
       await post('/api/settings/ai-keys', body);
@@ -473,7 +475,7 @@ export default function SettingsPage() {
           <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
             <p className="text-sm font-bold text-emerald-800 mb-1">Free plan — 30 lifetime AI replies included</p>
             <p className="text-xs text-emerald-700">
-              Add your own free Groq API key below to get <strong>unlimited AI replies at zero cost</strong> — no payment needed.
+              Add your own Groq API key below to use your own provider quota for AI replies.
               Takes 2 minutes. Groq&apos;s free tier handles 500+ customer conversations/day.
             </p>
           </div>
@@ -636,6 +638,28 @@ export default function SettingsPage() {
           </select>
         </div>
 
+        {/* Agentic AI safety — max steps */}
+        <div className="mt-5">
+          <label className="mb-1 block text-sm font-semibold text-gray-700">
+            Agentic AI — Max Steps per Reply
+          </label>
+          <p className="mb-2 text-xs text-gray-500">
+            How many tool calls the AI can make per customer message. Higher = more thorough but slower. Range: 2–8.
+          </p>
+          <div className="flex items-center gap-3">
+            <input
+              type="range" min={2} max={8} step={1}
+              value={agenticMaxSteps}
+              onChange={(e) => { setAgenticMaxSteps(Number(e.target.value)); setAiDirty(true); }}
+              className="w-40 accent-orange-500"
+            />
+            <span className="w-6 text-center text-sm font-bold text-gray-900">{agenticMaxSteps}</span>
+            <span className="text-xs text-gray-400">
+              {agenticMaxSteps <= 3 ? '— Fast, simple replies' : agenticMaxSteps <= 5 ? '— Balanced (recommended)' : '— Deep, multi-step replies'}
+            </span>
+          </div>
+        </div>
+
         <div className="mt-5 flex items-center gap-3 flex-wrap">
           <Button variant="primary" onClick={saveAiKeys} loading={savingAiKeys}>
             {savingAiKeys ? 'Saving…' : 'Save AI Settings'}
@@ -655,7 +679,7 @@ export default function SettingsPage() {
         {/* Bottom info — different for free vs paid */}
         {isFreePlan ? (
           <div className="mt-5 rounded-xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-800">
-            <p className="font-bold mb-1 flex items-center gap-1.5"><Zap className="h-4 w-4" /> Free unlimited AI — here&apos;s how</p>
+            <p className="font-bold mb-1 flex items-center gap-1.5"><Zap className="h-4 w-4" /> Use your own AI key</p>
             <ul className="space-y-1 text-xs text-emerald-700 list-disc list-inside">
               <li>Go to <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" className="font-semibold underline">console.groq.com</a> → Create free account → Copy API key</li>
               <li>Paste above → Toggle BYOK ON → Save</li>

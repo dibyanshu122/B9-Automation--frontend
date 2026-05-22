@@ -253,7 +253,7 @@ const findBlock = (title: string): LibraryBlock =>
   visibleLibrary.find((b) => b.title === title) ?? visibleLibrary[0];
 
 export default function AutomationsPage() {
-  const { get, post, delete: del } = useApi();
+  const { get, post, put, delete: del } = useApi();
   const planAccess = usePlanAccess('automation.create');
   const [industryPack, setIndustryPack] = useState<IndustryPack>(DEFAULT_INDUSTRY_PACK);
   const [workflows, setWorkflows] = useState<AutomationWorkflow[]>([]);
@@ -283,6 +283,19 @@ export default function AutomationsPage() {
   const [generateDesc, setGenerateDesc] = useState('');
   const [generatePlatform, setGeneratePlatform] = useState('whatsapp');
   const [generating, setGenerating] = useState(false);
+  const [showLaunchAssistant, setShowLaunchAssistant] = useState(false);
+  const [launchDrafting, setLaunchDrafting] = useState(false);
+  const [launchPlan, setLaunchPlan] = useState<any>(null);
+  const [launchBrief, setLaunchBrief] = useState({
+    business_name: '',
+    industry: '',
+    goal: '',
+    products_services: '',
+    target_customers: '',
+    common_questions: '',
+    channels: ['whatsapp', 'website'],
+    language_style: 'English',
+  });
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [lockedFeature, setLockedFeature] = useState<FeatureKey | null>(null);
   const [libraryCollapsed, setLibraryCollapsed] = useState(false);
@@ -725,11 +738,9 @@ export default function AutomationsPage() {
           return;
         }
       }
-      const response = await post('/api/automation/workflows', {
+      const workflowPayload = {
         name: workflowName,
-        description: 'Visual drag-and-drop workflow created in B9 Automation.',
         trigger_type: nodes.find((node) => node.type === 'trigger')?.config?.trigger_type || 'new_lead',
-        required_plan: 'GROWTH',
         status: isReady ? 'active' : 'draft',
         config: {
           builder: 'visual_canvas',
@@ -738,42 +749,58 @@ export default function AutomationsPage() {
           edges: validEdges,
           activation_validation: serverValidation,
         },
-      });
-      setActiveWorkflowId(response.data.id);
+      };
 
-      await Promise.all(
-        layoutNodes.map((node, index) =>
-          post(`/api/automation/workflows/${response.data.id}/blocks`, {
-            block_type: node.type,
-            name: node.title,
-            description: node.description,
-            position_x: Math.round(node.x),
-            position_y: Math.round(node.y),
-            order_index: index,
-            config: { ...node.config, node_id: node.id, edges: validEdges.filter((edge) => edge.source === node.id) },
-          })
-        )
-      );
+      let workflowId = activeWorkflowId;
 
-      await Promise.all(
-        nodes
-          .filter((node) => node.type === 'condition')
-          .map((node) =>
-            post(`/api/automation/workflows/${response.data.id}/conditions`, {
-              field: node.config.field || 'extraction.fields.budget',
-              operator: node.config.operator || 'exists',
-              value: node.config.value || null,
-              then_action: node.config.then_action || 'send_whatsapp_message',
-              else_action: node.config.else_action || 'create_task',
-              config: { node_id: node.id },
+      if (activeWorkflowId) {
+        // UPDATE existing workflow via PUT (no duplicate creation)
+        await put(`/api/automation/workflows/${activeWorkflowId}`, workflowPayload);
+      } else {
+        // CREATE new workflow via POST
+        const response = await post('/api/automation/workflows', {
+          ...workflowPayload,
+          description: 'Visual drag-and-drop workflow created in B9 Automation.',
+          required_plan: 'GROWTH',
+        });
+        workflowId = response.data.id;
+        setActiveWorkflowId(workflowId);
+
+        // Create blocks only for new workflows
+        await Promise.all(
+          layoutNodes.map((node, index) =>
+            post(`/api/automation/workflows/${workflowId}/blocks`, {
+              block_type: node.type,
+              name: node.title,
+              description: node.description,
+              position_x: Math.round(node.x),
+              position_y: Math.round(node.y),
+              order_index: index,
+              config: { ...node.config, node_id: node.id, edges: validEdges.filter((edge) => edge.source === node.id) },
             })
           )
-      );
+        );
 
-      toast.success(isReady ? 'Visual workflow saved and active' : 'Workflow saved as draft. Fix blockers to activate.');
+        await Promise.all(
+          nodes
+            .filter((node) => node.type === 'condition')
+            .map((node) =>
+              post(`/api/automation/workflows/${workflowId}/conditions`, {
+                field: node.config.field || 'extraction.fields.budget',
+                operator: node.config.operator || 'exists',
+                value: node.config.value || null,
+                then_action: node.config.then_action || 'send_whatsapp_message',
+                else_action: node.config.else_action || 'create_task',
+                config: { node_id: node.id },
+              })
+            )
+        );
+      }
+
+      toast.success(isReady ? 'Workflow saved and active' : 'Workflow saved as draft. Fix blockers to activate.');
       window.localStorage.removeItem(AUTOSAVE_KEY);
       setLastAutosavedAt('');
-      refresh();
+      refresh(true); // silent — keeps existing list visible, no skeleton flash
     } catch (error: any) {
       toast.error(error.response?.data?.detail || 'Could not save workflow');
     } finally {
@@ -926,6 +953,9 @@ export default function AutomationsPage() {
         <Button variant="secondary" size="sm" onClick={() => setShowTemplateGallery(true)}>
           <Sparkles className="h-3.5 w-3.5" /> Templates
         </Button>
+        <Button variant="secondary" size="sm" onClick={() => setShowLaunchAssistant(true)}>
+          <Bot className="h-3.5 w-3.5" /> Launch Assistant
+        </Button>
         <div className="relative" ref={overflowMenuRef}>
           <Button variant="secondary" size="sm" onClick={() => setOverflowMenuOpen((p) => !p)}>
             ••• More
@@ -968,8 +998,10 @@ export default function AutomationsPage() {
           size="sm"
           onClick={testWorkflow}
           loading={testing}
+          title={!activeWorkflowId ? 'Save the workflow first to test the visual canvas. Currently testing the general AI chat.' : 'Run the saved visual workflow'}
         >
-          <Play className="h-3.5 w-3.5" /> {testing ? 'Running…' : 'Test'}
+          <Play className="h-3.5 w-3.5" />
+          {testing ? 'Running…' : activeWorkflowId ? 'Test' : 'Test (unsaved)'}
         </Button>
         {/* Go Live — set all send nodes to live at once */}
         {nodes.some(n => ((n as any).data?.config?.send_mode === 'draft') && (n as any).data?.config?.tool?.includes('whatsapp')) && (
@@ -1011,6 +1043,13 @@ export default function AutomationsPage() {
           >
             <Sparkles className="h-4 w-4" /> Generate Automation with AI
           </button>
+          <button
+            type="button"
+            onClick={() => setShowLaunchAssistant(true)}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 py-2 text-sm font-bold text-violet-700 hover:bg-violet-100 transition"
+          >
+            <Bot className="h-4 w-4" /> Draft Full Launch Plan
+          </button>
         </div>
       </div>
 
@@ -1045,8 +1084,12 @@ export default function AutomationsPage() {
               await del(`/api/automation/workflows/${id}`);
               setWorkflows((prev) => prev.filter((w) => w.id !== id));
               if (activeWorkflowId === id) setActiveWorkflowId('');
-            } catch {
-              toast.error('Failed to delete workflow');
+            } catch (e: any) {
+              if (e?.response?.status === 403) {
+                toast.error('Only workspace admins can delete workflows.');
+              } else {
+                toast.error(e?.response?.data?.detail || 'Failed to delete workflow');
+              }
             }
           }}
           onRefresh={() => refresh()}
@@ -1528,12 +1571,8 @@ export default function AutomationsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-lg rounded-2xl border border-violet-200 bg-white shadow-2xl max-h-[90vh] flex flex-col">
             <div className="border-b border-gray-100 px-6 py-4 flex-shrink-0">
-              <div className="flex items-center justify-between">
+              <div>
                 <p className="font-bold text-gray-900 text-lg">✨ Generate Flow with AI</p>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white"
-                  style={{ background: 'linear-gradient(135deg, #1e293b, #1e1b4b)' }}>
-                  B9 Agentic Core
-                </span>
               </div>
               <p className="text-xs text-gray-400 mt-0.5">Describe your chatbot in plain language — AI will build the entire flow</p>
             </div>
@@ -1601,6 +1640,107 @@ export default function AutomationsPage() {
                 }}
               >
                 {generating ? '✨ Generating…' : '✨ Generate Flow →'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showLaunchAssistant && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="flex max-h-[90vh] w-full max-w-3xl flex-col rounded-2xl border border-violet-200 bg-white shadow-2xl">
+            <div className="flex items-start justify-between border-b border-gray-100 px-6 py-4">
+              <div>
+                <p className="text-lg font-bold text-gray-900">Agentic Launch Assistant</p>
+                <p className="mt-0.5 text-xs text-gray-500">Draft assistant, templates, WhatsApp Flow, automation, widget, and campaign. Nothing goes live until you review.</p>
+              </div>
+              <button type="button" onClick={() => setShowLaunchAssistant(false)} className="rounded-lg px-2 py-1 text-sm font-bold text-gray-400 hover:bg-gray-100">X</button>
+            </div>
+            <div className="grid flex-1 gap-4 overflow-y-auto p-6 md:grid-cols-2">
+              <div className="space-y-3">
+                {[
+                  ['business_name', 'Business name', 'Example: Sharma Realty'],
+                  ['industry', 'Industry', 'Real estate, coaching, clinic, D2C...'],
+                  ['goal', 'Main goal', 'Qualify leads and book site visits'],
+                  ['products_services', 'Products or services', 'List your services, prices, packages'],
+                  ['target_customers', 'Target customers', 'Who should this automation serve?'],
+                  ['common_questions', 'Common customer questions', 'Pricing, availability, location, timing...'],
+                ].map(([key, label, placeholder]) => (
+                  <div key={key}>
+                    <label className="mb-1 block text-xs font-bold text-gray-700">{label}</label>
+                    {['products_services', 'common_questions'].includes(key) ? (
+                      <textarea
+                        value={(launchBrief as any)[key]}
+                        onChange={(e) => setLaunchBrief((p) => ({ ...p, [key]: e.target.value }))}
+                        rows={3}
+                        className="input-field resize-none text-sm"
+                        placeholder={placeholder}
+                      />
+                    ) : (
+                      <input
+                        value={(launchBrief as any)[key]}
+                        onChange={(e) => setLaunchBrief((p) => ({ ...p, [key]: e.target.value }))}
+                        className="input-field text-sm"
+                        placeholder={placeholder}
+                      />
+                    )}
+                  </div>
+                ))}
+                <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-xs text-emerald-800">
+                  Review-before-activate is enforced. AI drafts; you approve before templates, flows, or automations go live.
+                </div>
+              </div>
+              <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-sm font-bold text-gray-900">Draft Preview</p>
+                  {launchPlan && <span className="rounded-full bg-violet-100 px-2 py-1 text-[11px] font-bold text-violet-700">{launchPlan.source || 'draft'}</span>}
+                </div>
+                {!launchPlan ? (
+                  <div className="flex h-full min-h-[360px] items-center justify-center rounded-xl border border-dashed border-gray-300 bg-white p-6 text-center text-sm text-gray-500">
+                    Fill the brief and generate a launch plan.
+                  </div>
+                ) : (
+                  <div className="max-h-[520px] space-y-3 overflow-y-auto pr-1 text-sm">
+                    {[
+                      ['Assistant', launchPlan.assistant?.name, launchPlan.assistant?.instructions],
+                      ['Templates', `${launchPlan.templates?.length || 0} drafts`, launchPlan.templates?.map((t: any) => t.name).join(', ')],
+                      ['WhatsApp Flow', launchPlan.whatsapp_flow?.name, launchPlan.whatsapp_flow?.fields?.join(', ')],
+                      ['Automation', launchPlan.automation?.name, launchPlan.automation?.steps?.join(' -> ')],
+                      ['Widget', launchPlan.widget?.mode, launchPlan.widget?.welcome_message],
+                      ['Campaign', launchPlan.campaign?.name, launchPlan.campaign?.audience],
+                    ].map(([title, main, sub]) => (
+                      <div key={title} className="rounded-xl border border-gray-200 bg-white p-3">
+                        <p className="text-xs font-black uppercase tracking-wide text-gray-400">{title}</p>
+                        <p className="mt-1 font-bold text-gray-900">{main || 'Draft ready'}</p>
+                        {sub && <p className="mt-1 text-xs text-gray-500">{sub}</p>}
+                      </div>
+                    ))}
+                    <div className="rounded-xl border border-blue-100 bg-blue-50 p-3 text-xs text-blue-800">
+                      Next: {(launchPlan.next_steps || []).join(' -> ')}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="flex gap-3 border-t border-gray-100 px-6 py-4">
+              <Button variant="secondary" onClick={() => setShowLaunchAssistant(false)} disabled={launchDrafting}>Close</Button>
+              <Button
+                className="flex-1"
+                loading={launchDrafting}
+                disabled={launchDrafting || launchBrief.industry.trim().length < 2 || launchBrief.goal.trim().length < 5}
+                onClick={async () => {
+                  setLaunchDrafting(true);
+                  try {
+                    const res = await post('/api/automation/agentic/launch-plan', launchBrief);
+                    setLaunchPlan(res.data.launch_plan);
+                    toast.success('Launch plan drafted. Review before activating.');
+                  } catch (err: any) {
+                    toast.error(err.response?.data?.detail || 'Could not draft launch plan');
+                  } finally {
+                    setLaunchDrafting(false);
+                  }
+                }}
+              >
+                Draft Launch Plan
               </Button>
             </div>
           </div>

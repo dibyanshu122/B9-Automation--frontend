@@ -7,7 +7,7 @@ import { UpgradeModal } from '@/components/upgrade-modal';
 import { getApiClient } from '@/hooks/useApi';
 import { usePlanAccess } from '@/hooks/usePlanAccess';
 import { Assistant } from '@/types';
-import { Bot, Check, Code2, Copy, Globe, Loader2, Plus, Save, ShieldCheck, Trash2 } from 'lucide-react';
+import { Bot, Check, Code2, Copy, Globe, Loader2, MessageSquare, Plus, Save, Send, ShieldCheck, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface WidgetDomain {
@@ -30,6 +30,7 @@ interface WidgetConfig {
   suggested_buttons: string[];
   lead_capture_after_messages: number;
   lead_capture_on_intents: string[];
+  sales_agent_mode: boolean;
   allowed_domains: string[];
 }
 
@@ -45,8 +46,28 @@ const defaultConfig: WidgetConfig = {
   suggested_buttons: ['Pricing', 'Services', 'Book Demo', 'Talk to Team'],
   lead_capture_after_messages: 3,
   lead_capture_on_intents: ['pricing_intent', 'demo_intent', 'support_intent'],
+  sales_agent_mode: true,
   allowed_domains: [],
 };
+
+function normalizeWidgetConfig(raw: Partial<WidgetConfig> | null | undefined): WidgetConfig {
+  const cfg = raw || {};
+  return {
+    title: cfg.title ?? defaultConfig.title,
+    primary_color: cfg.primary_color ?? defaultConfig.primary_color,
+    theme_color: cfg.theme_color ?? cfg.primary_color ?? defaultConfig.theme_color,
+    welcome_message: cfg.welcome_message ?? defaultConfig.welcome_message,
+    position: cfg.position ?? defaultConfig.position,
+    enable_3d_robot: cfg.enable_3d_robot ?? defaultConfig.enable_3d_robot,
+    spline_scene_url: cfg.spline_scene_url ?? defaultConfig.spline_scene_url,
+    fallback_image_url: cfg.fallback_image_url ?? '',
+    suggested_buttons: Array.isArray(cfg.suggested_buttons) ? cfg.suggested_buttons : defaultConfig.suggested_buttons,
+    lead_capture_after_messages: cfg.lead_capture_after_messages ?? defaultConfig.lead_capture_after_messages,
+    lead_capture_on_intents: Array.isArray(cfg.lead_capture_on_intents) ? cfg.lead_capture_on_intents : defaultConfig.lead_capture_on_intents,
+    sales_agent_mode: cfg.sales_agent_mode ?? defaultConfig.sales_agent_mode,
+    allowed_domains: Array.isArray(cfg.allowed_domains) ? cfg.allowed_domains : defaultConfig.allowed_domains,
+  };
+}
 
 export default function WidgetsPage() {
   const [assistants, setAssistants] = useState<Assistant[]>([]);
@@ -62,6 +83,11 @@ export default function WidgetsPage() {
   const [addingDomain, setAddingDomain] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  // Preview/test chat state
+  const [previewMessages, setPreviewMessages] = useState<{role:string;text:string}[]>([]);
+  const [previewInput, setPreviewInput] = useState('');
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewSessionId, setPreviewSessionId] = useState('');
   const api = useMemo(() => getApiClient(), []);
   const widgetAccess = usePlanAccess('widget.embed');
   const premiumWidgetAccess = usePlanAccess('premium_widget');
@@ -111,7 +137,7 @@ export default function WidgetsPage() {
       setDomains(domainsResponse.data);
       setAssistantDomainCounts((items) => ({ ...items, [assistantId]: domainsResponse.data.length }));
       setEmbedCode(embedResponse.data.embed_code);
-      setConfig({ ...defaultConfig, ...embedResponse.data.config });
+      setConfig(normalizeWidgetConfig(embedResponse.data.config));
     } catch (error: any) {
       toast.error(error.response?.data?.detail || 'Failed to load widget settings');
     }
@@ -125,7 +151,7 @@ export default function WidgetsPage() {
     if (!selectedAssistantId) {
       setDomains([]);
       setEmbedCode('');
-      setConfig(defaultConfig);
+      setConfig(normalizeWidgetConfig(defaultConfig));
       return;
     }
 
@@ -170,10 +196,11 @@ export default function WidgetsPage() {
       formData.append('suggested_buttons', JSON.stringify(config.suggested_buttons));
       formData.append('lead_capture_after_messages', String(config.lead_capture_after_messages));
       formData.append('lead_capture_on_intents', JSON.stringify(config.lead_capture_on_intents));
+      formData.append('sales_agent_mode', String(config.sales_agent_mode));
       formData.append('allowed_domains', JSON.stringify(config.allowed_domains));
 
       const response = await api.post(`/api/widgets/${selectedAssistantId}/config`, formData);
-      setConfig(response.data.config);
+      setConfig(normalizeWidgetConfig(response.data.config));
       await fetchWidgetData(selectedAssistantId);
       toast.success('Widget config saved');
     } catch (error: any) {
@@ -223,6 +250,30 @@ export default function WidgetsPage() {
       toast.success('Domain deleted');
     } catch (error: any) {
       toast.error(error.response?.data?.detail || 'Failed to delete domain');
+    }
+  };
+
+  const sendPreviewMessage = async () => {
+    if (!previewInput.trim() || !selectedAssistantId || previewLoading) return;
+    const userMsg = previewInput.trim();
+    setPreviewInput('');
+    setPreviewMessages(prev => [...prev, { role: 'user', text: userMsg }]);
+    setPreviewLoading(true);
+    try {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || '';
+      const res = await fetch(`${apiBase}/api/widgets/${selectedAssistantId}/message`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: 'https://dashboard.brainai.in' },
+        body: JSON.stringify({ message: userMsg, session_id: previewSessionId || undefined }),
+      });
+      const data = await res.json();
+      if (!previewSessionId && data.session_id) setPreviewSessionId(data.session_id);
+      const reply = data.response || data.answer || 'No response';
+      setPreviewMessages(prev => [...prev, { role: 'bot', text: reply }]);
+    } catch {
+      setPreviewMessages(prev => [...prev, { role: 'bot', text: 'Preview unavailable — ensure WhatsApp domain is whitelisted or use localhost.' }]);
+    } finally {
+      setPreviewLoading(false);
     }
   };
 
@@ -426,7 +477,7 @@ export default function WidgetsPage() {
                   <label className="flex items-center justify-between gap-4 rounded-lg border border-sky-100 bg-sky-50 px-4 py-3">
                   <span>
                     <span className="block text-sm font-semibold text-gray-900">3D robot launcher</span>
-                    <span className="block text-xs text-gray-600">Bottom-right Spline robot lazy-load hoga. Mobile par fallback image use hogi.</span>
+                    <span className="block text-xs text-gray-600">The Spline robot lazy-loads on desktop. Mobile uses the fallback image.</span>
                     {!premiumWidgetAccess.allowed && <span className="mt-1 block text-xs font-bold text-amber-700">Premium 3D widget requires Pro. Basic fallback will be used.</span>}
                   </span>
                   <input
@@ -504,12 +555,24 @@ export default function WidgetsPage() {
                 <label className="flex items-center justify-between gap-4 rounded-lg border border-orange-100 bg-orange-50 px-4 py-3">
                   <span>
                     <span className="block text-sm font-semibold text-gray-900">Lead capture</span>
-                    <span className="block text-xs text-gray-600">Visitor phone/email dete hi lead save aur WhatsApp draft create hoga.</span>
+                    <span className="block text-xs text-gray-600">When a visitor shares phone/email, B9 saves the lead and prepares a WhatsApp draft.</span>
                   </span>
                   <input
                     type="checkbox"
                     checked={leadCaptureEnabled}
                     onChange={(e) => setLeadCaptureEnabled(e.target.checked)}
+                    className="h-5 w-5"
+                  />
+                </label>
+                <label className="flex items-center justify-between gap-4 rounded-lg border border-emerald-100 bg-emerald-50 px-4 py-3">
+                  <span>
+                    <span className="block text-sm font-semibold text-gray-900">Sales-agent mode</span>
+                    <span className="block text-xs text-gray-600">Widget answers from knowledge, detects buying intent, asks for contact details, and suggests quote/demo/support actions.</span>
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={config.sales_agent_mode}
+                    onChange={(e) => setConfig({ ...config, sales_agent_mode: e.target.checked })}
                     className="h-5 w-5"
                   />
                 </label>
@@ -521,12 +584,17 @@ export default function WidgetsPage() {
             </Card>
 
             <Card>
-              <h2 className="mb-6 text-2xl font-bold text-gray-900">Allowed Domains</h2>
+              <h2 className="mb-2 text-2xl font-bold text-gray-900">Allowed Domains</h2>
+              <p className="mb-4 text-sm text-gray-500">
+                Enter the root domain (e.g. <code className="bg-gray-100 px-1 rounded">example.com</code>). This matches only that exact domain.
+                {' '}<strong>Subdomains (e.g. shop.example.com) must be added separately.</strong>
+                {' '}For local testing, <code className="bg-gray-100 px-1 rounded">localhost</code> is always allowed automatically.
+              </p>
               <form onSubmit={handleAddDomain} className="mb-4 flex flex-col gap-2 sm:flex-row">
                 <input
                   value={domainInput}
                   onChange={(e) => setDomainInput(e.target.value)}
-                  placeholder="example.com"
+                  placeholder="example.com or shop.example.com"
                   className="input-field"
                   required
                 />
@@ -571,6 +639,62 @@ export default function WidgetsPage() {
               </div>
             </Card>
           </div>
+
+          {/* Live Preview / Test Chat */}
+          <Card>
+            <div className="mb-4 flex items-center gap-2">
+              <MessageSquare className="h-5 w-5 text-primary-600" />
+              <h2 className="text-xl font-bold text-gray-900">Test Widget Chat</h2>
+              <span className="ml-2 text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded-full px-2 py-0.5 font-medium">Preview</span>
+            </div>
+            <p className="mb-4 text-sm text-gray-500">Send a test message to see exactly how your widget AI responds before going live.</p>
+            {/* Message thread */}
+            <div className="mb-3 h-56 overflow-y-auto rounded-xl border border-gray-200 bg-gray-50 p-3 space-y-2">
+              {previewMessages.length === 0 ? (
+                <div className="flex h-full items-center justify-center text-sm text-gray-400">
+                  Send a message to test your widget AI response
+                </div>
+              ) : (
+                previewMessages.map((m, i) => (
+                  <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${
+                      m.role === 'user'
+                        ? 'bg-primary-600 text-white rounded-br-none'
+                        : 'bg-white border border-gray-200 text-gray-800 rounded-bl-none shadow-sm'
+                    }`}>
+                      {m.text}
+                    </div>
+                  </div>
+                ))
+              )}
+              {previewLoading && (
+                <div className="flex justify-start">
+                  <div className="rounded-2xl rounded-bl-none bg-white border border-gray-200 px-3 py-2 text-sm text-gray-400 shadow-sm">
+                    <Loader2 className="h-4 w-4 animate-spin inline mr-1" /> Thinking...
+                  </div>
+                </div>
+              )}
+            </div>
+            {/* Input */}
+            <div className="flex gap-2">
+              <input
+                value={previewInput}
+                onChange={e => setPreviewInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && sendPreviewMessage()}
+                placeholder="Type a test message..."
+                className="input-field flex-1 text-sm"
+                disabled={previewLoading}
+              />
+              <Button type="button" onClick={sendPreviewMessage} disabled={previewLoading || !previewInput.trim()} size="sm">
+                <Send className="h-4 w-4" />
+              </Button>
+              {previewMessages.length > 0 && (
+                <Button type="button" variant="ghost" size="sm" onClick={() => { setPreviewMessages([]); setPreviewSessionId(''); }}>
+                  Clear
+                </Button>
+              )}
+            </div>
+          </Card>
 
           <Card>
             <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">

@@ -43,11 +43,11 @@ export default function OptedOutPage() {
   );
 
   const resubscribe = async (lead: OptedOutLead) => {
-    if (!confirm(`${lead.name || lead.phone} ko unblock karo? Ye dobara messages receive kar sakenge.`)) return;
+    if (!confirm(`Unblock ${lead.name || lead.phone}? They may receive messages again.`)) return;
     setResubscribing(lead.id);
     try {
       await api.post(`/api/leads/${lead.id}/resubscribe`, {});
-      toast.success(`${lead.name || lead.phone} unblocked ✓`);
+      toast.success(`${lead.name || lead.phone} unblocked`);
       setLeads(prev => prev.filter(l => l.id !== lead.id));
     } catch {
       toast.error('Unblock failed');
@@ -57,7 +57,7 @@ export default function OptedOutPage() {
   };
 
   const exportCsv = () => {
-    if (filtered.length === 0) { toast.error('Koi data nahi'); return; }
+    if (filtered.length === 0) { toast.error('No data to export'); return; }
     const rows = [
       ['Name', 'Phone', 'Email', 'Source', 'Opted Out Date'],
       ...filtered.map(l => [
@@ -86,7 +86,7 @@ export default function OptedOutPage() {
             <h1 className="text-2xl font-bold text-gray-900">Opted-Out Contacts</h1>
           </div>
           <p className="text-sm text-gray-500 mt-0.5">
-            Customers jinhoone STOP bheja ya manually block kiya gaya — inhe koi message nahi jaata.
+            Customers who sent STOP or were manually blocked. B9 will not send them automation or campaign messages.
           </p>
         </div>
         <Button variant="secondary" onClick={exportCsv} className="flex items-center gap-2">
@@ -100,7 +100,7 @@ export default function OptedOutPage() {
           <div className="w-2 h-2 rounded-full bg-red-500" />
           <span className="text-sm font-semibold text-red-800">{leads.length} contacts opted out</span>
         </div>
-        <span className="text-xs text-red-500">Inhe koi bhi automation ya campaign message nahi bhejega</span>
+        <span className="text-xs text-red-500">Automation and campaign sends are blocked for these contacts.</span>
       </div>
 
       {/* Search */}
@@ -109,7 +109,7 @@ export default function OptedOutPage() {
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder="Name ya phone se search..."
+          placeholder="Search by name or phone..."
           className="w-full border border-gray-200 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-300"
         />
       </div>
@@ -124,7 +124,7 @@ export default function OptedOutPage() {
         <div className="flex flex-col items-center justify-center py-20 gap-3 rounded-xl border-2 border-dashed border-gray-200">
           <UserX className="w-10 h-10 text-gray-200" />
           <p className="text-sm font-medium text-gray-400">
-            {search ? 'Koi result nahi mila' : 'Koi opted-out contact nahi hai — great!'}
+            {search ? 'No matching contact found' : 'No opted-out contacts. Great!'}
           </p>
         </div>
       ) : (
@@ -144,14 +144,14 @@ export default function OptedOutPage() {
                 <tr key={lead.id} className="hover:bg-gray-50 transition">
                   <td className="px-4 py-3">
                     <div>
-                      <p className="font-medium text-gray-900">{lead.name || '—'}</p>
+                      <p className="font-medium text-gray-900">{lead.name || '-'}</p>
                       {lead.email && <p className="text-xs text-gray-400">{lead.email}</p>}
                     </div>
                   </td>
                   <td className="px-4 py-3">
                     <span className="flex items-center gap-1.5 text-gray-600">
                       <Phone className="w-3.5 h-3.5 text-gray-400" />
-                      {lead.phone || '—'}
+                      {lead.phone || '-'}
                     </span>
                   </td>
                   <td className="px-4 py-3">
@@ -191,13 +191,14 @@ export default function OptedOutPage() {
 
       {/* Info box */}
       <div className="rounded-xl border border-amber-100 bg-amber-50 p-4">
-        <p className="text-sm font-semibold text-amber-800 mb-1">Unblock karne se pehle jaano</p>
+        <p className="text-sm font-semibold text-amber-800 mb-1">Before unblocking</p>
         <ul className="text-xs text-amber-700 space-y-1">
-          <li>→ Unblock karte hi customer dobara automation messages receive kar sakta hai</li>
-          <li>→ Sirf unblock karo agar customer ne khud request kiya ho</li>
-          <li>→ Meta ke guidelines mein opt-out honor karna zaroori hai</li>
+          <li>- Once unblocked, the customer may receive automation messages again.</li>
+          <li>- Only unblock if the customer explicitly asked to resubscribe.</li>
+          <li>- Meta guidelines require honoring opt-out requests.</li>
         </ul>
       </div>
     </div>
   );
 }
+

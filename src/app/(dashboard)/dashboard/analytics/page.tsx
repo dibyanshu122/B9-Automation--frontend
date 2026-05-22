@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { Card } from '@/components/card';
-import { ProgressBar } from '@/components/progress-bar';
 import { useApi } from '@/hooks/useApi';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import toast from 'react-hot-toast';
@@ -91,10 +90,6 @@ export default function AnalyticsPage() {
       <div className="relative overflow-hidden rounded-xl border border-orange-100 bg-white p-6 shadow-sm">
         <div className="absolute right-6 top-6 h-20 w-20 rounded-full bg-orange-100 blur-2xl" />
         <div className="relative">
-          <p className="mb-2 inline-flex items-center gap-2 rounded-full bg-orange-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-primary-700">
-            <Sparkles className="h-3.5 w-3.5 animate-pulse" />
-            Business impact dashboard
-          </p>
           <h1 className="text-4xl font-bold text-gray-950">Analytics</h1>
           <p className="mt-2 max-w-2xl text-gray-600">
             Track conversations, leads, automations, saved time, and launch readiness in one place.
@@ -121,30 +116,7 @@ export default function AnalyticsPage() {
         })}
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-        <Card className="border-orange-100 shadow-sm" hoverable={false}>
-          <h2 className="text-xl font-bold text-gray-950">Launch Readiness</h2>
-          <div className="mt-4 rounded-lg bg-orange-50 p-4">
-            <div className="flex items-center justify-between">
-              <p className="font-semibold text-gray-900">{readiness?.launch_status?.split('_').join(' ') || 'setup needed'}</p>
-              <p className="text-2xl font-bold text-primary-700">{readiness?.score || 0}%</p>
-            </div>
-            <div className="mt-3">
-              <ProgressBar value={readiness?.score || 0} color="primary" showLabel={false} />
-            </div>
-          </div>
-          <div className="mt-4 space-y-2">
-            {(readiness?.checks || []).map((check: any) => (
-              <div key={check.key} className="flex items-center justify-between gap-3 rounded-lg border border-gray-100 px-3 py-2">
-                <span className="text-sm font-medium text-gray-700">{check.label}</span>
-                <span className={`rounded-full px-2 py-1 text-xs font-bold ${check.done ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
-                  {check.done ? 'Done' : check.action}
-                </span>
-              </div>
-            ))}
-          </div>
-        </Card>
-
+      <section className="grid gap-6 lg:grid-cols-1">
         <Card className="border-orange-100 shadow-sm" hoverable={false}>
           <h2 className="mb-6 text-xl font-bold text-gray-950">Conversation Trend</h2>
           {trends.length === 0 ? (

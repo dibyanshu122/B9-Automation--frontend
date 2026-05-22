@@ -26,8 +26,8 @@ const ICONS = {
   FlaskConical, Bot, UserCog, UserX, Target,
 };
 
-// Guaranteed dark bg — inline style bypasses Tailwind purge issues
-const BG = 'rgba(2, 6, 23, 0.97)';
+// Dark sidebar — premium contrast against white dashboard
+const BG = '#0F172A';
 
 function useUnreadCount() {
   const [count, setCount] = useState(0);
@@ -87,20 +87,20 @@ export const Sidebar = () => {
   const groupActive = (children?: any[]): boolean =>
     children?.some(c => isActive(c.href)) ?? false;
 
-  // Item styles — exact same as original dark sidebar
+  // Item styles — dark sidebar, indigo active
   const item = (active: boolean) => clsx(
-    'flex w-full items-center gap-3 rounded-lg transition-all duration-150 text-sm',
+    'flex w-full items-center gap-3 rounded-lg transition-all duration-150 text-sm font-medium',
     'px-3 py-2.5',
     active
-      ? 'bg-primary-500/20 text-cyan-100 font-semibold shadow-lg shadow-cyan-500/10 ring-1 ring-cyan-400/30'
-      : 'text-slate-400 hover:bg-white/10 hover:text-slate-100'
+      ? 'bg-indigo-500/20 text-indigo-300 font-semibold'
+      : 'text-slate-400 hover:bg-white/8 hover:text-slate-100'
   );
   const child = (active: boolean) => clsx(
-    'flex w-full items-center gap-3 rounded-lg transition-all duration-150 text-sm',
+    'flex w-full items-center gap-3 rounded-lg transition-all duration-150 text-sm font-medium',
     'px-3 py-2',
     active
-      ? 'bg-primary-500/20 text-cyan-100 font-semibold ring-1 ring-cyan-400/30'
-      : 'text-slate-400 hover:bg-white/10 hover:text-slate-100'
+      ? 'bg-indigo-500/20 text-indigo-300 font-semibold'
+      : 'text-slate-400 hover:bg-white/8 hover:text-slate-100'
   );
 
   // Label — fades in/out based on expanded state
@@ -135,30 +135,15 @@ export const Sidebar = () => {
           'hidden md:flex flex-col fixed left-0 top-16 z-40',
           'h-[calc(100vh-64px)]',
           // Appearance
-          'border-r border-white/10 backdrop-blur-xl',
+          'border-r border-white/10',
           'overflow-hidden',                         // clips content to current width
           // Width — transitions smoothly
           'transition-[width] duration-300 ease-in-out',
           expanded ? 'w-72' : 'w-16',
           // Shadow when open
-          expanded && 'shadow-[4px_0_24px_rgba(0,0,0,0.5)]',
+          expanded && 'shadow-[4px_0_20px_rgba(0,0,0,0.3)]',
         )}
       >
-        {/* Logo */}
-        <div className={clsx(
-          'flex shrink-0 items-center h-[61px] border-b border-white/10',
-          expanded ? 'px-4' : 'justify-center'
-        )}>
-          {expanded
-            ? <Logo variant="dark" />
-            : (
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/20">
-                <span className="text-cyan-400 font-black text-sm select-none">B9</span>
-              </div>
-            )
-          }
-        </div>
-
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto overflow-x-hidden py-3 px-2 space-y-0.5">
           {mainGroups.map((group) => {
