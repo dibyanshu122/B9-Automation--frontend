@@ -40,23 +40,23 @@ const ALL_SCOPES: { value: string; label: string; desc: string; group: string }[
 const SCOPE_GROUPS = [...new Set(ALL_SCOPES.map(s => s.group))];
 
 const V1_ENDPOINTS = [
-  { method: 'GET',   path: '/api/v1/',                      scope: 'none',              desc: 'API info + endpoint list' },
-  { method: 'GET',   path: '/api/v1/leads',                 scope: 'leads:read',        desc: 'List leads (status, tag, phone filters)' },
-  { method: 'POST',  path: '/api/v1/leads',                 scope: 'leads:write',       desc: 'Create a new lead' },
-  { method: 'GET',   path: '/api/v1/leads/{id}',            scope: 'leads:read',        desc: 'Get lead by ID' },
-  { method: 'PATCH', path: '/api/v1/leads/{id}',            scope: 'leads:write',       desc: 'Update lead status/tag/score' },
-  { method: 'POST',  path: '/api/v1/whatsapp/send-template',scope: 'messages:send',     desc: 'Send approved template (any time)' },
-  { method: 'POST',  path: '/api/v1/whatsapp/send-text',    scope: 'messages:send',     desc: 'Send plain text (24h window required)' },
-  { method: 'GET',   path: '/api/v1/whatsapp/status',       scope: 'integrations:read', desc: 'WhatsApp connection health' },
-  { method: 'GET',   path: '/api/v1/messages',              scope: 'messages:read',     desc: 'List outbound messages' },
-  { method: 'GET',   path: '/api/v1/templates',             scope: 'templates:read',    desc: 'List APPROVED WhatsApp templates' },
-  { method: 'GET',   path: '/api/v1/catalog',               scope: 'catalog:read',      desc: 'List products' },
-  { method: 'GET',   path: '/api/v1/campaigns',             scope: 'campaigns:read',    desc: 'List campaigns + stats' },
-  { method: 'GET',   path: '/api/v1/automations',           scope: 'automations:read',  desc: 'List workflows' },
-  { method: 'POST',  path: '/api/v1/automations/{id}/run',  scope: 'automations:run',   desc: 'Trigger a workflow' },
-  { method: 'GET',   path: '/api/v1/payments',              scope: 'payments:read',     desc: 'List customer payment records' },
-  { method: 'POST',  path: '/api/v1/payments/link',         scope: 'payments:write',    desc: 'Create Razorpay payment link' },
-  { method: 'GET',   path: '/api/v1/analytics',             scope: 'analytics:read',    desc: '30-day usage summary' },
+  { method: 'GET',   path: '/api/v1/',                      scope: 'none',              desc: 'API info + endpoint list',             body: null },
+  { method: 'GET',   path: '/api/v1/leads',                 scope: 'leads:read',        desc: 'List leads (status, tag, phone filters)', body: null, params: '?status=hot&limit=20' },
+  { method: 'POST',  path: '/api/v1/leads',                 scope: 'leads:write',       desc: 'Create a new lead',                    body: { name: 'Rahul Sharma', phone: '919876543210', email: 'rahul@example.com', source: 'shopify' } },
+  { method: 'GET',   path: '/api/v1/leads/{id}',            scope: 'leads:read',        desc: 'Get lead by ID',                       body: null },
+  { method: 'PATCH', path: '/api/v1/leads/{id}',            scope: 'leads:write',       desc: 'Update lead status/tag/score',         body: { status: 'hot', tag: 'interested', score: 8 } },
+  { method: 'POST',  path: '/api/v1/whatsapp/send-template',scope: 'messages:send',     desc: 'Send approved template (any time)',    body: { phone: '919876543210', template_name: 'order_confirmed', language_code: 'en_US', variables: ['Rahul', 'ORD-123'] } },
+  { method: 'POST',  path: '/api/v1/whatsapp/send-text',    scope: 'messages:send',     desc: 'Send plain text (24h window only)',    body: { phone: '919876543210', message: 'Hi! Your order is ready.' } },
+  { method: 'GET',   path: '/api/v1/whatsapp/status',       scope: 'integrations:read', desc: 'WhatsApp connection health',           body: null },
+  { method: 'GET',   path: '/api/v1/messages',              scope: 'messages:read',     desc: 'List outbound messages',               body: null, params: '?status=sent&limit=20' },
+  { method: 'GET',   path: '/api/v1/templates',             scope: 'templates:read',    desc: 'List APPROVED WhatsApp templates',     body: null },
+  { method: 'GET',   path: '/api/v1/catalog',               scope: 'catalog:read',      desc: 'List products',                        body: null },
+  { method: 'GET',   path: '/api/v1/campaigns',             scope: 'campaigns:read',    desc: 'List campaigns + stats',               body: null },
+  { method: 'GET',   path: '/api/v1/automations',           scope: 'automations:read',  desc: 'List workflows',                       body: null },
+  { method: 'POST',  path: '/api/v1/automations/{id}/run',  scope: 'automations:run',   desc: 'Trigger a workflow',                   body: { context: { lead_id: 'lead_abc123', message: 'interested in product' } } },
+  { method: 'GET',   path: '/api/v1/payments',              scope: 'payments:read',     desc: 'List customer payment records',        body: null },
+  { method: 'POST',  path: '/api/v1/payments/link',         scope: 'payments:write',    desc: 'Create Razorpay payment link',         body: { phone: '919876543210', amount: 49900, description: 'Coaching fee - June batch', lead_id: 'lead_abc123' } },
+  { method: 'GET',   path: '/api/v1/analytics',             scope: 'analytics:read',    desc: '30-day usage summary',                 body: null },
 ];
 
 function formatDate(iso: string | null) {
@@ -93,6 +93,7 @@ export default function ApiKeysPage() {
   const [revoking, setRevoking] = useState<string | null>(null);
   const [logsLoading, setLogsLoading] = useState(false);
   const [docsFilter, setDocsFilter] = useState<string>('all');
+  const [expandedEp, setExpandedEp] = useState<number | null>(null);
 
   const loadKeys = async () => {
     setLoading(true);
@@ -305,23 +306,22 @@ export default function ApiKeysPage() {
           {/* Auth */}
           <Card className="p-5">
             <h2 className="font-semibold text-gray-900 mb-3 flex items-center gap-2"><Shield className="w-4 h-4 text-primary-600" /> Authentication</h2>
-            <p className="text-sm text-gray-600 mb-3">Pass your API key in the <code className="bg-gray-100 px-1 rounded">Authorization</code> header:</p>
-            <div className="bg-gray-900 rounded-xl p-4 overflow-x-auto mb-3">
-              <pre className="text-sm text-green-400 whitespace-pre-wrap">{`curl ${API_BASE}/api/v1/leads \\
-  -H "Authorization: Bearer YOUR_API_KEY"`}</pre>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+            <p className="text-sm text-gray-600 mb-4">Pass your API key in the <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs font-mono">Authorization</code> header on every request:</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
-                { lang: 'JavaScript', code: `const res = await fetch('${API_BASE}/api/v1/leads', {\n  headers: { Authorization: 'Bearer YOUR_API_KEY' }\n});\nconst data = await res.json();` },
-                { lang: 'Python', code: `import requests\nr = requests.get('${API_BASE}/api/v1/leads',\n  headers={'Authorization': 'Bearer YOUR_API_KEY'})\nprint(r.json())` },
-                { lang: 'cURL', code: `curl ${API_BASE}/api/v1/leads \\\n  -H "Authorization: Bearer YOUR_API_KEY"` },
+                { lang: 'cURL', color: 'from-orange-500/10 to-orange-500/5 border-orange-200', labelColor: 'text-orange-600 bg-orange-50 border-orange-200', textColor: 'text-orange-900',
+                  code: `curl ${API_BASE}/api/v1/leads \\\n  -H "Authorization: Bearer YOUR_API_KEY"` },
+                { lang: 'JavaScript', color: 'from-yellow-500/10 to-yellow-500/5 border-yellow-200', labelColor: 'text-yellow-700 bg-yellow-50 border-yellow-200', textColor: 'text-yellow-900',
+                  code: `const res = await fetch(\n  '${API_BASE}/api/v1/leads',\n  { headers: { Authorization:\n    'Bearer YOUR_API_KEY' } }\n);\nconst data = await res.json();` },
+                { lang: 'Python', color: 'from-blue-500/10 to-blue-500/5 border-blue-200', labelColor: 'text-blue-700 bg-blue-50 border-blue-200', textColor: 'text-blue-900',
+                  code: `import requests\nr = requests.get(\n  '${API_BASE}/api/v1/leads',\n  headers={'Authorization':\n    'Bearer YOUR_API_KEY'})\nprint(r.json())` },
               ].map(ex => (
-                <div key={ex.lang}>
-                  <p className="text-xs font-bold text-gray-500 mb-1.5">{ex.lang}</p>
-                  <div className="relative bg-gray-900 rounded-xl p-3 overflow-x-auto">
-                    <pre className="text-[11px] text-green-400 whitespace-pre-wrap">{ex.code}</pre>
-                    <div className="absolute top-2 right-2"><CopyButton text={ex.code} /></div>
+                <div key={ex.lang} className={`relative rounded-xl border bg-gradient-to-br ${ex.color} overflow-hidden`}>
+                  <div className={`flex items-center justify-between px-3 py-1.5 border-b ${ex.color.split(' ').find(c => c.startsWith('border-')) || 'border-gray-200'}`}>
+                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded border ${ex.labelColor}`}>{ex.lang}</span>
+                    <CopyButton text={ex.code} />
                   </div>
+                  <pre className={`text-[11px] font-mono p-3 whitespace-pre-wrap leading-relaxed ${ex.textColor}`}>{ex.code}</pre>
                 </div>
               ))}
             </div>
@@ -330,9 +330,11 @@ export default function ApiKeysPage() {
           {/* Endpoints */}
           <Card className="p-5">
             <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
-              <h2 className="font-semibold text-gray-900 flex items-center gap-2"><Zap className="w-4 h-4 text-primary-600" /> Endpoints</h2>
+              <div>
+                <h2 className="font-semibold text-gray-900 flex items-center gap-2"><Zap className="w-4 h-4 text-primary-600" /> Endpoints</h2>
+                <p className="text-xs text-gray-400 mt-0.5">Click any row to see the full curl command</p>
+              </div>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs text-gray-500">Filter:</span>
                 {['all', 'Leads', 'Messages', 'Templates', 'Campaigns', 'Payments', 'Automation', 'Analytics'].map(g => (
                   <button key={g} onClick={() => setDocsFilter(g)}
                     className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border transition-colors ${docsFilter === g ? 'bg-primary-600 text-white border-primary-600' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}>
@@ -341,41 +343,44 @@ export default function ApiKeysPage() {
                 ))}
               </div>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-2 pr-3 text-xs font-semibold text-gray-500 uppercase">Method</th>
-                    <th className="text-left py-2 pr-3 text-xs font-semibold text-gray-500 uppercase">Full URL</th>
-                    <th className="text-left py-2 pr-3 text-xs font-semibold text-gray-500 uppercase">Scope</th>
-                    <th className="text-left py-2 text-xs font-semibold text-gray-500 uppercase">Description</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {V1_ENDPOINTS
-                    .filter(ep => docsFilter === 'all' || ep.scope.split(':')[0].toLowerCase() === docsFilter.toLowerCase() || (docsFilter === 'Leads' && (ep.scope.startsWith('leads') || ep.scope.startsWith('contacts'))) || (docsFilter === 'Automation' && ep.scope.startsWith('automations')))
-                    .map((ep, i) => {
-                      const fullUrl = `${API_BASE}${ep.path}`;
-                      return (
-                        <tr key={i} className="hover:bg-gray-50 group">
-                          <td className="py-2.5 pr-3">
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${METHOD_COLORS[ep.method] || 'bg-gray-100 text-gray-600'}`}>{ep.method}</span>
-                          </td>
-                          <td className="py-2.5 pr-3 min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <code className="text-xs text-gray-700 font-mono break-all">{fullUrl}</code>
-                              <span className="opacity-0 group-hover:opacity-100 transition-opacity"><CopyButton text={fullUrl} /></span>
+            <div className="space-y-1">
+              {V1_ENDPOINTS
+                .filter(ep => docsFilter === 'all' || ep.scope.split(':')[0].toLowerCase() === docsFilter.toLowerCase() || (docsFilter === 'Leads' && (ep.scope.startsWith('leads') || ep.scope.startsWith('contacts'))) || (docsFilter === 'Automation' && ep.scope.startsWith('automations')))
+                .map((ep, i) => {
+                  const fullUrl = `${API_BASE}${ep.path}${(ep as any).params || ''}`;
+                  const isOpen = expandedEp === i;
+                  const curlBody = ep.body ? ` \\\n  -H "Content-Type: application/json" \\\n  -d '${JSON.stringify(ep.body, null, 2)}'` : '';
+                  const curlCmd = `curl -X ${ep.method} ${fullUrl} \\\n  -H "Authorization: Bearer YOUR_API_KEY"${curlBody}`;
+                  return (
+                    <div key={i}>
+                      <button
+                        onClick={() => setExpandedEp(isOpen ? null : i)}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all ${isOpen ? 'bg-primary-50 border border-primary-200' : 'hover:bg-gray-50 border border-transparent'}`}
+                      >
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded w-14 text-center flex-shrink-0 ${METHOD_COLORS[ep.method] || 'bg-gray-100 text-gray-600'}`}>{ep.method}</span>
+                        <code className="text-xs text-gray-700 font-mono flex-1 text-left truncate">{ep.path}</code>
+                        {ep.scope !== 'none' && <span className="text-[10px] bg-blue-50 text-blue-700 border border-blue-100 px-1.5 py-0.5 rounded flex-shrink-0 hidden sm:inline">{ep.scope}</span>}
+                        <span className="text-xs text-gray-400 flex-shrink-0 hidden md:inline">{ep.desc}</span>
+                        <span className={`text-gray-400 flex-shrink-0 text-xs transition-transform ${isOpen ? 'rotate-180' : ''}`}>▾</span>
+                      </button>
+                      {isOpen && (
+                        <div className="mx-1 mb-2 rounded-xl border border-primary-100 bg-gradient-to-br from-slate-50 to-blue-50/30 overflow-hidden">
+                          <div className="flex items-center justify-between px-3 py-1.5 border-b border-slate-200">
+                            <span className="text-[11px] font-bold text-slate-500">cURL</span>
+                            <CopyButton text={curlCmd} />
+                          </div>
+                          <pre className="text-[11px] font-mono text-slate-700 p-3 whitespace-pre-wrap leading-relaxed overflow-x-auto">{curlCmd}</pre>
+                          {ep.body && (
+                            <div className="border-t border-slate-200 px-3 py-2">
+                              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Request Body</p>
+                              <pre className="text-[11px] font-mono text-emerald-700 whitespace-pre-wrap">{JSON.stringify(ep.body, null, 2)}</pre>
                             </div>
-                          </td>
-                          <td className="py-2.5 pr-3 whitespace-nowrap">
-                            {ep.scope !== 'none' ? <span className="text-[10px] bg-blue-50 text-blue-700 border border-blue-100 px-1.5 py-0.5 rounded">{ep.scope}</span> : <span className="text-xs text-gray-400">public</span>}
-                          </td>
-                          <td className="py-2.5 text-xs text-gray-600 whitespace-nowrap">{ep.desc}</td>
-                        </tr>
-                      );
-                    })}
-                </tbody>
-              </table>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
             </div>
           </Card>
 
