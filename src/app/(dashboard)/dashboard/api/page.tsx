@@ -10,7 +10,7 @@ import { useApi } from '@/hooks/useApi';
 interface ApiKey { id: string; name: string; prefix: string; scopes: string[]; last_used_at: string | null; expires_at: string | null; created_at: string; }
 interface LogEntry { id: string; method: string; path: string; status_code: number | null; scope_used: string | null; response_ms: number | null; created_at: string; }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.b9automation.com';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://b9-automation-backend.onrender.com';
 
 const ALL_SCOPES: { value: string; label: string; desc: string; group: string }[] = [
   { value: 'leads:read',      label: 'Read Leads',        desc: 'View contacts and conversation data',      group: 'Leads' },
@@ -92,6 +92,7 @@ export default function ApiKeysPage() {
   const [newKeyValue, setNewKeyValue] = useState<string | null>(null);
   const [revoking, setRevoking] = useState<string | null>(null);
   const [logsLoading, setLogsLoading] = useState(false);
+  const [docsFilter, setDocsFilter] = useState<string>('all');
 
   const loadKeys = async () => {
     setLoading(true);
@@ -153,10 +154,19 @@ export default function ApiKeysPage() {
           <p className="text-sm text-gray-500 mt-0.5">
             Programmatic access to your B9 workspace — leads, messages, automations, catalog, payments.
           </p>
+          <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-100 rounded-lg px-3 py-2 mt-2 w-fit">
+            <span className="font-mono font-semibold">{API_BASE}/api/v1/</span>
+            <CopyButton text={`${API_BASE}/api/v1/`} />
+          </div>
         </div>
-        <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-100 rounded-lg px-3 py-2">
-          <span className="font-mono font-semibold">{API_BASE}/api/v1/</span>
-          <CopyButton text={`${API_BASE}/api/v1/`} />
+        <div className="flex items-center gap-2">
+          <a href={`${API_BASE}/docs`} target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-violet-200 bg-violet-50 text-violet-700 text-sm font-semibold hover:bg-violet-100 transition-colors">
+            <ExternalLink className="w-4 h-4" /> Open Swagger
+          </a>
+          <Button onClick={() => { setTab('keys'); setShowForm(true); }} className="flex items-center gap-2">
+            <Plus className="w-4 h-4" /> New API Key
+          </Button>
         </div>
       </div>
 
@@ -268,9 +278,15 @@ export default function ApiKeysPage() {
                       ))}
                       {!key.scopes?.length && <span className="text-xs text-gray-400">No scopes</span>}
                     </div>
-                    <p className="text-xs text-gray-400 mt-1.5">
-                      Created {formatDate(key.created_at)} · Last used {formatDate(key.last_used_at)}
-                    </p>
+                    <div className="flex items-center gap-3 mt-1.5">
+                      <p className="text-xs text-gray-400">
+                        Created {formatDate(key.created_at)} · Last used {formatDate(key.last_used_at)}
+                      </p>
+                      <a href={`${API_BASE}/docs`} target="_blank" rel="noopener noreferrer"
+                        className="text-[11px] text-violet-600 hover:text-violet-800 font-semibold flex items-center gap-0.5 transition-colors">
+                        Test in Swagger <ExternalLink className="w-2.5 h-2.5" />
+                      </a>
+                    </div>
                   </div>
                   <button onClick={() => handleRevoke(key.id)} disabled={revoking === key.id}
                     className="p-2 text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50" title="Revoke key">
@@ -313,32 +329,51 @@ export default function ApiKeysPage() {
 
           {/* Endpoints */}
           <Card className="p-5">
-            <h2 className="font-semibold text-gray-900 mb-3 flex items-center gap-2"><Zap className="w-4 h-4 text-primary-600" /> Endpoints</h2>
+            <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+              <h2 className="font-semibold text-gray-900 flex items-center gap-2"><Zap className="w-4 h-4 text-primary-600" /> Endpoints</h2>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs text-gray-500">Filter:</span>
+                {['all', 'Leads', 'Messages', 'Templates', 'Campaigns', 'Payments', 'Automation', 'Analytics'].map(g => (
+                  <button key={g} onClick={() => setDocsFilter(g)}
+                    className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border transition-colors ${docsFilter === g ? 'bg-primary-600 text-white border-primary-600' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}>
+                    {g === 'all' ? 'All' : g}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-200">
                     <th className="text-left py-2 pr-3 text-xs font-semibold text-gray-500 uppercase">Method</th>
-                    <th className="text-left py-2 pr-3 text-xs font-semibold text-gray-500 uppercase">Path</th>
-                    <th className="text-left py-2 pr-3 text-xs font-semibold text-gray-500 uppercase">Scope Required</th>
+                    <th className="text-left py-2 pr-3 text-xs font-semibold text-gray-500 uppercase">Full URL</th>
+                    <th className="text-left py-2 pr-3 text-xs font-semibold text-gray-500 uppercase">Scope</th>
                     <th className="text-left py-2 text-xs font-semibold text-gray-500 uppercase">Description</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {V1_ENDPOINTS.map((ep, i) => (
-                    <tr key={i} className="hover:bg-gray-50">
-                      <td className="py-2 pr-3">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${METHOD_COLORS[ep.method] || 'bg-gray-100 text-gray-600'}`}>{ep.method}</span>
-                      </td>
-                      <td className="py-2 pr-3">
-                        <code className="text-xs text-gray-700 font-mono">{ep.path}</code>
-                      </td>
-                      <td className="py-2 pr-3">
-                        {ep.scope !== 'none' ? <span className="text-[10px] bg-blue-50 text-blue-700 border border-blue-100 px-1.5 py-0.5 rounded">{ep.scope}</span> : <span className="text-xs text-gray-400">public</span>}
-                      </td>
-                      <td className="py-2 text-xs text-gray-600">{ep.desc}</td>
-                    </tr>
-                  ))}
+                  {V1_ENDPOINTS
+                    .filter(ep => docsFilter === 'all' || ep.scope.split(':')[0].toLowerCase() === docsFilter.toLowerCase() || (docsFilter === 'Leads' && (ep.scope.startsWith('leads') || ep.scope.startsWith('contacts'))) || (docsFilter === 'Automation' && ep.scope.startsWith('automations')))
+                    .map((ep, i) => {
+                      const fullUrl = `${API_BASE}${ep.path}`;
+                      return (
+                        <tr key={i} className="hover:bg-gray-50 group">
+                          <td className="py-2.5 pr-3">
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${METHOD_COLORS[ep.method] || 'bg-gray-100 text-gray-600'}`}>{ep.method}</span>
+                          </td>
+                          <td className="py-2.5 pr-3 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <code className="text-xs text-gray-700 font-mono break-all">{fullUrl}</code>
+                              <span className="opacity-0 group-hover:opacity-100 transition-opacity"><CopyButton text={fullUrl} /></span>
+                            </div>
+                          </td>
+                          <td className="py-2.5 pr-3 whitespace-nowrap">
+                            {ep.scope !== 'none' ? <span className="text-[10px] bg-blue-50 text-blue-700 border border-blue-100 px-1.5 py-0.5 rounded">{ep.scope}</span> : <span className="text-xs text-gray-400">public</span>}
+                          </td>
+                          <td className="py-2.5 text-xs text-gray-600 whitespace-nowrap">{ep.desc}</td>
+                        </tr>
+                      );
+                    })}
                 </tbody>
               </table>
             </div>

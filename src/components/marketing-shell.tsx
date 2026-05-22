@@ -145,14 +145,14 @@ export function MarketingFooter({ variant = 'light' }: { variant?: 'light' | 'da
             </div>
           )}
           <p className={`mt-4 max-w-sm text-sm leading-6 ${isDark ? 'text-gray-500' : 'text-gray-600'}`}>
-            Upload, organize, chat, and embed AI assistants trained on your own knowledge.
+            India&apos;s WhatsApp Agentic AI platform — qualify leads, collect payments, and run campaigns automatically.
           </p>
         </div>
 
         {[
-          { title: 'Product', links: [['Features', '/features'], ['How It Works', '/how-it-works'], ['Pricing', '/pricing'], ['Dashboard', '/dashboard']] },
-          { title: 'Resources', links: [['Blog', '/blog'], ['Changelog', '/changelog'], ['FAQ', '/features#faq']] },
-          { title: 'Company', links: [['About', '/about'], ['Privacy', '/privacy'], ['Terms', '/privacy']] },
+          { title: 'Product', links: [['Features', '/features'], ['How It Works', '/how-it-works'], ['Integrations', '/integrations'], ['Pricing', '/pricing']] },
+          { title: 'Resources', links: [['Blog', '/blog'], ['Changelog', '/changelog'], ['API Docs', '/api-docs'], ['FAQ', '/features#faq']] },
+          { title: 'Legal', links: [['Privacy Policy', '/privacy'], ['Terms of Service', '/terms'], ['Cookie Policy', '/cookies'], ['Data Deletion', '/deletion']] },
         ].map((group) => (
           <div key={group.title}>
             <h3 className={`text-sm font-bold ${isDark ? 'text-white' : 'text-gray-950'}`}>{group.title}</h3>
@@ -170,8 +170,17 @@ export function MarketingFooter({ variant = 'light' }: { variant?: 'light' | 'da
           </div>
         ))}
       </div>
-      <div className={`border-t py-5 text-center text-sm ${isDark ? 'border-white/[0.06] text-gray-600' : 'border-orange-100 text-gray-500'}`}>
-        © 2026 B9 Automation. All rights reserved.
+      <div className={`border-t py-5 ${isDark ? 'border-white/[0.06]' : 'border-orange-100'}`}>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
+          <p className={isDark ? 'text-gray-600' : 'text-gray-500'}>© 2026 B9 Automation. All rights reserved.</p>
+          <div className="flex items-center gap-5">
+            {[['Privacy', '/privacy'], ['Terms', '/terms'], ['Cookies', '/cookies'], ['Data Deletion', '/deletion']].map(([label, href]) => (
+              <Link key={label} href={href} className={`${isDark ? 'text-gray-600 hover:text-gray-400' : 'text-gray-500 hover:text-gray-700'} transition-colors`}>
+                {label}
+              </Link>
+            ))}
+          </div>
+        </div>
       </div>
     </footer>
   );

@@ -10,7 +10,7 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { Eye, EyeOff } from 'lucide-react';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://b9-automation-backend.onrender.com';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');

@@ -437,12 +437,12 @@ export default function SettingsPage() {
             <p className="text-xs font-semibold text-gray-700 mb-1">WhatsApp Webhook URL</p>
             <div className="flex items-center gap-2 rounded-lg bg-gray-100 px-3 py-2">
               <code className="flex-1 truncate text-xs text-gray-700 select-all">
-                {(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000')}/api/webhooks/whatsapp
+                {(process.env.NEXT_PUBLIC_API_URL || 'https://b9-automation-backend.onrender.com')}/api/webhooks/whatsapp
               </code>
               <button
                 type="button"
                 onClick={() => {
-                  navigator.clipboard.writeText(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/webhooks/whatsapp`);
+                  navigator.clipboard.writeText(`${process.env.NEXT_PUBLIC_API_URL || 'https://b9-automation-backend.onrender.com'}/api/webhooks/whatsapp`);
                 }}
                 className="text-xs font-semibold text-primary-600 hover:text-primary-700"
               >

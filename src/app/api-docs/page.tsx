@@ -16,7 +16,7 @@ const stagger = {
   visible: { transition: { staggerChildren: 0.08 } },
 };
 
-const BASE_URL = 'http://localhost:8000';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://b9-automation-backend.onrender.com';
 
 type ApiEndpoint = {
   method: string;
@@ -36,6 +36,31 @@ type ApiGroup = {
 };
 
 const apiGroups: ApiGroup[] = [
+  {
+    tag: 'v1',
+    label: 'REST API v1 — External Integrations',
+    color: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
+    description: 'These endpoints use API Key authentication (b9_xxx). Generate a key from your dashboard → API Access. Pass it as: Authorization: Bearer YOUR_API_KEY',
+    endpoints: [
+      { method: 'GET',   path: '/api/v1/',                        description: 'API info — version, available endpoints, your plan',         auth: true },
+      { method: 'GET',   path: '/api/v1/leads',                   description: 'List leads. Filters: ?status=hot&tag=opted_out&phone=91xxx', auth: true },
+      { method: 'POST',  path: '/api/v1/leads',                   description: 'Create a new lead in CRM',                                  auth: true, body: { name: 'string', phone: 'string (E.164)', email: 'string (optional)', source: 'string' } },
+      { method: 'GET',   path: '/api/v1/leads/{id}',              description: 'Get lead by ID with full conversation history',              auth: true },
+      { method: 'PATCH', path: '/api/v1/leads/{id}',              description: 'Update lead status, tag, score, or pipeline stage',         auth: true, body: { status: 'hot | warm | cold | contacted | won | lost', tag: 'string', score: 'number 0-10' } },
+      { method: 'POST',  path: '/api/v1/whatsapp/send-template',  description: 'Send approved WhatsApp template. Works anytime (no 24h limit)',auth: true, body: { phone: 'string (E.164)', template_name: 'string', language_code: 'en_US | hi | gu ...', variables: ['string'] } },
+      { method: 'POST',  path: '/api/v1/whatsapp/send-text',      description: 'Send plain text. Only within 24h of customer last message', auth: true, body: { phone: 'string', message: 'string' } },
+      { method: 'GET',   path: '/api/v1/whatsapp/status',         description: 'WhatsApp connection health + phone number details',          auth: true },
+      { method: 'GET',   path: '/api/v1/messages',                description: 'List outbound messages. Filters: ?status=sent&limit=20',    auth: true },
+      { method: 'GET',   path: '/api/v1/templates',               description: 'List APPROVED WhatsApp templates with components',           auth: true },
+      { method: 'GET',   path: '/api/v1/catalog',                 description: 'List products in your catalog',                             auth: true },
+      { method: 'GET',   path: '/api/v1/campaigns',               description: 'List campaigns with delivery stats',                        auth: true },
+      { method: 'GET',   path: '/api/v1/automations',             description: 'List all automation workflows',                             auth: true },
+      { method: 'POST',  path: '/api/v1/automations/{id}/run',    description: 'Trigger a workflow run with custom context',                auth: true, body: { context: { lead_id: 'string (optional)', message: 'string (optional)' } } },
+      { method: 'GET',   path: '/api/v1/payments',                description: 'List customer payment records',                             auth: true },
+      { method: 'POST',  path: '/api/v1/payments/link',           description: 'Create Razorpay payment link for a customer',               auth: true, body: { phone: 'string', amount: 'number (paise)', description: 'string', lead_id: 'string (optional)' } },
+      { method: 'GET',   path: '/api/v1/analytics',               description: '30-day usage summary: leads, messages, campaigns, revenue', auth: true },
+    ],
+  },
   {
     tag: 'auth',
     label: 'Authentication',
@@ -234,14 +259,24 @@ export default function ApiDocsPage() {
               B9 Automation API
             </motion.h1>
             <motion.p variants={fadeUp} className="text-xl text-gray-400 max-w-2xl mx-auto mb-8">
-              Build custom integrations on top of B9. All endpoints are REST-based. Authenticate with a Bearer token.
+              Build custom integrations with B9. REST API v1 uses API Key auth. Internal APIs use JWT. All responses are JSON.
             </motion.p>
 
             {/* Base URL */}
-            <motion.div variants={fadeUp} className="inline-flex items-center gap-3 rounded-xl border border-white/[0.10] bg-white/[0.03] px-5 py-3 font-mono text-sm">
+            <motion.div variants={fadeUp} className="inline-flex items-center gap-3 rounded-xl border border-white/[0.10] bg-white/[0.03] px-5 py-3 font-mono text-sm mb-6">
               <span className="text-gray-500">Base URL</span>
               <span className="text-white">{BASE_URL}</span>
               <CopyButton text={BASE_URL} />
+            </motion.div>
+
+            <motion.div variants={fadeUp} className="flex flex-wrap justify-center gap-3">
+              <Link href="/dashboard/api" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-black font-semibold text-sm hover:bg-gray-100 transition-colors">
+                Get API Key →
+              </Link>
+              <a href={`${BASE_URL}/docs`} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/20 text-white font-semibold text-sm hover:bg-white/10 transition-colors">
+                Open Swagger UI ↗
+              </a>
             </motion.div>
           </motion.div>
         </div>
@@ -250,15 +285,36 @@ export default function ApiDocsPage() {
       {/* AUTH HEADER NOTE */}
       <section className="border-b border-white/[0.06] py-8">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-6">
-            <h3 className="font-semibold text-white mb-2">Authentication</h3>
-            <p className="text-gray-400 text-sm mb-4">
-              Endpoints marked with <span className="text-yellow-400 font-mono">🔒 Auth</span> require a Bearer token in the Authorization header. Get your token from <code className="bg-white/5 px-1 rounded text-gray-300">POST /api/auth/login</code>.
-            </p>
-            <div className="flex items-center gap-3 rounded-lg bg-black/50 border border-white/[0.06] px-4 py-2 font-mono text-sm">
-              <span className="text-gray-500">Authorization:</span>
-              <span className="text-green-400">Bearer &lt;your_access_token&gt;</span>
-              <CopyButton text="Authorization: Bearer <your_access_token>" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* API Key auth */}
+            <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.04] p-5">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs font-bold bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded">REST API v1</span>
+                <h3 className="font-semibold text-white text-sm">API Key Authentication</h3>
+              </div>
+              <p className="text-gray-400 text-xs mb-3">
+                For external integrations — CRMs, Shopify, custom apps. Generate key from Dashboard → API Access. 22 permission scopes available.
+              </p>
+              <div className="flex items-center gap-2 rounded-lg bg-black/50 border border-white/[0.06] px-3 py-2 font-mono text-xs">
+                <span className="text-gray-500">Authorization:</span>
+                <span className="text-emerald-400">Bearer b9_xxxxxxxxxxxx</span>
+                <CopyButton text="Authorization: Bearer b9_xxxxxxxxxxxx" />
+              </div>
+            </div>
+            {/* JWT auth */}
+            <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-5">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs font-bold bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded">Dashboard APIs</span>
+                <h3 className="font-semibold text-white text-sm">JWT Authentication</h3>
+              </div>
+              <p className="text-gray-400 text-xs mb-3">
+                For dashboard access. Get token from <code className="bg-white/5 px-1 rounded text-gray-300">POST /api/auth/login</code>, then pass in every request.
+              </p>
+              <div className="flex items-center gap-2 rounded-lg bg-black/50 border border-white/[0.06] px-3 py-2 font-mono text-xs">
+                <span className="text-gray-500">Authorization:</span>
+                <span className="text-blue-400">Bearer eyJhbGciOiJIUzI1...</span>
+                <CopyButton text="Authorization: Bearer <jwt_token>" />
+              </div>
             </div>
           </div>
         </div>

@@ -6,7 +6,7 @@ import { CheckCircle2, Loader2, XCircle } from 'lucide-react';
 import { Button } from '@/components/button';
 import axios from 'axios';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API = process.env.NEXT_PUBLIC_API_URL || 'https://b9-automation-backend.onrender.com';
 
 function TeamAcceptContent() {
   const params = useSearchParams();

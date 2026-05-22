@@ -337,9 +337,9 @@ export default function HomePage() {
             variants={fadeUp}
             className="text-5xl sm:text-6xl lg:text-7xl font-bold leading-[1.05] tracking-tight"
           >
-            WhatsApp AI
+            Your AI sales team,
             <br />
-            <span className="text-gray-500">for Indian Business.</span>
+            <span className="text-gray-500">running on WhatsApp.</span>
           </motion.h1>
 
           <motion.p
@@ -356,9 +356,15 @@ export default function HomePage() {
                 <ArrowRight className="h-5 w-5" />
               </button>
             </Link>
+            <Link href="/how-it-works">
+              <button className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-white/5 text-white border border-white/10 font-semibold hover:bg-white/10 transition-all">
+                How It Works
+                <ArrowRight className="h-4 w-4 opacity-60" />
+              </button>
+            </Link>
             <Link href="/signup?demo=1">
-              <button className="px-6 py-3 rounded-lg bg-white/5 text-white border border-white/10 font-semibold hover:bg-white/10 transition-all">
-                Book Demo Call
+              <button className="px-6 py-3 rounded-lg text-gray-400 border border-white/[0.06] font-medium hover:text-white hover:border-white/20 transition-all text-sm">
+                Book Demo
               </button>
             </Link>
           </motion.div>

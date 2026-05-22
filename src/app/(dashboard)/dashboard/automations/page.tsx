@@ -843,7 +843,7 @@ export default function AutomationsPage() {
       refresh();
 
       if (runId) {
-        const wsBase = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000').replace(/^http/, 'ws');
+        const wsBase = (process.env.NEXT_PUBLIC_API_URL || 'https://b9-automation-backend.onrender.com').replace(/^http/, 'ws');
         const ws = new WebSocket(`${wsBase}/api/automation/ws/runs/${runId}`);
         ws.onmessage = (evt) => {
           try {
@@ -3999,7 +3999,7 @@ function RequestApprovalSettings({ config, onChange }: { config: Record<string, 
 function FacebookWebhookPanel({ workspaceId }: { workspaceId: string }) {
   const [copied, setCopied] = useState(false);
   void workspaceId;
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.brainai.in';
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://b9-automation-backend.onrender.com';
   const webhookUrl = `${baseUrl}/api/webhooks/facebook`;
   const verifyToken = 'brainai_fb_verify';
 

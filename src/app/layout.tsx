@@ -84,7 +84,7 @@ export default function RootLayout({
         <meta name="color-scheme" content="light" />
 
         {/* DNS Prefetch for performance */}
-        <link rel="dns-prefetch" href="https://api.brainai.in" />
+        <link rel="dns-prefetch" href="https://b9-automation-backend.onrender.com" />
       </head>
       <body className={`${inter.className} font-sans`} suppressHydrationWarning>
         <Providers>{children}</Providers>
