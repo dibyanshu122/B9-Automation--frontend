@@ -348,20 +348,20 @@ export default function IntegrationsPage() {
       window.opener?.postMessage({ type: 'instagram_error', error: params.get('instagram_error') }, window.location.origin);
       window.close();
     }
-    // Load Meta FB SDK for Embedded Signup popup
+    // Load Meta FB SDK — fbAsyncInit must be set BEFORE script loads
     if (!document.getElementById('fb-sdk')) {
+      const appId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || '';
+      (window as any).fbAsyncInit = () => {
+        if (appId && (window as any).FB) {
+          (window as any).FB.init({ appId, cookie: true, xfbml: false, version: 'v20.0' });
+        }
+      };
       const s = document.createElement('script');
       s.id = 'fb-sdk';
       s.src = 'https://connect.facebook.net/en_US/sdk.js';
       s.async = true;
       s.defer = true;
       document.body.appendChild(s);
-      (window as any).fbAsyncInit = () => {
-        const appId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || '';
-        if (appId && (window as any).FB) {
-          (window as any).FB.init({ appId, cookie: true, xfbml: false, version: 'v20.0' });
-        }
-      };
     }
     // Meta Embedded Signup callback handling
     if (params.get('meta_step') === 'select_assets') {
@@ -2172,6 +2172,8 @@ export default function IntegrationsPage() {
                           if (!data.app_id) { toast.error('Meta app not configured'); return; }
                           // FB.login() requires HTTPS — use it only in production, OAuth popup on localhost
                           if ((window as any).FB && window.location.protocol === 'https:') {
+                            // Re-init to guarantee version is set before login
+                            (window as any).FB.init({ appId: data.app_id, cookie: true, xfbml: false, version: 'v20.0' });
                             (window as any).FB.login((response: any) => {
                               if (response.authResponse) {
                                 window.location.href = `${base}/api/meta/onboarding/callback?code=${response.authResponse.code}&state=${data.state}`;
