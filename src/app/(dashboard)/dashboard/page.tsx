@@ -97,6 +97,7 @@ export default function DashboardPage() {
     leads_hour?: number; leads_today?: number;
     wa_messages_hour?: number; automations_today?: number; pending_tasks?: number;
   }>({});
+  const [teamMe, setTeamMe] = useState<{ role?: string; is_owner?: boolean; assigned_only?: boolean; permissions?: string[] } | null>(null);
 
   const activePack = onboarding?.industry_pack || selectedPack;
   const businessName = onboarding?.profile?.business_name || activePack.workspace_name || `${activePack.label} Workspace`;
@@ -124,10 +125,12 @@ export default function DashboardPage() {
       silentGet('/api/analytics/dashboard'),
       silentGet('/api/automation/onboarding/status'),
       silentGet('/api/automation/readiness'),
-    ]).then(([statsResult, onbResult, readResult]) => {
+      silentGet('/api/team/me'),
+    ]).then(([statsResult, onbResult, readResult, teamResult]) => {
       const statsRes = statsResult.status === 'fulfilled' ? statsResult.value : { data: null };
       const onbRes   = onbResult.status === 'fulfilled'   ? onbResult.value   : { data: null };
       const readRes  = readResult.status === 'fulfilled'  ? readResult.value  : { data: null };
+      const teamRes  = teamResult.status === 'fulfilled'  ? teamResult.value  : { data: null };
       if (statsRes.data) {
         const d = statsRes.data;
         setAutomationStats({
@@ -158,6 +161,7 @@ export default function DashboardPage() {
         setOnboarding({ is_complete: false });
       }
       if (readRes.data) setReadiness(readRes.data);
+      if (teamRes.data) setTeamMe(teamRes.data);
     });
   };
 
@@ -217,6 +221,22 @@ export default function DashboardPage() {
         </div>
       )}
       {/* Push notification opt-in banner — shown only when not subscribed + supported + not dismissed */}
+      {teamMe && !teamMe.is_owner && (
+        <Card className="border-indigo-100 bg-indigo-50/70 shadow-sm" hoverable={false}>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-bold text-indigo-950">Agent workspace</p>
+              <p className="mt-1 text-sm text-indigo-700">
+                Role: <span className="font-semibold capitalize">{teamMe.role || 'agent'}</span>
+                {teamMe.assigned_only ? ' - assigned customer work only' : ' - broader workspace access enabled'}
+              </p>
+            </div>
+            <Link href="/dashboard/leads" className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-indigo-700 ring-1 ring-indigo-100 hover:bg-indigo-100">
+              Open my leads
+            </Link>
+          </div>
+        </Card>
+      )}
       {push.supported && !push.subscribed && push.permission !== 'denied' && !pushDismissed && (
         <div className="flex items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm text-blue-800">
           <div className="flex items-center gap-2">

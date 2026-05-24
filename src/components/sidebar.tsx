@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { SIDEBAR_GROUPS } from '@/lib/constants';
+import { API_BASE_URL, SIDEBAR_GROUPS } from '@/lib/constants';
 import { useUIStore } from '@/store/uiStore';
 import { useAuthStore } from '@/store/authStore';
 import { Logo } from '@/components/logo';
@@ -28,6 +28,50 @@ const ICONS = {
 
 // Dark sidebar — premium contrast against white dashboard
 const BG = '#0F172A';
+
+type TeamAccess = {
+  role?: string;
+  is_owner?: boolean;
+  permissions?: string[];
+};
+
+const NAV_PERMISSIONS: Record<string, string[]> = {
+  '/dashboard/assistants': ['settings.manage', 'automations.manage'],
+  '/dashboard/leads': ['leads.read_all', 'leads.read_assigned'],
+  '/dashboard/campaigns': ['campaigns.manage', 'campaigns.draft'],
+  '/dashboard/catalog': ['integrations.manage', 'campaigns.manage'],
+  '/dashboard/qr-codes': ['campaigns.manage', 'campaigns.draft'],
+  '/dashboard/imports': ['leads.write', 'leads.write_assigned'],
+  '/dashboard/messages': ['inbox.read_all', 'inbox.read_assigned'],
+  '/dashboard/auto-replies': ['automations.manage', 'inbox.reply'],
+  '/dashboard/opted-out': ['leads.read_all'],
+  '/dashboard/tasks': ['tasks.manage_own', 'leads.write', 'leads.write_assigned'],
+  '/dashboard/automations': ['automations.manage', 'automations.view'],
+  '/dashboard/flows': ['flows.manage', 'flows.draft'],
+  '/dashboard/templates': ['templates.manage', 'templates.draft'],
+  '/dashboard/ab-testing': ['campaigns.manage'],
+  '/dashboard/logs': ['automations.manage', 'automations.view'],
+  '/dashboard/documents': ['dashboard.read'],
+  '/dashboard/chat': ['dashboard.read'],
+  '/dashboard/widgets': ['dashboard.read'],
+  '/dashboard/analytics': ['analytics.read', 'dashboard.read'],
+  '/dashboard/notifications': ['dashboard.read'],
+  '/dashboard/team': ['team.manage', 'team.manage_agents'],
+  '/dashboard/integrations': ['integrations.manage'],
+  '/dashboard/api': ['api_keys.manage'],
+  '/dashboard/billing': ['settings.manage'],
+  '/dashboard/settings': ['settings.manage'],
+  '/dashboard/launch': ['settings.manage', 'integrations.manage'],
+};
+
+function canSeeHref(access: TeamAccess | null, href?: string) {
+  if (!href || !access) return true;
+  const perms = new Set(access.permissions || []);
+  if (access.is_owner || access.role === 'owner' || perms.has('*')) return true;
+  const required = NAV_PERMISSIONS[href];
+  if (!required?.length) return true;
+  return required.some((permission) => perms.has(permission));
+}
 
 function useUnreadCount() {
   const [count, setCount] = useState(0);
@@ -63,6 +107,7 @@ export const Sidebar = () => {
     openGroups, toggleGroup,
   } = useUIStore();
   const unreadCount = useUnreadCount();
+  const [teamAccess, setTeamAccess] = useState<TeamAccess | null>(null);
 
   // Hover state with small leave-delay to prevent flicker when moving between children
   const [hovered, setHovered] = useState(false);
@@ -78,9 +123,27 @@ export const Sidebar = () => {
 
   useEffect(() => () => { if (leaveTimer.current) clearTimeout(leaveTimer.current); }, []);
 
+  useEffect(() => {
+    const token = useAuthStore.getState().token;
+    if (!token) return;
+    fetch(`${API_BASE_URL}/api/team/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        if (data) setTeamAccess(data);
+      })
+      .catch(() => {});
+  }, []);
+
   const expanded = sidebarPinned || hovered;
-  const mainGroups = SIDEBAR_GROUPS.filter((group) => group.position !== 'bottom');
-  const bottomGroups = SIDEBAR_GROUPS.filter((group) => group.position === 'bottom');
+  const visibleGroups = SIDEBAR_GROUPS.map((group) => {
+    if (!group.children?.length) return canSeeHref(teamAccess, group.href) ? group : null;
+    const children = group.children.filter((childItem) => canSeeHref(teamAccess, childItem.href));
+    return children.length ? { ...group, children } : null;
+  }).filter(Boolean) as typeof SIDEBAR_GROUPS;
+  const mainGroups = visibleGroups.filter((group) => group.position !== 'bottom');
+  const bottomGroups = visibleGroups.filter((group) => group.position === 'bottom');
 
   const isActive = (href: string): boolean =>
     pathname === href || (href !== '/dashboard' && (pathname?.startsWith(href) ?? false));

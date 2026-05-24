@@ -23,6 +23,20 @@ interface InboxItem {
   updated_at: string;
 }
 
+interface TeamMemberOption {
+  id: string;
+  user_id?: string;
+  display_name?: string;
+  email: string;
+  role: string;
+}
+
+interface LeadLabelOption {
+  id: string;
+  name: string;
+  color?: string;
+}
+
 const stages = [
   { key: 'new', label: 'New' },
   { key: 'contacted', label: 'Contacted' },
@@ -63,14 +77,25 @@ export default function LeadsPage() {
   const [memoryLoading, setMemoryLoading] = useState(false);
   const [memoryOpen, setMemoryOpen] = useState(false);
   const [clearingMemory, setClearingMemory] = useState(false);
+  const [teamMembers, setTeamMembers] = useState<TeamMemberOption[]>([]);
+  const [leadLabels, setLeadLabels] = useState<LeadLabelOption[]>([]);
 
   const refresh = () => {
     setLoading(true);
-    Promise.all([get('/api/leads'), get('/api/leads/inbox'), get('/api/leads/handover-queue')])
-      .then(([leadResponse, inboxResponse, handoverResponse]) => {
-        setLeads(leadResponse.data);
-        setInbox(inboxResponse.data);
-        setHandoverQueue(handoverResponse.data?.items || []);
+    Promise.allSettled([
+      get('/api/leads'),
+      get('/api/leads/inbox'),
+      get('/api/leads/handover-queue'),
+      api.get('/api/leads/labels'),
+      api.get('/api/team/members'),
+    ])
+      .then(([leadResponse, inboxResponse, handoverResponse, labelResponse, memberResponse]) => {
+        if (leadResponse.status === 'rejected') throw leadResponse.reason;
+        setLeads(leadResponse.value.data);
+        if (inboxResponse.status === 'fulfilled') setInbox(inboxResponse.value.data);
+        if (handoverResponse.status === 'fulfilled') setHandoverQueue(handoverResponse.value.data?.items || []);
+        if (labelResponse.status === 'fulfilled') setLeadLabels(labelResponse.value.data?.labels || []);
+        if (memberResponse.status === 'fulfilled') setTeamMembers(memberResponse.value.data?.members || []);
       })
       .catch((error) => toast.error(error.response?.data?.detail || 'Failed to load CRM data'))
       .finally(() => setLoading(false));
@@ -112,6 +137,20 @@ export default function LeadsPage() {
       const response = await api.patch(`/api/leads/${lead.id}`, { status });
       updateLeadInList(response.data);
       toast.success('Lead stage updated');
+    } catch (error: any) {
+      toast.error(error.response?.data?.detail || 'Failed to update lead');
+    } finally {
+      setBusyAction('');
+    }
+  };
+
+  const updateLeadMeta = async (lead: Lead, patch: Partial<Lead>, successMessage: string) => {
+    setBusyAction(`meta-${lead.id}`);
+    try {
+      const response = await api.patch(`/api/leads/${lead.id}`, patch);
+      updateLeadInList(response.data);
+      if (selectedLead?.id === lead.id) setSelectedLead(response.data);
+      toast.success(successMessage);
     } catch (error: any) {
       toast.error(error.response?.data?.detail || 'Failed to update lead');
     } finally {
@@ -491,12 +530,16 @@ export default function LeadsPage() {
                   <LeadCard
                     key={lead.id}
                     lead={lead}
+                    labels={leadLabels}
+                    members={teamMembers}
                     busyAction={busyAction}
                     onFollowUp={sendFollowUp}
                     onTask={createTask}
                     onHistory={openChatHistory}
                     onQualify={qualifyLead}
                     onStage={updateStage}
+                    onTag={(nextTag) => updateLeadMeta(lead, { tag: nextTag || null } as any, nextTag ? 'Lead label updated' : 'Lead label cleared')}
+                    onAssign={(memberId) => updateLeadMeta(lead, { assigned_to_user_id: memberId || null } as any, memberId ? 'Lead assigned' : 'Lead unassigned')}
                     onView={openLeadDetail}
                   />
                 ))}
@@ -521,12 +564,16 @@ export default function LeadsPage() {
                   <LeadCard
                     key={lead.id}
                     lead={lead}
+                    labels={leadLabels}
+                    members={teamMembers}
                     busyAction={busyAction}
                     onFollowUp={sendFollowUp}
                     onTask={createTask}
                     onHistory={openChatHistory}
                     onQualify={qualifyLead}
                     onStage={updateStage}
+                    onTag={(nextTag) => updateLeadMeta(lead, { tag: nextTag || null } as any, nextTag ? 'Lead label updated' : 'Lead label cleared')}
+                    onAssign={(memberId) => updateLeadMeta(lead, { assigned_to_user_id: memberId || null } as any, memberId ? 'Lead assigned' : 'Lead unassigned')}
                     onView={openLeadDetail}
                   />
                 ))}
@@ -618,6 +665,8 @@ export default function LeadsPage() {
             <DetailRow label="Email" value={selectedLead.email || '-'} />
             <DetailRow label="Source" value={selectedLead.source?.replace(/_/g, ' ') || '-'} />
             <DetailRow label="Status" value={selectedLead.status} />
+            <DetailRow label="Label" value={selectedLead.tag || '-'} />
+            <DetailRow label="Owner" value={teamMembers.find((member) => member.user_id === selectedLead.assigned_to_user_id)?.display_name || teamMembers.find((member) => member.user_id === selectedLead.assigned_to_user_id)?.email || 'Unassigned'} />
             <DetailRow label="Created date" value={new Date(selectedLead.created_at).toLocaleString()} />
           </div>
           <div className="mt-4 rounded-lg bg-gray-50 p-4 text-sm text-gray-700">
@@ -842,24 +891,33 @@ export default function LeadsPage() {
 
 function LeadCard({
   lead,
+  labels,
+  members,
   busyAction,
   onFollowUp,
   onTask,
   onHistory,
   onQualify,
   onStage,
+  onTag,
+  onAssign,
   onView,
 }: {
   lead: Lead;
+  labels: LeadLabelOption[];
+  members: TeamMemberOption[];
   busyAction: string;
   onFollowUp: (lead: Lead) => void;
   onTask: (lead: Lead) => void;
   onHistory: (lead: Lead) => void;
   onQualify: (lead: Lead) => void;
   onStage: (lead: Lead, status: string) => void;
+  onTag: (tag: string) => void;
+  onAssign: (memberId: string) => void;
   onView: (lead: Lead) => void;
 }) {
   const label = (lead.score_label || 'cold') as 'hot' | 'warm' | 'cold';
+  const masked = Boolean(lead.metadata?.masked_for_role);
   return (
     <div className="rounded-lg border border-gray-100 bg-white p-4">
       <div className="flex items-start justify-between gap-3">
@@ -874,6 +932,8 @@ function LeadCard({
       <div className="mt-3 flex flex-wrap gap-2 text-xs text-gray-500">
         {lead.phone && <span className="inline-flex items-center gap-1"><Phone className="h-3.5 w-3.5" />{lead.phone}</span>}
         {lead.email && <span className="inline-flex items-center gap-1"><Mail className="h-3.5 w-3.5" />{lead.email}</span>}
+        {masked && <span className="rounded-full bg-slate-100 px-2 py-0.5 font-semibold text-slate-600">Masked by role</span>}
+        {lead.tag && <span className="rounded-full bg-indigo-50 px-2 py-0.5 font-semibold text-indigo-700">{lead.tag}</span>}
         {lead.budget && <span>Budget: {lead.budget}</span>}
         {lead.timeline && <span>Timeline: {lead.timeline}</span>}
         {lead.source === 'whatsapp_flow' && (
@@ -891,6 +951,30 @@ function LeadCard({
           disabled={busyAction === `status-${lead.id}`}
         >
           {stages.map((stage) => <option key={stage.key} value={stage.key}>{stage.label}</option>)}
+        </select>
+        <select
+          value={lead.tag || ''}
+          onChange={(e) => onTag(e.target.value)}
+          className="rounded-lg border border-gray-200 px-2 py-1.5 text-sm"
+          disabled={busyAction === `meta-${lead.id}`}
+          title="Lead label"
+        >
+          <option value="">No label</option>
+          {labels.map((item) => <option key={item.id} value={item.name}>{item.name}</option>)}
+        </select>
+        <select
+          value={lead.assigned_to_user_id || ''}
+          onChange={(e) => onAssign(e.target.value)}
+          className="rounded-lg border border-gray-200 px-2 py-1.5 text-sm"
+          disabled={busyAction === `meta-${lead.id}`}
+          title="Assign owner"
+        >
+          <option value="">Unassigned</option>
+          {members.filter((member) => member.user_id).map((member) => (
+            <option key={member.id} value={member.user_id}>
+              {member.display_name || member.email} ({member.role})
+            </option>
+          ))}
         </select>
         <Button variant="primary" size="sm" onClick={() => onFollowUp(lead)} loading={busyAction === `follow-${lead.id}`}>
           <Send className="h-4 w-4" />

@@ -132,6 +132,7 @@ export interface Lead {
   conversation_id?: string;
   visitor_id?: string;
   tag?: string;
+  assigned_to_user_id?: string;
   metadata?: Record<string, any>;
   ai_summary?: string;
   lead_score: number;

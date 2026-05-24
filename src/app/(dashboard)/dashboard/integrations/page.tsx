@@ -11,7 +11,6 @@ import {
   Database,
   ExternalLink,
   Instagram,
-  Loader2,
   Mail,
   Plug,
   RefreshCw,
@@ -2170,17 +2169,20 @@ export default function IntegrationsPage() {
                           const r = await fetch(`${base}/api/meta/onboarding/init`, { headers: { Authorization: `Bearer ${token}` } });
                           const data = await r.json();
                           if (!data.app_id) { toast.error('Meta app not configured'); return; }
-                          // FB.login() requires HTTPS — use it only in production, OAuth popup on localhost
+                          const redirectUri = data.redirect_uri || `${base}/api/meta/onboarding/callback`;
+                          const scope = data.scope || 'whatsapp_business_management,whatsapp_business_messaging,business_management';
+                          const graphVersion = data.graph_version || 'v20.0';
+                          // Prefer Meta Embedded Signup SDK; OAuth popup remains only as localhost fallback.
                           if ((window as any).FB && window.location.protocol === 'https:') {
                             // Re-init to guarantee version is set before login
-                            (window as any).FB.init({ appId: data.app_id, cookie: true, xfbml: false, version: 'v20.0' });
+                            (window as any).FB.init({ appId: data.app_id, cookie: true, xfbml: false, version: graphVersion });
                             (window as any).FB.login((response: any) => {
                               if (response.authResponse) {
                                 window.location.href = `${base}/api/meta/onboarding/callback?code=${response.authResponse.code}&state=${data.state}`;
                               }
                             }, { config_id: data.config_id, response_type: 'code', override_default_response_type: true });
                           } else {
-                            const params = new URLSearchParams({ client_id: data.app_id, redirect_uri: `${base}/api/meta/onboarding/callback`, state: data.state, scope: 'whatsapp_business_management,whatsapp_business_messaging,business_management', response_type: 'code' });
+                            const params = new URLSearchParams({ client_id: data.app_id, redirect_uri: redirectUri, state: data.state, scope, response_type: 'code' });
                             window.open(`https://www.facebook.com/dialog/oauth?${params}`, '_blank', 'width=600,height=700');
                           }
                         } catch (e: any) { toast.error(e?.message || 'Could not start Meta connection'); }
