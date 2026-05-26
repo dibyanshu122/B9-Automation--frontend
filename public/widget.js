@@ -131,7 +131,9 @@
       ".brainai-send{border:0;border-radius:999px;background:" + primaryColor + ";color:#fff;padding:0 16px;font:800 14px inherit;cursor:pointer}",
       ".brainai-send:disabled{opacity:.55;cursor:not-allowed}",
       ".brainai-mic{width:36px;height:36px;flex-shrink:0;border:1px solid #d1d5db;border-radius:50%;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;padding:0}",
-      ".brainai-mic.active{background:#fee2e2;border-color:#fca5a5}",
+      ".brainai-mic.active{background:#ef4444;border-color:#ef4444;animation:brainai-pulse-mic 1s ease-in-out infinite}",
+      ".brainai-mic.active svg{stroke:#fff}",
+      "@keyframes brainai-pulse-mic{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.4)}50%{box-shadow:0 0 0 8px rgba(239,68,68,0)}}",
       ".brainai-mic svg{width:16px;height:16px;stroke:currentColor}",
       ".brainai-watermark{border-top:1px solid #eef2f7;background:#fff;padding:7px 12px;text-align:center;font:700 11px/1 inherit;color:#6b7280}",
       ".brainai-watermark a{color:#111827;text-decoration:none}",
@@ -371,7 +373,12 @@
         r.continuous = false;
         r.onresult = function (e) {
           var t = e.results && e.results[0] && e.results[0][0] && e.results[0][0].transcript;
-          if (t) { input.value = (input.value ? input.value + " " : "") + t; input.focus(); }
+          if (t) {
+            input.value = t.trim();
+            mic.classList.remove("active");
+            activeRecognition = null;
+            sendMessage();
+          }
         };
         r.onerror = function () { mic.classList.remove("active"); activeRecognition = null; };
         r.onend = function () { mic.classList.remove("active"); activeRecognition = null; };
