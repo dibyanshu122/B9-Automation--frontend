@@ -181,7 +181,7 @@
       doIntro = false;
       root.style.transform = "scale(1)";
       bubble.classList.remove("intro");
-      bubble.textContent = "Chat with us";
+      bubble.textContent = welcome;
       if (introTimeout) clearTimeout(introTimeout);
     }
 
@@ -192,7 +192,7 @@
       bubble.textContent = welcome;
       introTimeout = setTimeout(endIntro, 3500);
     } else {
-      bubble.textContent = "Chat with us";
+      bubble.textContent = welcome;
       root.style.transform = "scale(1)";
     }
 
