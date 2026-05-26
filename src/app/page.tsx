@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import Script from 'next/script';
 import { Button } from '@/components/button';
 import { Logo } from '@/components/logo';
 import { SplineViewer } from '@/components/spline-viewer';
@@ -935,6 +936,42 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+      <Script
+        id="b9-widget"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: `
+            (function() {
+              var s = document.createElement('script');
+              s.src = 'https://b9-automation-frontend.vercel.app/widget.js';
+              s.async = true;
+              s.onload = function() {
+                B9Automation.init({
+                  assistantId: '7086ce82-e8f9-45fa-bdf0-85185f84af22',
+                  apiUrl: 'https://b9-automation-backend.onrender.com',
+                  businessName: 'B9 Automation',
+                  config: {
+                    title: 'B9 Automation',
+                    primary_color: '#3b82f6',
+                    theme_color: '#3b82f6',
+                    welcome_message: 'Hi! Ask me anything about B9 Automation.',
+                    position: 'bottom-right',
+                    enable_3d_robot: true,
+                    spline_scene_url: 'https://prod.spline.design/jxk-XEJksbP0STuI/scene.splinecode',
+                    suggested_buttons: ['Pricing', 'Features', 'Book Demo', 'Talk to Team'],
+                    lead_capture_after_messages: 3,
+                    sales_agent_mode: true,
+                    watermark_enabled: false,
+                    language: 'en',
+                    response_language: 'English'
+                  }
+                });
+              };
+              document.head.appendChild(s);
+            })();
+          `,
+        }}
+      />
     </div>
   );
 }

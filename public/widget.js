@@ -193,7 +193,7 @@
       var translateY = isBottom ? "calc(-50vh + 80px)" : "calc(50vh - 80px)";
       root.style.transform = "translate(" + translateX + ", " + translateY + ") scale(2.2)";
       bubble.classList.add("intro");
-      bubble.innerHTML = "Hi! How can we help?<br><span style='font-size: 13px; opacity: 0.8;'>Welcome to " + escapeHtml(config.businessName) + "</span>";
+      bubble.innerHTML = "👋 Hi! How can I help you today?";
       introTimeout = setTimeout(endIntro, 3500);
     } else {
       bubble.textContent = "Chat with us";
