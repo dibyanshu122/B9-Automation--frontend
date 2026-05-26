@@ -40,6 +40,7 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
     icon: 'MessageSquare',
     children: [
       { name: 'Messages', href: '/dashboard/messages', icon: 'Send' },
+      { name: 'Handover Queue', href: '/dashboard/handover', icon: 'UserCog' },
       { name: 'Auto Replies', href: '/dashboard/auto-replies', icon: 'Bot' },
       { name: 'Opted Out', href: '/dashboard/opted-out', icon: 'UserX' },
       { name: 'Tasks', href: '/dashboard/tasks', icon: 'CheckSquare' },

@@ -19,6 +19,10 @@ function VerifyEmailContent() {
 
   useEffect(() => {
     const token = searchParams?.get('token');
+    const emailFromQuery = searchParams?.get('email');
+    if (emailFromQuery) {
+      setResendEmail(emailFromQuery.trim().toLowerCase());
+    }
     if (!token) {
       setStatus('error');
       setMessage('Verification link is missing or incomplete.');
@@ -35,15 +39,20 @@ function VerifyEmailContent() {
         setStatus('error');
         setMessage(error.response?.data?.detail || 'Verification link is invalid or expired.');
       });
-  }, [get, router, searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [get, router, searchParams]);
 
   const handleResend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!resendEmail.trim()) return;
+    const cleanEmail = resendEmail.trim().toLowerCase();
+    if (!cleanEmail) {
+      toast.error('Email is required');
+      return;
+    }
     setResending(true);
     try {
-      await post('/api/auth/resend-verification', { email: resendEmail.trim() });
-      toast.success('New verification link sent — check your inbox.');
+      await post('/api/auth/resend-verification', { email: cleanEmail });
+      setResendEmail(cleanEmail);
+      toast.success('New verification link sent. Check your inbox.');
     } catch {
       toast.error('Could not resend. Try signing up again.');
     } finally {
@@ -56,12 +65,12 @@ function VerifyEmailContent() {
       <div className="w-full max-w-md rounded-2xl border border-orange-100 bg-white p-6 text-center shadow-xl">
         <Image src="/b9-automation-logo.jpg" alt="B9 Automation logo" width={220} height={148} className="mx-auto mb-6 h-28 w-auto object-contain" priority />
         <h1 className="mb-2 text-2xl font-bold text-gray-900">
-          {status === 'loading' ? 'Verifying email…' : status === 'success' ? '✓ Email verified' : 'Verification failed'}
+          {status === 'loading' ? 'Verifying email...' : status === 'success' ? 'Email verified' : 'Verification failed'}
         </h1>
         <p className="text-gray-600">{message}</p>
 
         {status === 'success' && (
-          <p className="mt-3 text-sm text-gray-400">Redirecting to login…</p>
+          <p className="mt-3 text-sm text-gray-400">Redirecting to login...</p>
         )}
 
         {status === 'error' && (
@@ -75,6 +84,7 @@ function VerifyEmailContent() {
                   value={resendEmail}
                   onChange={(e) => setResendEmail(e.target.value)}
                   placeholder="your@email.com"
+                  autoComplete="email"
                   required
                   className="flex-1 rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-400"
                 />
@@ -84,7 +94,7 @@ function VerifyEmailContent() {
               </form>
             </div>
             <Link href="/signup" className="block text-sm font-medium text-primary-500 hover:text-primary-600">
-              Create a new account instead →
+              Create a new account instead
             </Link>
           </div>
         )}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Card } from '@/components/card';
 import { Button } from '@/components/button';
 import { useApi } from '@/hooks/useApi';
@@ -35,11 +35,7 @@ export default function BillingPage() {
   const { get, post } = useApi();
   const { user } = useAuth();
 
-  useEffect(() => {
-    fetchBillingData();
-  }, []);
-
-  const fetchBillingData = async () => {
+  const fetchBillingData = useCallback(async () => {
     try {
       const [planResult, invoicesResult] = await Promise.allSettled([
         get('/api/billing/current-plan'),
@@ -53,11 +49,15 @@ export default function BillingPage() {
       if (invoicesResult.status === 'fulfilled') {
         setInvoices(invoicesResult.value.data);
       }
-      // Invoices failure is non-critical — plan info still shown
+      // Invoices failure is non-critical - plan info still shown
     } finally {
       setLoading(false);
     }
-  };
+  }, [get]);
+
+  useEffect(() => {
+    fetchBillingData();
+  }, [fetchBillingData]);
 
   const handleUpgrade = (plan: string) => {
     // Pre-fill from user profile
@@ -99,10 +99,10 @@ export default function BillingPage() {
         amount,
         currency: 'INR',
         name: 'B9 Automation',
-        description: `${plan.charAt(0) + plan.slice(1).toLowerCase()} Plan — ${billingCycle === 'yearly' ? 'Annual' : 'Monthly'}`,
+        description: `${plan.charAt(0) + plan.slice(1).toLowerCase()} Plan - ${billingCycle === 'yearly' ? 'Annual' : 'Monthly'}`,
         image: '/logo.png',
-        handler: (_paymentResponse: any) => {
-          toast.success('Payment successful! Activating your plan…');
+        handler: () => {
+          toast.success('Payment successful! Activating your plan...');
           // Poll until plan updates in DB (webhook takes 2-5 sec)
           let attempts = 0;
           const poll = setInterval(async () => {
@@ -178,7 +178,7 @@ export default function BillingPage() {
                     onClick={() => setShowCancelConfirm(true)}
                     className="text-xs font-semibold text-gray-400 hover:text-red-500 transition"
                   >
-                    Cancel plan →
+                    Cancel plan
                   </button>
                 )}
                 {showCancelConfirm && (
@@ -196,18 +196,18 @@ export default function BillingPage() {
                           setCancelling(true);
                           try {
                             await post('/api/billing/cancel', {});
-                            toast.success('Plan cancelled. You will revert to FREE at end of billing period.');
+                            toast.success('Plan cancelled. You will revert to FREE at the end of this billing period.');
                             setShowCancelConfirm(false);
                             fetchBillingData();
                           } catch {
-                            toast.error('Could not cancel — email support@b9automation.com');
+                            toast.error('Could not cancel. Email support@b9automation.com');
                           } finally {
                             setCancelling(false);
                           }
                         }}
                         className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-700 disabled:opacity-50"
                       >
-                        {cancelling ? 'Cancelling…' : 'Yes, cancel'}
+                        {cancelling ? 'Cancelling...' : 'Yes, cancel'}
                       </button>
                     </div>
                   </div>
@@ -223,7 +223,7 @@ export default function BillingPage() {
                 label="Widget Domains"
                 value={
                   currentPlan.quotas?.widget_domains > 1000
-                    ? 'Unlimited'
+                    ? 'High limit'
                     : currentPlan.quotas?.widget_domains
                 }
               />
@@ -238,6 +238,9 @@ export default function BillingPage() {
             <h2 className="text-2xl font-bold text-gray-900">Upgrade Your Plan</h2>
             <p className="mt-1 text-sm text-gray-600">
               {billingCycle === 'yearly' ? 'Yearly billing selected' : 'Monthly billing selected'}
+            </p>
+            <p className="mt-1 text-xs text-gray-500">
+              AI is credit-based on every plan. Top-ups are available when credits run low.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -285,7 +288,7 @@ export default function BillingPage() {
                 key={plan.type}
                 className={`relative flex flex-col ${isCurrent ? 'ring-2 ring-primary-500' : ''} ${badge === 'Most Popular' ? 'border-primary-400' : ''}`}
               >
-                {/* Badge — only Most Popular */}
+                {/* Badge - only Most Popular */}
                 {badge === 'Most Popular' && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary-500 px-3 py-0.5 text-[10px] font-bold whitespace-nowrap text-white">
                     Most Popular
@@ -295,7 +298,7 @@ export default function BillingPage() {
                 {/* Current plan indicator */}
                 {isCurrent && (
                   <div className="mb-2 rounded-full bg-primary-50 px-2 py-0.5 text-center text-[10px] font-bold text-primary-600 border border-primary-200">
-                    ✓ Current Plan
+                    Current Plan
                   </div>
                 )}
 
@@ -304,26 +307,26 @@ export default function BillingPage() {
                 {/* Price display */}
                 <div className="my-2">
                   {plan.price === 0 ? (
-                    <p className="text-2xl font-bold text-gray-900">₹0</p>
+                    <p className="text-2xl font-bold text-gray-900">Rs 0</p>
                   ) : (
                     <>
                       <div className="flex items-end gap-1">
-                        <p className="text-2xl font-bold text-primary-500">₹{displayPrice.toLocaleString('en-IN')}</p>
+                        <p className="text-2xl font-bold text-primary-500">Rs {displayPrice.toLocaleString('en-IN')}</p>
                         <p className="mb-0.5 text-xs font-medium text-gray-500">{isAnnual && plan.annual_price ? '/year' : '/month'}</p>
                       </div>
                       {isAnnual && plan.annual_price && (
                         <div className="mt-1 space-y-0.5">
                           <p className="text-[11px] text-gray-500">
-                            Equivalent to ₹{annualMonthlyEquivalent?.toLocaleString('en-IN')}/month
+                            Equivalent to Rs {annualMonthlyEquivalent?.toLocaleString('en-IN')}/month
                           </p>
                           <p className="text-[11px] font-semibold text-green-600">
-                            Save ₹{annualSaving.toLocaleString('en-IN')}/year
+                            Save Rs {annualSaving.toLocaleString('en-IN')}/year
                           </p>
                         </div>
                       )}
                       {!isAnnual && plan.annual_price && (
                         <p className="mt-0.5 text-[11px] text-gray-400">
-                          Annual ₹{plan.annual_price.toLocaleString('en-IN')}/year
+                          Annual Rs {plan.annual_price.toLocaleString('en-IN')}/year
                         </p>
                       )}
                     </>
@@ -349,7 +352,7 @@ export default function BillingPage() {
                     loading={upgrading === plan.type}
                     disabled={!!upgrading}
                   >
-                    {upgrading === plan.type ? 'Opening…' : plan.cta || `Upgrade to ${plan.name}`}
+                    {upgrading === plan.type ? 'Opening...' : plan.cta || `Upgrade to ${plan.name}`}
                   </Button>
                 )}
                 {isCurrent && (
@@ -367,14 +370,14 @@ export default function BillingPage() {
                 <div className="space-y-1.5 mt-auto">
                   {plan.features.map((feature: string, i: number) => (
                     <div key={i} className="flex items-start gap-2">
-                      {feature.includes('✓') || feature.includes('✅') ? (
+                      {feature.includes('included') ? (
                         <Check className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-primary-500" />
                       ) : feature.startsWith('No ') || feature.startsWith('Without') ? (
                         <X className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-gray-300" />
                       ) : (
                         <Check className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-green-500" />
                       )}
-                      <span className="text-xs text-gray-700 leading-relaxed">{feature.replace(' ✓', '').replace(' ✅', '')}</span>
+                      <span className="text-xs text-gray-700 leading-relaxed">{feature.replace(' included', '')}</span>
                     </div>
                   ))}
                 </div>

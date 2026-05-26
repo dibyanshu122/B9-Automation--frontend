@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import {
@@ -9,7 +9,6 @@ import {
   FlaskConical,
   KeyRound,
   MessageSquare,
-  Rocket,
   ShieldCheck,
   Sparkles,
   TestTube2,
@@ -22,17 +21,37 @@ import { ProgressBar } from '@/components/progress-bar';
 import { useApi } from '@/hooks/useApi';
 
 const industries = [
-  { key: 'coaching',    label: '🎓 Coaching Center' },
-  { key: 'real_estate', label: '🏠 Real Estate' },
-  { key: 'ecommerce',   label: '🛒 D2C / Ecommerce' },
-  { key: 'healthcare',  label: '🏥 Clinic / Doctor' },
-  { key: 'salon',       label: '💇 Salon / Gym' },
-  { key: 'indiamart',   label: '🇮🇳 IndiaMART Business' },
-  { key: 'it_agency',   label: '💻 IT / Agency' },
-  { key: 'general',     label: '🏢 General Business' },
+  { key: 'coaching',    label: 'Coaching Center' },
+  { key: 'real_estate', label: 'Real Estate' },
+  { key: 'ecommerce',   label: 'D2C / Ecommerce' },
+  { key: 'healthcare',  label: 'Clinic / Doctor' },
+  { key: 'salon',       label: 'Salon / Gym' },
+  { key: 'indiamart',   label: 'IndiaMART Business' },
+  { key: 'it_agency',   label: 'IT / Agency' },
+  { key: 'general',     label: 'General Business' },
 ];
 
-
+const actionHref: Record<string, string> = {
+  business_profile: '/dashboard/settings',
+  assistant: '/dashboard/assistants',
+  documents: '/dashboard/documents',
+  widget: '/dashboard/widgets',
+  lead_capture: '/dashboard/widgets',
+  automations: '/dashboard/automations',
+  document_routing: '/dashboard/documents',
+  action_drafts: '/dashboard/automations',
+  whatsapp: '/dashboard/integrations',
+  secret_key: '/admin',
+  debug: '/admin',
+  database: '/admin',
+  public_api: '/admin',
+  payment_webhook: '/dashboard/integrations',
+  lead_engine: '/dashboard/leads',
+  automation_engine: '/dashboard/automations',
+  knowledge_engine: '/dashboard/documents',
+  widget_engine: '/dashboard/widgets',
+  whatsapp_engine: '/dashboard/integrations',
+};
 
 export default function LaunchCenterPage() {
   const { get, post } = useApi();
@@ -42,17 +61,17 @@ export default function LaunchCenterPage() {
   const [industry, setIndustry] = useState('coaching');
   const [demoResult, setDemoResult] = useState<any>(null);
 
-  const refresh = () => {
+  const refresh = useCallback(() => {
     setLoading(true);
     get('/api/automation/launch-audit')
       .then((response) => setAudit(response.data))
       .catch((error) => toast.error(error.response?.data?.detail || 'Failed to load launch audit'))
       .finally(() => setLoading(false));
-  };
+  }, [get]);
 
   useEffect(() => {
     refresh();
-  }, []);
+  }, [refresh]);
 
   const runDemo = async () => {
     setRunning(true);
@@ -78,17 +97,17 @@ export default function LaunchCenterPage() {
   const valueChecks = audit?.value_checks || [];
   const integrationChecks = audit?.integration_checks || [];
   const blockers = audit?.blockers || [];
+  const allChecks = [...(audit?.readiness?.checks || []), ...securityChecks, ...valueChecks, ...integrationChecks];
+  const mustFix = allChecks.filter((check: any) => !check.done).length;
 
   return (
     <div className="space-y-6">
-      <section className="relative overflow-hidden rounded-2xl border border-gray-200 bg-gray-950 p-6 text-white shadow-xl">
-        <div className="absolute -right-12 -top-16 h-56 w-56 rounded-full bg-orange-500/20 blur-3xl" />
-        <div className="absolute bottom-0 left-1/2 h-24 w-64 -translate-x-1/2 rounded-full bg-sky-500/10 blur-3xl" />
+      <section className="relative overflow-hidden rounded-xl border border-gray-200 bg-gray-950 p-6 text-white shadow-xl">
         <div className="relative grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
           <div>
-            <h1 className="text-3xl font-bold sm:text-4xl">Make B9 Automation client-ready before you sell it.</h1>
+            <h1 className="text-3xl font-bold sm:text-4xl">Production Launch Center</h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-300">
-              This page checks business value, security, live integrations, WhatsApp readiness, and the real owner journey: lead captured, message drafted, task created.
+              Final readiness checklist for WhatsApp, payments, security, business value, widget, automation, and the real owner journey.
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
               <Link href="/dashboard/automations">
@@ -106,7 +125,7 @@ export default function LaunchCenterPage() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-white/10 p-5">
+          <div className="rounded-xl border border-white/10 bg-white/10 p-5">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-300">Launch score</p>
@@ -122,6 +141,20 @@ export default function LaunchCenterPage() {
             <p className="mt-3 rounded-full bg-white/10 px-3 py-1 text-sm font-semibold capitalize text-orange-100">
               {stage}
             </p>
+            <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
+              <div className="rounded-lg bg-white/10 p-2">
+                <p className="text-lg font-bold">{audit?.completed || 0}</p>
+                <p className="text-gray-300">Passed</p>
+              </div>
+              <div className="rounded-lg bg-white/10 p-2">
+                <p className="text-lg font-bold">{mustFix}</p>
+                <p className="text-gray-300">Open</p>
+              </div>
+              <div className="rounded-lg bg-white/10 p-2">
+                <p className="text-lg font-bold">{integrationChecks.filter((c: any) => c.done).length}</p>
+                <p className="text-gray-300">Live</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -226,6 +259,19 @@ export default function LaunchCenterPage() {
         <p className="mt-2 text-sm text-gray-700">
           Live provider connections are required before WhatsApp, email, and lead-ad automations can send real messages.
         </p>
+        <div className="mt-4 grid gap-3 md:grid-cols-4">
+          {[
+            ['Meta live test', 'Webhook, inbound, template, and opt-out pass.'],
+            ['Razorpay live test', 'Payment link, webhook, and ledger update pass.'],
+            ['Agentic test', 'Question, buy, complaint, and opt-out route correctly.'],
+            ['Browser QA', 'No console crash on key dashboard routes.'],
+          ].map(([title, body]) => (
+            <div key={title} className="rounded-lg border border-orange-100 bg-white p-3">
+              <p className="text-sm font-bold text-gray-950">{title}</p>
+              <p className="mt-1 text-xs text-gray-600">{body}</p>
+            </div>
+          ))}
+        </div>
       </Card>
     </div>
   );
@@ -245,9 +291,13 @@ function ChecklistCard({ title, icon: Icon, checks }: { title: string; icon: any
               <p className="font-semibold text-gray-900">{check.label}</p>
               {!check.done && check.fix && <p className="mt-1 text-xs text-gray-500">{check.fix}</p>}
             </div>
-            <span className={`rounded-full px-2 py-1 text-xs font-bold ${check.done ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
-              {check.done ? 'Done' : 'Fix'}
-            </span>
+            {check.done ? (
+              <span className="rounded-full bg-emerald-50 px-2 py-1 text-xs font-bold text-emerald-700">Done</span>
+            ) : (
+              <Link href={actionHref[check.key] || '/dashboard/launch'} className="rounded-full bg-amber-50 px-2 py-1 text-xs font-bold text-amber-700 hover:bg-amber-100">
+                Fix
+              </Link>
+            )}
           </div>
         ))}
       </div>

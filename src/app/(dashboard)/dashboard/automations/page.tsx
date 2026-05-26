@@ -123,7 +123,7 @@ const baseLibrary: LibraryBlock[] = [
   { type: 'trigger', title: 'New Instagram Message', description: 'Runs on every incoming Instagram DM.', config: { trigger_type: 'new_instagram_message', source: 'instagram' } },
   { type: 'trigger', title: 'Payment Success', description: 'Fires after a successful Razorpay payment.', config: { trigger_type: 'payment_success' } },
   { type: 'trigger', title: 'IndiaMART Lead', description: 'Auto-polls IndiaMART every 15 min for new buyer leads.', config: { trigger_type: 'indiamart' } },
-  { type: 'ai', title: '🤖 Agentic AI (Auto)', description: 'TRUE agentic AI — automatically decides which tools to call (send message, catalog, payment, follow-up). No manual wiring needed.', config: { tool: 'agentic_agent', max_steps: '5', send_mode: 'live' } },
+  { type: 'ai', title: 'Agentic AI (Auto)', description: 'Agentic AI decides which approved tools to call: reply, catalog, payment, handover, and follow-up. Review before live sending.', config: { tool: 'agentic_agent', max_steps: '4', max_messages: '2', send_mode: 'draft', handover_enabled: 'true', template_fallback_enabled: 'true' } },
   { type: 'ai', title: 'AI Agent', description: 'Gemini Flash reply using lead, message and knowledge context.', config: { tool: 'ai_agent', tone: 'Friendly', response_length: 'Short', use_knowledge_base: 'true', use_previous_data: 'true' } },
   { type: 'ai', title: 'Conversation Flow', description: 'Uses uploaded chatbot flow PDF to decide the next reply.', config: { tool: 'conversation_flow_pdf', strict_mode: 'true', fallback_instruction: 'Ask one clarification question or hand over to team if flow is unclear.' } },
   { type: 'ai', title: 'Document Search', description: 'Find the right answer from uploaded docs.', config: { tool: 'document_routing' } },
@@ -143,7 +143,7 @@ const baseLibrary: LibraryBlock[] = [
   { type: 'action', title: 'Add Row to Google Sheet', description: 'Adds lead, AI, or workflow data to selected Google Sheet.', config: { tool: 'add_row_google_sheet', column_mapping: { Name: '{{lead.name}}', Phone: '{{lead.phone}}', Email: '{{lead.email}}', Message: '{{lead.message}}', Status: '{{lead.status}}' } } },
   { type: 'action', title: 'Book Meeting', description: 'Create Calendly/Calendar booking task.', config: { tool: 'book_meeting' } },
   { type: 'action', title: 'Notify Owner', description: 'Alert owner via Telegram, Slack or Email.', config: { tool: 'notify_owner' } },
-  { type: 'action', title: 'HTTP Request', description: 'Call any external API — GET, POST, PUT, DELETE.', config: { tool: 'http_request', method: 'POST', url: '', headers: [], body: '' } },
+  { type: 'action', title: 'HTTP Request', description: 'Call any external API with GET, POST, PUT, or DELETE.', config: { tool: 'http_request', method: 'POST', url: '', headers: [], body: '' } },
   { type: 'action', title: 'Set Variable', description: 'Create or transform variables using {{placeholders}} from previous nodes.', config: { tool: 'set_variable', variables: {} } },
   { type: 'action', title: 'Wait / Delay', description: 'Pause workflow and resume after a set time.', config: { tool: 'wait_node', delay_minutes: 60 } },
   { type: 'action', title: 'Loop Items', description: 'Run the next action for each item in a list.', config: { tool: 'loop' } },
@@ -170,10 +170,10 @@ const visibleLibrary: LibraryBlock[] = [
   { type: 'ai', title: 'Score Lead', description: 'AI marks lead as Hot, Warm or Cold based on buying intent.', config: { tool: 'ai_agent', custom_prompt: 'Score this lead as HOT, WARM or COLD based on urgency and buying intent. Reply with only: HOT, WARM, or COLD.', response_length: 'Short' } },
   // ── Logic ─────────────────────────────────────────────────────────────────
   { type: 'condition', title: 'Is New Customer?', description: 'Branch YES for first-time customers (never messaged before), NO for returning customers.', config: { field: 'lead.is_new', operator: 'equals', value: 'true' } },
-  { type: 'condition', title: 'If Flow → Show Catalog', description: 'Branch YES when AI flow wants to show product catalog.', config: { field: 'flow.intent', operator: 'equals', value: 'show_catalog' } },
-  { type: 'condition', title: 'If Flow → Collect Form', description: 'Branch YES when AI flow wants to collect customer details.', config: { field: 'flow.intent', operator: 'equals', value: 'collect_form' } },
-  { type: 'condition', title: 'If Flow → Take Payment', description: 'Branch YES when AI flow wants to send payment link.', config: { field: 'flow.intent', operator: 'equals', value: 'take_payment' } },
-  { type: 'condition', title: 'If Flow → Handover', description: 'Branch YES when AI decides human agent is needed.', config: { field: 'flow.intent', operator: 'equals', value: 'handover' } },
+  { type: 'condition', title: 'If Flow: Show Catalog', description: 'Branch YES when AI flow wants to show product catalog.', config: { field: 'flow.intent', operator: 'equals', value: 'show_catalog' } },
+  { type: 'condition', title: 'If Flow: Collect Form', description: 'Branch YES when AI flow wants to collect customer details.', config: { field: 'flow.intent', operator: 'equals', value: 'collect_form' } },
+  { type: 'condition', title: 'If Flow: Take Payment', description: 'Branch YES when AI flow wants to send payment link.', config: { field: 'flow.intent', operator: 'equals', value: 'take_payment' } },
+  { type: 'condition', title: 'If Flow: Handover', description: 'Branch YES when AI decides human agent is needed.', config: { field: 'flow.intent', operator: 'equals', value: 'handover' } },
   { type: 'condition', title: 'If Hot Lead', description: 'Branch YES if AI scored this lead as HOT.', config: { field: 'lead_score', operator: 'greater_than', value: '7', then_action: 'notify_owner', else_action: 'create_task' } },
   { type: 'condition', title: 'Decide Next Step', description: 'Ask AI a Yes/No question to choose the next path.', config: { tool: 'ai_condition', condition_prompt: 'Does this lead want to book a demo or meeting?' } },
   { type: 'action', title: 'Schedule Reminder', description: 'Schedule a WhatsApp follow-up reminder to send automatically after X hours or days.', config: { tool: 'schedule_followup', hours: '24', days: '0', message: 'Hi {{lead.name}}, just checking in! Do you need any help?' } },
@@ -182,17 +182,17 @@ const visibleLibrary: LibraryBlock[] = [
   { type: 'action', title: 'Send WhatsApp', description: 'Send WhatsApp message or approved template to the lead.', config: { tool: 'send_whatsapp_message', recipient: '{{lead.phone}}', message_body: '{{ai.response}}', message_mode: 'text', send_mode: 'draft', language_code: 'en_US' } },
   { type: 'action', title: 'Send WhatsApp Image/Video', description: 'Send a product image, video, PDF, or document to the customer via WhatsApp.', config: { tool: 'send_whatsapp_media', recipient: '{{lead.phone}}', media_type: 'image', media_url: '', caption: '{{ai.response}}', send_mode: 'draft' } },
   { type: 'action', title: 'Send WhatsApp Menu', description: 'Send an interactive list/menu message with up to 10 options for the customer to choose from.', config: { tool: 'send_whatsapp_list_message', recipient: '{{lead.phone}}', body_text: 'Please choose a service:', button_text: 'View Options', send_mode: 'draft', sections: '[{"title":"Services","rows":[{"id":"opt_1","title":"Option 1"},{"id":"opt_2","title":"Option 2"}]}]' } },
-  { type: 'action', title: 'WhatsApp Buttons (3)', description: 'Send up to 3 quick-reply buttons — customer taps to reply instantly.', config: { tool: 'send_whatsapp_buttons', recipient: '{{lead.phone}}', body_text: 'Which option suits you best?', buttons: '[{"id":"btn_0","title":"Option 1"},{"id":"btn_1","title":"Option 2"},{"id":"btn_2","title":"Option 3"}]', send_mode: 'draft' } },
+  { type: 'action', title: 'WhatsApp Buttons (3)', description: 'Send up to 3 quick-reply buttons that customers can tap instantly.', config: { tool: 'send_whatsapp_buttons', recipient: '{{lead.phone}}', body_text: 'Which option suits you best?', buttons: '[{"id":"btn_0","title":"Option 1"},{"id":"btn_1","title":"Option 2"},{"id":"btn_2","title":"Option 3"}]', send_mode: 'draft' } },
   { type: 'action', title: 'WhatsApp CTA Button', description: 'Send a call-to-action button that opens a URL or calls a phone number.', config: { tool: 'send_whatsapp_cta', recipient: '{{lead.phone}}', body_text: 'Click below to learn more:', buttons: '[{"type":"url","text":"Visit Website","url":"https://your-site.com"}]', send_mode: 'draft' } },
-  { type: 'action', title: 'WhatsApp Form (Flow)', description: 'Open an interactive Meta WhatsApp Flow — surveys, booking forms, lead capture inside chat.', config: { tool: 'send_whatsapp_meta_flow', recipient: '{{lead.phone}}', flow_id: '', cta_text: 'Fill Form', body_text: 'Please fill in your details below:', send_mode: 'draft' } },
+  { type: 'action', title: 'WhatsApp Form (Flow)', description: 'Open an interactive Meta WhatsApp Flow for surveys, booking forms, and lead capture inside chat.', config: { tool: 'send_whatsapp_meta_flow', recipient: '{{lead.phone}}', flow_id: '', cta_text: 'Fill Form', body_text: 'Please fill in your details below:', send_mode: 'draft' } },
   { type: 'action', title: 'Send Location', description: 'Send your business location pin to the customer via WhatsApp with name and address.', config: { tool: 'send_whatsapp_location', recipient: '{{lead.phone}}', latitude: '28.6139', longitude: '77.2090', name: 'Our Office', address: '123 Business Park, New Delhi', send_mode: 'draft' } },
   { type: 'action', title: 'Send Single Product', description: 'Send a single product card from your Meta catalog with a Buy Now button.', config: { tool: 'send_whatsapp_single_product', recipient: '{{lead.phone}}', catalog_id: '', product_retailer_id: '', body_text: 'Check out this product:', send_mode: 'draft' } },
   { type: 'action', title: 'Get Inbound Media URL', description: 'When a customer sends an image/video/document, fetch its download URL for processing.', config: { tool: 'get_whatsapp_media_url', media_id: '{{message.media_id}}' } },
-  { type: 'action', title: 'Request Payment (UPI)', description: 'Send a WhatsApp Pay UPI payment request — customer taps to pay inline without leaving WhatsApp. Requires WhatsApp Pay enabled on your Meta account.', config: { tool: 'send_whatsapp_payment_request', recipient: '{{lead.phone}}', amount: '{{extraction.fields.amount}}', description: 'Payment for your order', reference_id: '', send_mode: 'draft' } },
-  { type: 'action', title: 'Chat Flow Reply', description: 'Send step-by-step reply from the uploaded conversation flow PDF — with interactive buttons when the flow includes choices.', config: { tool: 'send_whatsapp_flow_message', recipient: '{{lead.phone}}', send_mode: 'draft' } },
+  { type: 'action', title: 'Request Payment (UPI)', description: 'Send a WhatsApp Pay UPI payment request. Requires WhatsApp Pay enabled on your Meta account.', config: { tool: 'send_whatsapp_payment_request', recipient: '{{lead.phone}}', amount: '{{extraction.fields.amount}}', description: 'Payment for your order', reference_id: '', send_mode: 'draft' } },
+  { type: 'action', title: 'Chat Flow Reply', description: 'Send a step-by-step reply from the uploaded conversation flow PDF, including buttons when choices exist.', config: { tool: 'send_whatsapp_flow_message', recipient: '{{lead.phone}}', send_mode: 'draft' } },
   { type: 'action', title: 'Send Instagram DM', description: 'Reply to the Instagram DM with an AI-generated message.', config: { tool: 'send_instagram_dm', recipient: '{{instagram.senderId}}', message_body: '{{ai.response}}', send_mode: 'draft' } },
   { type: 'action', title: 'Send Facebook Message', description: 'Reply to the Facebook Messenger message with an AI response.', config: { tool: 'send_facebook_message', recipient: '{{facebook.senderId}}', message_body: '{{ai.response}}', send_mode: 'draft' } },
-  { type: 'action', title: 'Send Catalog', description: 'Send your product catalog via WhatsApp with Buy buttons for top 3 products.', config: { tool: 'send_catalog', recipient: '{{lead.phone}}', send_mode: 'draft', intro_text: 'Humare products dekhiye:' } },
+  { type: 'action', title: 'Send Catalog', description: 'Send your product catalog via WhatsApp with Buy buttons for top 3 products.', config: { tool: 'send_catalog', recipient: '{{lead.phone}}', send_mode: 'draft', intro_text: 'Please review our products:' } },
   { type: 'action', title: 'Collect Order Form', description: 'AI asks step-by-step questions to collect product choice, name, phone, address.', config: { tool: 'collect_order_form', fields: 'name, phone, product_choice, quantity, address' } },
   { type: 'action', title: 'Send Payment Link', description: 'Create a Razorpay payment link and send it to the customer via WhatsApp.', config: { tool: 'create_customer_payment_link', amount: '{{extraction.fields.budget}}', description: 'Payment for {{extraction.fields.product_choice}}', recipient_phone: '{{lead.phone}}', send_mode: 'draft', send_via_whatsapp: 'true' } },
   { type: 'action', title: 'Generate GST Invoice', description: 'Create a GST-compliant invoice from order data and send via WhatsApp.', config: { tool: 'generate_gst_invoice', gst_rate: '18', buyer_name: '{{lead.name}}' } },
@@ -203,6 +203,7 @@ const visibleLibrary: LibraryBlock[] = [
   { type: 'ai', title: 'Analyze Sentiment', description: 'Detect if customer is happy, neutral, frustrated, or complaining. Use with condition nodes to route complaints.', config: { tool: 'analyze_sentiment' } },
   { type: 'ai', title: 'Detect Language', description: 'Auto-detect Hindi/English/Hinglish from the message. AI replies will automatically use the detected language.', config: { tool: 'detect_language' } },
   { type: 'ai', title: 'Recommend Product', description: 'AI matches customer query to your Product Catalog and recommends the best matching products.', config: { tool: 'recommend_products' } },
+  { type: 'ai', title: 'Agentic AI (Auto)', description: 'AI decides the next safe tool call: reply, catalog, payment, follow-up, or handover.', config: { tool: 'agentic_agent', max_steps: '4', max_messages: '2', send_mode: 'draft', handover_enabled: 'true', template_fallback_enabled: 'true' } },
   { type: 'condition', title: 'If Complaint', description: 'Branch YES if customer is complaining, frustrated, or unhappy. Connect to Auto Handover for escalation.', config: { tool: 'ai_condition', condition_prompt: 'Is this customer making a complaint, expressing frustration, or asking for a manager/human?' } },
   { type: 'condition', title: 'If Price Inquiry', description: 'Branch YES if customer is asking about price, cost, fees, or charges.', config: { tool: 'ai_condition', condition_prompt: 'Is the customer asking about price, fees, cost, charges, or how much it costs?' } },
   { type: 'condition', title: 'If Booking Request', description: 'Branch YES if customer wants to book, schedule, or make an appointment.', config: { tool: 'ai_condition', condition_prompt: 'Does the customer want to book, schedule an appointment, or register for something?' } },
@@ -299,6 +300,7 @@ export default function AutomationsPage() {
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [lockedFeature, setLockedFeature] = useState<FeatureKey | null>(null);
   const [libraryCollapsed, setLibraryCollapsed] = useState(false);
+  const [libraryMode, setLibraryMode] = useState<'beginner' | 'advanced'>('beginner');
   const [settingsOpen, setSettingsOpen] = useState(true);
   const [backendValidation, setBackendValidation] = useState<WorkflowValidationResult | null>(null);
   const [autosaveReady, setAutosaveReady] = useState(false);
@@ -325,7 +327,17 @@ export default function AutomationsPage() {
     const nodeIds = new Set(nodes.map((node) => node.id));
     return edges.filter((edge) => nodeIds.has(edge.source) && nodeIds.has(edge.target));
   }, [edges, nodes]);
-  const library = useMemo(() => visibleLibrary, []);
+  const library = useMemo(() => {
+    if (libraryMode === 'beginner') return visibleLibrary;
+    const seen = new Set(visibleLibrary.map((block) => `${block.type}:${block.config?.tool || block.config?.trigger_type || block.title}`));
+    const advancedOnly = baseLibrary.filter((block) => {
+      const key = `${block.type}:${block.config?.tool || block.config?.trigger_type || block.title}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    return [...visibleLibrary, ...advancedOnly];
+  }, [libraryMode]);
 
   const arrangeNodes = (items: BuilderBlock[], edgeItems: BuilderEdge[]): BuilderBlock[] => {
     if (items.length === 0) return items;
@@ -601,16 +613,33 @@ export default function AutomationsPage() {
       .forEach((node) => {
         const tool = inferNodeTool(node);
         const provider = node.config.provider || defaultProviderForTool(tool);
+        const whatsappSendTools = [
+          'send_whatsapp_message',
+          'send_whatsapp_media',
+          'send_whatsapp_list_message',
+          'send_whatsapp_buttons',
+          'send_whatsapp_cta',
+          'send_whatsapp_meta_flow',
+          'send_whatsapp_location',
+          'send_whatsapp_single_product',
+          'send_whatsapp_payment_request',
+          'send_whatsapp_flow_message',
+          'send_catalog',
+          'create_customer_payment_link',
+        ];
 
-        if (tool === 'send_whatsapp_message') {
+        if (whatsappSendTools.includes(tool)) {
           if ((node.config.send_mode || 'draft') === 'live') {
             const integration = requireProvider(node, provider === 'draft' ? 'meta' : provider, 'WhatsApp live send');
             if (integration && integration.status !== 'active') {
-              warnings.push({ node: node.title, provider, message: 'WhatsApp not fully connected — messages will be saved as drafts until credentials are added in Integrations.' });
+              warnings.push({ node: node.title, provider, message: 'WhatsApp is not fully connected. Messages will be saved as drafts until credentials are added in Integrations.' });
             }
           } else {
             warnings.push({ node: node.title, message: 'WhatsApp will create drafts unless live mode is enabled.' });
           }
+        }
+
+        if (tool === 'send_whatsapp_message') {
           if (node.config.recipient_source === 'custom' && !node.config.recipient) {
             blockers.push({ node: node.title, provider, message: 'Custom WhatsApp recipient is missing.' });
           }
@@ -669,6 +698,20 @@ export default function AutomationsPage() {
 
   const effectiveValidation = backendValidation || workflowValidation;
 
+  const complianceScore = useMemo(() => {
+    const actionNodes = nodes.filter((node) => node.type === 'action');
+    const liveWhatsAppNodes = actionNodes.filter((node) => {
+      const tool = inferNodeTool(node);
+      return (tool.includes('whatsapp') || tool.includes('catalog') || tool.includes('payment')) && (node.config.send_mode || 'draft') === 'live';
+    });
+    const templateFallbackNodes = liveWhatsAppNodes.filter((node) => {
+      const cfg = node.config || {};
+      return Boolean(cfg.template_name || cfg.template_fallback || cfg.message_mode === 'template' || cfg.fallback_template_name);
+    });
+    const score = Math.max(0, Math.min(100, 100 - effectiveValidation.blockers.length * 25 - effectiveValidation.warnings.length * 8 - Math.max(0, liveWhatsAppNodes.length - templateFallbackNodes.length) * 12));
+    return { score, liveWhatsApp: liveWhatsAppNodes.length, templateFallback: templateFallbackNodes.length };
+  }, [nodes, effectiveValidation]);
+
   useEffect(() => {
     setBackendValidation(null);
   }, [nodes, validEdges]);
@@ -710,6 +753,27 @@ export default function AutomationsPage() {
     setNodes((items) => [...items, clone]);
     setSelectedNodeId(clone.id);
     toast.success('Node duplicated');
+  };
+
+  const openWebhookSetup = () => {
+    setShowWorkflowList(false);
+    setSettingsOpen(true);
+    setLibraryCollapsed(false);
+    const existing = nodes.find((node) => node.type === 'trigger' && node.config?.trigger_type === 'webhook');
+    if (existing) {
+      setSelectedNodeId(existing.id);
+      return;
+    }
+    const block = baseLibrary.find((item) => item.config?.trigger_type === 'webhook') || {
+      type: 'trigger' as BlockType,
+      title: 'Inbound Webhook',
+      description: 'Receive data from any external tool.',
+      config: { trigger_type: 'webhook', source: 'webhook' },
+    };
+    const nextNode = makeNode(block, FLOW_START_X, FLOW_CENTER_Y);
+    setNodes((items) => [nextNode, ...items]);
+    setSelectedNodeId(nextNode.id);
+    toast.success(activeWorkflowId ? 'Webhook trigger ready. Copy the URL from settings.' : 'Webhook trigger added. Save once to generate the URL.');
   };
 
   const saveWorkflow = async () => {
@@ -820,7 +884,7 @@ export default function AutomationsPage() {
     setTimeline([
       { label: 'Reading visual workflow', status: 'completed' },
       { label: 'Detecting intent', status: 'running' },
-      { label: 'Running AI tools', status: 'pending' },
+      { label: 'Running...', status: 'pending' },
     ]);
     try {
       // Derive channel source from the trigger node so the test simulates the right channel
@@ -1001,27 +1065,30 @@ export default function AutomationsPage() {
           title={!activeWorkflowId ? 'Save the workflow first to test the visual canvas. Currently testing the general AI chat.' : 'Run the saved visual workflow'}
         >
           <Play className="h-3.5 w-3.5" />
-          {testing ? 'Running…' : activeWorkflowId ? 'Test' : 'Test (unsaved)'}
+          {testing ? 'Running...' : activeWorkflowId ? 'Test' : 'Test (unsaved)'}
         </Button>
-        {/* Go Live — set all send nodes to live at once */}
-        {nodes.some(n => ((n as any).data?.config?.send_mode === 'draft') && (n as any).data?.config?.tool?.includes('whatsapp')) && (
+        {/* Go Live - set all send nodes to live at once */}
+        {nodes.some(n => {
+          const cfg = n.config || {};
+          return (cfg.send_mode === 'draft') && (cfg.tool?.includes('whatsapp') || cfg.tool?.includes('catalog') || cfg.tool?.includes('payment'));
+        }) && (
           <Button
             size="sm"
             variant="secondary"
             className="text-emerald-600 border-emerald-200 hover:bg-emerald-50"
             onClick={() => {
               setNodes(prev => prev.map(n => {
-                const cfg = (n as any).data?.config || {};
+                const cfg = n.config || {};
                 if (cfg.tool?.includes('whatsapp') || cfg.tool?.includes('catalog') || cfg.tool?.includes('payment')) {
-                  return { ...n, data: { ...(n as any).data, config: { ...cfg, send_mode: 'live' } } };
+                  return { ...n, config: { ...cfg, send_mode: 'live' } };
                 }
                 return n;
               }));
-              toast.success('All WhatsApp nodes set to LIVE ✅');
+              toast.success('All WhatsApp nodes set to live mode. Review compliance before activating.');
             }}
             title="Set all WhatsApp send nodes to live mode"
           >
-            🚀 Go Live
+            Go Live
           </Button>
         )}
         <Button size="sm" onClick={saveWorkflow} loading={saving}>
@@ -1050,8 +1117,29 @@ export default function AutomationsPage() {
           >
             <Bot className="h-4 w-4" /> Draft Full Launch Plan
           </button>
+          <button
+            type="button"
+            onClick={openWebhookSetup}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-100 transition"
+          >
+            <Link className="h-4 w-4" /> Webhook Setup
+          </button>
         </div>
       </div>
+
+      {!showWorkflowList && (
+        <div className="shrink-0 rounded-xl border border-indigo-100 bg-white px-4 py-3 shadow-sm">
+          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-sm font-bold text-gray-950">Compliance score: {complianceScore.score}%</p>
+              <p className="mt-0.5 text-xs text-gray-600">Live WhatsApp nodes: {complianceScore.liveWhatsApp}. Template fallback configured: {complianceScore.templateFallback}. Backend safety checks still run before every send.</p>
+            </div>
+            <span className={`inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${complianceScore.score >= 90 ? 'bg-emerald-50 text-emerald-700' : complianceScore.score >= 70 ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700'}`}>
+              {complianceScore.score >= 90 ? 'Ready to activate' : complianceScore.score >= 70 ? 'Review warnings' : 'Fix blockers first'}
+            </span>
+          </div>
+        </div>
+      )}
 
       {!showWorkflowList && effectiveValidation.blockers.length > 0 && (
         <div className="shrink-0 flex flex-wrap gap-2 rounded-xl border border-amber-100 bg-amber-50 px-4 py-2">
@@ -1102,14 +1190,33 @@ export default function AutomationsPage() {
         {/* Left — Node Library */}
         <div className={`b9-dark-surface z-20 flex min-h-0 shrink-0 flex-col overflow-hidden border-r border-slate-800 bg-slate-950 shadow-xl shadow-black/30 transition-all duration-200 ${libraryCollapsed ? 'w-0 opacity-0' : 'w-[280px] opacity-100'}`}>
           <div className="border-b border-slate-800 px-4 py-3">
-            <p className="text-xs font-black uppercase tracking-widest text-slate-400">Node Library</p>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs font-black uppercase tracking-widest text-slate-400">Node Library</p>
+              <div className="rounded-lg border border-slate-700 bg-slate-900 p-0.5">
+                {(['beginner', 'advanced'] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setLibraryMode(mode)}
+                    className={`rounded-md px-2 py-1 text-[10px] font-bold capitalize transition ${
+                      libraryMode === mode ? 'bg-cyan-500 text-slate-950' : 'text-slate-400 hover:text-slate-100'
+                    }`}
+                  >
+                    {mode}
+                  </button>
+                ))}
+              </div>
+            </div>
             <input
               type="text"
               value={librarySearch}
               onChange={(e) => setLibrarySearch(e.target.value)}
-              placeholder="Search nodes…"
+              placeholder="Search nodes..."
               className="mt-1.5 w-full rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-1.5 text-xs text-slate-100 placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
             />
+            <p className="mt-1.5 text-[10px] leading-4 text-slate-500">
+              {libraryMode === 'beginner' ? 'Recommended nodes for common WhatsApp automations.' : 'Full toolset for advanced workflows and external systems.'}
+            </p>
           </div>
           <div className="flex-1 overflow-y-auto p-3">
             {(['trigger', 'ai', 'condition', 'action'] as BlockType[]).map((sectionType) => {
@@ -1572,28 +1679,28 @@ export default function AutomationsPage() {
           <div className="w-full max-w-lg rounded-2xl border border-violet-200 bg-white shadow-2xl max-h-[90vh] flex flex-col">
             <div className="border-b border-gray-100 px-6 py-4 flex-shrink-0">
               <div>
-                <p className="font-bold text-gray-900 text-lg">✨ Generate Flow with AI</p>
+                <p className="font-bold text-gray-900 text-lg">Generate Automation with AI</p>
               </div>
-              <p className="text-xs text-gray-400 mt-0.5">Describe your chatbot in plain language — AI will build the entire flow</p>
+              <p className="text-xs text-gray-400 mt-0.5">Describe your business workflow in plain English. AI will build an editable canvas draft.</p>
             </div>
             <div className="p-6 space-y-4 overflow-y-auto flex-1 min-h-0">
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-2">Describe your chatbot:</p>
+                <p className="text-sm font-semibold text-gray-700 mb-2">Describe your automation:</p>
                 <textarea
                   value={generateDesc}
                   onChange={e => setGenerateDesc(e.target.value)}
                   rows={5}
                   className="input-field resize-none text-sm"
-                  placeholder={`Examples:\n• "I run a coaching center. First ask which class — 9th ya 10th. Then share fee details."\n• "Real estate chatbot. Ask budget, location preference, then book a site visit."\n• "Salon booking — show services, collect name/phone, confirm appointment"`}
+                  placeholder={`Examples:\n- "I run a coaching center. Ask class, subject, phone number, then share demo details."\n- "Real estate workflow. Ask budget, location preference, then book a site visit."\n- "Salon booking. Show services, collect name and phone, then confirm appointment."`}
                 />
               </div>
               <div>
                 <p className="text-sm font-semibold text-gray-700 mb-2">Platform:</p>
                 <div className="flex gap-2">
                   {[
-                    { value: 'whatsapp', label: '💬 WhatsApp', desc: 'Interactive buttons (max 3)' },
-                    { value: 'instagram', label: '📸 Instagram', desc: 'Quick replies (max 13)' },
-                    { value: 'facebook', label: '📘 Facebook', desc: 'Quick replies (max 13)' },
+                    { value: 'whatsapp', label: 'WhatsApp', desc: 'Interactive buttons (max 3)' },
+                    { value: 'instagram', label: 'Instagram', desc: 'Quick replies (max 13)' },
+                    { value: 'facebook', label: 'Facebook', desc: 'Quick replies (max 13)' },
                   ].map(p => (
                     <button key={p.value} onClick={() => setGeneratePlatform(p.value)}
                       className={`flex-1 rounded-xl border p-2.5 text-left text-xs transition ${generatePlatform === p.value ? 'border-violet-400 bg-violet-50 text-violet-800' : 'border-gray-200 hover:border-gray-300'}`}>
@@ -1604,7 +1711,7 @@ export default function AutomationsPage() {
                 </div>
               </div>
               <div className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3 text-xs text-amber-700">
-                <p className="font-semibold mb-1">💡 Tips for best results:</p>
+                <p className="font-semibold mb-1">Tips for best results:</p>
                 <ul className="space-y-0.5 list-disc list-inside">
                   <li>Mention specific options/choices customers will have</li>
                   <li>Mention if you want to collect details (name, phone, address)</li>
@@ -1633,13 +1740,13 @@ export default function AutomationsPage() {
                     setTimeout(() => autoArrangeFlow(), 100);
                     toast.success('Flow generated! Review nodes and click Save.');
                   } catch (err: any) {
-                    toast.error(err.response?.data?.detail || 'Generation failed — try a more detailed description');
+                    toast.error(err.response?.data?.detail || 'Generation failed. Try a more detailed description');
                   } finally {
                     setGenerating(false);
                   }
                 }}
               >
-                {generating ? '✨ Generating…' : '✨ Generate Flow →'}
+                {generating ? 'Generating...' : 'Generate Flow'}
               </Button>
             </div>
           </div>
@@ -1723,6 +1830,45 @@ export default function AutomationsPage() {
             </div>
             <div className="flex gap-3 border-t border-gray-100 px-6 py-4">
               <Button variant="secondary" onClick={() => setShowLaunchAssistant(false)} disabled={launchDrafting}>Close</Button>
+              {launchPlan && (
+                <Button
+                  variant="secondary"
+                  loading={launchDrafting}
+                  disabled={launchDrafting}
+                  onClick={async () => {
+                    setLaunchDrafting(true);
+                    try {
+                      const description = [
+                        launchBrief.business_name && `Business: ${launchBrief.business_name}`,
+                        launchBrief.industry && `Industry: ${launchBrief.industry}`,
+                        launchBrief.goal && `Goal: ${launchBrief.goal}`,
+                        launchBrief.products_services && `Products/services: ${launchBrief.products_services}`,
+                        launchBrief.target_customers && `Target customers: ${launchBrief.target_customers}`,
+                        launchBrief.common_questions && `Common questions: ${launchBrief.common_questions}`,
+                        launchPlan.automation?.steps?.length ? `Suggested steps: ${launchPlan.automation.steps.join(' -> ')}` : '',
+                      ].filter(Boolean).join('\n');
+                      const res = await post('/api/automation/workflows/generate-from-description', {
+                        description,
+                        platform: 'whatsapp',
+                      });
+                      const { nodes: genNodes, edges: genEdges, name: genName } = res.data;
+                      setNodes(genNodes);
+                      setEdges(genEdges);
+                      setWorkflowName(genName || launchPlan.automation?.name || 'Agentic Launch Automation');
+                      setShowWorkflowList(false);
+                      setShowLaunchAssistant(false);
+                      setTimeout(() => autoArrangeFlow(), 100);
+                      toast.success('Canvas draft created. Review every node before going live.');
+                    } catch (err: any) {
+                      toast.error(err.response?.data?.detail || 'Could not create canvas draft');
+                    } finally {
+                      setLaunchDrafting(false);
+                    }
+                  }}
+                >
+                  Build Canvas Draft
+                </Button>
+              )}
               <Button
                 className="flex-1"
                 loading={launchDrafting}
@@ -2259,11 +2405,30 @@ const NODE_TYPE_META: Record<BlockType, { bar: string; badge: string; label: str
 
 function isNodeConfigured(block: BuilderBlock): boolean {
   if (block.type === 'trigger') return !!(block.config?.trigger_type);
-  if (block.type === 'ai') return true;
+  if (block.type === 'ai') {
+    const tool = block.config?.tool || '';
+    if (tool === 'agentic_agent') return Number(block.config?.max_steps || 0) > 0;
+    return true;
+  }
   if (block.type === 'condition') return !!(block.config?.field || block.config?.tool === 'ai_condition');
   const tool = block.config?.tool || '';
   if (tool === 'send_whatsapp_message') return !!(block.config?.recipient && (block.config?.message_body || block.config?.template_name));
+  if (tool === 'send_whatsapp_media') return !!(block.config?.recipient && block.config?.media_url);
+  if (tool === 'send_whatsapp_list_message') return !!(block.config?.recipient && block.config?.body_text && block.config?.button_text && block.config?.sections);
+  if (tool === 'send_whatsapp_buttons') return !!(block.config?.recipient && block.config?.body_text && block.config?.buttons);
+  if (tool === 'send_whatsapp_cta') return !!(block.config?.recipient && block.config?.body_text && block.config?.buttons);
+  if (tool === 'send_whatsapp_meta_flow') return !!(block.config?.recipient && block.config?.flow_id && block.config?.cta_text);
+  if (tool === 'send_whatsapp_location') return !!(block.config?.recipient && block.config?.latitude && block.config?.longitude);
+  if (tool === 'send_whatsapp_single_product') return !!(block.config?.recipient && block.config?.catalog_id && block.config?.product_retailer_id);
+  if (tool === 'send_whatsapp_payment_request') return !!(block.config?.recipient && block.config?.amount);
+  if (tool === 'send_instagram_dm') return !!(block.config?.recipient && block.config?.message_body);
+  if (tool === 'send_facebook_message') return !!(block.config?.recipient && block.config?.message_body);
+  if (tool === 'send_catalog') return !!(block.config?.recipient);
+  if (tool === 'create_customer_payment_link') return !!(block.config?.amount && block.config?.recipient_phone);
+  if (tool === 'send_email') return !!(block.config?.to && block.config?.subject);
   if (tool === 'add_row_google_sheet') return !!(block.config?.sheet_name || block.config?.connection_id);
+  if (tool === 'sync_to_sheet') return !!(block.config?.sheet_name || block.config?.connection_id);
+  if (tool === 'http_request') return !!(block.config?.method && block.config?.url);
   if (tool === 'notify_owner') return !!(block.config?.provider);
   if (tool === 'create_task') return true;
   if (tool === 'wait_node') return true;
@@ -2474,16 +2639,16 @@ function ActionBlockSettings({
           <SelectField label="Message mode" value={config.message_mode || 'text'} options={['text', 'template']} onChange={(value) => onChange('message_mode', value)} />
           {config.message_mode === 'template' ? (
             <>
-              {/* ── Smart Template Picker ── */}
+              {/* Smart Template Picker */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-sm font-semibold text-gray-700">Select Template</p>
                   <button onClick={() => { setTemplatesLoaded(false); loadTemplates(); }}
                     className="text-[10px] text-emerald-600 hover:text-emerald-800 font-semibold">
-                    {templatesLoading ? '⟳ Loading…' : '⟳ Refresh'}
+                    {templatesLoading ? 'Loading...' : 'Refresh'}
                   </button>
                 </div>
-                {/* Dropdown — loads on focus/click */}
+                {/* Dropdown loads on focus/click */}
                 <select
                   value={config.template_name || ''}
                   onFocus={loadTemplates}
@@ -2503,7 +2668,7 @@ function ActionBlockSettings({
                   }}
                   className="input-field text-sm"
                 >
-                  <option value="">{templatesLoading ? 'Loading templates…' : waTemplates.length === 0 ? 'Click Refresh to load templates' : 'Select an approved template…'}</option>
+                  <option value="">{templatesLoading ? 'Loading templates...' : waTemplates.length === 0 ? 'Click Refresh to load templates' : 'Select an approved template...'}</option>
                   {waTemplates.map(t => (
                     <option key={t.name} value={t.name}>{t.name} ({t.language || 'en_US'})</option>
                   ))}
@@ -2739,7 +2904,7 @@ function ActionBlockSettings({
             <span className="rounded-full bg-white px-2 py-1 text-[10px] font-bold uppercase text-violet-700">{integrationStatusFor('meta')}</span>
           </div>
           <p className="text-xs text-violet-700">Sends your active products with Buy buttons for the top 3. Manage products in <a href="/dashboard/catalog" className="font-bold underline">Product Catalog</a>.</p>
-          <InputField label="Intro message" value={config.intro_text || 'Humare products dekhiye:'} placeholder="Humare products dekhiye:" onChange={(v) => onChange('intro_text', v)} />
+          <InputField label="Intro message" value={config.intro_text || 'Please review our products:'} placeholder="Please review our products:" onChange={(v) => onChange('intro_text', v)} />
           <InputField label="Filter by category (optional)" value={config.category || ''} placeholder="Leave blank to show all" onChange={(v) => onChange('category', v)} />
           <InputField label="Send to" value={config.recipient || '{{lead.phone}}'} placeholder="{{lead.phone}}" onChange={(v) => onChange('recipient', v)} />
           <SelectField label="Send mode" value={config.send_mode || 'draft'} options={['draft', 'live']} onChange={(v) => onChange('send_mode', v)} />
@@ -3340,6 +3505,33 @@ function AiBlockSettings({ config, onChange }: { config: Record<string, any>; on
     }
   };
 
+  if (config.tool === 'agentic_agent') {
+    return (
+      <div className="space-y-4">
+        <div className="rounded-xl border border-violet-100 bg-violet-50 p-3">
+          <p className="text-xs font-bold text-violet-700">Agentic AI Safety</p>
+          <p className="mt-1 text-xs text-violet-700">
+            AI can choose approved tools, but backend compliance checks still run before any live WhatsApp send.
+          </p>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <InputField label="Max steps" value={config.max_steps || '4'} placeholder="4" onChange={(value) => onChange('max_steps', value)} />
+          <InputField label="Max messages" value={config.max_messages || '2'} placeholder="2" onChange={(value) => onChange('max_messages', value)} />
+        </div>
+        <SelectField label="Send mode" value={config.send_mode || 'draft'} options={['draft', 'live']} onChange={(value) => onChange('send_mode', value)} />
+        <SelectField label="Human handover" value={config.handover_enabled || 'true'} options={['true', 'false']} onChange={(value) => onChange('handover_enabled', value)} />
+        <SelectField label="Template fallback" value={config.template_fallback_enabled || 'true'} options={['true', 'false']} onChange={(value) => onChange('template_fallback_enabled', value)} />
+        <textarea
+          value={config.agent_goal || ''}
+          onChange={(e) => onChange('agent_goal', e.target.value)}
+          rows={3}
+          className="input-field resize-none text-sm"
+          placeholder="Example: qualify the lead, answer questions from knowledge base, send catalog when buying intent is clear, and hand over complaints."
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       {/* Template picker */}
@@ -3608,11 +3800,16 @@ function SelectField({
 }
 
 function defaultProviderForTool(tool: string) {
-  if (tool === 'send_whatsapp_message') return 'meta';
+  if (
+    tool === 'send_whatsapp_message' ||
+    tool.startsWith('send_whatsapp_') ||
+    tool === 'send_catalog' ||
+    tool === 'create_customer_payment_link'
+  ) return 'meta';
   if (tool === 'send_instagram_dm') return 'instagram';
   if (tool === 'send_email') return 'gmail';
   if (['create_gmail_draft_reply', 'send_gmail_reply', 'mark_gmail_read', 'add_gmail_label'].includes(tool)) return 'gmail';
-  if (tool === 'sync_to_sheet') return 'google_sheets';
+  if (tool === 'sync_to_sheet' || tool === 'add_row_google_sheet') return 'google_sheets';
   if (tool === 'push_to_crm') return 'zoho';
   if (tool === 'book_meeting') return 'calendly';
   if (tool === 'notify_owner') return 'telegram';
@@ -3761,6 +3958,7 @@ function WebhookUrlPanel({ workflowId }: { workflowId: string }) {
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copiedCurl, setCopiedCurl] = useState(false);
 
   useEffect(() => {
     if (!workflowId) return;
@@ -3771,43 +3969,75 @@ function WebhookUrlPanel({ workflowId }: { workflowId: string }) {
       .finally(() => setLoading(false));
   }, [workflowId, get]);
 
-  const copy = () => {
-    if (!url) return;
-    navigator.clipboard.writeText(url).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+  const verifyUrl = url ? `${url}/verify` : '';
+  const curlExample = url
+    ? `curl -X POST "${url}" -H "Content-Type: application/json" -d "{\"name\":\"Test Lead\",\"phone\":\"919876543210\",\"email\":\"lead@example.com\",\"message\":\"Webhook test lead\"}"`
+    : '';
+
+  const copyText = (text: string, kind: 'url' | 'curl') => {
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      if (kind === 'url') {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } else {
+        setCopiedCurl(true);
+        setTimeout(() => setCopiedCurl(false), 2000);
+      }
     });
   };
 
   if (!workflowId) {
     return (
-      <div className="rounded-lg border border-amber-100 bg-amber-50 p-3 text-xs text-amber-700">
-        <p className="font-bold">Save the workflow first</p>
-        <p className="mt-0.5">Click Save to generate your unique webhook URL.</p>
+      <div className="space-y-2 rounded-xl border border-amber-100 bg-amber-50 p-3 text-xs text-amber-800">
+        <p className="font-bold">Save once to generate the webhook URL</p>
+        <p>This trigger is ready. Click Save, then B9 will create a unique inbound URL for this workflow.</p>
+        <div className="rounded-lg bg-white/70 p-2 text-[10px] text-amber-700">
+          Supported payload fields: <code>name</code>, <code>phone</code>, <code>email</code>, <code>message</code>, plus any custom JSON keys.
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
-      <div className="flex items-center gap-2">
-        <Link className="h-4 w-4 text-emerald-600" />
-        <p className="text-xs font-bold text-emerald-900">Webhook URL</p>
+    <div className="space-y-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+      <div className="flex items-start gap-2">
+        <Link className="mt-0.5 h-4 w-4 text-emerald-600" />
+        <div>
+          <p className="text-xs font-bold text-emerald-900">Inbound Webhook</p>
+          <p className="text-[10px] text-emerald-700">Use this URL in Typeform, Zapier, Make, custom forms, or any external tool.</p>
+        </div>
       </div>
       {loading ? (
-        <p className="text-[10px] text-emerald-600">Generating URL…</p>
+        <p className="text-[10px] text-emerald-600">Generating URL...</p>
       ) : url ? (
         <>
+          <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-800">POST URL</p>
           <div className="flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-white px-2 py-1.5">
             <code className="flex-1 truncate font-mono text-[10px] text-gray-700">{url}</code>
-            <button type="button" onClick={copy} className="shrink-0 rounded-md p-1 hover:bg-emerald-50">
+            <button type="button" onClick={() => copyText(url, 'url')} className="shrink-0 rounded-md p-1 hover:bg-emerald-50">
               {copied ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5 text-gray-400" />}
             </button>
             <a href={url} target="_blank" rel="noreferrer" className="shrink-0 rounded-md p-1 hover:bg-emerald-50">
               <ExternalLink className="h-3.5 w-3.5 text-gray-400" />
             </a>
           </div>
-          <p className="text-[10px] text-emerald-700">Paste this URL in Typeform, Facebook Lead Ads, Zapier, Make or any tool that supports webhooks. The workflow will fire when data arrives.</p>
+          <div className="rounded-lg border border-emerald-100 bg-white/80 p-2">
+            <p className="text-[10px] font-bold text-emerald-900">Verify URL</p>
+            <code className="mt-1 block truncate font-mono text-[10px] text-gray-700">{verifyUrl}</code>
+          </div>
+          <div className="rounded-lg border border-emerald-100 bg-white/80 p-2">
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <p className="text-[10px] font-bold text-emerald-900">Test with cURL</p>
+              <button type="button" onClick={() => copyText(curlExample, 'curl')} className="rounded-md px-2 py-1 text-[10px] font-bold text-emerald-700 hover:bg-emerald-50">
+                {copiedCurl ? 'Copied' : 'Copy'}
+              </button>
+            </div>
+            <code className="block whitespace-pre-wrap break-all font-mono text-[10px] text-gray-700">{curlExample}</code>
+          </div>
+          <div className="rounded-lg bg-white/80 p-2 text-[10px] text-emerald-800">
+            Variables: <code>{'{{webhook.name}}'}</code>, <code>{'{{webhook.phone}}'}</code>, <code>{'{{webhook.email}}'}</code>, <code>{'{{webhook.message}}'}</code>, plus raw payload fields.
+          </div>
         </>
       ) : (
         <p className="text-[10px] text-emerald-600">Could not load URL. Save the workflow and try again.</p>
@@ -3815,7 +4045,6 @@ function WebhookUrlPanel({ workflowId }: { workflowId: string }) {
     </div>
   );
 }
-
 // ── Execution Log ──────────────────────────────────────────────────────────
 
 // ── Wait / Delay Node Settings ─────────────────────────────────────────────

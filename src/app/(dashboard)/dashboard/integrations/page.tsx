@@ -39,6 +39,41 @@ const iconFor = (channel: string) => {
   return Plug;
 };
 
+const formatStatusLabel = (status?: string, fallback = 'not_connected') =>
+  String(status || fallback).split('_').join(' ');
+
+const hasValue = (value: unknown) => value !== undefined && value !== null && String(value).trim() !== '';
+
+const integrationHealthSteps = (item: IntegrationCatalogItem) => {
+  const cfg = (item.config || {}) as Record<string, unknown>;
+  if (item.provider === 'meta' || item.provider === 'whatsapp') {
+    return [
+      { label: 'Token saved', ok: hasValue(cfg.access_token) || hasValue(cfg.encrypted_access_token) || item.connected },
+      { label: 'WABA selected', ok: hasValue(cfg.business_account_id) || hasValue(cfg.waba_id) },
+      { label: 'Phone verified', ok: hasValue(cfg.phone_number_id) || hasValue(cfg.display_phone_number) },
+      { label: 'Webhook ready', ok: hasValue(cfg.webhook_url) || item.status === 'active' },
+      { label: 'Test passed', ok: hasValue(cfg.last_test_at) || hasValue(cfg.last_test_message_id) },
+    ];
+  }
+  if (item.provider === 'facebook' || item.provider === 'instagram') {
+    return [
+      { label: 'Token saved', ok: hasValue(cfg.access_token) || hasValue(cfg.encrypted_access_token) || item.connected },
+      { label: 'Asset selected', ok: hasValue(cfg.page_id) || hasValue(cfg.instagram_business_account_id) || hasValue(cfg.account_id) },
+      { label: 'Webhook ready', ok: hasValue(cfg.webhook_url) || Boolean((cfg.webhook_subscription as { ok?: boolean } | undefined)?.ok) },
+      { label: 'Last sync known', ok: hasValue(cfg.last_sync_at) || item.status === 'active' },
+    ];
+  }
+  return [
+    { label: 'Credentials saved', ok: item.connected || item.status === 'active' },
+    { label: 'Setup complete', ok: item.connected || Boolean((item as IntegrationCatalogItem & { setup_complete?: boolean }).setup_complete) },
+  ];
+};
+
+const verifiedConnected = (item: IntegrationCatalogItem) => {
+  const steps = integrationHealthSteps(item);
+  return item.connected && steps.every((step) => step.ok);
+};
+
 /* ── Google Sheets constants ── */
 const GS_OPERATION_OPTIONS = [
   { value: 'append_row', label: 'Append Row', desc: 'Add a new row for each lead' },
@@ -551,6 +586,9 @@ export default function IntegrationsPage() {
       // Fetch webhook URL from backend (verify_token + app_secret handled server-side)
       get('/api/integrations/whatsapp/defaults').then(r => {
         if (r.data?.webhook_url) setWhatsappWebhookUrl(r.data.webhook_url);
+        if (r.data?.verify_token) {
+          setConfigForm((current) => ({ ...current, verify_token: current.verify_token || r.data.verify_token }));
+        }
       }).catch(() => {});
       loadWhatsAppStatus();
     } else {
@@ -1285,7 +1323,7 @@ export default function IntegrationsPage() {
     setLoading('whatsapp:connect');
     setSetupError('');
     try {
-      await post('/api/integrations/whatsapp/connect', {
+      const res = await post('/api/integrations/whatsapp/connect', {
         businessAccountId,
         phoneNumberId,
         accessToken,
@@ -1294,9 +1332,23 @@ export default function IntegrationsPage() {
         defaultAssistantId: configForm.default_assistant_id || undefined,
         syncLeads: configForm.sync_leads !== 'false',
       });
-      toast.success('WhatsApp setup saved');
+      toast.success('WhatsApp verified and connected');
       setWhatsappConnected(true);
-      closeModal();
+      setSelectedIntegration((current) => current ? {
+        ...current,
+        connected: true,
+        status: 'active',
+        config: {
+          ...(current.config || {}),
+          phone_number_id: phoneNumberId,
+          waba_id: businessAccountId,
+          business_account_id: businessAccountId,
+          display_phone_number: res.data?.connection?.displayPhoneNumber || (current.config as any)?.display_phone_number,
+          setup_complete: true,
+        },
+      } : current);
+      setConfigForm((current) => ({ ...current, permanent_access_token: '', app_secret: '' }));
+      await loadWhatsAppStatus();
       refresh();
     } catch (err: any) {
       setSetupError(err.response?.data?.detail || 'Save failed. Please try again.');
@@ -1466,20 +1518,20 @@ export default function IntegrationsPage() {
       </div>
 
 
-      {/* ── Integration Health Banner ── */}
+      {/* Integration Health Banner */}
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
         {[
-          { label: 'WhatsApp', connected: whatsappConnected, icon: '💬', detail: whatsappConnected ? '' : 'Not connected' },
-          { label: 'Instagram', connected: instagramConnected, icon: '📸', detail: instagramConnected ? (instagramUsername ? `@${instagramUsername}` : 'Connected') : 'Not connected' },
-          { label: 'Facebook', connected: facebookConnected, icon: '📘', detail: facebookConnected ? (facebookAccountName || 'Connected') : 'Not connected' },
-          { label: 'Google Sheets', connected: gsOAuthConnected, icon: '📊', detail: gsOAuthConnected ? (gsConnectedEmail || 'Connected') : 'Not connected' },
+          { label: 'WhatsApp', connected: whatsappConnected, icon: 'WA', detail: whatsappConnected ? 'Ready for health check' : 'Not connected' },
+          { label: 'Instagram', connected: instagramConnected, icon: 'IG', detail: instagramConnected ? (instagramUsername ? `@${instagramUsername}` : 'Account linked') : 'Not connected' },
+          { label: 'Facebook', connected: facebookConnected, icon: 'FB', detail: facebookConnected ? (facebookAccountName || 'Page linked') : 'Not connected' },
+          { label: 'Google Sheets', connected: gsOAuthConnected, icon: 'Sheets', detail: gsOAuthConnected ? (gsConnectedEmail || 'OAuth connected') : 'Not connected' },
         ].map(ch => (
           <div key={ch.label} className={`rounded-xl border p-3 flex items-center gap-2.5 transition ${ch.connected ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'}`}>
             <span className="text-lg shrink-0">{ch.icon}</span>
             <div className="min-w-0">
               <p className="text-xs font-bold text-gray-900">{ch.label}</p>
               <p className={`text-[10px] font-semibold truncate ${ch.connected ? 'text-emerald-700' : 'text-amber-700'}`}>
-                {ch.connected ? `✓ ${ch.detail || 'Connected'}` : `⚠ ${ch.detail}`}
+                {ch.detail}
               </p>
             </div>
           </div>
@@ -1504,40 +1556,48 @@ export default function IntegrationsPage() {
           const Icon = iconFor(item.channel);
           const feature = featureForProvider(item.provider);
           const available = planAccess.canUse(feature);
-          const badge = item.connected ? 'Connected' : available ? 'Not connected' : 'Upgrade required';
-          const statusLabel = String(item.status || (item.connected ? 'connected' : available ? 'not_connected' : 'upgrade_required'))
-            .split('_')
-            .join(' ');
+          const healthSteps = integrationHealthSteps(item);
+          const connectedVerified = verifiedConnected(item);
+          const badge = connectedVerified ? 'Verified' : item.connected ? 'Needs test' : available ? 'Not connected' : 'Upgrade required';
+          const statusLabel = formatStatusLabel(item.status, item.connected ? 'token_saved' : available ? 'not_connected' : 'upgrade_required');
           const accent = accentFor(item.provider, item.channel);
           return (
             <Card key={`${item.provider}-${item.channel}`} className={`relative overflow-hidden border-gray-200 shadow-sm transition hover:shadow-lg ${accent.hover}`} hoverable={false}>
               <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${accent.bar}`} />
               <div className="flex items-start justify-between gap-3">
                 <div className={`rounded-lg p-3 ring-1 ${accent.icon}`}><Icon className="h-5 w-5" /></div>
-                <span className={`rounded-full px-2 py-1 text-xs font-semibold ${item.connected ? 'bg-emerald-50 text-emerald-700' : available ? 'bg-blue-50 text-blue-700' : 'bg-amber-50 text-amber-700'}`}>{badge}</span>
+                <span className={`rounded-full px-2 py-1 text-xs font-semibold ${connectedVerified ? 'bg-emerald-50 text-emerald-700' : item.connected ? 'bg-amber-50 text-amber-700' : available ? 'bg-blue-50 text-blue-700' : 'bg-amber-50 text-amber-700'}`}>{badge}</span>
               </div>
               <h2 className="mt-4 font-bold text-gray-950">{item.label}</h2>
               <p className="mt-2 min-h-12 text-sm text-gray-600">{item.description}</p>
-              {/* Connected account detail — read directly from item.config (no extra state) */}
+              {/* Connected account detail */}
               {item.connected && (() => {
                 const cfg = (item.config || {}) as any;
                 const detail =
                   (item.provider === 'meta' || item.provider === 'whatsapp')
-                    ? cfg.display_phone_number || cfg.phone_number_id ? `📞 ${cfg.display_phone_number || cfg.phone_number_id}` : ''
+                    ? cfg.display_phone_number || cfg.phone_number_id ? `Phone ${cfg.display_phone_number || cfg.phone_number_id}` : ''
                   : item.provider === 'instagram'
                     ? cfg.instagram_username || cfg.username ? `@${cfg.instagram_username || cfg.username}` : ''
                   : item.provider === 'facebook'
-                    ? cfg.page_name || cfg.account_name ? `🏢 ${cfg.page_name || cfg.account_name}` : ''
+                    ? cfg.page_name || cfg.account_name ? `Business ${cfg.page_name || cfg.account_name}` : ''
                   : item.provider === 'google_sheets'
-                    ? cfg.email || cfg.connected_email ? `📧 ${cfg.email || cfg.connected_email}` : ''
+                    ? cfg.email || cfg.connected_email ? `Email ${cfg.email || cfg.connected_email}` : ''
                   : item.provider === 'gmail'
-                    ? cfg.sender_email || cfg.email ? `📧 ${cfg.sender_email || cfg.email}` : ''
+                    ? cfg.sender_email || cfg.email ? `Email ${cfg.sender_email || cfg.email}` : ''
                   : '';
                 return detail ? <p className="mt-1 text-xs font-semibold text-gray-500 truncate">{detail}</p> : null;
               })()}
               <div className="mt-4 flex items-center gap-2 text-xs font-semibold">
                 <span className={`h-2 w-2 rounded-full ${item.connected ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                <span className="text-gray-600">{statusLabel}</span>
+                <span className="capitalize text-gray-600">{statusLabel}</span>
+              </div>
+              <div className="mt-3 grid gap-1.5 rounded-lg border border-gray-100 bg-gray-50 p-2">
+                {healthSteps.slice(0, 5).map((step) => (
+                  <div key={step.label} className="flex items-center justify-between gap-2 text-[11px]">
+                    <span className="text-gray-600">{step.label}</span>
+                    <span className={step.ok ? 'font-bold text-emerald-700' : 'font-semibold text-gray-400'}>{step.ok ? 'OK' : 'Pending'}</span>
+                  </div>
+                ))}
               </div>
               <Button variant={item.connected ? 'secondary' : 'primary'} className="mt-4 w-full"
                 loading={loading === `${item.provider}:connect`} onClick={() => openSetup(item)}>
@@ -2158,9 +2218,17 @@ export default function IntegrationsPage() {
 
             {(selectedIntegration.provider === 'meta' || selectedIntegration.provider === 'whatsapp') && (
               <div className="mt-5 space-y-5">
-                {/* 2 connect options at top of modal */}
+                {/* Official Meta connect path */}
                 {!selectedIntegration.connected && (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
+                    <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
+                      <p className="text-sm font-bold text-blue-950">Official Meta connect</p>
+                      <div className="mt-3 grid gap-2 text-xs text-blue-800 sm:grid-cols-3">
+                        <div className="rounded-lg bg-white/70 p-2"><strong>1. Connect via Meta</strong><br />Approve WhatsApp permissions in Meta.</div>
+                        <div className="rounded-lg bg-white/70 p-2"><strong>2. Select WABA and phone</strong><br />Choose the business asset for B9.</div>
+                        <div className="rounded-lg bg-white/70 p-2"><strong>3. Send test message</strong><br />Verify webhook and delivery.</div>
+                      </div>
+                    </div>
                     <button
                       onClick={async () => {
                         try {
@@ -2189,7 +2257,7 @@ export default function IntegrationsPage() {
                       }}
                       className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#1877F2] hover:bg-[#166FE5] text-white text-sm font-bold py-2.5 transition"
                     >
-                      <span className="text-base">𝐟</span> Connect via Facebook Login
+                      Connect with Meta
                       <span className="text-[10px] bg-white/20 rounded px-1.5 py-0.5 font-semibold">Recommended</span>
                     </button>
                     <div className="flex items-center gap-2">
@@ -2197,31 +2265,37 @@ export default function IntegrationsPage() {
                       <span className="text-[10px] text-gray-400 font-medium">OR</span>
                       <div className="flex-1 h-px bg-gray-200" />
                     </div>
-                    <p className="text-xs font-semibold text-gray-500 text-center">Enter credentials manually ↓</p>
+                    <p className="text-xs font-semibold text-gray-500 text-center">Manual token setup is available under Advanced.</p>
                   </div>
                 )}
                 <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-xs font-bold uppercase tracking-wide text-gray-500">WhatsApp Business</p>
-                      <p className="mt-1 text-sm text-gray-600">{selectedIntegration.connected ? 'Connected' : 'Not Connected'}</p>
+                      <p className="mt-1 text-sm text-gray-600">{whatsappConnected ? 'Verified and connected' : 'Not connected'}</p>
                     </div>
-                    <span className={`rounded-full px-3 py-1 text-xs font-bold ${selectedIntegration.connected ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                      {selectedIntegration.connected ? 'Connected' : 'Not Connected'}
+                    <span className={`rounded-full px-3 py-1 text-xs font-bold ${whatsappConnected ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                      {whatsappConnected ? 'Connected' : 'Not Connected'}
                     </span>
                   </div>
+                  {whatsappConnected && (
+                    <div className="mt-3 rounded-lg border border-emerald-100 bg-emerald-50 p-3 text-xs text-emerald-800">
+                      <p className="font-bold">Manual credentials verified</p>
+                      <p className="mt-0.5">B9 verified the token and Phone Number ID with Meta. Send a test message to confirm the 24-hour conversation window and delivery.</p>
+                    </div>
+                  )}
                   <label className="mt-4 block text-sm font-semibold text-gray-700">
                     Webhook URL
                     <input value={whatsappWebhookUrl || 'https://b9-automation-backend.onrender.com/api/webhooks/whatsapp'} readOnly className="input-field mt-1 font-mono text-xs" />
                   </label>
                 </div>
-                <div className="rounded-xl border border-gray-200 p-4">
-                  <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Step 1 — Meta Cloud API Credentials</p>
+                <details className="rounded-xl border border-gray-200 p-4">
+                  <summary className="cursor-pointer text-xs font-bold uppercase tracking-wide text-gray-500">Advanced: manual Meta Cloud API credentials</summary>
 
                     <div className="mt-3 mb-4 rounded-lg border border-blue-100 bg-blue-50 p-3 text-xs text-blue-800">
                       <p className="font-bold mb-1.5">Where to find these credentials:</p>
                       <ol className="list-decimal list-inside space-y-1">
-                        <li>Go to <strong>Meta for Developers</strong> → Your App → WhatsApp → API Setup</li>
+                        <li>Go to <strong>Meta for Developers</strong> &gt; Your App &gt; WhatsApp &gt; API Setup</li>
                         <li>Copy <strong>Phone Number ID</strong> from the &ldquo;From&rdquo; section on the setup page</li>
                         <li>Copy <strong>WhatsApp Business Account ID</strong> shown just below</li>
                         <li>Generate a <strong>Permanent Access Token</strong> via System Users in Meta Business Suite</li>
@@ -2243,7 +2317,7 @@ export default function IntegrationsPage() {
                       <label className="block text-sm font-semibold text-gray-700">
                         Permanent Access Token <span className="text-red-500">*</span>
                         <input value={configForm.permanent_access_token || ''} onChange={(e) => setConfigForm({...configForm, permanent_access_token: e.target.value})} className="input-field mt-1" placeholder="EAAxxxx..." type="password" />
-                        <p className="text-[10px] text-gray-400 mt-0.5">Meta Business Suite → System Users → Generate token</p>
+                        <p className="text-[10px] text-gray-400 mt-0.5">Meta Business Suite &gt; System Users &gt; Generate token</p>
                       </label>
 
                       {/* Test number + send test */}
@@ -2252,15 +2326,15 @@ export default function IntegrationsPage() {
                         <div className="flex gap-2 mt-1">
                           <input value={configForm.test_to || ''} onChange={(e) => setConfigForm({...configForm, test_to: e.target.value})} className="input-field flex-1" placeholder="919876543210 (with country code)" />
                           <button type="button"
-                            disabled={!configForm.test_to || !configForm.phone_number_id || !configForm.permanent_access_token}
+                            disabled={!whatsappConnected || !configForm.test_to}
                             onClick={testWhatsAppConnection}
                             className="px-3 py-2 text-xs font-bold rounded-lg border border-green-300 text-green-700 hover:bg-green-50 disabled:opacity-40 transition whitespace-nowrap">
                             Send Test
                           </button>
                         </div>
-                        <p className="text-[10px] text-gray-400 mt-0.5">First send a WhatsApp message TO your B9 number, then test here within 24 hours.</p>
-                        {configForm.test_to && (
-                          <p className="text-[10px] text-emerald-600 mt-1">Ready to test — click &ldquo;Send Test&rdquo; in the button row below.</p>
+                        <p className="text-[10px] text-gray-400 mt-0.5">Save and verify the connection first. Then send a WhatsApp message to your B9 number and test within 24 hours.</p>
+                        {configForm.test_to && whatsappConnected && (
+                          <p className="text-[10px] text-emerald-600 mt-1">Ready to test. Click Send Test.</p>
                         )}
                       </label>
 
@@ -2274,7 +2348,7 @@ export default function IntegrationsPage() {
                       </label>
                     </div>
 
-                  </div>
+                  </details>
 
                 <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
                   <Button type="button" variant="secondary" onClick={closeModal}>Cancel</Button>
@@ -2282,7 +2356,7 @@ export default function IntegrationsPage() {
                     <Send className="h-4 w-4" />Send Test
                   </Button>
                   <Button type="button" loading={loading === 'whatsapp:connect'} onClick={saveWhatsAppConnection}>
-                    <Plug className="h-4 w-4" />Save Setup
+                    <Plug className="h-4 w-4" />Verify & Connect
                   </Button>
                 </div>
 
@@ -2314,7 +2388,7 @@ export default function IntegrationsPage() {
                     }}
                   >
                     <span className="text-xs font-bold uppercase tracking-wide text-blue-700">WhatsApp Business Profile</span>
-                    <span className="text-xs text-blue-500">{bpEditing ? '▲ collapse' : '▼ edit'}</span>
+                    <span className="text-xs text-blue-500">{bpEditing ? 'Collapse' : 'Edit'}</span>
                   </button>
 
                   {bpEditing && (
@@ -2665,4 +2739,3 @@ export default function IntegrationsPage() {
     </div>
   );
 }
-

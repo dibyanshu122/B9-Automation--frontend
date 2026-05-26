@@ -12,7 +12,18 @@ import toast from 'react-hot-toast';
 import { Button } from '@/components/button';
 import { useApi } from '@/hooks/useApi';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+function apiErrorMessage(error: any, fallback: string): string {
+  const detail = error?.response?.data?.detail;
+  if (typeof detail === 'string') return detail;
+  if (detail?.message) {
+    const first = Array.isArray(detail.errors) && detail.errors.length ? detail.errors[0] : null;
+    const firstMessage = typeof first === 'string' ? first : first?.message || first?.error || '';
+    return firstMessage ? `${detail.message} ${firstMessage}` : detail.message;
+  }
+  return fallback;
+}
+
+//  Types 
 
 interface WaFlow { id: string; name: string; status: string; categories?: string[] }
 
@@ -53,7 +64,7 @@ interface FlowScreen {
   components: FlowComponent[];
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+//  Constants 
 
 const CATEGORIES = [
   { value: 'LEAD_GENERATION', label: 'Lead Generation' },
@@ -99,7 +110,7 @@ const defaultComponent = (type: ComponentType): FlowComponent => {
   }
 };
 
-// ─── AI Generate Modal ────────────────────────────────────────────────────────
+//  AI Generate Modal 
 
 const FLOW_CATEGORIES = [
   { value: 'LEAD_GENERATION', label: 'Lead Generation' },
@@ -110,11 +121,11 @@ const FLOW_CATEGORIES = [
 ];
 
 const EXAMPLE_PROMPTS = [
-  'Lead form for coaching center — naam, phone, class (9th/10th/11th-12th), subject',
-  'Appointment booking for clinic — patient name, phone, date, doctor choice',
-  'Real estate inquiry — name, phone, budget, BHK type, preferred location',
-  'Feedback form — rating (1-5), what they liked, suggestions, email',
-  'Job application — name, phone, role applied for, experience years, city',
+  'Lead form for coaching center  naam, phone, class (9th/10th/11th-12th), subject',
+  'Appointment booking for clinic  patient name, phone, date, doctor choice',
+  'Real estate inquiry  name, phone, budget, BHK type, preferred location',
+  'Feedback form  rating (1-5), what they liked, suggestions, email',
+  'Job application  name, phone, role applied for, experience years, city',
 ];
 
 const INDIA_FLOW_PRESETS = [
@@ -174,7 +185,7 @@ function AiGenerateModal({
         };
       });
       onGenerated(screens);
-      toast.success(`✓ ${screens.length} screen(s) generated! You can edit it now.`);
+      toast.success(` ${screens.length} screen(s) generated! You can edit it now.`);
       onClose();
       setDesc('');
     } catch (e: unknown) {
@@ -202,7 +213,7 @@ function AiGenerateModal({
               <Wand2 className="w-4 h-4 text-white" />
             </div>
             <div>
-              <p className="font-bold text-gray-900 text-sm">B9 Agentic Core — Form Generator</p>
+              <p className="font-bold text-gray-900 text-sm">B9 Agentic Core  Form Generator</p>
               <p className="text-[10px] text-gray-400">Describe it, and AI will create a valid Meta Flow</p>
             </div>
           </div>
@@ -274,7 +285,7 @@ function AiGenerateModal({
   );
 }
 
-// ─── Flow JSON Builder ────────────────────────────────────────────────────────
+//  Flow JSON Builder 
 
 function buildFlowJson(screens: FlowScreen[]): object {
   const routing: Record<string, string[]> = {};
@@ -369,7 +380,7 @@ function buildFlowJson(screens: FlowScreen[]): object {
   return { version: '7.0', routing_model: routing, screens: builtScreens };
 }
 
-// ─── WhatsApp Phone Preview ───────────────────────────────────────────────────
+//  WhatsApp Phone Preview 
 
 function PhonePreview({ screen }: { screen: FlowScreen }) {
   return (
@@ -469,14 +480,14 @@ function PreviewComponent({ c }: { c: FlowComponent }) {
     case 'Condition':   return (
       <div className="mt-1 rounded border border-dashed border-amber-300 bg-amber-50 px-2 py-1 text-[9px] text-amber-700">
         <span className="font-bold">IF</span> {c.conditionField || '?'} = {c.conditionValue || '?'}<br/>
-        ✅ → {c.trueScreen || '?'} &nbsp; ❌ → {c.falseScreen || '?'}
+          {c.trueScreen || '?'} &nbsp;   {c.falseScreen || '?'}
       </div>
     );
     default: return null;
   }
 }
 
-// ─── Component Editor ─────────────────────────────────────────────────────────
+//  Component Editor 
 
 function ComponentEditor({ c, screens, screenId, onChange, onDelete }: {
   c: FlowComponent; screens: FlowScreen[]; screenId: string;
@@ -589,7 +600,7 @@ function ComponentEditor({ c, screens, screenId, onChange, onDelete }: {
             <p className="text-[9px] text-gray-400 mt-0.5">Other options route to the False screen. Each option routes individually.</p>
           </div>
           <div>
-            <p className="text-[10px] font-semibold text-gray-500 mb-1">✅ If TRUE → go to screen:</p>
+            <p className="text-[10px] font-semibold text-gray-500 mb-1"> If TRUE  go to screen:</p>
             <select value={c.trueScreen || ''} onChange={e => onChange({ ...c, trueScreen: e.target.value })} className={inp}>
               <option value="">Select screen...</option>
               {screens.filter(s => s._id !== screenId).map(s => (
@@ -598,7 +609,7 @@ function ComponentEditor({ c, screens, screenId, onChange, onDelete }: {
             </select>
           </div>
           <div>
-            <p className="text-[10px] font-semibold text-gray-500 mb-1">❌ If FALSE → go to screen:</p>
+            <p className="text-[10px] font-semibold text-gray-500 mb-1"> If FALSE  go to screen:</p>
             <select value={c.falseScreen || ''} onChange={e => onChange({ ...c, falseScreen: e.target.value })} className={inp}>
               <option value="">Select screen...</option>
               {screens.filter(s => s._id !== screenId).map(s => (
@@ -612,7 +623,7 @@ function ComponentEditor({ c, screens, screenId, onChange, onDelete }: {
   );
 }
 
-// ─── Flow Designer ────────────────────────────────────────────────────────────
+//  Flow Designer 
 
 function FlowDesigner({
   flow, onBack, onFlowUpdated, initialOpenAi = false, onAiModalOpened,
@@ -721,9 +732,9 @@ function FlowDesigner({
       const r = await post(`/api/automation/whatsapp/flows/${flow.id}/upload-document`, { flow_json: flowJson });
       const errs = r.data?.validation_errors || [];
       if (errs.length) toast.error(`Saved with warnings: ${errs[0]?.message || 'check flow JSON'}`);
-      else toast.success('Flow saved! ✓ Screens uploaded to Meta.');
+      else toast.success('Flow saved. Screens uploaded to Meta.');
     } catch (e: any) {
-      toast.error(e.response?.data?.detail || 'Failed to save flow');
+      toast.error(apiErrorMessage(e, 'Failed to save flow'));
     } finally { setSaving(false); }
   };
 
@@ -732,11 +743,11 @@ function FlowDesigner({
     setPublishing(true);
     try {
       await post(`/api/automation/whatsapp/flows/${flow.id}/publish`, {});
-      toast.success('Flow published successfully! 🎉');
+      toast.success('Flow published successfully.');
       onFlowUpdated();
       onBack();
     } catch (e: any) {
-      toast.error(e.response?.data?.detail || 'Publish failed');
+      toast.error(apiErrorMessage(e, 'Publish failed'));
     } finally { setPublishing(false); }
   };
 
@@ -755,7 +766,7 @@ function FlowDesigner({
       <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-white border-b border-gray-200 flex-shrink-0">
         <div className="flex items-center gap-3">
           <button onClick={onBack} className="text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1">
-            ← Back
+             Back
           </button>
           <div className="w-px h-5 bg-gray-200" />
           <div>
@@ -807,7 +818,7 @@ function FlowDesigner({
       {/* Live warning */}
       {flow.status === 'PUBLISHED' && (
         <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-xs text-amber-800 font-medium">
-          ⚠️ This flow is Published and cannot be edited. Duplicate it to make changes.
+           This flow is Published and cannot be edited. Duplicate it to make changes.
         </div>
       )}
 
@@ -924,7 +935,7 @@ function FlowDesigner({
   );
 }
 
-// ─── Status Badge ─────────────────────────────────────────────────────────────
+//  Status Badge 
 
 function StatusBadge({ status }: { status: string }) {
   if (status === 'PUBLISHED') return (
@@ -939,7 +950,7 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+//  Main Page 
 
 export default function FlowsPage() {
   const { get, post, delete: del } = useApi();
@@ -1013,7 +1024,7 @@ export default function FlowsPage() {
     setNewName(preset.name);
     setNewCategory(preset.category);
     setShowCreate(true);
-    toast('Preset selected. Click Generate with AI, then use the prompt examples to create the form.', { icon: '✨' });
+    toast('Preset selected. Click Generate with AI, then use the prompt examples to create the form.', { icon: '' });
   };
 
   // Show designer if editing
@@ -1039,7 +1050,7 @@ export default function FlowsPage() {
             <h1 className="text-2xl font-bold text-gray-900">WhatsApp Flows</h1>
           </div>
           <p className="text-sm text-gray-500 mt-0.5">
-            Build interactive forms that open inside WhatsApp — lead capture, surveys, bookings. Design everything here, no external tools needed.
+            Build interactive forms that open inside WhatsApp  lead capture, surveys, bookings. Design everything here, no external tools needed.
           </p>
         </div>
         {!notConnected && (
@@ -1078,7 +1089,7 @@ export default function FlowsPage() {
             Retry
           </button>
           <a href="/dashboard/integrations" className="mt-1 text-sm font-semibold text-orange-600 hover:underline">
-            Go to Integrations →
+            Go to Integrations 
           </a>
         </div>
       )}
@@ -1141,7 +1152,7 @@ export default function FlowsPage() {
               </div>
               <div className="col-span-2">
                 <span className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium">
-                  {CATEGORIES.find(c => c.value === f.categories?.[0])?.label || f.categories?.[0] || '—'}
+                  {CATEGORIES.find(c => c.value === f.categories?.[0])?.label || f.categories?.[0] || ''}
                 </span>
               </div>
               <div className="col-span-2"><StatusBadge status={f.status} /></div>

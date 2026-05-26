@@ -20,6 +20,7 @@ export default function SignupPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [verificationSent, setVerificationSent] = useState(false);
+  const [resending, setResending] = useState(false);
   const router = useRouter();
   const { post } = useApi();
 
@@ -44,6 +45,17 @@ export default function SignupPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const cleanName = name.trim();
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!cleanName) {
+      toast.error('Full name is required');
+      return;
+    }
+    if (!cleanEmail) {
+      toast.error('Email is required');
+      return;
+    }
 
     if (password.length < 8) {
       toast.error('Password must be at least 8 characters');
@@ -58,16 +70,35 @@ export default function SignupPage() {
 
     try {
       await post('/api/auth/signup', {
-        name,
-        email,
+        name: cleanName,
+        email: cleanEmail,
         password,
       });
+      setName(cleanName);
+      setEmail(cleanEmail);
       setVerificationSent(true);
       toast.success('Verification link sent to your email');
     } catch (error: any) {
       toast.error(error.response?.data?.detail || 'Signup failed');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail) {
+      toast.error('Email is required');
+      return;
+    }
+    setResending(true);
+    try {
+      await post('/api/auth/resend-verification', { email: cleanEmail });
+      toast.success('New verification link sent. Check your inbox.');
+    } catch (error: any) {
+      toast.error(error.response?.data?.detail || 'Could not resend verification email');
+    } finally {
+      setResending(false);
     }
   };
 
@@ -90,6 +121,18 @@ export default function SignupPage() {
             <Button type="button" variant="primary" className="mt-6 w-full" onClick={() => router.push('/login')}>
               Go to Login
             </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              className="mt-3 w-full"
+              loading={resending}
+              onClick={handleResendVerification}
+            >
+              Resend Verification Email
+            </Button>
+            <p className="mt-4 text-xs text-slate-400">
+              Did not receive it? Check spam or resend after a few seconds.
+            </p>
           </div>
         ) : (
           <>
@@ -124,6 +167,7 @@ export default function SignupPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
+              autoComplete="email"
               className="input-field border-white/10 bg-slate-900/80 text-white placeholder:text-slate-500 focus:ring-cyan-400"
               required
             />
@@ -139,6 +183,7 @@ export default function SignupPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Create a password"
+                autoComplete="new-password"
                 className="input-field border-white/10 bg-slate-900/80 pr-11 text-white placeholder:text-slate-500 focus:ring-cyan-400"
                 required
               />
@@ -172,6 +217,7 @@ export default function SignupPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirm your password"
+                autoComplete="new-password"
                 className={`input-field border-white/10 bg-slate-900/80 pr-11 text-white placeholder:text-slate-500 focus:ring-cyan-400 ${confirmPassword && confirmPassword !== password ? 'border-red-500/60' : ''}`}
                 required
               />
@@ -188,7 +234,7 @@ export default function SignupPage() {
               <p className="mt-1 text-[11px] font-semibold text-red-400">Passwords do not match</p>
             )}
             {confirmPassword && confirmPassword === password && (
-              <p className="mt-1 text-[11px] font-semibold text-emerald-400">✓ Passwords match</p>
+              <p className="mt-1 text-[11px] font-semibold text-emerald-400">Passwords match</p>
             )}
           </div>
 

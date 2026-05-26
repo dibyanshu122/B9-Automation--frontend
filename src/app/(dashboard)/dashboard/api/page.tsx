@@ -153,7 +153,7 @@ export default function ApiKeysPage() {
             <h1 className="text-2xl font-bold text-gray-900">API Access</h1>
           </div>
           <p className="text-sm text-gray-500 mt-0.5">
-            Programmatic access to your B9 workspace — leads, messages, automations, catalog, payments.
+            Programmatic access to your B9 workspace - leads, messages, automations, catalog, payments.
           </p>
           <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-100 rounded-lg px-3 py-2 mt-2 w-fit">
             <span className="font-mono font-semibold">{API_BASE}/api/v1/</span>
@@ -192,7 +192,7 @@ export default function ApiKeysPage() {
               <div className="flex items-start gap-3">
                 <Shield className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-green-800">API key created — copy it now</p>
+                  <p className="font-semibold text-green-800">API key created - copy it now</p>
                   <p className="text-sm text-green-700 mt-0.5">This key will not be shown again.</p>
                   <div className="mt-3 flex items-center gap-2 bg-white border border-green-200 rounded-lg px-3 py-2">
                     <code className="text-sm font-mono text-gray-800 flex-1 break-all">{newKeyValue}</code>
@@ -271,7 +271,7 @@ export default function ApiKeysPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-medium text-gray-900">{key.name}</span>
-                      <code className="text-xs bg-gray-100 px-2 py-0.5 rounded text-gray-600">{key.prefix}••••••••</code>
+                      <code className="text-xs bg-gray-100 px-2 py-0.5 rounded text-gray-600">{key.prefix}********</code>
                     </div>
                     <div className="flex flex-wrap gap-1 mt-1.5">
                       {(key.scopes || []).map(s => (
@@ -324,6 +324,24 @@ export default function ApiKeysPage() {
                   <pre className={`text-[11px] font-mono p-3 whitespace-pre-wrap leading-relaxed ${ex.textColor}`}>{ex.code}</pre>
                 </div>
               ))}
+            </div>
+          </Card>
+
+          <Card className="p-5 border-blue-100 bg-blue-50">
+            <h2 className="font-semibold text-blue-950 mb-2">API Safety Rules</h2>
+            <div className="grid gap-3 text-xs text-blue-800 md:grid-cols-3">
+              <div className="rounded-lg border border-blue-100 bg-white/70 p-3">
+                <p className="font-bold">Scopes are enforced</p>
+                <p className="mt-1">Every key can only access the scopes selected during creation.</p>
+              </div>
+              <div className="rounded-lg border border-blue-100 bg-white/70 p-3">
+                <p className="font-bold">Workspace permissions still apply</p>
+                <p className="mt-1">API keys cannot bypass owner/admin permissions or workspace boundaries.</p>
+              </div>
+              <div className="rounded-lg border border-blue-100 bg-white/70 p-3">
+                <p className="font-bold">WhatsApp rules still apply</p>
+                <p className="mt-1">Opt-out, 24-hour window, template, and rate-limit guards apply to API sends.</p>
+              </div>
             </div>
           </Card>
 
@@ -389,14 +407,14 @@ export default function ApiKeysPage() {
             <h2 className="font-semibold text-gray-900 mb-3">WhatsApp Messaging Rules</h2>
             <div className="space-y-3 text-sm text-gray-600">
               <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl p-3">
-                <span className="text-amber-600 font-bold text-xs mt-0.5">⚠️</span>
+                <span className="text-amber-600 font-bold text-xs mt-0.5">Warning</span>
                 <div>
                   <p className="font-semibold text-amber-800">24-Hour Window</p>
                   <p className="text-xs text-amber-700 mt-0.5">Plain text messages (<code>/whatsapp/send-text</code>) only work within 24 hours of the customer&apos;s last WhatsApp message to you. After that, use <code>/whatsapp/send-template</code> with an approved template.</p>
                 </div>
               </div>
               <div className="flex items-start gap-2 bg-green-50 border border-green-200 rounded-xl p-3">
-                <span className="text-green-600 font-bold text-xs mt-0.5">✓</span>
+                <span className="text-green-600 font-bold text-xs mt-0.5">OK</span>
                 <div>
                   <p className="font-semibold text-green-800">Templates Work Any Time</p>
                   <p className="text-xs text-green-700 mt-0.5">Approved WhatsApp templates can be sent at any time. Use <code>/api/v1/templates</code> to list your APPROVED templates first.</p>
@@ -431,7 +449,7 @@ export default function ApiKeysPage() {
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded w-14 text-center flex-shrink-0 ${METHOD_COLORS[log.method] || 'bg-gray-100 text-gray-600'}`}>{log.method}</span>
                   <code className="text-xs text-gray-700 font-mono flex-1 truncate">{log.path}</code>
                   {log.scope_used && <span className="text-[10px] bg-blue-50 text-blue-600 border border-blue-100 px-1.5 py-0.5 rounded flex-shrink-0">{log.scope_used}</span>}
-                  <span className={`text-[11px] font-bold flex-shrink-0 ${(log.status_code || 0) >= 400 ? 'text-red-600' : 'text-emerald-600'}`}>{log.status_code || '—'}</span>
+                  <span className={`text-[11px] font-bold flex-shrink-0 ${(log.status_code || 0) >= 400 ? 'text-red-600' : 'text-emerald-600'}`}>{log.status_code || '-'}</span>
                   {log.response_ms != null && <span className="text-[11px] text-gray-400 flex-shrink-0">{log.response_ms}ms</span>}
                   <span className="text-[11px] text-gray-400 flex-shrink-0">{new Date(log.created_at).toLocaleTimeString()}</span>
                 </div>

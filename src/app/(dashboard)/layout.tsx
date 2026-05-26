@@ -65,7 +65,7 @@ export default function DashboardLayout({
   }, [hasHydrated, user?.id, token]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    // Only the main element scrolls now — body is locked
+    // Only the main element scrolls now; body is locked.
     mainRef.current?.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
   }, [pathname]);
 
@@ -96,7 +96,7 @@ export default function DashboardLayout({
       <Navbar />
       <div className="relative z-10 flex h-[calc(100vh-64px)] min-w-0 mt-16">
         <Sidebar />
-        {/* Single scroll container — body never scrolls, only this main element does */}
+        {/* Single scroll container; body never scrolls. */}
         <main
           ref={mainRef}
           className={`min-w-0 flex-1 overflow-y-auto overflow-x-hidden transition-[margin] duration-300 ease-in-out ${sidebarPinned ? 'md:ml-72' : 'md:ml-16'}`}

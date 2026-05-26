@@ -24,6 +24,13 @@ const ROLE_COLORS: Record<Role, string> = {
   viewer: 'bg-gray-100 text-gray-600',
 };
 
+const ROLE_DESCRIPTIONS: Record<Role, string> = {
+  admin: 'Workspace setup, integrations, campaigns, templates, billing except owner-only actions.',
+  senior_agent: 'Manages queues and assigned agents without owner-level workspace control.',
+  agent: 'Works assigned chats, leads, tasks, and quick replies.',
+  viewer: 'Read-only access for reporting and review.',
+};
+
 const PERMISSION_TOGGLES = [
   { key: 'inbox.reply', label: 'Reply to chats' },
   { key: 'leads.write_assigned', label: 'Update assigned leads' },
@@ -32,6 +39,13 @@ const PERMISSION_TOGGLES = [
   { key: 'templates.draft', label: 'Draft templates' },
   { key: 'flows.draft', label: 'Draft WhatsApp Flows' },
 ] as const;
+
+const PERMISSION_PRESETS: Record<Role, string[]> = {
+  admin: ['inbox.reply', 'leads.write_assigned', 'leads.export', 'campaigns.draft', 'templates.draft', 'flows.draft'],
+  senior_agent: ['inbox.reply', 'leads.write_assigned', 'campaigns.draft', 'templates.draft', 'flows.draft'],
+  agent: ['inbox.reply', 'leads.write_assigned'],
+  viewer: [],
+};
 
 export default function TeamPage() {
   const { get, post, patch, delete: del } = useApi();
@@ -86,6 +100,7 @@ export default function TeamPage() {
       await patch(`/api/team/members/${editingMember.id}/permissions`, {
         role: editingMember.role,
         permissions: editingMember.custom_permissions || [],
+        reports_to_member_id: editingMember.reports_to_member_id || '',
         assigned_only: !!editingMember.assigned_only,
         phone_masking_enabled: !!editingMember.phone_masking_enabled,
         status: editingMember.status || 'active',
@@ -153,6 +168,14 @@ export default function TeamPage() {
         </form>
         <div className="mt-3 rounded-lg bg-blue-50 p-3 text-xs text-blue-700">
           <strong>Roles:</strong> Admin controls workspace. Senior Agent manages queues and agents. Agent works assigned chats/leads. Viewer is read-only.
+        </div>
+        <div className="mt-3 grid gap-2 md:grid-cols-4">
+          {ROLES.map((role) => (
+            <div key={role} className="rounded-lg border border-gray-100 bg-gray-50 p-3">
+              <p className="text-xs font-bold text-gray-900">{ROLE_LABELS[role]}</p>
+              <p className="mt-1 text-[11px] leading-4 text-gray-500">{ROLE_DESCRIPTIONS[role]}</p>
+            </div>
+          ))}
         </div>
       </Card>
 
@@ -233,9 +256,17 @@ export default function TeamPage() {
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <label className="block text-sm font-medium text-gray-700">
                 Role
-                <select value={editingMember.role} onChange={(e) => setEditingMember({ ...editingMember, role: e.target.value })} className="input-field mt-1">
+                <select
+                  value={editingMember.role}
+                  onChange={(e) => {
+                    const role = e.target.value as Role;
+                    setEditingMember({ ...editingMember, role, custom_permissions: PERMISSION_PRESETS[role] || [] });
+                  }}
+                  className="input-field mt-1"
+                >
                   {ROLES.map(r => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
                 </select>
+                <p className="mt-1 text-xs text-gray-500">{ROLE_DESCRIPTIONS[(editingMember.role || 'agent') as Role]}</p>
               </label>
               <label className="block text-sm font-medium text-gray-700">
                 Status
@@ -248,6 +279,21 @@ export default function TeamPage() {
             </div>
 
             <div className="mt-4 space-y-2">
+              <label className="block rounded-lg border border-gray-100 px-3 py-2 text-sm">
+                Reports to
+                <select
+                  value={editingMember.reports_to_member_id || ''}
+                  onChange={(e) => setEditingMember({ ...editingMember, reports_to_member_id: e.target.value || null })}
+                  className="input-field mt-1"
+                >
+                  <option value="">Workspace owner/admin</option>
+                  {(data?.members || [])
+                    .filter((member) => member.id !== editingMember.id && ['admin', 'senior_agent'].includes(member.role))
+                    .map((member) => (
+                      <option key={member.id} value={member.id}>{member.display_name || member.email}</option>
+                    ))}
+                </select>
+              </label>
               <label className="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2 text-sm">
                 Assigned leads only
                 <input type="checkbox" checked={!!editingMember.assigned_only} onChange={(e) => setEditingMember({ ...editingMember, assigned_only: e.target.checked })} />

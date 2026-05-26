@@ -26,7 +26,7 @@ const ICONS = {
   FlaskConical, Bot, UserCog, UserX, Target,
 };
 
-// Dark sidebar — premium contrast against white dashboard
+// Dark sidebar with premium contrast against the white dashboard.
 const BG = '#0F172A';
 
 type TeamAccess = {
@@ -43,6 +43,7 @@ const NAV_PERMISSIONS: Record<string, string[]> = {
   '/dashboard/qr-codes': ['campaigns.manage', 'campaigns.draft'],
   '/dashboard/imports': ['leads.write', 'leads.write_assigned'],
   '/dashboard/messages': ['inbox.read_all', 'inbox.read_assigned'],
+  '/dashboard/handover': ['inbox.read_all', 'inbox.read_assigned'],
   '/dashboard/auto-replies': ['automations.manage', 'inbox.reply'],
   '/dashboard/opted-out': ['leads.read_all'],
   '/dashboard/tasks': ['tasks.manage_own', 'leads.write', 'leads.write_assigned'],
@@ -65,7 +66,8 @@ const NAV_PERMISSIONS: Record<string, string[]> = {
 };
 
 function canSeeHref(access: TeamAccess | null, href?: string) {
-  if (!href || !access) return true;
+  if (!href) return true;
+  if (!access) return href === '/dashboard';
   const perms = new Set(access.permissions || []);
   if (access.is_owner || access.role === 'owner' || perms.has('*')) return true;
   const required = NAV_PERMISSIONS[href];
@@ -150,10 +152,10 @@ export const Sidebar = () => {
   const groupActive = (children?: any[]): boolean =>
     children?.some(c => isActive(c.href)) ?? false;
 
-  // Item styles — dark sidebar, indigo active
-  const item = (active: boolean) => clsx(
-    'flex w-full items-center gap-3 rounded-lg transition-all duration-150 text-sm font-medium',
-    'px-3 py-2.5',
+  // Item styles: dark sidebar, indigo active.
+  const item = (active: boolean, mini = false) => clsx(
+    'flex w-full items-center rounded-lg transition-all duration-150 text-sm font-medium',
+    mini ? 'my-1 h-11 justify-center gap-0 px-0 py-0' : 'gap-3 px-3 py-2.5',
     active
       ? 'bg-indigo-500/20 text-indigo-300 font-semibold'
       : 'text-slate-400 hover:bg-white/8 hover:text-slate-100'
@@ -166,7 +168,7 @@ export const Sidebar = () => {
       : 'text-slate-400 hover:bg-white/8 hover:text-slate-100'
   );
 
-  // Label — fades in/out based on expanded state
+  // Label fades in/out based on expanded state.
   const lbl = clsx(
     'transition-all duration-200 whitespace-nowrap overflow-hidden',
     expanded ? 'opacity-100 max-w-[180px]' : 'opacity-0 max-w-0 pointer-events-none'
@@ -174,21 +176,20 @@ export const Sidebar = () => {
 
   return (
     <>
-      {/* ── Mobile button ────────────────────────────────────────────── */}
+      {/* Mobile button */}
       <Button variant="ghost" size="sm" onClick={toggleSidebar}
         className="md:hidden fixed top-20 left-4 z-50">
         {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
       </Button>
 
-      {/* ── Mobile backdrop ──────────────────────────────────────────── */}
+      {/* Mobile backdrop */}
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black/50 md:hidden z-30"
           onClick={() => setSidebarOpen(false)} />
       )}
 
-      {/* ═══════════════════════════════════════════════════════════════
-          DESKTOP SIDEBAR — Mini (64 px) ↔ Expanded (288 px) on hover
-      ═══════════════════════════════════════════════════════════════ */}
+      {/* Desktop sidebar: mini at 64px, expanded at 288px on hover. */}
+
       <aside
         onMouseEnter={handleEnter}
         onMouseLeave={handleLeave}
@@ -200,7 +201,7 @@ export const Sidebar = () => {
           // Appearance
           'border-r border-white/10',
           'overflow-hidden',                         // clips content to current width
-          // Width — transitions smoothly
+          // Width transitions smoothly.
           'transition-[width] duration-300 ease-in-out',
           expanded ? 'w-72' : 'w-16',
           // Shadow when open
@@ -226,7 +227,7 @@ export const Sidebar = () => {
                       if (!expanded) toggleSidebarPinned();
                       toggleGroup(group.id);
                     }}
-                    className={item(gActive)}
+                    className={item(gActive, !expanded)}
                   >
                     <Icon className="w-5 h-5 shrink-0" />
                     <span className={clsx(lbl, 'flex-1 text-left')}>{group.name}</span>
@@ -268,10 +269,11 @@ export const Sidebar = () => {
               );
             }
 
+
             return (
               <Link key={group.id} href={group.href || '#'}
                 title={!expanded ? group.name : undefined}
-                className={item(singleActive)}
+                className={item(singleActive, !expanded)}
                 onClick={() => setSidebarOpen(false)}>
                 <Icon className="w-5 h-5 shrink-0" />
                 <span className={lbl}>{group.name}</span>
@@ -288,7 +290,7 @@ export const Sidebar = () => {
             return (
               <Link key={group.id} href={group.href || '#'}
                 title={!expanded ? group.name : undefined}
-                className={item(a)}
+                className={item(a, !expanded)}
                 onClick={() => setSidebarOpen(false)}>
                 <Icon className="w-5 h-5 shrink-0" />
                 <span className={lbl}>{group.name}</span>
@@ -299,19 +301,23 @@ export const Sidebar = () => {
           {/* Pin / Unpin */}
           <button onClick={toggleSidebarPinned}
             title={sidebarPinned ? 'Collapse sidebar' : 'Pin sidebar open'}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-slate-500 hover:bg-white/10 hover:text-slate-300 transition-all text-sm">
-            {sidebarPinned
-              ? <ChevronsLeft className="w-4 h-4 shrink-0" />
-              : <ChevronsRight className="w-4 h-4 shrink-0" />
-            }
+            className={clsx(
+              'flex w-full items-center rounded-lg text-slate-500 transition-all hover:bg-white/10 hover:text-slate-300 text-sm',
+              expanded ? 'gap-3 px-3 py-2.5' : 'my-1 h-11 justify-center gap-0 px-0 py-0'
+            )}>
+            {sidebarPinned ? (
+              <ChevronsLeft className="w-4 h-4 shrink-0" />
+            ) : (
+              <ChevronsRight className="w-4 h-4 shrink-0" />
+            )}
+
             <span className={lbl}>{sidebarPinned ? 'Collapse' : 'Pin open'}</span>
           </button>
         </div>
       </aside>
 
-      {/* ═════════════════════════════════════════════════════
-          MOBILE SIDEBAR — slide-in overlay (unchanged)
-      ═════════════════════════════════════════════════════ */}
+      {/* Mobile sidebar slide-in overlay. */}
+
       <aside
         style={{ backgroundColor: BG }}
         className={clsx(
@@ -369,6 +375,7 @@ export const Sidebar = () => {
                 </div>
               );
             }
+
             return (
               <Link key={group.id} href={group.href || '#'} className={item(sActive)}
                 onClick={() => setSidebarOpen(false)}>

@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  Bell, CheckCircle2, Clock, Edit2, Image, Info, Loader2, MessageSquare, Plus,
+  Bell, CheckCircle2, Clock, Edit2, Image as ImageIcon, Info, Loader2, MessageSquare, Plus,
   ToggleLeft, ToggleRight, Trash2, Upload, X, Zap, UserCheck, PhoneOff, Bot, ShieldAlert,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -138,7 +138,7 @@ function RuleForm({ ruleType, existing, onClose, onSaved }: {
       .catch(() => {});
   }, []); // eslint-disable-line
   const [workingHours, setWorkingHours] = useState<any>(existing?.working_hours && Object.keys(existing.working_hours).length > 0 ? existing.working_hours : DEFAULT_HOURS);
-  const [timezone, setTimezone] = useState(existing?.timezone || 'Asia/Kolkata');
+  const timezone = existing?.timezone || 'Asia/Kolkata';
   const [alertEmail, setAlertEmail] = useState(
     ruleType === 'auto_assign'
       ? ((existing as any)?.assign_label || '')
@@ -242,7 +242,7 @@ function RuleForm({ ruleType, existing, onClose, onSaved }: {
                   <div className="border border-gray-200 rounded-xl p-3 space-y-2 bg-gray-50">
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-1.5">
-                        <Image className="w-4 h-4 text-gray-500" />
+                        <ImageIcon className="w-4 h-4 text-gray-500" />
                         <span className="text-sm font-semibold text-gray-700">Attach Media <span className="text-xs font-normal text-gray-400">(optional)</span></span>
                       </div>
                       {/* Toggle: upload file vs paste URL */}
@@ -818,7 +818,7 @@ export default function AutoRepliesPage() {
                     )}
                     {rule.media_url && (
                       <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                        <Image className="w-3 h-3" />
+                        <ImageIcon className="w-3 h-3" />
                         <span className="capitalize">{rule.media_type || 'image'}</span> attached
                       </p>
                     )}

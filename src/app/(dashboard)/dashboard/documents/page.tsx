@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Card } from '@/components/card';
 import { Button } from '@/components/button';
@@ -8,6 +8,17 @@ import { getApiClient, useApi } from '@/hooks/useApi';
 import { Assistant, Document } from '@/types';
 import { CheckCircle2, FileText, Loader2, MessageCircle, Upload, Trash2, Eye, Bot, ScanLine, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
+
+function getDocumentStatus(doc: Document) {
+  const rawStatus = String((doc as any).status || '').toLowerCase();
+  if (rawStatus === 'failed' || rawStatus === 'error') {
+    return { label: 'Failed', className: 'bg-red-100 text-red-700', ready: false };
+  }
+  if (doc.is_indexed) {
+    return { label: 'Ready', className: 'bg-emerald-100 text-emerald-700', ready: true };
+  }
+  return { label: 'Indexing', className: 'bg-amber-100 text-amber-700', ready: false };
+}
 
 export default function DocumentsPage() {
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -28,6 +39,23 @@ export default function DocumentsPage() {
   });
   const { get, post, delete: deleteReq } = useApi();
 
+  const fetchDocuments = useCallback(async (assistantId: string) => {
+    if (!assistantId) {
+      setDocuments([]);
+      return;
+    }
+
+    setDocumentsLoading(true);
+    try {
+      const response = await get(`/api/documents/${assistantId}`);
+      setDocuments(response.data);
+    } catch (error: any) {
+      toast.error(error.response?.data?.detail || 'Failed to load documents');
+    } finally {
+      setDocumentsLoading(false);
+    }
+  }, [get]);
+
   useEffect(() => {
     const fetchAssistants = async () => {
       try {
@@ -45,24 +73,7 @@ export default function DocumentsPage() {
     };
 
     fetchAssistants();
-  }, []);
-
-  const fetchDocuments = async (assistantId: string) => {
-    if (!assistantId) {
-      setDocuments([]);
-      return;
-    }
-
-    setDocumentsLoading(true);
-    try {
-      const response = await get(`/api/documents/${assistantId}`);
-      setDocuments(response.data);
-    } catch (error: any) {
-      toast.error(error.response?.data?.detail || 'Failed to load documents');
-    } finally {
-      setDocumentsLoading(false);
-    }
-  };
+  }, [fetchDocuments, get]);
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,10 +124,10 @@ export default function DocumentsPage() {
 
       if (response) {
         setUploadProgress(100);
-        setUploadStage('Completed');
+        setUploadStage('Uploaded');
         setDocuments([...documents, response.data]);
         setLastUploadedAssistantId(uploadData.assistant_id);
-        toast.success('Document uploaded! Now test it in Chat.');
+        toast.success('Document uploaded. Indexing status is shown below.');
         setUploadMode(null);
         setUploadData((data) => ({ ...data, file: null, url: '' }));
       }
@@ -172,7 +183,7 @@ export default function DocumentsPage() {
             variant={uploadMode === 'pdf' ? 'primary' : 'secondary'}
             disabled={!uploadData.assistant_id}
             onClick={() => setUploadMode(uploadMode === 'pdf' ? null : 'pdf')}
-            title="Upload business knowledge — FAQs, pricing, services, policies"
+            title="Upload business knowledge - FAQs, pricing, services, policies"
           >
             Knowledge PDF
           </Button>
@@ -214,9 +225,9 @@ export default function DocumentsPage() {
               </h3>
               <p className="text-sm text-gray-500">
                 {uploadMode === 'flow_pdf'
-                  ? 'Use this for chatbot conversation scripts — steps, questions, and reply rules. Not for general knowledge.'
+                  ? 'Use this for chatbot conversation scripts - steps, questions, and reply rules. Not for general knowledge.'
                   : uploadMode === 'pdf'
-                  ? 'Upload FAQs, pricing, policies, services — anything the AI should know to answer customers.'
+                  ? 'Upload FAQs, pricing, policies, services - anything the AI should know to answer customers.'
                   : 'B9 will scan and add this content to your assistant knowledge.'}
               </p>
             </div>
@@ -367,7 +378,7 @@ export default function DocumentsPage() {
         </Card>
       )}
 
-      {/* Test in Chat banner — shown after successful upload */}
+      {/* Test in Chat banner - shown after successful upload */}
       {lastUploadedAssistantId && (
         <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
           <div className="flex items-center gap-2 text-sm text-emerald-800">
@@ -419,18 +430,18 @@ export default function DocumentsPage() {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-bold text-gray-900 truncate">{doc.title}</h3>
-                    {doc.is_indexed
-                      ? <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">Ready</span>
-                      : <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">Processing...</span>
-                    }
+                    {(() => {
+                      const status = getDocumentStatus(doc);
+                      return <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${status.className}`}>{status.label}</span>;
+                    })()}
                   </div>
                   <p className="text-gray-500 text-sm">
                     {(doc.purpose || doc.source_purpose) === 'conversation_flow'
                       ? 'Flow Script'
                       : doc.source_type === 'WEBSITE'
-                        ? `Website${(doc.source_metadata?.pages_scraped || doc.pages) > 1 ? ` · ${doc.source_metadata?.pages_scraped || doc.pages} pages` : ' · 1 page'}`
+                        ? `Website${(doc.source_metadata?.pages_scraped || doc.pages) > 1 ? ` - ${doc.source_metadata?.pages_scraped || doc.pages} pages` : ' - 1 page'}`
                         : doc.source_type}
-                    {doc.source_type !== 'WEBSITE' && (doc.pages || 0) > 0 && ` · ${doc.pages} pages`}
+                    {doc.source_type !== 'WEBSITE' && (doc.pages || 0) > 0 && ` - ${doc.pages} pages`}
                   </p>
                   {doc.source_type === 'WEBSITE' && doc.source_url && (
                     <a href={doc.source_url} target="_blank" rel="noreferrer" className="text-xs text-blue-500 hover:underline truncate max-w-xs block">
@@ -503,10 +514,10 @@ export default function DocumentsPage() {
               </div>
               <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Status</p>
-                {previewDocument.is_indexed
-                  ? <p className="mt-1 font-bold text-emerald-700">Ready ✓</p>
-                  : <p className="mt-1 font-bold text-amber-600">Processing…</p>
-                }
+                {(() => {
+                  const status = getDocumentStatus(previewDocument);
+                  return <p className={`mt-1 font-bold ${status.ready ? 'text-emerald-700' : status.label === 'Failed' ? 'text-red-700' : 'text-amber-600'}`}>{status.label}</p>;
+                })()}
               </div>
             </div>
 
@@ -514,7 +525,7 @@ export default function DocumentsPage() {
               <p className="flex items-center gap-2 text-sm font-semibold text-gray-900">
                 {previewDocument.is_indexed
                   ? <><CheckCircle2 className="h-4 w-4 text-emerald-400" /> Ready for chat</>
-                  : <><span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-amber-400 border-t-transparent" /> Processing document — please wait a moment…</>
+                  : <><span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-amber-400 border-t-transparent" /> Indexing document. Please wait a moment.</>
                 }
               </p>
               <p className="mt-2 text-sm text-gray-600">

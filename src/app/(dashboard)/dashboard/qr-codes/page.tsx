@@ -13,6 +13,7 @@ interface WaQrCode {
   prefilled_message: string;
   deep_link_url?: string;
   qr_image_url?: string;
+  source_tag?: string;
 }
 
 export default function QrCodesPage() {
@@ -22,16 +23,26 @@ export default function QrCodesPage() {
   const [notConnected, setNotConnected] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [message, setMessage] = useState('Hello! I\'d like to know more about your services.');
+  const [sourceTag, setSourceTag] = useState('Store Poster');
+  const [pageError, setPageError] = useState('');
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
 
   const load = () => {
     setLoading(true);
+    setPageError('');
+    setNotConnected(false);
     get('/api/automation/whatsapp/qr-codes')
-      .then(r => setQrCodes(r.data?.qr_codes || []))
+      .then(r => {
+        setQrCodes(r.data?.qr_codes || []);
+        if (r.data?.error) {
+          setPageError(r.data.error);
+          if ((r.data.error || '').toLowerCase().includes('not connected')) setNotConnected(true);
+        }
+      })
       .catch((e: any) => {
         if (e?.response?.status === 400) setNotConnected(true);
-        else toast.error('Could not load QR codes');
+        setPageError(e.response?.data?.detail || 'Could not load QR codes. Retry or check WhatsApp connection health.');
       })
       .finally(() => setLoading(false));
   };
@@ -42,10 +53,11 @@ export default function QrCodesPage() {
     if (!message.trim()) { toast.error('Message required'); return; }
     setCreating(true);
     try {
-      await post('/api/automation/whatsapp/qr-codes', { prefilled_message: message.trim() });
+      await post('/api/automation/whatsapp/qr-codes', { prefilled_message: message.trim(), source_tag: sourceTag.trim() });
       toast.success('QR code created!');
       setShowCreate(false);
       setMessage('Hello! I\'d like to know more about your services.');
+      setSourceTag('Store Poster');
       load();
     } catch (e: any) { toast.error(e.response?.data?.detail || 'Failed to create QR code'); }
     finally { setCreating(false); }
@@ -88,19 +100,33 @@ export default function QrCodesPage() {
 
       <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
         <p className="font-semibold mb-1">How QR Codes work</p>
-        <ul className="text-xs space-y-0.5 opacity-90">
-          <li>• Customer scans QR code with phone camera</li>
-          <li>• WhatsApp opens with a pre-filled message ready to send</li>
-          <li>• Great for: shop displays, business cards, posters, websites</li>
-          <li>• Meta allows up to 3 QR codes per phone number</li>
+        <ul className="list-disc pl-4 text-xs space-y-0.5 opacity-90">
+          <li>Customer scans QR code with phone camera</li>
+          <li>WhatsApp opens with a pre-filled message ready to send</li>
+          <li>Great for shop displays, business cards, posters, and websites</li>
+          <li>Meta allows up to 3 QR codes per phone number</li>
+          <li>Source tag helps you identify where the lead came from</li>
         </ul>
       </div>
+
+      {pageError && !loading && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+          <p className="font-semibold">QR code status needs attention</p>
+          <p className="mt-1">{pageError}</p>
+          <div className="mt-3 flex gap-2">
+            <Button variant="secondary" size="sm" onClick={load}>Retry</Button>
+            <a href="/dashboard/integrations" className="rounded-lg border border-amber-200 bg-white px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-50">
+              Open Integrations
+            </a>
+          </div>
+        </div>
+      )}
 
       {notConnected && (
         <div className="flex flex-col items-center gap-3 rounded-xl border-2 border-dashed border-gray-200 py-14 text-center">
           <AlertCircle className="w-10 h-10 text-amber-400" />
           <p className="font-semibold text-gray-700">WhatsApp not connected</p>
-          <a href="/dashboard/integrations" className="text-sm font-semibold text-orange-600 hover:underline">Go to Integrations →</a>
+          <a href="/dashboard/integrations" className="text-sm font-semibold text-orange-600 hover:underline">Go to Integrations</a>
         </div>
       )}
 
@@ -126,6 +152,8 @@ export default function QrCodesPage() {
               {/* QR Image */}
               {qr.qr_image_url ? (
                 <div className="flex justify-center">
+                  {/* Meta returns QR SVG/data URLs; keep native img for exact rendering. */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={qr.qr_image_url} alt="QR Code" className="w-40 h-40 rounded-lg border border-gray-100" />
                 </div>
               ) : (
@@ -138,6 +166,11 @@ export default function QrCodesPage() {
               <div>
                 <p className="text-[10px] font-semibold text-gray-400 uppercase">Pre-filled Message</p>
                 <p className="text-sm text-gray-700 mt-0.5 line-clamp-2">{qr.prefilled_message}</p>
+                {qr.source_tag && (
+                  <p className="mt-1 inline-flex rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700">
+                    Source: {qr.source_tag}
+                  </p>
+                )}
               </div>
 
               {/* Actions */}
@@ -198,6 +231,17 @@ export default function QrCodesPage() {
                     placeholder="Message that appears in WhatsApp when customer scans the QR code"
                     className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none" />
                   <p className="text-xs text-gray-400 mt-1">Customer can edit this message before sending.</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Source Tag</label>
+                  <input
+                    value={sourceTag}
+                    onChange={e => setSourceTag(e.target.value)}
+                    maxLength={80}
+                    placeholder="Store Poster, Website Banner, Event Stall"
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">This is appended to the WhatsApp message so leads can be attributed later.</p>
                 </div>
               </div>
               <div className="flex justify-end gap-2 mt-4">

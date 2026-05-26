@@ -100,7 +100,6 @@ export default function DashboardPage() {
   const [teamMe, setTeamMe] = useState<{ role?: string; is_owner?: boolean; assigned_only?: boolean; permissions?: string[] } | null>(null);
 
   const activePack = onboarding?.industry_pack || selectedPack;
-  const businessName = onboarding?.profile?.business_name || activePack.workspace_name || `${activePack.label} Workspace`;
   const health = onboarding?.health;
   const readinessScore = readiness?.score ?? health?.score ?? 0;
   const readinessChecks = readiness?.checks || health?.checks || [];
@@ -191,22 +190,21 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Welcome checklist — shown once after onboarding */}
+      {/* Welcome checklist shown once after onboarding. */}
       {showWelcome && (
         <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-5">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-sm font-bold text-indigo-800">🎉 Workspace ready! Here are your next 4 steps:</p>
+              <p className="text-sm font-bold text-indigo-800">Workspace ready. Here are your next 4 steps:</p>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {[
-                  { step: '1', label: 'Test your AI assistant', href: '/dashboard/chat', icon: '💬' },
-                  { step: '2', label: 'Upload business knowledge', href: '/dashboard/documents', icon: '📄' },
-                  { step: '3', label: 'Connect WhatsApp', href: '/dashboard/integrations', icon: '📱' },
-                  { step: '4', label: 'Build your first automation', href: '/dashboard/automations', icon: '⚡' },
+                  { step: '1', label: 'Test your AI assistant', href: '/dashboard/chat' },
+                  { step: '2', label: 'Upload business knowledge', href: '/dashboard/documents' },
+                  { step: '3', label: 'Connect WhatsApp', href: '/dashboard/integrations' },
+                  { step: '4', label: 'Build your first automation', href: '/dashboard/automations' },
                 ].map((item) => (
                   <Link key={item.step} href={item.href}
                     className="flex items-center gap-2 rounded-lg border border-indigo-100 bg-white px-3 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100 transition">
-                    <span>{item.icon}</span>
                     <span>{item.step}. {item.label}</span>
                     <ChevronRight className="ml-auto h-3.5 w-3.5 opacity-50" />
                   </Link>
@@ -220,8 +218,8 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
-      {/* Push notification opt-in banner — shown only when not subscribed + supported + not dismissed */}
-      {teamMe && !teamMe.is_owner && (
+      {/* Push notification opt-in banner. */}
+      {teamMe && ['agent', 'senior_agent', 'viewer'].includes(teamMe.role || '') && (
         <Card className="border-indigo-100 bg-indigo-50/70 shadow-sm" hoverable={false}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -240,8 +238,7 @@ export default function DashboardPage() {
       {push.supported && !push.subscribed && push.permission !== 'denied' && !pushDismissed && (
         <div className="flex items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm text-blue-800">
           <div className="flex items-center gap-2">
-            <span>🔔</span>
-            <span className="font-medium">Get instant alerts for new leads and payments — even when the tab is closed.</span>
+            <span className="font-medium">Get instant alerts for new leads and payments, even when the tab is closed.</span>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <button
@@ -249,24 +246,24 @@ export default function DashboardPage() {
               disabled={push.loading}
               className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-blue-700 disabled:opacity-50 transition"
             >
-              {push.loading ? 'Enabling…' : 'Enable'}
+              {push.loading ? 'Enabling...' : 'Enable'}
             </button>
             <button onClick={() => {
               setPushDismissed(true);
               if (typeof window !== 'undefined') localStorage.setItem('push_banner_dismissed', 'true');
-            }} className="text-blue-400 hover:text-blue-700 text-base leading-none px-1">✕</button>
+            }} className="text-blue-400 hover:text-blue-700 text-base leading-none px-1">x</button>
           </div>
         </div>
       )}
 
       {statsError && (
         <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-200/60 bg-amber-50/80 px-4 py-2.5 text-sm text-amber-800">
-          <span>⚠️ Stats could not load — showing cached data.</span>
+          <span>Stats could not load. Showing cached data.</span>
           <button type="button" className="shrink-0 font-semibold underline" onClick={loadDashboard}>Retry</button>
         </div>
       )}
 
-      {/* ── Low AI Credit Warning Banner ─────────────────────────────────── */}
+      {/* Low AI credit warning banner. */}
       {(() => {
         const remaining = planFallback.queries - (quota?.queries_used ?? 0);
         if (!quota || remaining > 100) return null;
@@ -278,7 +275,7 @@ export default function DashboardPage() {
               <span className="font-semibold">
                 {isCritical ? 'Critical:' : 'Low credits:'} Only {Math.max(0, remaining).toLocaleString('en-IN')} AI credits left this month.
               </span>
-              <span className="hidden sm:inline text-xs opacity-75">Add your own Groq key for extra AI usage at no cost.</span>
+              <Link href="/dashboard/settings" className="hidden text-xs font-semibold underline opacity-75 hover:opacity-100 sm:inline">Add BYOK key</Link>
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -286,11 +283,8 @@ export default function DashboardPage() {
                 onClick={() => setTopUpOpen(true)}
                 className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${isCritical ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-amber-500 text-white hover:bg-amber-600'}`}
               >
-                Buy 500 for ₹299
+                Buy top-up
               </button>
-              <Link href="/dashboard/settings" className="rounded-lg border border-current px-3 py-1.5 text-xs font-bold hover:opacity-75">
-                Add free Groq key
-              </Link>
             </div>
           </div>
         );
@@ -323,7 +317,7 @@ export default function DashboardPage() {
               <Link href={`/dashboard/chat${command ? `?mode=automation&q=${encodeURIComponent(command)}` : ''}`}>
                 <Button onClick={runCommand} className="h-full w-full justify-center md:w-auto" title="Open Automation Chat with this command">
                   <Sparkles className="h-4 w-4" />
-                  Open in AI Chat →
+                  Open in AI Chat {'->'}
                 </Button>
               </Link>
             </div>
@@ -334,7 +328,7 @@ export default function DashboardPage() {
               <div>
                 <p className="text-sm text-gray-300">Launch readiness</p>
                 <p className="mt-1 text-5xl font-black">
-                  {readiness === null ? <span className="text-3xl text-gray-400">—</span> : `${readinessScore}%`}
+                  {readiness === null ? <span className="text-3xl text-gray-400">-</span> : `${readinessScore}%`}
                 </p>
               </div>
               <ShieldCheck className="h-11 w-11 text-emerald-300" />
@@ -574,7 +568,7 @@ export default function DashboardPage() {
             <Sparkles className="h-5 w-5 animate-pulse text-primary-600" />
           </div>
           <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-3">
-            {activePack.quick_actions.map((action, index) => (
+            {activePack.quick_actions.map((action) => (
               <div key={action} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:shadow-md">
                 <div className="flex items-center justify-between">
                   <CheckCircle2 className="h-5 w-5 text-emerald-500" />

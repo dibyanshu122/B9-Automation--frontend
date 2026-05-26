@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { Bot, Brain, Edit2, MessageCircle, Plus, Trash2, X } from 'lucide-react';
@@ -12,10 +12,13 @@ import { Assistant } from '@/types';
 const BLANK_FORM = {
   name: '',
   description: '',
-  language: 'hinglish',
+  language: 'english',
   role: 'sales',
   tone: 'friendly',
   lead_capture_enabled: true,
+  handover_policy: 'low_confidence_or_complaint',
+  restricted_topics: 'Legal, medical, financial guarantees, unsafe claims, and anything not present in business knowledge.',
+  compliance_mode: true,
 };
 
 export default function AssistantsPage() {
@@ -24,12 +27,10 @@ export default function AssistantsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingAssistant, setEditingAssistant] = useState<Assistant | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Assistant | null>(null);
-  const [userName, setUserName] = useState('');
-  const [businessName, setBusinessName] = useState('');
   const [newAssistant, setNewAssistant] = useState({ ...BLANK_FORM });
   const { get, post, put, patch, delete: deleteReq } = useApi();
 
-  const fetchAssistants = async () => {
+  const fetchAssistants = useCallback(async () => {
     try {
       const response = await get('/api/assistants');
       setAssistants(response.data);
@@ -38,32 +39,11 @@ export default function AssistantsPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const fetchUserProfile = async () => {
-    try {
-      const response = await get('/api/auth/me');
-      if (response.data?.name) {
-        setUserName(response.data.name);
-      } else if (response.data?.email) {
-        setUserName(response.data.email.split('@')[0]);
-      } else {
-        setUserName('User');
-      }
-    } catch {
-      setUserName('User');
-    }
-  };
+  }, [get]);
 
   useEffect(() => {
-    Promise.all([
-      fetchAssistants(),
-      fetchUserProfile(),
-      get('/api/automation/business-profile').catch(() => ({ data: null })),
-    ]).then(([, , bpRes]: any) => {
-      if (bpRes?.data?.business_name) setBusinessName(bpRes.data.business_name);
-    });
-  }, []);
+    fetchAssistants();
+  }, [fetchAssistants]);
 
   const handleCreateAssistant = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -71,6 +51,7 @@ export default function AssistantsPage() {
       const response = await post('/api/assistants', {
         ...newAssistant,
         lead_capture_enabled: newAssistant.lead_capture_enabled,
+        system_prompt: buildAssistantSystemPrompt(newAssistant),
       });
       setAssistants([...assistants, response.data]);
       setNewAssistant({ ...BLANK_FORM });
@@ -90,6 +71,7 @@ export default function AssistantsPage() {
         description: newAssistant.description,
         language: newAssistant.language,
         lead_capture_enabled: newAssistant.lead_capture_enabled,
+        system_prompt: buildAssistantSystemPrompt(newAssistant),
       });
       setAssistants(assistants.map(a => a.id === editingAssistant.id ? { ...a, ...response.data } : a));
       setEditingAssistant(null);
@@ -199,7 +181,7 @@ export default function AssistantsPage() {
                 </select>
                 <p className="mt-2 text-xs text-gray-500">
                   {(assistant.chat_provider || 'groq') === 'groq'
-                    ? 'Best for live chat — instant responses to customers.'
+                    ? 'Best for live chat - instant responses to customers.'
                     : 'Best for detailed document-based answers.'}
                 </p>
               </div>
@@ -213,7 +195,7 @@ export default function AssistantsPage() {
                 </Link>
                 <Button variant="ghost" title="Edit assistant" onClick={() => {
                   setEditingAssistant(assistant);
-                  setNewAssistant({ ...BLANK_FORM, name: assistant.name, description: assistant.description || '', language: assistant.language || 'hinglish', lead_capture_enabled: (assistant as any).lead_capture_enabled ?? true });
+      setNewAssistant({ ...BLANK_FORM, name: assistant.name, description: assistant.description || '', language: assistant.language || 'english', lead_capture_enabled: (assistant as any).lead_capture_enabled ?? true });
                 }}>
                   <Edit2 className="h-4 w-4" />
                 </Button>
@@ -226,7 +208,7 @@ export default function AssistantsPage() {
         </div>
       )}
 
-      {/* ── Create / Edit Modal ── */}
+      {/* -- Create / Edit Modal -- */}
       {(showCreateModal || editingAssistant) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <Card className="w-full max-w-lg max-h-[90vh] overflow-y-auto">
@@ -247,10 +229,10 @@ export default function AssistantsPage() {
               <div>
                 <label className="mb-1 block text-sm font-medium text-gray-700">Role</label>
                 <select value={newAssistant.role} onChange={e => setNewAssistant({ ...newAssistant, role: e.target.value })} className="input-field">
-                  <option value="sales">Sales — convert leads, send catalog, payment</option>
-                  <option value="support">Support — answer queries, resolve complaints</option>
-                  <option value="receptionist">Receptionist — greet, qualify, route</option>
-                  <option value="admission">Admission Counselor — education enquiries</option>
+                  <option value="sales">Sales - convert leads, send catalog, payment</option>
+                  <option value="support">Support - answer queries, resolve complaints</option>
+                  <option value="receptionist">Receptionist - greet, qualify, route</option>
+                  <option value="admission">Admission Counselor - education enquiries</option>
                   <option value="general">General Purpose</option>
                 </select>
               </div>
@@ -267,12 +249,41 @@ export default function AssistantsPage() {
                 </div>
                 <div>
                   <label className="mb-1 block text-sm font-medium text-gray-700">Language</label>
-                  <select value={newAssistant.language} onChange={e => setNewAssistant({ ...newAssistant, language: e.target.value })} className="input-field">
-                    <option value="hinglish">Hinglish</option>
+                <select value={newAssistant.language} onChange={e => setNewAssistant({ ...newAssistant, language: e.target.value })} className="input-field">
                     <option value="english">English</option>
+                    <option value="hinglish">Hinglish</option>
                     <option value="hindi">Hindi</option>
                   </select>
                 </div>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">Handover Policy</label>
+                  <select value={newAssistant.handover_policy} onChange={e => setNewAssistant({ ...newAssistant, handover_policy: e.target.value })} className="input-field">
+                    <option value="low_confidence_or_complaint">Low confidence or complaint</option>
+                    <option value="complaint_only">Complaint only</option>
+                    <option value="always_after_lead_capture">After lead capture</option>
+                  </select>
+                </div>
+                <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Compliance Mode</p>
+                    <p className="text-xs text-gray-500">Safer replies and human escalation</p>
+                  </div>
+                  <button type="button" onClick={() => setNewAssistant({ ...newAssistant, compliance_mode: !newAssistant.compliance_mode })}
+                    className={`relative h-6 w-11 rounded-full transition-colors ${newAssistant.compliance_mode ? 'bg-indigo-500' : 'bg-gray-300'}`}>
+                    <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${newAssistant.compliance_mode ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">Restricted Topics</label>
+                <textarea value={newAssistant.restricted_topics}
+                  onChange={e => setNewAssistant({ ...newAssistant, restricted_topics: e.target.value })}
+                  placeholder="Topics where AI should avoid answering and hand over to a human"
+                  className="input-field resize-none" rows={2} />
               </div>
 
               <div>
@@ -308,7 +319,7 @@ export default function AssistantsPage() {
         </div>
       )}
 
-      {/* ── Destructive Delete Confirmation Modal ── */}
+      {/* -- Destructive Delete Confirmation Modal -- */}
       {deleteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <Card className="w-full max-w-md">
@@ -317,9 +328,9 @@ export default function AssistantsPage() {
               <strong>{deleteTarget.name}</strong> will be permanently deleted along with its:
             </p>
             <ul className="mt-2 space-y-1 text-sm text-red-700">
-              <li>• All uploaded documents and knowledge</li>
-              <li>• All chat history and sessions</li>
-              <li>• Any connected widgets</li>
+              <li>- All uploaded documents and knowledge</li>
+              <li>- All chat history and sessions</li>
+              <li>- Any connected widgets</li>
             </ul>
             <p className="mt-3 text-sm font-semibold text-gray-800">This cannot be undone.</p>
             <div className="mt-5 flex gap-2">
@@ -333,4 +344,18 @@ export default function AssistantsPage() {
       )}
     </div>
   );
+}
+
+function buildAssistantSystemPrompt(form: typeof BLANK_FORM) {
+  return [
+    `Assistant role: ${form.role}.`,
+    `Tone: ${form.tone}.`,
+    `Language: ${form.language}.`,
+    form.compliance_mode
+      ? 'Compliance mode: follow Meta/WhatsApp rules, respect opt-out, avoid unsupported claims, and escalate when policy or confidence is unclear.'
+      : 'Compliance mode: standard safe responses.',
+    `Handover policy: ${form.handover_policy}.`,
+    `Restricted topics: ${form.restricted_topics}.`,
+    'Use uploaded business knowledge first. If the answer is not known, ask a clarifying question or hand over to a human.',
+  ].join('\n');
 }

@@ -5,7 +5,7 @@ import { Card } from '@/components/card';
 import { useApi } from '@/hooks/useApi';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import toast from 'react-hot-toast';
-import { Activity, Bot, CheckCheck, Clock, IndianRupee, MessageCircle, MessageSquare, Send, Sparkles, Target, TrendingUp, Users, Zap } from 'lucide-react';
+import { Activity, Bot, CheckCheck, Clock, IndianRupee, MessageCircle, MessageSquare, Send, Target, TrendingUp, Users, Zap } from 'lucide-react';
 
 type UsageTrend = {
   date: string;
@@ -15,11 +15,11 @@ type UsageTrend = {
 export default function AnalyticsPage() {
   const [dashboard, setDashboard] = useState<any>(null);
   const [impact, setImpact] = useState<any>(null);
-  const [readiness, setReadiness] = useState<any>(null);
   const [trends, setTrends] = useState<UsageTrend[]>([]);
   const [funnel, setFunnel] = useState<any>(null);
   const [templatePerf, setTemplatePerf] = useState<any>(null);
   const [waStats, setWaStats] = useState<any>(null);
+  const [businessMetrics, setBusinessMetrics] = useState<any>(null);
   const [waDays, setWaDays] = useState(30);
   const [waLoading, setWaLoading] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -28,22 +28,22 @@ export default function AnalyticsPage() {
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
-        const [dashRes, trendsRes, impactRes, readinessRes, funnelRes, templatesRes, waRes] = await Promise.all([
+        const [dashRes, trendsRes, impactRes, funnelRes, templatesRes, waRes, businessRes] = await Promise.all([
           get('/api/analytics/dashboard').catch(() => ({ data: null })),
           get('/api/analytics/usage-trends').catch(() => ({ data: null })),
           get('/api/analytics/business-impact').catch(() => ({ data: null })),
-          get('/api/automation/readiness').catch(() => ({ data: null })),
           get('/api/analytics/funnel').catch(() => ({ data: null })),
           get('/api/analytics/template-performance').catch(() => ({ data: null })),
           get(`/api/analytics/whatsapp?days=${waDays}`).catch(() => ({ data: null })),
+          get('/api/analytics/business-metrics').catch(() => ({ data: null })),
         ]);
         setDashboard(dashRes.data);
         setTrends(trendsRes.data);
         setImpact(impactRes.data);
-        setReadiness(readinessRes.data);
         setFunnel(funnelRes.data);
         setTemplatePerf(templatesRes.data);
         setWaStats(waRes.data);
+        setBusinessMetrics(businessRes.data);
       } catch {
         toast.error('Failed to load analytics');
       } finally {
@@ -115,6 +115,57 @@ export default function AnalyticsPage() {
           );
         })}
       </section>
+
+      {businessMetrics && (
+        <section className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
+          <Card className="border-indigo-100 shadow-sm" hoverable={false}>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-bold text-gray-950">Business Performance</h2>
+                <p className="mt-1 text-sm text-gray-500">Revenue, AI usage, and automation quality for the last {businessMetrics.period_days || 30} days.</p>
+              </div>
+              <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-700">
+                {businessMetrics.flow_success_rate || 0}% automation success
+              </span>
+            </div>
+            <div className="mt-5 grid gap-3 sm:grid-cols-4">
+              {[
+                { label: 'Paid Revenue', value: `Rs ${Number(businessMetrics.revenue_paid || 0).toLocaleString('en-IN')}` },
+                { label: 'Pending Revenue', value: `Rs ${Number(businessMetrics.revenue_pending || 0).toLocaleString('en-IN')}` },
+                { label: 'AI Units Used', value: Number(businessMetrics.ai_usage_total || 0).toLocaleString('en-IN') },
+                { label: 'Payments', value: businessMetrics.payment_count || 0 },
+              ].map((item) => (
+                <div key={item.label} className="rounded-lg border border-gray-100 bg-gray-50 p-3">
+                  <p className="text-xs font-semibold text-gray-500">{item.label}</p>
+                  <p className="mt-1 text-lg font-bold text-gray-950">{item.value}</p>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          <Card className="border-indigo-100 shadow-sm" hoverable={false}>
+            <h2 className="text-xl font-bold text-gray-950">Agent Performance</h2>
+            <div className="mt-4 space-y-2">
+              {(businessMetrics.agent_performance || []).length === 0 ? (
+                <p className="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">No assigned agent data yet.</p>
+              ) : (
+                businessMetrics.agent_performance.map((agent: any) => (
+                  <div key={agent.agent_id} className="flex items-center justify-between gap-3 rounded-lg border border-gray-100 px-3 py-2">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-bold text-gray-900">{agent.name}</p>
+                      <p className="text-xs capitalize text-gray-500">{agent.role}</p>
+                    </div>
+                    <div className="text-right text-xs text-gray-500">
+                      <p><strong className="text-gray-900">{agent.assigned_leads}</strong> leads</p>
+                      <p><strong className="text-emerald-700">{agent.won_leads}</strong> won</p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </Card>
+        </section>
+      )}
 
       <section className="grid gap-6 lg:grid-cols-1">
         <Card className="border-orange-100 shadow-sm" hoverable={false}>
@@ -200,7 +251,7 @@ export default function AnalyticsPage() {
                 <span className="ml-2 text-xs font-normal text-indigo-600">Conversion: {funnel.conversion_rate}%</span>
               </h3>
               <div className="space-y-3">
-                {(funnel.funnel || []).map((stage: any, i: number) => (
+                {(funnel.funnel || []).map((stage: any) => (
                   <div key={stage.stage}>
                     <div className="flex items-center justify-between text-xs font-semibold text-gray-700 mb-1">
                       <span>{stage.stage}</span>

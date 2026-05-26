@@ -4,7 +4,7 @@
   var DEFAULT_CONFIG = {
     title: "AI Chat",
     businessName: "our business",
-    welcome_message: "Hey 👋 Welcome to {businessName}. ",
+    welcome_message: "Welcome to {businessName}. How can I help you?",
     primary_color: "#3b82f6",
     theme_color: "#3b82f6",
     position: "bottom-right",
@@ -181,7 +181,7 @@
       doIntro = false;
       root.style.transform = "scale(1)";
       bubble.classList.remove("intro");
-      bubble.textContent = "Chat with us 👋";
+      bubble.textContent = "Chat with us";
       if (introTimeout) clearTimeout(introTimeout);
     }
 
@@ -196,7 +196,7 @@
       bubble.innerHTML = "Hi! How can we help?<br><span style='font-size: 13px; opacity: 0.8;'>Welcome to " + escapeHtml(config.businessName) + "</span>";
       introTimeout = setTimeout(endIntro, 3500);
     } else {
-      bubble.textContent = "Chat with us 👋";
+      bubble.textContent = "Chat with us";
       root.style.transform = "scale(1)";
     }
 
@@ -261,7 +261,7 @@
       var box = document.createElement("form");
       box.className = "brainai-lead";
       box.innerHTML = [
-        "<p>Team se connect karne ke liye details share kar dijiye.</p>",
+        "<p>Share your details so our team can follow up.</p>",
         "<input name='name' placeholder='Name' required />",
         "<input name='phone' placeholder='Mobile / WhatsApp' required />",
         "<input name='email' placeholder='Email optional' />",
@@ -276,7 +276,7 @@
         };
         captureLead(pendingLead);
         box.remove();
-        addMessage("assistant", "Thanks. Aap chat continue kar sakte hain.");
+        addMessage("assistant", "Thanks. You can continue the chat.");
       });
       messages.appendChild(box);
       messages.scrollTop = messages.scrollHeight;

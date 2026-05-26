@@ -79,6 +79,11 @@ export default function LeadsPage() {
   const [clearingMemory, setClearingMemory] = useState(false);
   const [teamMembers, setTeamMembers] = useState<TeamMemberOption[]>([]);
   const [leadLabels, setLeadLabels] = useState<LeadLabelOption[]>([]);
+  const [labelFilter, setLabelFilter] = useState('all');
+  const [labelModalOpen, setLabelModalOpen] = useState(false);
+  const [newLabelName, setNewLabelName] = useState('');
+  const [newLabelColor, setNewLabelColor] = useState('#4F46E5');
+  const [savingLabel, setSavingLabel] = useState(false);
 
   const refresh = () => {
     setLoading(true);
@@ -103,16 +108,18 @@ export default function LeadsPage() {
 
   useEffect(() => {
     refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const filteredLeads = useMemo(() => {
     return leads.filter((lead) => {
       const query = searchQuery.trim().toLowerCase();
       const matchesStatus = statusFilter === 'all' || lead.status === statusFilter;
+      const matchesLabel = labelFilter === 'all' || lead.tag === labelFilter;
       const matchesSearch = !query || [lead.name, lead.phone, lead.email].some((value) => (value || '').toLowerCase().includes(query));
-      return matchesStatus && matchesSearch;
+      return matchesStatus && matchesLabel && matchesSearch;
     });
-  }, [leads, searchQuery, statusFilter]);
+  }, [leads, searchQuery, statusFilter, labelFilter]);
 
   const groupedByStage = useMemo(() => {
     return stages.reduce<Record<string, Lead[]>>((groups, stage) => {
@@ -155,6 +162,67 @@ export default function LeadsPage() {
       toast.error(error.response?.data?.detail || 'Failed to update lead');
     } finally {
       setBusyAction('');
+    }
+  };
+
+  const createLabel = async () => {
+    const name = newLabelName.trim();
+    if (!name) {
+      toast.error('Label name is required');
+      return;
+    }
+    setSavingLabel(true);
+    try {
+      const response = await api.post('/api/leads/labels', { name, color: newLabelColor });
+      const label = response.data?.label;
+      if (label) {
+        setLeadLabels((current) => current.some((item) => item.id === label.id) ? current : [...current, label]);
+        setLabelFilter(label.name);
+      }
+      setNewLabelName('');
+      setNewLabelColor('#4F46E5');
+      setLabelModalOpen(false);
+      toast.success('Label created');
+    } catch (error: any) {
+      toast.error(error.response?.data?.detail || 'Failed to create label');
+    } finally {
+      setSavingLabel(false);
+    }
+  };
+
+  const updateLabel = async (label: LeadLabelOption) => {
+    const nextName = window.prompt('Label name', label.name)?.trim();
+    if (!nextName) return;
+    setSavingLabel(true);
+    try {
+      const response = await api.patch(`/api/leads/labels/${label.id}`, { name: nextName, color: label.color || '#4F46E5' });
+      const updated = response.data?.label;
+      if (updated) {
+        setLeadLabels((current) => current.map((item) => (item.id === updated.id ? updated : item)));
+        setLeads((current) => current.map((lead) => (lead.tag === label.name ? { ...lead, tag: updated.name } : lead)));
+        if (labelFilter === label.name) setLabelFilter(updated.name);
+      }
+      toast.success('Label updated');
+    } catch (error: any) {
+      toast.error(error.response?.data?.detail || 'Failed to update label');
+    } finally {
+      setSavingLabel(false);
+    }
+  };
+
+  const deleteLabel = async (label: LeadLabelOption) => {
+    if (!confirm(`Delete label "${label.name}"? Leads using it will be unlabelled.`)) return;
+    setSavingLabel(true);
+    try {
+      await api.delete(`/api/leads/labels/${label.id}`);
+      setLeadLabels((current) => current.filter((item) => item.id !== label.id));
+      setLeads((current) => current.map((lead) => (lead.tag === label.name ? { ...lead, tag: null } as Lead : lead)));
+      if (labelFilter === label.name) setLabelFilter('all');
+      toast.success('Label deleted');
+    } catch (error: any) {
+      toast.error(error.response?.data?.detail || 'Failed to delete label');
+    } finally {
+      setSavingLabel(false);
     }
   };
 
@@ -349,31 +417,38 @@ export default function LeadsPage() {
       )}
 
       <Card className="border-orange-100 shadow-sm" hoverable={false}>
-        <div className="flex flex-wrap gap-3">
-          <label className="relative flex-1 min-w-[180px]">
-            <Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-gray-400" />
+        <div className="grid gap-3 md:grid-cols-[minmax(260px,1fr)_180px_180px_auto_auto] md:items-center">
+          <label className="relative min-w-0">
             <input
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
-              className="input-field pl-9"
+              className="input-field h-11 text-sm"
               placeholder="Search by name, phone, or email"
             />
           </label>
-          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="input-field min-w-[160px]">
+          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="input-field h-11 text-sm">
             <option value="all">All statuses</option>
             {stages.map((stage) => <option key={stage.key} value={stage.key}>{stage.label}</option>)}
           </select>
+          <select value={labelFilter} onChange={(event) => setLabelFilter(event.target.value)} className="input-field h-11 text-sm">
+            <option value="all">All labels</option>
+            {leadLabels.map((label) => <option key={label.id} value={label.name}>{label.name}</option>)}
+          </select>
+          <Button variant="secondary" className="h-11 whitespace-nowrap" onClick={() => setLabelModalOpen(true)}>
+            <Plus className="h-4 w-4" />
+            New Label
+          </Button>
           {/* Export CSV */}
           <a
             href={`${typeof window !== 'undefined' ? '' : ''}/api/leads/export?format=csv${statusFilter !== 'all' ? `&status=${statusFilter}` : ''}`}
             download="leads.csv"
-            className="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 transition"
+            className="inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-emerald-200 bg-emerald-50 px-4 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
           >
-            ↓ Export CSV
+            Export CSV
           </a>
         </div>
 
-        {/* Bulk action toolbar — appears when leads are selected */}
+        {/* Bulk action toolbar appears when leads are selected */}
         {selectedLeadIds.size > 0 && (
           <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-primary-200 bg-primary-50 px-3 py-2">
             <span className="text-sm font-semibold text-primary-700">{selectedLeadIds.size} selected</span>
@@ -498,7 +573,17 @@ export default function LeadsPage() {
             <div className="divide-y divide-gray-100">
               {filteredLeads.map((lead) => (
                 <div key={lead.id} className="grid gap-2 py-3 text-sm md:grid-cols-[24px_1.1fr_1fr_1fr_0.8fr_0.8fr_0.9fr_90px] md:items-center">
-                  <input type="checkbox" className="rounded" checked={selectedLeadIds.has(lead.id)} onChange={(e) => { const next = new Set(selectedLeadIds); e.target.checked ? next.add(lead.id) : next.delete(lead.id); setSelectedLeadIds(next); }} />
+                  <input
+                    type="checkbox"
+                    className="rounded"
+                    checked={selectedLeadIds.has(lead.id)}
+                    onChange={(e) => {
+                      const next = new Set(selectedLeadIds);
+                      if (e.target.checked) next.add(lead.id);
+                      else next.delete(lead.id);
+                      setSelectedLeadIds(next);
+                    }}
+                  />
                   <span className="font-semibold text-gray-950">{lead.name || 'Unnamed lead'}</span>
                   <span className="text-gray-600">{lead.phone || '-'}</span>
                   <span className="text-gray-600">{lead.email || '-'}</span>
@@ -834,6 +919,55 @@ export default function LeadsPage() {
             {stages.map((stage) => <option key={stage.key} value={stage.key}>{stage.label}</option>)}
           </select>
         </DetailCard>
+      )}
+
+      {labelModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl">
+            <h3 className="text-base font-bold text-gray-900">Create Lead Label</h3>
+            <p className="mt-1 text-sm text-gray-500">Labels help your team filter and route leads faster.</p>
+            <div className="mt-4 space-y-3">
+              {leadLabels.length > 0 && (
+                <div className="max-h-40 space-y-2 overflow-y-auto rounded-xl border border-gray-100 bg-gray-50 p-2">
+                  {leadLabels.map((label) => (
+                    <div key={label.id} className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm">
+                      <span className="h-3 w-3 rounded-full" style={{ backgroundColor: label.color || '#4F46E5' }} />
+                      <span className="flex-1 font-semibold text-gray-800">{label.name}</span>
+                      <button className="text-xs font-semibold text-indigo-600" onClick={() => updateLabel(label)} disabled={savingLabel}>Edit</button>
+                      <button className="text-xs font-semibold text-red-600" onClick={() => deleteLabel(label)} disabled={savingLabel}>Delete</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <label className="block text-xs font-semibold text-gray-700">
+                Label name
+                <input
+                  value={newLabelName}
+                  onChange={(event) => setNewLabelName(event.target.value)}
+                  className="input-field mt-1"
+                  placeholder="e.g. high_budget"
+                />
+              </label>
+              <label className="block text-xs font-semibold text-gray-700">
+                Label color
+                <input
+                  type="color"
+                  value={newLabelColor}
+                  onChange={(event) => setNewLabelColor(event.target.value)}
+                  className="mt-1 h-10 w-full rounded-lg border border-gray-200 bg-white p-1"
+                />
+              </label>
+            </div>
+            <div className="mt-5 flex gap-2">
+              <Button variant="primary" className="flex-1" onClick={createLabel} loading={savingLabel}>
+                Create Label
+              </Button>
+              <Button variant="secondary" onClick={() => setLabelModalOpen(false)} disabled={savingLabel}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Payment Link Modal */}

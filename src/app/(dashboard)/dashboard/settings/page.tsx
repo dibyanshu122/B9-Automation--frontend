@@ -25,6 +25,7 @@ export default function SettingsPage() {
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingBusiness, setSavingBusiness] = useState(false);
   const [savingWhatsapp, setSavingWhatsapp] = useState(false);
+  const [canManageSensitiveSettings, setCanManageSensitiveSettings] = useState<boolean | null>(null);
   const [deleteConfirmEmail, setDeleteConfirmEmail] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
@@ -78,10 +79,17 @@ export default function SettingsPage() {
     Promise.all([
       get('/api/automation/business-profile').catch(() => ({ data: null })),
       get('/api/automation/whatsapp/status').catch(() => ({ data: null })),
+      get('/api/team/me').catch(() => ({ data: null })),
       get('/api/settings/ai-keys').catch(() => ({ data: null })),
-    ]).then(([bpRes, waRes, aiRes]) => {
+    ]).then(([bpRes, waRes, teamRes, aiRes]) => {
       if (bpRes.data) setBusinessProfile(bpRes.data);
       if (waRes.data) setWhatsappStatus(waRes.data);
+      if (teamRes.data) {
+        const permissions = teamRes.data.permissions || [];
+        setCanManageSensitiveSettings(Boolean(teamRes.data.is_owner || permissions.includes('*') || permissions.includes('settings.manage')));
+      } else {
+        setCanManageSensitiveSettings(false);
+      }
       if (aiRes.data) {
         setAiKeys(aiRes.data);
         setByokEnabled(aiRes.data.byok_enabled ?? false);
@@ -237,10 +245,10 @@ export default function SettingsPage() {
       const res = await post(`/api/settings/ai-keys/test?provider=${provider}`, {});
       setTestResult((r) => ({ ...r, [provider]: res.data?.ok === true }));
       if (res.data?.ok) toast.success(`${provider === 'groq' ? 'Groq' : 'Gemini'} key works`);
-      else toast.error(`${provider === 'groq' ? 'Groq' : 'Gemini'} key is invalid — check and re-enter`);
+      else toast.error(`${provider === 'groq' ? 'Groq' : 'Gemini'} key is invalid - check and re-enter`);
     } catch {
       setTestResult((r) => ({ ...r, [provider]: false }));
-      toast.error('Test failed — check your key');
+      toast.error('Test failed - check your key');
     } finally {
       setTestingProvider(null);
     }
@@ -281,7 +289,7 @@ export default function SettingsPage() {
             />
           </div>
           <Button variant="primary" onClick={saveProfile} loading={savingProfile}>
-            {savingProfile ? 'Saving…' : 'Save Changes'}
+            {savingProfile ? 'Saving...' : 'Save Changes'}
           </Button>
         </div>
       </Card>
@@ -449,7 +457,7 @@ export default function SettingsPage() {
                 Copy
               </button>
             </div>
-            <p className="mt-1 text-xs text-gray-500">Paste this URL in your Meta App → WhatsApp → Configuration → Webhook URL</p>
+            <p className="mt-1 text-xs text-gray-500">Paste this URL in your Meta App, then WhatsApp, then Configuration, then Webhook URL.</p>
           </div>
         </div>
         <div className="flex gap-3 mt-5">
@@ -457,12 +465,22 @@ export default function SettingsPage() {
             {savingWhatsapp ? 'Saving...' : 'Keep Draft Mode'}
           </Button>
           <Button onClick={() => window.location.href = '/dashboard/messages'}>
-            Connect WhatsApp →
+            Connect WhatsApp
           </Button>
         </div>
       </Card>
 
+      {canManageSensitiveSettings === false && (
+        <Card>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Advanced Settings</h2>
+          <p className="text-sm text-gray-600">
+            AI provider keys, payment keys, and workspace-level settings are managed by the workspace owner or an admin.
+          </p>
+        </Card>
+      )}
+
       {/* AI & BYOK Settings */}
+      {canManageSensitiveSettings === true && (
       <Card>
         <div className="flex items-center gap-3 mb-1">
           <Cpu className="h-5 w-5 text-violet-600" />
@@ -471,27 +489,27 @@ export default function SettingsPage() {
 
         {/* Plan-specific context banner */}
         {isFreePlan ? (
-          /* FREE PLAN — push BYOK as the upgrade path */
+          /* FREE PLAN - push BYOK as the upgrade path */
           <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-            <p className="text-sm font-bold text-emerald-800 mb-1">Free plan — 30 lifetime AI replies included</p>
+            <p className="text-sm font-bold text-emerald-800 mb-1">Free plan - 30 lifetime AI replies included</p>
             <p className="text-xs text-emerald-700">
               Add your own Groq API key below to use your own provider quota for AI replies.
               Takes 2 minutes. Groq&apos;s free tier handles 500+ customer conversations/day.
             </p>
           </div>
         ) : (
-          /* PAID PLAN — show remaining quota + offer top-up */
+          /* PAID PLAN - show remaining quota + offer top-up */
           <div className="mb-5 rounded-xl border border-blue-200 bg-blue-50 p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-bold text-blue-900 mb-0.5">
-                  {user?.plan} plan — B9 managed AI active
+                  {user?.plan} plan - B9 managed AI active
                 </p>
                 <p className="text-xs text-blue-700">
                   {quota
                     ? <>You have <strong>{remainingReplies.toLocaleString('en-IN')} AI replies</strong> remaining this month (out of {planQueryLimit.toLocaleString('en-IN')} included).</>
                     : 'Your plan includes AI replies every month.'}
-                  {' '}When you run out, buy a top-up below — no plan upgrade needed.
+                  {' '}When you run out, buy a top-up below - no plan upgrade needed.
                 </p>
               </div>
               <Link
@@ -517,12 +535,12 @@ export default function SettingsPage() {
             <KeyRound className={`h-4 w-4 shrink-0 ${byokEnabled ? 'text-violet-600' : 'text-gray-400'}`} />
             <div>
               <p className="text-sm font-bold text-gray-950">
-                {isFreePlan ? 'Use your own API keys — unlimited for free' : 'Use your own API keys (advanced)'}
+                {isFreePlan ? 'Use your own API keys (advanced)' : 'Use your own API keys (advanced)'}
               </p>
               <p className="text-xs text-gray-500">
                 {isFreePlan
-                  ? 'Your key is used instead of B9\'s shared key — bypasses the 30-query limit'
-                  : 'Bypasses your monthly plan quota. Your top-up balance won\'t be used when this is ON.'}
+                  ? 'Your key is used instead of B9 managed credits. Provider usage is billed or limited by your provider account.'
+                  : 'Uses your provider account instead of monthly B9 credits while this is ON.'}
               </p>
             </div>
           </div>
@@ -538,7 +556,7 @@ export default function SettingsPage() {
         {/* Paid plan warning when BYOK turned ON */}
         {!isFreePlan && byokEnabled && (
           <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
-            <strong>Note:</strong> With BYOK ON, your {user?.plan} plan&apos;s monthly AI replies won&apos;t be consumed — but any top-ups you buy also won&apos;t be used. Turn BYOK OFF if you want to use your plan quota or top-ups.
+            <strong>Note:</strong> With BYOK ON, your {user?.plan} plan&apos;s monthly AI credits and top-ups are not consumed. Turn BYOK OFF if you want to use B9 managed credits.
           </div>
         )}
 
@@ -551,7 +569,7 @@ export default function SettingsPage() {
               <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5 font-semibold text-violet-600 hover:underline">
                 console.groq.com/keys <ExternalLink className="h-3 w-3" />
               </a>
-              {' '}— 2 minutes setup.
+              {' '}- 2 minutes setup.
             </p>
             <div className="flex gap-2">
               <input
@@ -559,7 +577,7 @@ export default function SettingsPage() {
                 value={groqKey}
                 onChange={(e) => { setGroqKey(e.target.value); setAiDirty(true); }}
                 className="input-field flex-1"
-                placeholder={aiKeys?.groq_key_set ? aiKeys.groq_key_masked || '••••••••••••••••' : 'gsk_...'}
+                placeholder={aiKeys?.groq_key_set ? aiKeys.groq_key_masked || '****************' : 'gsk_...'}
                 autoComplete="new-password"
               />
               {aiKeys?.groq_key_set && (
@@ -591,7 +609,7 @@ export default function SettingsPage() {
               <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5 font-semibold text-violet-600 hover:underline">
                 aistudio.google.com <ExternalLink className="h-3 w-3" />
               </a>
-              {' '}— 1,500 req/day free.
+              {' '}- 1,500 req/day free.
             </p>
             <div className="flex gap-2">
               <input
@@ -599,7 +617,7 @@ export default function SettingsPage() {
                 value={geminiKey}
                 onChange={(e) => { setGeminiKey(e.target.value); setAiDirty(true); }}
                 className="input-field flex-1"
-                placeholder={aiKeys?.gemini_key_set ? aiKeys.gemini_key_masked || '••••••••••••••••' : 'AIza...'}
+                placeholder={aiKeys?.gemini_key_set ? aiKeys.gemini_key_masked || '****************' : 'AIza...'}
                 autoComplete="new-password"
               />
               {aiKeys?.gemini_key_set && (
@@ -632,19 +650,19 @@ export default function SettingsPage() {
             onChange={(e) => { setPreferredModel(e.target.value); setAiDirty(true); }}
             className="input-field max-w-xs"
           >
-            <option value="auto">B9 Agentic Core — Auto (recommended)</option>
+            <option value="auto">B9 Agentic Core - Auto (recommended)</option>
             <option value="groq">Groq only (llama-3.1-8b, fastest)</option>
             <option value="gemini">Gemini only (flash-lite, long context)</option>
           </select>
         </div>
 
-        {/* Agentic AI safety — max steps */}
+        {/* Agentic AI safety - max steps */}
         <div className="mt-5">
           <label className="mb-1 block text-sm font-semibold text-gray-700">
-            Agentic AI — Max Steps per Reply
+            Agentic AI - Max Steps per Reply
           </label>
           <p className="mb-2 text-xs text-gray-500">
-            How many tool calls the AI can make per customer message. Higher = more thorough but slower. Range: 2–8.
+            How many tool calls the AI can make per customer message. Higher = more thorough but slower. Range: 2-8.
           </p>
           <div className="flex items-center gap-3">
             <input
@@ -655,35 +673,35 @@ export default function SettingsPage() {
             />
             <span className="w-6 text-center text-sm font-bold text-gray-900">{agenticMaxSteps}</span>
             <span className="text-xs text-gray-400">
-              {agenticMaxSteps <= 3 ? '— Fast, simple replies' : agenticMaxSteps <= 5 ? '— Balanced (recommended)' : '— Deep, multi-step replies'}
+              {agenticMaxSteps <= 3 ? '- Fast, simple replies' : agenticMaxSteps <= 5 ? '- Balanced (recommended)' : '- Deep, multi-step replies'}
             </span>
           </div>
         </div>
 
         <div className="mt-5 flex items-center gap-3 flex-wrap">
           <Button variant="primary" onClick={saveAiKeys} loading={savingAiKeys}>
-            {savingAiKeys ? 'Saving…' : 'Save AI Settings'}
+            {savingAiKeys ? 'Saving...' : 'Save AI Settings'}
           </Button>
           {aiDirty && !savingAiKeys && (
             <span className="text-xs font-medium text-amber-600 flex items-center gap-1">
-              ● Unsaved changes
+              * Unsaved changes
             </span>
           )}
           {byokEnabled && (aiKeys?.groq_key_set || aiKeys?.gemini_key_set) && (
             <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
-              <CheckCircle2 className="h-4 w-4" /> BYOK active — no reply limit
+              <CheckCircle2 className="h-4 w-4" /> BYOK active - provider-managed usage
             </span>
           )}
         </div>
 
-        {/* Bottom info — different for free vs paid */}
+        {/* Bottom info - different for free vs paid */}
         {isFreePlan ? (
           <div className="mt-5 rounded-xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-800">
             <p className="font-bold mb-1 flex items-center gap-1.5"><Zap className="h-4 w-4" /> Use your own AI key</p>
             <ul className="space-y-1 text-xs text-emerald-700 list-disc list-inside">
-              <li>Go to <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" className="font-semibold underline">console.groq.com</a> → Create free account → Copy API key</li>
-              <li>Paste above → Toggle BYOK ON → Save</li>
-              <li>Done — your AI now runs on Groq&apos;s free tier (500+ chats/day)</li>
+              <li>Go to <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" className="font-semibold underline">console.groq.com</a>, create a free account, then copy your API key.</li>
+              <li>Paste above, toggle BYOK ON, then save.</li>
+              <li>Done - your AI now runs through your Groq account and provider limits.</li>
               <li>Keys are AES-encrypted. Never visible after saving.</li>
             </ul>
           </div>
@@ -691,14 +709,15 @@ export default function SettingsPage() {
           <div className="mt-5 rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
             <p className="font-bold mb-1 text-gray-900">How AI replies work on paid plans</p>
             <ul className="space-y-1 text-xs text-gray-600 list-disc list-inside">
-              <li>B9 manages the AI — no key needed. Just use the platform.</li>
+              <li>B9 manages the AI - no key needed. Just use the platform.</li>
               <li>Monthly replies reset every billing cycle.</li>
-              <li>Limit hit? Buy a top-up from <Link href="/dashboard/billing" className="font-semibold text-primary-600 underline">Billing</Link> — replies added instantly.</li>
-              <li>BYOK is for power users who want truly unlimited without buying top-ups.</li>
+              <li>Limit hit? Buy a top-up from <Link href="/dashboard/billing" className="font-semibold text-primary-600 underline">Billing</Link> - replies added instantly.</li>
+              <li>BYOK is for power users who prefer provider-managed usage instead of B9 credits.</li>
             </ul>
           </div>
         )}
       </Card>
+      )}
 
       {/* Security */}
       <Card>
@@ -731,7 +750,7 @@ export default function SettingsPage() {
             />
           </div>
           <Button variant="primary" onClick={changePassword} loading={changingPassword}>
-            {changingPassword ? 'Updating…' : 'Update Password'}
+            {changingPassword ? 'Updating...' : 'Update Password'}
           </Button>
         </div>
       </Card>
@@ -751,7 +770,7 @@ export default function SettingsPage() {
             <p className="font-semibold text-gray-900 text-sm">Privacy Policy</p>
             <p className="mt-1 text-xs text-gray-500">Read how we collect, use and protect your data.</p>
             <a href="/privacy" target="_blank" rel="noopener noreferrer" className="mt-2 text-xs font-semibold text-primary-600 underline hover:text-primary-700">
-              View Privacy Policy →
+              View Privacy Policy
             </a>
           </div>
         </div>
@@ -794,7 +813,7 @@ export default function SettingsPage() {
                 loading={deletingAccount}
                 disabled={deleteConfirmEmail !== user?.email || deletingAccount}
               >
-                {deletingAccount ? 'Deleting…' : 'Yes, Delete My Account'}
+                {deletingAccount ? 'Deleting...' : 'Yes, Delete My Account'}
               </Button>
               <Button variant="secondary" onClick={() => { setShowDeleteModal(false); setDeleteConfirmEmail(''); }}>
                 Cancel

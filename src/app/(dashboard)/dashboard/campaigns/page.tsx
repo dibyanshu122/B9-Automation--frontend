@@ -13,7 +13,7 @@ import toast from 'react-hot-toast';
 import { Button } from '@/components/button';
 import { useApi } from '@/hooks/useApi';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+//  Types 
 
 interface Campaign {
   name: string; message: string; channel: string; msg_type: string;
@@ -27,7 +27,7 @@ interface PreviewResult {
   sample: { name: string; phone: string; score: string; tag: string }[];
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+//  Constants 
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode; dot?: string }> = {
   sending:               { label: 'Sending',       color: 'bg-blue-100 text-blue-700',    icon: <Loader2 className="w-3 h-3 animate-spin" />, dot: 'bg-blue-500' },
@@ -41,9 +41,9 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
 
 const FILTER_OPTIONS = [
   { value: 'all', label: 'All Leads' },
-  { value: 'hot', label: '🔥 Hot Leads' },
-  { value: 'warm', label: '☀️ Warm Leads' },
-  { value: 'cold', label: '❄️ Cold Leads' },
+  { value: 'hot', label: 'Hot Leads' },
+  { value: 'warm', label: 'Warm Leads' },
+  { value: 'cold', label: 'Cold Leads' },
 ];
 
 function timeAgo(iso: string | null): string {
@@ -62,28 +62,28 @@ function formatScheduled(iso: string): string {
   });
 }
 
-// ─── Country detection ────────────────────────────────────────────────────────
+//  Country detection 
 
 const COUNTRY_MAP: { prefix: string; flag: string; name: string }[] = [
-  { prefix: '+91',  flag: '🇮🇳', name: 'India' },
-  { prefix: '+1',   flag: '🇺🇸', name: 'USA / Canada' },
-  { prefix: '+44',  flag: '🇬🇧', name: 'UK' },
-  { prefix: '+971', flag: '🇦🇪', name: 'UAE' },
-  { prefix: '+966', flag: '🇸🇦', name: 'Saudi Arabia' },
-  { prefix: '+974', flag: '🇶🇦', name: 'Qatar' },
-  { prefix: '+65',  flag: '🇸🇬', name: 'Singapore' },
-  { prefix: '+61',  flag: '🇦🇺', name: 'Australia' },
-  { prefix: '+60',  flag: '🇲🇾', name: 'Malaysia' },
-  { prefix: '+880', flag: '🇧🇩', name: 'Bangladesh' },
-  { prefix: '+92',  flag: '🇵🇰', name: 'Pakistan' },
-  { prefix: '+977', flag: '🇳🇵', name: 'Nepal' },
+  { prefix: '+91',  flag: '', name: 'India' },
+  { prefix: '+1',   flag: '', name: 'USA / Canada' },
+  { prefix: '+44',  flag: '', name: 'UK' },
+  { prefix: '+971', flag: '', name: 'UAE' },
+  { prefix: '+966', flag: '', name: 'Saudi Arabia' },
+  { prefix: '+974', flag: '', name: 'Qatar' },
+  { prefix: '+65',  flag: '', name: 'Singapore' },
+  { prefix: '+61',  flag: '', name: 'Australia' },
+  { prefix: '+60',  flag: '', name: 'Malaysia' },
+  { prefix: '+880', flag: '', name: 'Bangladesh' },
+  { prefix: '+92',  flag: '', name: 'Pakistan' },
+  { prefix: '+977', flag: '', name: 'Nepal' },
 ];
 
 function detectCountry(phone: string): string {
   // Sort by prefix length desc so +974 matches before +97
   const sorted = [...COUNTRY_MAP].sort((a, b) => b.prefix.length - a.prefix.length);
   const match = sorted.find(c => phone.startsWith(c.prefix));
-  return match ? `${match.flag} ${match.name}` : '🌐 International';
+  return match ? match.name : 'International';
 }
 
 interface ParseResult {
@@ -94,7 +94,7 @@ interface ParseResult {
   fileName: string;
 }
 
-// ─── WhatsApp Preview Bubble ──────────────────────────────────────────────────
+//  WhatsApp Preview Bubble 
 
 function WaPreview({ template, vars }: { template: any; vars: string[] }) {
   if (!template) return null;
@@ -124,7 +124,7 @@ function WaPreview({ template, vars }: { template: any; vars: string[] }) {
       <div className="bg-white rounded-xl shadow-sm max-w-[280px] mx-auto overflow-hidden">
         {header?.format === 'IMAGE' && (
           <div className="h-24 bg-gray-100 flex items-center justify-center text-gray-400 text-xs border-b">
-            🖼️ Image Header
+             Image Header
           </div>
         )}
         {header?.format === 'TEXT' && (
@@ -135,13 +135,13 @@ function WaPreview({ template, vars }: { template: any; vars: string[] }) {
             {renderSafeWhatsAppText(rendered)}
           </p>
           {footer && <p className="text-[10px] text-gray-400 mt-1.5">{footer}</p>}
-          <p className="text-[9px] text-gray-400 text-right mt-1">12:30 ✓✓</p>
+          <p className="text-[9px] text-gray-400 text-right mt-1">12:30 </p>
         </div>
         {buttons.length > 0 && (
           <div className="border-t border-gray-100 divide-y divide-gray-100">
             {buttons.map((b: any, i: number) => (
               <div key={i} className="px-3 py-2 text-center text-xs font-semibold text-blue-500">
-                {b.type === 'URL' ? '🔗 ' : b.type === 'PHONE_NUMBER' ? '📞 ' : ''}{b.text}
+                {b.type === 'URL' ? ' ' : b.type === 'PHONE_NUMBER' ? ' ' : ''}{b.text}
               </div>
             ))}
           </div>
@@ -151,7 +151,7 @@ function WaPreview({ template, vars }: { template: any; vars: string[] }) {
   );
 }
 
-// ─── Campaign Table ───────────────────────────────────────────────────────────
+//  Campaign Table 
 
 const COL = '36px minmax(150px,1fr) 88px 96px 68px 108px 44px 48px 52px 48px 48px 40px';
 
@@ -243,7 +243,7 @@ function CampaignRow({ idx, c, onDetail, onRefresh }: { idx: number; c: Campaign
         </span>
       </div>
       <div className="text-xs text-gray-500">
-        {c.created_at ? new Date(c.created_at.endsWith('Z') ? c.created_at : c.created_at + 'Z').toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' }) : '—'}
+        {c.created_at ? new Date(c.created_at.endsWith('Z') ? c.created_at : c.created_at + 'Z').toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' }) : ''}
       </div>
       <div className="text-center text-sm font-semibold text-gray-700">{c.total}</div>
       <div>
@@ -265,23 +265,23 @@ function CampaignRow({ idx, c, onDetail, onRefresh }: { idx: number; c: Campaign
       {/* Delivered */}
       <div className="flex justify-center items-center gap-1">
         <TickDelivered />
-        <span className={`text-xs font-bold ${delivered > 0 ? 'text-gray-600' : 'text-gray-300'}`}>{delivered || '—'}</span>
+        <span className={`text-xs font-bold ${delivered > 0 ? 'text-gray-600' : 'text-gray-300'}`}>{delivered || ''}</span>
       </div>
       {/* Read */}
       <div className="flex justify-center items-center gap-1">
         <TickRead />
-        <span className={`text-xs font-bold ${read > 0 ? 'text-cyan-600' : 'text-gray-300'}`}>{read || '—'}</span>
+        <span className={`text-xs font-bold ${read > 0 ? 'text-cyan-600' : 'text-gray-300'}`}>{read || ''}</span>
       </div>
       {/* Failed */}
       <div className="flex justify-center items-center gap-1">
         <AlertCircle className={`w-3 h-3 ${c.failed > 0 ? 'text-red-400' : 'text-gray-200'}`} />
-        <span className={`text-xs font-bold ${c.failed > 0 ? 'text-red-500' : 'text-gray-300'}`}>{c.failed > 0 ? c.failed : '—'}</span>
+        <span className={`text-xs font-bold ${c.failed > 0 ? 'text-red-500' : 'text-gray-300'}`}>{c.failed > 0 ? c.failed : ''}</span>
       </div>
       {/* More menu */}
       <div className="relative flex justify-center">
         <button onClick={e => { e.stopPropagation(); setMenuOpen(o => !o); }} disabled={!!acting}
           className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition">
-          {acting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <span className="text-sm font-bold tracking-widest">···</span>}
+          {acting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <span className="text-sm font-bold tracking-widest"></span>}
         </button>
         {menuOpen && (
           <>
@@ -299,9 +299,10 @@ function CampaignRow({ idx, c, onDetail, onRefresh }: { idx: number; c: Campaign
   );
 }
 
-// ─── Status Bar (keep for detail drawer) ──────────────────────────────────────
+//  Status Bar (keep for detail drawer) 
 
 function StatusBar({ sent, failed, queued, total }: { sent: number; failed: number; queued: number; total: number }) {
+  void queued;
   if (!total) return null;
   const sp = Math.round((sent / total) * 100);
   const fp = Math.round((failed / total) * 100);
@@ -315,7 +316,7 @@ function StatusBar({ sent, failed, queued, total }: { sent: number; failed: numb
   );
 }
 
-// ─── Campaign Detail Drawer ───────────────────────────────────────────────────
+//  Campaign Detail Drawer 
 
 function DetailDrawer({ name, onClose, onRefresh }: { name: string; onClose: () => void; onRefresh: () => void }) {
   const { get, post } = useApi();
@@ -476,8 +477,9 @@ function DetailDrawer({ name, onClose, onRefresh }: { name: string; onClose: () 
   );
 }
 
-// ─── Campaign Card ────────────────────────────────────────────────────────────
+//  Campaign Card 
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function CampaignCard({ c, onDetail, onRefresh }: { c: Campaign; onDetail: () => void; onRefresh: () => void }) {
   const { post } = useApi();
   const [acting, setActing] = useState<string | null>(null);
@@ -516,13 +518,13 @@ function CampaignCard({ c, onDetail, onRefresh }: { c: Campaign; onDetail: () =>
           </div>
           <div className="flex items-center gap-2 mt-1 flex-wrap">
             <span className="text-xs text-gray-500">
-              {c.msg_type === 'template' ? `📋 ${c.template_name || 'Template'}` : '✏️ Custom text'}
+              {c.msg_type === 'template' ? ` ${c.template_name || 'Template'}` : ' Custom text'}
             </span>
-            <span className="text-gray-200">·</span>
+            <span className="text-gray-200"></span>
             <span className="text-xs text-gray-400 capitalize">{c.channel}</span>
             {c.created_at && (
               <>
-                <span className="text-gray-200">·</span>
+                <span className="text-gray-200"></span>
                 <span className="text-xs text-gray-400">{timeAgo(c.created_at)}</span>
               </>
             )}
@@ -546,7 +548,7 @@ function CampaignCard({ c, onDetail, onRefresh }: { c: Campaign; onDetail: () =>
             {c.failed > 0 && <span className="text-red-500 font-semibold">{c.failed} failed</span>}
             {c.queued > 0 && <span className="text-amber-500">{c.queued} pending</span>}
           </div>
-          <span className="text-xs text-gray-400">{c.total} total · {deliveryRate}%</span>
+          <span className="text-xs text-gray-400">{c.total} total  {deliveryRate}%</span>
         </div>
         <StatusBar sent={c.sent} failed={c.failed} queued={c.queued} total={c.total} />
       </div>
@@ -579,7 +581,7 @@ function CampaignCard({ c, onDetail, onRefresh }: { c: Campaign; onDetail: () =>
   );
 }
 
-// ─── New Campaign Slide-over ──────────────────────────────────────────────────
+//  New Campaign Slide-over 
 
 function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: () => void }) {
   const { get, post } = useApi();
@@ -590,6 +592,7 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
   const [recipientMode, setRecipientMode] = useState<'leads' | 'excel'>('leads');
   const [filter, setFilter] = useState('all');
   const [customTag, setCustomTag] = useState('');
+  const [leadLabels, setLeadLabels] = useState<{ id: string; name: string }[]>([]);
   const [parseResult, setParseResult] = useState<ParseResult | null>(null);
   const [excelPhones, setExcelPhones] = useState<string[]>([]);
   const [templates, setTemplates] = useState<any[]>([]);
@@ -605,7 +608,7 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
   useEffect(() => {
     setLoadingTpl(true);
     setTplLoadError('');
-    const timeout = setTimeout(() => setTplLoadError('Taking too long — check your WhatsApp connection.'), 15000);
+    const timeout = setTimeout(() => setTplLoadError('Taking too long  check your WhatsApp connection.'), 15000);
     get('/api/automation/whatsapp/templates')
       .then(r => {
         clearTimeout(timeout);
@@ -617,6 +620,9 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
         setTplLoadError(msg);
       })
       .finally(() => setLoadingTpl(false));
+    get('/api/leads/labels')
+      .then(r => setLeadLabels(r.data?.labels || []))
+      .catch(() => {});
     return () => clearTimeout(timeout);
   }, []); // eslint-disable-line
 
@@ -687,6 +693,7 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
   const handlePreview = async () => {
     if (recipientMode === 'leads') {
       if (!selected) { toast.error('Select a template first'); return; }
+      if (filter === 'tag' && !customTag) { toast.error('Select a lead label first'); return; }
       setPreviewing(true); setPreview(null);
       try {
         const r = await post('/api/campaigns/preview', { name: name || 'Preview', message: selected?.name || '', recipient_filter: recipientFilter });
@@ -704,6 +711,7 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
     if (!singlePhone.trim()) { toast.error('Phone number required'); return; }
     if (!selected) { toast.error('Select a template first'); return; }
     if (vars.some(v => !v.trim())) { toast.error('Fill all template variables'); return; }
+    if (recipientMode === 'leads' && filter === 'tag' && !customTag) { toast.error('Select a lead label first'); return; }
     setSending(true);
     try {
       await post('/api/campaigns/send', {
@@ -750,7 +758,7 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
       const r = await post('/api/campaigns/send', payload);
       if (saveAsDraft) toast.success('Draft saved');
       else if (r.data.scheduled_at) toast.success(`Campaign scheduled for ${r.data.recipient_count} recipients`);
-      else toast.success(`Campaign started — sending to ${r.data.recipient_count} recipients`);
+      else toast.success(`Campaign started  sending to ${r.data.recipient_count} recipients`);
       onClose(); onSent();
     } catch (e: any) { toast.error(e.response?.data?.detail || 'Failed'); }
     finally { setSending(false); }
@@ -783,7 +791,7 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
           <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
             <button onClick={() => setSendMode('single')}
               className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-semibold transition ${sendMode === 'single' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
-              ⚡ Single Number
+               Single Number
             </button>
             <button onClick={() => setSendMode('bulk')}
               className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-semibold transition ${sendMode === 'bulk' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
@@ -796,11 +804,11 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">
                 WhatsApp Number <span className="text-red-500">*</span>
-                <span className="ml-2 text-xs text-gray-400 font-normal">— for testing templates</span>
+                <span className="ml-2 text-xs text-gray-400 font-normal"> for testing templates</span>
               </label>
               <input value={singlePhone} onChange={e => setSinglePhone(e.target.value)}
                 placeholder="+91 98765 43210" className={inputCls} />
-              <p className="text-xs text-gray-400 mt-1">Send to a single number directly — great for testing before bulk send</p>
+              <p className="text-xs text-gray-400 mt-1">Send to a single number directly  great for testing before bulk send</p>
             </div>
           )}
 
@@ -822,7 +830,7 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
               </button>
               <button onClick={() => { setRecipientMode('excel'); setPreview(null); }}
                 className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium border transition ${recipientMode === 'excel' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'}`}>
-                📊 Upload Excel / CSV
+                Upload Excel / CSV
               </button>
             </div>
 
@@ -831,11 +839,13 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
                 <select value={filter} onChange={e => { setFilter(e.target.value); setPreview(null); }}
                   className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white">
                   {FILTER_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                  <option value="tag">By Tag…</option>
+                  <option value="tag">By Tag</option>
                 </select>
                 {filter === 'tag' && (
-                  <input value={customTag} onChange={e => setCustomTag(e.target.value)} placeholder="tag name"
-                    className="w-28 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none" />
+                  <select value={customTag} onChange={e => setCustomTag(e.target.value)} className="w-40 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none bg-white">
+                    <option value="">Select label</option>
+                    {leadLabels.map((label) => <option key={label.id} value={label.name}>{label.name}</option>)}
+                  </select>
                 )}
               </div>
             )}
@@ -918,7 +928,7 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
 
                     {parseResult.valid.length === 0 && (
                       <div className="px-3 py-2.5 bg-red-50 border-t border-red-100">
-                        <p className="text-xs text-red-600 font-semibold">⚠️ No valid phone numbers found. Please check your file format.</p>
+                        <p className="text-xs text-red-600 font-semibold"> No valid phone numbers found. Please check your file format.</p>
                         <p className="text-[10px] text-red-500 mt-0.5">Expected: +91XXXXXXXXXX or 10-digit numbers</p>
                       </div>
                     )}
@@ -934,19 +944,19 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
             )}
           </div>}
 
-          {/* Meta compliance notice — bulk only */}
+          {/* Meta compliance notice  bulk only */}
           {sendMode === 'bulk' && (
             <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800">
-              <p className="font-semibold mb-1">⚠️ Meta WhatsApp Compliance</p>
+              <p className="font-semibold mb-1"> Meta WhatsApp Compliance</p>
               <ul className="space-y-0.5 opacity-90">
-                <li>• Only <strong>APPROVED templates</strong> can be used for bulk campaigns</li>
-                <li>• Free-form text can only be sent within the 24-hour window after a customer messages you</li>
-                <li>• Sending to opted-out contacts is automatically blocked</li>
+                <li> Only <strong>APPROVED templates</strong> can be used for bulk campaigns</li>
+                <li> Free-form text can only be sent within the 24-hour window after a customer messages you</li>
+                <li> Sending to opted-out contacts is automatically blocked</li>
               </ul>
             </div>
           )}
 
-          {/* Template dropdown — for single always show; for Excel bulk only after valid upload */}
+          {/* Template dropdown  for single always show; for Excel bulk only after valid upload */}
           {(sendMode === 'single' || recipientMode === 'leads' || (recipientMode === 'excel' && parseResult && parseResult.valid.length > 0)) && (
           <>
           <div>
@@ -958,14 +968,14 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
               <button type="button" onClick={() => setDropdownOpen(o => !o)}
                 className={`w-full text-left border rounded-xl px-3 py-2.5 text-sm flex items-center justify-between transition focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white ${dropdownOpen ? 'border-orange-400 ring-2 ring-orange-200' : 'border-gray-200 hover:border-gray-400'}`}>
                 {loadingTpl ? (
-                  <span className="flex items-center gap-2 text-gray-400"><Loader2 className="w-4 h-4 animate-spin" /> Loading templates…</span>
+                  <span className="flex items-center gap-2 text-gray-400"><Loader2 className="w-4 h-4 animate-spin" /> Loading templates</span>
                 ) : selected ? (
                   <span className="flex items-center gap-2 truncate">
                     <span className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full font-bold ${selected.status === 'APPROVED' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{selected.status}</span>
                     <span className="font-semibold text-gray-800 truncate">{selected.name}</span>
                   </span>
                 ) : (
-                  <span className="text-gray-400">Click to choose a template…</span>
+                  <span className="text-gray-400">Click to choose a template</span>
                 )}
                 <ChevronRight className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform ${dropdownOpen ? 'rotate-90' : ''}`} />
               </button>
@@ -980,7 +990,7 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
                     </div>
                   ) : templates.length === 0 ? (
                     <div className="p-3 text-sm text-amber-600">
-                      No approved templates found. <a href="/dashboard/templates" className="font-semibold underline" onClick={() => setDropdownOpen(false)}>Create templates →</a>
+                      No approved templates found. <a href="/dashboard/templates" className="font-semibold underline" onClick={() => setDropdownOpen(false)}>Create templates </a>
                     </div>
                   ) : (
                     templates.map(tpl => (
@@ -1082,7 +1092,7 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+//  Main Page 
 
 const STATUS_TABS = [
   { key: 'all', label: 'All' },

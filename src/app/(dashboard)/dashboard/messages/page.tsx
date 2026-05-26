@@ -2,15 +2,15 @@
 
 import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Check, ChevronRight, Copy, FileText, Inbox, Loader2, MapPin, MessageCircle, MoreVertical, Play, Search, Send, Tag, Trash2, User, XCircle, Zap } from 'lucide-react';
+import { ArrowLeft, Check, ChevronRight, FileText, Inbox, Loader2, MapPin, MessageCircle, MoreVertical, Play, Search, Send, Tag, Trash2, User, XCircle, Zap } from 'lucide-react';
 import { Button } from '@/components/button';
 import { useApi } from '@/hooks/useApi';
 import { useAuthStore } from '@/store/authStore';
 
 const CHANNEL_BADGE: Record<string, { label: string; color: string; emoji: string }> = {
-  whatsapp:  { label: 'WhatsApp',  color: 'bg-emerald-50 text-emerald-700',  emoji: '💬' },
-  instagram: { label: 'Instagram', color: 'bg-pink-50 text-pink-700',        emoji: '📸' },
-  facebook:  { label: 'Facebook',  color: 'bg-blue-50 text-blue-700',        emoji: '📘' },
+  whatsapp:  { label: 'WhatsApp',  color: 'bg-emerald-50 text-emerald-700',  emoji: '' },
+  instagram: { label: 'Instagram', color: 'bg-pink-50 text-pink-700',        emoji: '' },
+  facebook:  { label: 'Facebook',  color: 'bg-blue-50 text-blue-700',        emoji: '' },
 };
 
 function ChannelIcon({ channel, size = 16 }: { channel: string; size?: number }) {
@@ -40,7 +40,7 @@ function ChannelIcon({ channel, size = 16 }: { channel: string; size?: number })
       <path d="M16 8h-2a1 1 0 00-1 1v2h3l-.5 3H13v7h-3v-7H8v-3h2V9a4 4 0 014-4h2v3z" fill="white"/>
     </svg>
   );
-  return <span className="text-sm">💬</span>;
+  return <span className="text-sm">Chat</span>;
 }
 
 function timeAgo(iso: string) {
@@ -65,7 +65,7 @@ interface Contact {
   lead_score?: string; // hot | warm | cold
 }
 
-/* ── 24-hour window helper ───────────────────────────────────────── */
+/* 24-hour window helper */
 function getWindowStatus(lastTime: string, channel: string): { open: boolean; hoursAgo: number; windowHours: number } {
   const windowHours = channel === 'whatsapp' ? 24 : 168; // WA=24h, IG/FB=168h (7 days)
   const hoursAgo = lastTime ? (Date.now() - new Date(lastTime.endsWith('Z') ? lastTime : lastTime + 'Z').getTime()) / 3600000 : 999;
@@ -77,18 +77,18 @@ function templateVarCount(body: string): number {
   return vars.size;
 }
 
-/* ── Delivery tick indicator ─────────────────────────────────────── */
+/* Delivery tick indicator */
 function DeliveryTick({ status, delivery_status, isOutbound }: { status?: string; delivery_status?: string; isOutbound: boolean }) {
   if (!isOutbound) return null;
   const ds = delivery_status || status || '';
-  if (ds === 'read') return <span className="text-sky-300 text-[11px]">✓✓</span>;
-  if (ds === 'delivered') return <span className="text-emerald-100 text-[11px]">✓✓</span>;
-  if (ds === 'sent' || status === 'sent') return <span className="text-emerald-200 text-[11px]">✓</span>;
-  if (status === 'failed') return <span className="text-red-300 text-[11px]">✗</span>;
-  return <span className="text-emerald-200 text-[11px]">✓</span>;
+  if (ds === 'read') return <span className="text-sky-300 text-[11px]">read</span>;
+  if (ds === 'delivered') return <span className="text-emerald-100 text-[11px]">delivered</span>;
+  if (ds === 'sent' || status === 'sent') return <span className="text-emerald-200 text-[11px]">sent</span>;
+  if (status === 'failed') return <span className="text-red-300 text-[11px]">failed</span>;
+  return <span className="text-emerald-200 text-[11px]">sent</span>;
 }
 
-/* ── Rich message content renderer ──────────────────────────────── */
+/* Rich message content renderer */
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || '';
 function mediaProxyUrl(mediaId: string) {
   const token = typeof window !== 'undefined' ? (useAuthStore.getState().token || '') : '';
@@ -109,6 +109,7 @@ function MessageContent({ msg, isOutbound }: { msg: any; isOutbound: boolean }) 
       <div className="space-y-1">
         <div className="rounded-lg overflow-hidden bg-black/10 max-w-[240px]">
           {mediaId ? (
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={mediaProxyUrl(mediaId)}
               alt="image"
@@ -602,7 +603,7 @@ function UnifiedInbox() {
                 <p className="text-xs text-slate-500 text-center">No messages yet<br/>Connect WhatsApp to get started</p>
               </div>
             ) : filtered.map(c => {
-              const badge = CHANNEL_BADGE[c.channel] || { emoji: '💬', label: c.channel, color: '' };
+              const badge = CHANNEL_BADGE[c.channel] || { emoji: '', label: c.channel, color: '' };
               const isSelected = selected?.sender_id === c.sender_id && selected?.channel === c.channel;
               const win = getWindowStatus(c.last_time, c.channel);
               return (

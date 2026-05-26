@@ -33,7 +33,7 @@ export default function OnboardingPage() {
     whatsapp_number: '',
     instagram_handle: '',
     business_description: '',
-    language: 'hinglish',
+    language: 'english',
     tone: 'friendly',
   });
   const [loading, setLoading] = useState(false);
@@ -68,34 +68,50 @@ export default function OnboardingPage() {
   }, [loading]);
 
   const completion = useMemo(() => {
-    // Only count actual user-filled fields (not defaults from selectedPack)
     const fields = [
       form.business_name,
       form.target_audience,
       form.primary_goal,
       form.services,
+      form.website_url,
+      form.whatsapp_number,
+      form.business_description,
+      form.language,
+      form.tone,
     ];
     const filled = fields.filter((f) => f && f.trim().length > 0).length;
     return Math.round((filled / fields.length) * 100);
-  }, [form.business_name, form.primary_goal, form.target_audience, form.services]);
+  }, [form]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setLoading(true);
+    const cleanForm = {
+      business_name: form.business_name.trim(),
+      target_audience: form.target_audience.trim(),
+      services: form.services.trim(),
+      primary_goal: form.primary_goal.trim(),
+      website_url: form.website_url.trim(),
+      whatsapp_number: form.whatsapp_number.trim(),
+      instagram_handle: form.instagram_handle.trim(),
+      business_description: form.business_description.trim(),
+      tone: form.tone,
+      language: form.language,
+    };
     try {
       await post('/api/automation/onboarding/setup', {
         business_type: selectedPack.label,
         industry: selectedPack.label,
-        business_name: form.business_name || selectedPack.workspace_name,
-        services: form.services,
-        target_audience: form.target_audience || selectedPack.target_audience,
-        primary_goal: form.primary_goal || selectedPack.primary_goal,
-        website_url: form.website_url,
-        whatsapp_number: form.whatsapp_number,
-        instagram_handle: form.instagram_handle,
-        business_description: form.business_description,
-        tone: form.tone,
-        language: form.language,
+        business_name: cleanForm.business_name || selectedPack.workspace_name,
+        services: cleanForm.services,
+        target_audience: cleanForm.target_audience || selectedPack.target_audience,
+        primary_goal: cleanForm.primary_goal || selectedPack.primary_goal,
+        website_url: cleanForm.website_url,
+        whatsapp_number: cleanForm.whatsapp_number,
+        instagram_handle: cleanForm.instagram_handle,
+        business_description: cleanForm.business_description,
+        tone: cleanForm.tone,
+        language: cleanForm.language,
       });
       setStepIndex(setupSteps.length - 1);
       toast.success('Your B9 Automation workspace is ready!');
@@ -139,7 +155,7 @@ export default function OnboardingPage() {
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="text-sm font-bold text-slate-100">Setup health</p>
-                    <p className="mt-1 text-xs text-slate-500">Complete the basics to unlock your dashboard.</p>
+                    <p className="mt-1 text-xs text-slate-500">Complete more fields to improve your first AI drafts.</p>
                   </div>
                   <div className="text-3xl font-bold text-orange-100">{completion}%</div>
                 </div>
@@ -217,8 +233,8 @@ export default function OnboardingPage() {
 
             <div className="mt-3 grid gap-3 md:grid-cols-2">
               <select value={form.language} onChange={(e) => setForm({ ...form, language: e.target.value })} className="input-field">
-                <option value="hinglish">Hinglish</option>
                 <option value="english">English</option>
+                <option value="hinglish">Hinglish</option>
                 <option value="hindi">Hindi</option>
               </select>
               <select value={form.tone} onChange={(e) => setForm({ ...form, tone: e.target.value })} className="input-field">
@@ -255,7 +271,7 @@ export default function OnboardingPage() {
               }}
               className="mt-2 w-full text-center text-xs text-slate-400 hover:text-slate-200 transition"
             >
-              Skip for now — set up later in Settings
+              Skip for now - set up later in Settings
             </button>
           </motion.form>
         </div>
