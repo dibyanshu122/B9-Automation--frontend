@@ -101,6 +101,7 @@
       ".brainai-chat-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}",
       ".brainai-chat-chip{border:1px solid #d1d5db;background:#fff;color:#111827;border-radius:999px;padding:8px 12px;font:600 13px/1 inherit;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.05);transition:all 0.2s}",
       ".brainai-chat-chip:hover{background:#f9fafb;border-color:#9ca3af}",
+      ".brainai-launch{display:flex;flex-direction:column;align-items:center}",
       ".brainai-robot{position:relative;width:122px;height:122px;border:0;background:transparent;cursor:pointer;padding:0;filter:drop-shadow(0 18px 34px rgba(17,24,39,.24));animation:brainai-wave 2.4s ease-in-out infinite}",
       ".brainai-robot spline-viewer{width:122px;height:122px;display:block}",
       ".brainai-fallback{display:none;width:90px;height:90px;border-radius:24px;object-fit:cover;background:" + primaryColor + ";color:#fff;align-items:center;justify-content:center;font:900 28px/1 inherit}",
