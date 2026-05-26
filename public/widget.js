@@ -181,22 +181,18 @@
       doIntro = false;
       root.style.transform = "scale(1)";
       bubble.classList.remove("intro");
-      bubble.textContent = "Chat with us";
+      bubble.textContent = welcome;
       if (introTimeout) clearTimeout(introTimeout);
     }
 
     title.textContent = config.title || DEFAULT_CONFIG.title;
     if (doIntro) {
-      var isBottom = config.position.indexOf("top") === -1;
-      var isRight = config.position.indexOf("left") === -1;
-      var translateX = isRight ? "calc(-50vw + 80px)" : "calc(50vw - 80px)";
-      var translateY = isBottom ? "calc(-50vh + 80px)" : "calc(50vh - 80px)";
-      root.style.transform = "translate(" + translateX + ", " + translateY + ") scale(2.2)";
+      root.style.transform = "scale(1.3)";
       bubble.classList.add("intro");
-      bubble.innerHTML = "👋 Hi! How can I help you today?";
+      bubble.textContent = welcome;
       introTimeout = setTimeout(endIntro, 3500);
     } else {
-      bubble.textContent = "Chat with us";
+      bubble.textContent = welcome;
       root.style.transform = "scale(1)";
     }
 
