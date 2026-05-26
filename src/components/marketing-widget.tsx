@@ -10,13 +10,37 @@ function isMarketing(pathname: string) {
   return !HIDE_PATHS.some(p => pathname.startsWith(p));
 }
 
+function hideWidget() {
+  const el = document.getElementById('brainai-widget-root');
+  if (el) el.style.display = 'none';
+}
+
 export function MarketingWidget() {
   const pathname = usePathname();
+  const marketing = isMarketing(pathname);
 
   useEffect(() => {
-    const el = document.getElementById('brainai-widget-root');
-    if (el) el.style.display = isMarketing(pathname) ? '' : 'none';
-  }, [pathname]);
+    if (marketing) {
+      const el = document.getElementById('brainai-widget-root');
+      if (el) el.style.display = '';
+      return;
+    }
+
+    // Hide immediately if widget already exists
+    hideWidget();
+
+    // MutationObserver — catches widget being created AFTER this effect runs (script race)
+    const observer = new MutationObserver(() => {
+      hideWidget();
+    });
+    observer.observe(document.body, { childList: true, subtree: false });
+
+    return () => observer.disconnect();
+  }, [pathname, marketing]);
+
+  // Don't render Script at all on non-marketing pages
+  // This prevents widget from loading on fresh load of /login, /dashboard, etc.
+  if (!marketing) return null;
 
   return (
     <Script
