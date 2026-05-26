@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import Script from 'next/script';
 import './globals.css';
 import { Providers } from './providers';
 
@@ -88,6 +89,40 @@ export default function RootLayout({
       </head>
       <body className={`${inter.className} font-sans`} suppressHydrationWarning>
         <Providers>{children}</Providers>
+        <Script
+          id="b9-widget"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                var s = document.createElement('script');
+                s.src = 'https://b9-automation-frontend.vercel.app/widget.js';
+                s.async = true;
+                s.onload = function() {
+                  B9Automation.init({
+                    assistantId: '7086ce82-e8f9-45fa-bdf0-85185f84af22',
+                    apiUrl: 'https://b9-automation-backend.onrender.com',
+                    businessName: 'My Knowledge Base',
+                    config: {
+                      title: 'Chat with us',
+                      primary_color: '#3b82f6',
+                      theme_color: '#3b82f6',
+                      welcome_message: 'Hi! How can we help?',
+                      position: 'bottom-right',
+                      enable_3d_robot: true,
+                      spline_scene_url: 'https://prod.spline.design/jxk-XEJksbP0STuI/scene.splinecode',
+                      suggested_buttons: ['Pricing', 'Services', 'Book Demo', 'Talk to Team'],
+                      lead_capture_after_messages: 3,
+                      sales_agent_mode: true,
+                      watermark_enabled: false
+                    }
+                  });
+                };
+                document.head.appendChild(s);
+              })();
+            `,
+          }}
+        />
       </body>
     </html>
   );
