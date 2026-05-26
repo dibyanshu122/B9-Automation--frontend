@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Check, CheckCheck, ChevronRight, FileText, Inbox, Loader2, MapPin, MessageCircle, MoreVertical, Play, Search, Send, Tag, Trash2, User, XCircle, Zap, Paperclip, Image as ImageIcon, Mic, Phone, Filter, MoreHorizontal, ShoppingCart, Sticker } from 'lucide-react';
+import { ArrowLeft, Check, CheckCheck, FileText, Loader2, MapPin, MessageCircle, MoreVertical, Play, Search, Send, Tag, Trash2, User, XCircle, Zap, Paperclip, Image as ImageIcon, Mic, Phone, ShoppingCart, Sticker } from 'lucide-react';
 import { Button } from '@/components/button';
 import { useApi } from '@/hooks/useApi';
 import { useAuthStore } from '@/store/authStore';
@@ -323,8 +323,11 @@ function UnifiedInbox() {
   const [leadProfile, setLeadProfile] = useState<any>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
-  const [leadMemory, setLeadMemory] = useState<any[]>([]);
-  const [memoryExpanded, setMemoryExpanded] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_leadMemory, setLeadMemory] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_memoryExpanded, setMemoryExpanded] = useState(false);
+
   const [templates, setTemplates] = useState<any[]>([]);
   const [tplOpen, setTplOpen] = useState(false);
   const [tplSearch, setTplSearch] = useState('');

@@ -715,7 +715,7 @@ export default function PlatformAdminPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 bg-white">
-                      {overview.users.recent_signups.map((user: any) => (
+                      {overview?.users?.recent_signups?.map((user: any) => (
                         <tr key={user.id} className="hover:bg-slate-50/50 transition-colors">
                           <td className="px-5 py-3.5">
                             <p className="font-medium text-slate-900">{user.name}</p>
@@ -753,7 +753,7 @@ export default function PlatformAdminPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 bg-white">
-                      {overview.revenue.recent_invoices.map((invoice: any) => (
+                      {overview?.revenue?.recent_invoices?.map((invoice: any) => (
                         <tr key={invoice.id} className="hover:bg-slate-50/50 transition-colors">
                           <td className="px-5 py-3.5 font-medium text-slate-800">{invoice.invoice_number}</td>
                           <td className="px-5 py-3.5 text-slate-500">{invoice.email || invoice.user_id}</td>

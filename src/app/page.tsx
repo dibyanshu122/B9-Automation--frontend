@@ -3,14 +3,12 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import Script from 'next/script';
-import { Button } from '@/components/button';
 import { Logo } from '@/components/logo';
 import { SplineViewer } from '@/components/spline-viewer';
-import { featureHighlights, workflowSteps, trustPoints, blogPosts, allFeatures } from '@/lib/marketing';
+import { featureHighlights, workflowSteps, allFeatures } from '@/lib/marketing';
 import {
-  ArrowRight, Bot, Brain, Building2, ChevronDown, MessageCircle, Sparkles, Users,
-  CheckCircle2, Globe, Mail, Linkedin, Instagram, Youtube, ExternalLink,
+  ArrowRight, Bot, ChevronDown, MessageCircle, Sparkles, Users,
+  CheckCircle2,
   Menu, X,
 } from 'lucide-react';
 
@@ -81,32 +79,6 @@ const liveIntegrations = [
   { label: 'Webhooks / REST',  icon: <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#F43F5E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>, desc: 'Connect any external tool or API' },
 ];
 
-const extendedUseCases = [
-  {
-    industry: 'Coaching Centers',
-    icon: Brain,
-    flow: 'Inquiry → AI qualifies (class/subject) → Demo booked via WhatsApp Flow → Fee WhatsApp sent → Razorpay payment link',
-    stat: '3x More Demo Bookings',
-  },
-  {
-    industry: 'Real Estate',
-    icon: Building2,
-    flow: 'IndiaMART / Facebook lead → AI sends property details + catalog → Site visit booked → Follow-up until site visit',
-    stat: '60% Faster Response',
-  },
-  {
-    industry: 'D2C & E-commerce',
-    icon: Users,
-    flow: 'Shopify order → WhatsApp confirmation sent → Delivery follow-up → Review request → Upsell campaign',
-    stat: '2x Repeat Orders',
-  },
-  {
-    industry: 'Clinics & Healthcare',
-    icon: Sparkles,
-    flow: 'Inquiry → AI collects symptoms + preferred doctor → Appointment booked → Reminder 1 hour before',
-    stat: 'Zero Missed Appointments',
-  },
-];
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -552,7 +524,6 @@ export default function HomePage() {
               className="space-y-12"
             >
               {workflowSteps.map((step, i) => {
-                const Icon = step.icon;
                 return (
                   <motion.div key={step.title} variants={fadeUp} className="relative pl-20 group">
                     <div className="absolute left-0 top-0 h-12 w-12 rounded-2xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-md flex items-center justify-center text-sm font-bold text-gray-300 shadow-xl group-hover:scale-110 group-hover:bg-white/[0.06] group-hover:border-white/[0.15] transition-all duration-500 z-10">
@@ -936,58 +907,6 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
-      <Script
-        id="b9-widget"
-        strategy="afterInteractive"
-        dangerouslySetInnerHTML={{
-          __html: `
-            (function() {
-              var HIDE_PATHS = ['/dashboard', '/login', '/signup', '/onboarding', '/admin', '/auth'];
-              function isMarketingPage() {
-                var p = window.location.pathname;
-                return !HIDE_PATHS.some(function(h) { return p.startsWith(h); });
-              }
-              function syncVisibility() {
-                var el = document.getElementById('brainai-widget-root');
-                if (el) el.style.display = isMarketingPage() ? '' : 'none';
-              }
-              // Intercept Next.js client-side navigation
-              var _push = history.pushState;
-              history.pushState = function() { _push.apply(this, arguments); syncVisibility(); };
-              window.addEventListener('popstate', syncVisibility);
-
-              if (!isMarketingPage()) return;
-
-              var s = document.createElement('script');
-              s.src = 'https://b9-automation-frontend.vercel.app/widget.js';
-              s.async = true;
-              s.onload = function() {
-                B9Automation.init({
-                  assistantId: '7086ce82-e8f9-45fa-bdf0-85185f84af22',
-                  apiUrl: 'https://b9-automation-backend.onrender.com',
-                  businessName: 'B9 Automation',
-                  config: {
-                    title: 'B9 Automation',
-                    primary_color: '#3b82f6',
-                    theme_color: '#3b82f6',
-                    welcome_message: 'Hi! Ask me anything about B9 Automation.',
-                    position: 'bottom-right',
-                    enable_3d_robot: true,
-                    spline_scene_url: 'https://prod.spline.design/jxk-XEJksbP0STuI/scene.splinecode',
-                    suggested_buttons: ['Pricing', 'Features', 'Book Demo', 'Talk to Team'],
-                    lead_capture_after_messages: 3,
-                    sales_agent_mode: true,
-                    watermark_enabled: false,
-                    language: 'en',
-                    response_language: 'English'
-                  }
-                });
-              };
-              document.head.appendChild(s);
-            })();
-          `,
-        }}
-      />
     </div>
   );
 }
