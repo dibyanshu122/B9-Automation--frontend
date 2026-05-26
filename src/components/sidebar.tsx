@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { API_BASE_URL, SIDEBAR_GROUPS } from '@/lib/constants';
 import { useUIStore } from '@/store/uiStore';
 import { useAuthStore } from '@/store/authStore';
+import { useRouter } from 'next/navigation';
 import { Logo } from '@/components/logo';
 import {
   Bell, Brain, FileText, MessageCircle, Code, BarChart3, CreditCard,
@@ -13,7 +14,7 @@ import {
   Rocket, ChevronDown, ChevronsLeft, ChevronsRight, LayoutDashboard,
   ShoppingCart, Send, Layout, Upload, ScrollText, Key, Megaphone,
   MessageSquare, Zap, Database, Building2, Layers, QrCode, FlaskConical,
-  Bot, UserCog, UserX, Target,
+  Bot, UserCog, UserX, Target, LogOut,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { Button } from './button';
@@ -103,12 +104,19 @@ function useUnreadCount() {
 
 export const Sidebar = () => {
   const pathname = usePathname();
+  const router = useRouter();
+  const { logout } = useAuthStore();
   const {
     sidebarOpen, setSidebarOpen, toggleSidebar,
     sidebarPinned, toggleSidebarPinned,
     openGroups, toggleGroup,
   } = useUIStore();
   const unreadCount = useUnreadCount();
+
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
+  };
   const [teamAccess, setTeamAccess] = useState<TeamAccess | null>(null);
 
   // Hover state with small leave-delay to prevent flicker when moving between children
@@ -298,6 +306,18 @@ export const Sidebar = () => {
             );
           })}
 
+          {/* Logout */}
+          <button
+            onClick={handleLogout}
+            title={!expanded ? 'Logout' : undefined}
+            className={clsx(
+              'flex w-full items-center rounded-lg text-red-400/70 transition-all hover:bg-red-500/10 hover:text-red-400 text-sm',
+              expanded ? 'gap-3 px-3 py-2.5' : 'my-1 h-11 justify-center gap-0 px-0 py-0'
+            )}>
+            <LogOut className="w-4 h-4 shrink-0" />
+            <span className={lbl}>Logout</span>
+          </button>
+
           {/* Pin / Unpin */}
           <button onClick={toggleSidebarPinned}
             title={sidebarPinned ? 'Collapse sidebar' : 'Pin sidebar open'}
@@ -310,7 +330,6 @@ export const Sidebar = () => {
             ) : (
               <ChevronsRight className="w-4 h-4 shrink-0" />
             )}
-
             <span className={lbl}>{sidebarPinned ? 'Collapse' : 'Pin open'}</span>
           </button>
         </div>
@@ -395,6 +414,14 @@ export const Sidebar = () => {
               </Link>
             );
           })}
+          <div className="my-2 border-t border-white/10" />
+          <button
+            onClick={handleLogout}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-red-400/70 transition hover:bg-red-500/10 hover:text-red-400"
+          >
+            <LogOut className="w-5 h-5 shrink-0" />
+            <span>Logout</span>
+          </button>
         </nav>
       </aside>
     </>

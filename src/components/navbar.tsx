@@ -37,6 +37,7 @@ export const Navbar = () => {
   const [aiCredits, setAiCredits] = useState<number | null>(null);
   const [aiLimit, setAiLimit] = useState<number>(500);
   const notifRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -81,6 +82,9 @@ export const Navbar = () => {
     const handleClick = (e: MouseEvent) => {
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
         setShowNotifDropdown(false);
+      }
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setShowUserMenu(false);
       }
     };
     document.addEventListener('mousedown', handleClick);
@@ -213,27 +217,35 @@ export const Navbar = () => {
                   <span className="text-sm text-slate-400">
                     {user.email}
                   </span>
-                  <div className="relative">
+                  <div ref={userMenuRef} className="relative">
                     <button
                       onClick={() => setShowUserMenu(!showUserMenu)}
-                      className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-cyan-500 text-white flex items-center justify-center shadow-sm"
+                      className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-cyan-500 text-white flex items-center justify-center shadow-sm font-bold text-sm"
                     >
-                      {user.name?.[0]?.toUpperCase() || 'U'}
+                      {user.name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || 'U'}
                     </button>
                     {showUserMenu && (
-                      <div className="b9-glass absolute right-0 top-full mt-2 overflow-hidden rounded-lg">
+                      <div
+                        className="absolute right-0 top-full mt-2 w-48 overflow-hidden rounded-xl border border-slate-700 bg-slate-900 shadow-2xl shadow-black/60"
+                        style={{ zIndex: 9999 }}
+                      >
+                        <div className="border-b border-white/10 px-4 py-2.5">
+                          <p className="text-xs font-semibold text-slate-300 truncate">{user.name || user.email}</p>
+                          <p className="text-[10px] text-slate-500 truncate">{user.email}</p>
+                        </div>
                         <Link
                           href="/dashboard/settings"
-                          className="block px-4 py-2 text-slate-200 hover:bg-white/10"
+                          onClick={() => setShowUserMenu(false)}
+                          className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-300 hover:bg-white/8 hover:text-white transition"
                         >
-                          <Settings className="w-4 h-4 inline mr-2" />
+                          <Settings className="w-4 h-4 shrink-0" />
                           Settings
                         </Link>
                         <button
                           onClick={handleLogout}
-                          className="w-full px-4 py-2 text-left text-slate-200 hover:bg-white/10"
+                          className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 transition"
                         >
-                          <LogOut className="w-4 h-4 inline mr-2" />
+                          <LogOut className="w-4 h-4 shrink-0" />
                           Logout
                         </button>
                       </div>
