@@ -249,7 +249,7 @@
 
     function closePanel() {
       panel.classList.remove("open");
-      launch.style.display = "block";
+      launch.style.display = "flex";
     }
 
     function showLeadForm() {
