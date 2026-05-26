@@ -753,11 +753,7 @@ function UnifiedInbox() {
 
             {/* Messages */}
             <div ref={chatBoxRef} className="flex-1 overflow-y-auto p-4 md:p-8 space-y-2 relative" style={{
-              backgroundImage: 'url("https://web.whatsapp.com/img/bg-chat-tile-dark_a4be512e7195b6b733d9110b408f075d.png")',
-              backgroundSize: '400px',
-              backgroundRepeat: 'repeat',
               backgroundColor: '#efeae2',
-              backgroundBlendMode: 'overlay',
             }}>
               {threadLoading ? (
                 <div className="flex justify-center pt-12"><Loader2 className="h-6 w-6 animate-spin text-gray-400" /></div>
