@@ -35,7 +35,7 @@ const faqs = [
   },
   {
     q: 'Which platforms does B9 integrate with?',
-    a: 'WhatsApp (Official Meta Cloud API), Gmail, Google Sheets, Facebook Lead Ads, Instagram DM, Razorpay, and IndiaMART are live today. Webhook support lets you connect any external tool or API. More native integrations (Telegram, Slack, Calendly, Zoho) coming soon.',
+    a: 'WhatsApp (Official Meta Cloud API), Gmail, Google Sheets, Facebook Lead Ads, Instagram DM, Razorpay, IndiaMART, and Shopify are live today. Webhook support and REST API v1 (22 scopes) let you connect any external tool.',
   },
   {
     q: 'How does the AI learn my business?',
@@ -47,7 +47,7 @@ const faqs = [
   },
   {
     q: 'Is my customer data safe?',
-    a: 'Yes. All data is encrypted at rest and in transit (256-bit AES). We never train AI models on your data. WhatsApp tokens are stored encrypted using PBKDF2. We follow GDPR-ready practices: opt-out is durable, consent is logged, and SOC2/ISO 27001 are on our roadmap.',
+    a: 'Yes. All data is encrypted at rest and in transit (256-bit AES). We never train AI models on your data. WhatsApp tokens are stored encrypted using PBKDF2. We follow GDPR-ready practices: opt-out is durable and consent is logged.',
   },
   {
     q: 'Is there a free plan?',
