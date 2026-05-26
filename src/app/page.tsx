@@ -942,6 +942,22 @@ export default function HomePage() {
         dangerouslySetInnerHTML={{
           __html: `
             (function() {
+              var HIDE_PATHS = ['/dashboard', '/login', '/signup', '/onboarding', '/admin', '/auth'];
+              function isMarketingPage() {
+                var p = window.location.pathname;
+                return !HIDE_PATHS.some(function(h) { return p.startsWith(h); });
+              }
+              function syncVisibility() {
+                var el = document.getElementById('brainai-widget-root');
+                if (el) el.style.display = isMarketingPage() ? '' : 'none';
+              }
+              // Intercept Next.js client-side navigation
+              var _push = history.pushState;
+              history.pushState = function() { _push.apply(this, arguments); syncVisibility(); };
+              window.addEventListener('popstate', syncVisibility);
+
+              if (!isMarketingPage()) return;
+
               var s = document.createElement('script');
               s.src = 'https://b9-automation-frontend.vercel.app/widget.js';
               s.async = true;
