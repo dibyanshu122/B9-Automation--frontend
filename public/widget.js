@@ -96,7 +96,7 @@
       "<style>",
       ":host{all:initial;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#111827}",
       "*{box-sizing:border-box;letter-spacing:0}",
-      ".brainai-stage{display:flex;flex-direction:column;align-items:center;gap:6px}",
+      ".brainai-stage{display:flex;flex-direction:column;align-items:flex-end;gap:6px}",
       ".brainai-bubble{position:relative;max-width:240px;border:2px solid #e5e7eb;background:#fff;color:#111827;border-radius:16px;padding:11px 18px;font:700 14px/1.35 inherit;box-shadow:0 8px 28px rgba(0,0,0,.12);text-align:center;transition:all 0.3s ease;}.brainai-bubble::after{content:'';position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);border-left:8px solid transparent;border-right:8px solid transparent;border-top:8px solid #fff;}",
       ".brainai-chat-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}",
       ".brainai-chat-chip{border:1px solid #d1d5db;background:#fff;color:#111827;border-radius:999px;padding:8px 12px;font:600 13px/1 inherit;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.05);transition:all 0.2s}",
