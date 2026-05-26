@@ -377,7 +377,14 @@ function buildFlowJson(screens: FlowScreen[]): object {
     };
   });
 
-  return { version: '7.0', routing_model: routing, screens: builtScreens };
+  // Clean routing_model: remove references to non-existent screen IDs
+  const validIds = new Set(builtScreens.map(s => s.id));
+  const cleanRouting: Record<string, string[]> = {};
+  builtScreens.forEach(s => {
+    cleanRouting[s.id] = (routing[s.id] || []).filter(id => validIds.has(id));
+  });
+
+  return { version: '7.0', routing_model: cleanRouting, screens: builtScreens };
 }
 
 //  WhatsApp Phone Preview 
