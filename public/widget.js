@@ -97,7 +97,7 @@
       ":host{all:initial;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#111827}",
       "*{box-sizing:border-box;letter-spacing:0}",
       ".brainai-stage{display:flex;flex-direction:column;align-items:flex-end;gap:10px}",
-      ".brainai-bubble{position:relative;max-width:260px;border:2px solid #e5e7eb;background:#fff;color:#111827;border-radius:40px 40px 4px 40px;padding:12px 20px;font:700 14px/1.35 inherit;box-shadow:0 12px 35px rgba(0,0,0,.15);text-align:center;transition:all 0.3s ease;}",
+      ".brainai-bubble{position:relative;max-width:260px;border:2px solid #e5e7eb;background:#fff;color:#111827;border-radius:18px;padding:12px 20px;font:700 14px/1.35 inherit;box-shadow:0 12px 35px rgba(0,0,0,.15);text-align:center;transition:all 0.3s ease;}.brainai-bubble::after{content:'';position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);border-left:10px solid transparent;border-right:10px solid transparent;border-top:10px solid #fff;filter:drop-shadow(0 2px 0 #e5e7eb);}",
       ".brainai-chat-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}",
       ".brainai-chat-chip{border:1px solid #d1d5db;background:#fff;color:#111827;border-radius:999px;padding:8px 12px;font:600 13px/1 inherit;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.05);transition:all 0.2s}",
       ".brainai-chat-chip:hover{background:#f9fafb;border-color:#9ca3af}",
