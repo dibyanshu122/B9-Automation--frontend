@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Check, ChevronRight, FileText, Inbox, Loader2, MapPin, MessageCircle, MoreVertical, Play, Search, Send, Tag, Trash2, User, XCircle, Zap } from 'lucide-react';
+import { ArrowLeft, Check, CheckCheck, ChevronRight, FileText, Inbox, Loader2, MapPin, MessageCircle, MoreVertical, Play, Search, Send, Tag, Trash2, User, XCircle, Zap, Paperclip, Image as ImageIcon, Mic, Phone, Filter, MoreHorizontal, ShoppingCart, Sticker } from 'lucide-react';
 import { Button } from '@/components/button';
 import { useApi } from '@/hooks/useApi';
 import { useAuthStore } from '@/store/authStore';
@@ -43,16 +43,25 @@ function ChannelIcon({ channel, size = 16 }: { channel: string; size?: number })
   return <span className="text-sm">Chat</span>;
 }
 
-function timeAgo(iso: string) {
+function timeAgo(iso: string, format: 'short' | 'time' | 'full' = 'short') {
   if (!iso) return '';
-  // Add 'Z' if missing so browser treats as UTC (server stores UTC without Z)
   const utcIso = iso.endsWith('Z') || iso.includes('+') ? iso : iso + 'Z';
-  const diff = Math.floor((Date.now() - new Date(utcIso).getTime()) / 1000);
-  if (diff < 10) return 'just now';
-  if (diff < 60) return `${diff}s ago`;
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  return `${Math.floor(diff / 86400)}d ago`;
+  const date = new Date(utcIso);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (format === 'time' || (format === 'short' && diffDays === 0 && now.getDate() === date.getDate())) {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+  
+  if (format === 'short') {
+    if (diffDays === 1 || (diffDays === 0 && now.getDate() !== date.getDate())) return 'Yesterday';
+    return date.toLocaleDateString([], { day: 'numeric', month: 'short' });
+  }
+
+  // full format for tooltips
+  return date.toLocaleString();
 }
 
 interface Contact {
@@ -81,11 +90,11 @@ function templateVarCount(body: string): number {
 function DeliveryTick({ status, delivery_status, isOutbound }: { status?: string; delivery_status?: string; isOutbound: boolean }) {
   if (!isOutbound) return null;
   const ds = delivery_status || status || '';
-  if (ds === 'read') return <span className="text-sky-300 text-[11px]">read</span>;
-  if (ds === 'delivered') return <span className="text-emerald-100 text-[11px]">delivered</span>;
-  if (ds === 'sent' || status === 'sent') return <span className="text-emerald-200 text-[11px]">sent</span>;
-  if (status === 'failed') return <span className="text-red-300 text-[11px]">failed</span>;
-  return <span className="text-emerald-200 text-[11px]">sent</span>;
+  if (ds === 'read') return <CheckCheck className="h-3.5 w-3.5 text-blue-500" />;
+  if (ds === 'delivered') return <CheckCheck className="h-3.5 w-3.5 text-gray-400" />;
+  if (ds === 'sent' || status === 'sent') return <Check className="h-3.5 w-3.5 text-gray-400" />;
+  if (status === 'failed') return <XCircle className="h-3.5 w-3.5 text-red-500" />;
+  return <Check className="h-3.5 w-3.5 text-gray-400" />;
 }
 
 /* Rich message content renderer */
@@ -107,7 +116,7 @@ function MessageContent({ msg, isOutbound }: { msg: any; isOutbound: boolean }) 
     const mediaId = img.id || '';
     return (
       <div className="space-y-1">
-        <div className="rounded-lg overflow-hidden bg-black/10 max-w-[240px]">
+        <div className="rounded-lg overflow-hidden bg-gray-100 max-w-[240px]">
           {mediaId ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -118,13 +127,13 @@ function MessageContent({ msg, isOutbound }: { msg: any; isOutbound: boolean }) 
               onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
             />
           ) : (
-            <div className="flex flex-col items-center gap-1 py-4 px-6 opacity-60">
-              <span className="text-2xl">🖼️</span>
-              <span className="text-[10px]">Image</span>
+            <div className="flex flex-col items-center gap-2 py-6 px-8 text-gray-400">
+              <ImageIcon className="h-8 w-8" />
+              <span className="text-[10px] uppercase tracking-wide font-medium">Image</span>
             </div>
           )}
         </div>
-        {caption && <p className="text-sm leading-relaxed mt-1">{caption}</p>}
+        {caption && <p className="text-[14.5px] leading-snug mt-1 text-gray-800">{caption}</p>}
       </div>
     );
   }
@@ -135,11 +144,11 @@ function MessageContent({ msg, isOutbound }: { msg: any; isOutbound: boolean }) 
     const caption = vid.caption || text;
     return (
       <div className="space-y-1">
-        <div className="rounded-lg bg-black/20 flex items-center justify-center gap-2 px-4 py-3 min-w-[140px]">
-          <Play className="h-5 w-5" />
-          <span className="text-sm font-medium">Video</span>
+        <div className="rounded-lg bg-gray-800 text-white flex items-center justify-center gap-2 px-4 py-6 min-w-[200px]">
+          <Play className="h-8 w-8 opacity-80" />
+          <span className="text-sm font-medium opacity-80">Video</span>
         </div>
-        {caption && <p className="text-sm leading-relaxed">{caption}</p>}
+        {caption && <p className="text-[14.5px] leading-snug text-gray-800">{caption}</p>}
       </div>
     );
   }
@@ -147,18 +156,20 @@ function MessageContent({ msg, isOutbound }: { msg: any; isOutbound: boolean }) 
   // Audio / Voice
   if (type === 'audio' || type === 'voice') {
     return (
-      <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-black/10 min-w-[140px]">
-        <span className="text-lg">🎵</span>
+      <div className={`flex items-center gap-3 px-3 py-2 rounded-lg min-w-[180px] ${isOutbound ? 'bg-green-100/50' : 'bg-gray-100'}`}>
+        <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${isOutbound ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-600'}`}>
+          <Play className="h-4 w-4 ml-0.5" />
+        </div>
         <div className="flex-1">
           <div className="flex gap-0.5 items-end h-5">
-            {Array.from({length: 20}).map((_, i) => (
-              <div key={i} className="w-0.5 rounded-full opacity-60" style={{
-                height: `${30 + Math.sin(i * 0.8) * 20 + Math.cos(i * 1.3) * 15}%`,
-                background: isOutbound ? 'white' : '#25D366'
+            {Array.from({length: 24}).map((_, i) => (
+              <div key={i} className="w-[3px] rounded-full opacity-40" style={{
+                height: `${30 + Math.sin(i * 0.5) * 40 + Math.cos(i * 1.1) * 30}%`,
+                background: isOutbound ? '#166534' : '#4b5563'
               }} />
             ))}
           </div>
-          <p className="text-[10px] mt-0.5 opacity-70">Voice message</p>
+          <p className={`text-[10px] mt-1 opacity-70 ${isOutbound ? 'text-green-800' : 'text-gray-500'}`}>Voice message</p>
         </div>
       </div>
     );
@@ -177,17 +188,19 @@ function MessageContent({ msg, isOutbound }: { msg: any; isOutbound: boolean }) 
           download={filename}
           target="_blank"
           rel="noreferrer"
-          className={`flex items-center gap-2 rounded-lg px-3 py-2 min-w-[160px] transition ${
-            isOutbound ? 'bg-emerald-400/30 hover:bg-emerald-400/40' : 'bg-gray-100 hover:bg-gray-200'
+          className={`flex items-center gap-3 rounded-lg px-3 py-2 min-w-[200px] transition ${
+            isOutbound ? 'bg-green-100 hover:bg-green-200/70' : 'bg-gray-100 hover:bg-gray-200'
           }`}
         >
-          <FileText className="h-5 w-5 shrink-0" />
+          <div className={`h-10 w-10 flex items-center justify-center rounded-lg shrink-0 ${isOutbound ? 'bg-green-200 text-green-700' : 'bg-gray-200 text-gray-600'}`}>
+            <FileText className="h-5 w-5" />
+          </div>
           <div className="min-w-0">
-            <p className="text-sm font-medium truncate max-w-[160px]">{filename}</p>
-            <p className="text-[10px] opacity-60">{doc.mime_type ? doc.mime_type.split('/')[1]?.toUpperCase() : 'Document'} · Tap to download</p>
+            <p className="text-[14px] font-medium truncate text-gray-900 max-w-[160px]">{filename}</p>
+            <p className="text-[11px] text-gray-500 mt-0.5 uppercase tracking-wide">{doc.mime_type ? doc.mime_type.split('/')[1]?.substring(0,4) : 'DOC'} • {doc.file_size ? Math.round(doc.file_size/1024) + 'KB' : 'File'}</p>
           </div>
         </a>
-        {caption && <p className="text-sm px-1">{caption}</p>}
+        {caption && <p className="text-[14.5px] leading-snug px-1 text-gray-800">{caption}</p>}
       </div>
     );
   }
@@ -195,9 +208,9 @@ function MessageContent({ msg, isOutbound }: { msg: any; isOutbound: boolean }) 
   // Sticker
   if (type === 'sticker') {
     return (
-      <div className="flex items-center gap-2 opacity-70">
-        <span className="text-3xl">🎭</span>
-        <span className="text-xs">Sticker</span>
+      <div className="flex flex-col items-center gap-1 opacity-80 py-2">
+        <Sticker className="h-12 w-12 text-gray-400" />
+        <span className="text-[10px] uppercase font-medium text-gray-400">Sticker</span>
       </div>
     );
   }
@@ -212,18 +225,19 @@ function MessageContent({ msg, isOutbound }: { msg: any; isOutbound: boolean }) 
     const mapsUrl = `https://maps.google.com/?q=${lat},${lng}`;
     return (
       <a href={mapsUrl} target="_blank" rel="noreferrer" className="block">
-        <div className={`rounded-xl overflow-hidden border min-w-[200px] ${isOutbound ? 'border-emerald-400' : 'border-gray-200'}`}>
-          <div className="bg-gray-100 h-16 flex items-center justify-center relative">
-            <div className="w-full h-full" style={{
-              background: 'linear-gradient(135deg, #e2e8f0 25%, #f0f4f8 50%, #e2e8f0 75%)',
-              backgroundSize: '20px 20px',
+        <div className={`rounded-lg overflow-hidden border min-w-[220px] ${isOutbound ? 'border-green-200' : 'border-gray-200'}`}>
+          <div className="bg-gray-100 h-24 flex items-center justify-center relative">
+            <div className="w-full h-full opacity-30" style={{
+              background: 'linear-gradient(135deg, #e2e8f0 25%, #cbd5e1 50%, #e2e8f0 75%)',
+              backgroundSize: '16px 16px',
             }} />
-            <MapPin className="absolute h-6 w-6 text-red-500" />
+            <div className="absolute flex flex-col items-center">
+              <MapPin className="h-8 w-8 text-red-500 fill-red-100" />
+            </div>
           </div>
-          <div className={`px-2 py-1.5 ${isOutbound ? 'bg-emerald-400/20' : 'bg-white'}`}>
-            <p className="text-xs font-semibold truncate">{name}</p>
-            {address && <p className="text-[10px] opacity-70 truncate">{address}</p>}
-            <p className="text-[10px] text-blue-500 mt-0.5">Open in Maps ↗</p>
+          <div className={`px-3 py-2 ${isOutbound ? 'bg-green-50' : 'bg-white'}`}>
+            <p className="text-[14px] font-semibold truncate text-gray-900">{name}</p>
+            {address && <p className="text-[12px] text-gray-500 truncate mt-0.5">{address}</p>}
           </div>
         </div>
       </a>
@@ -238,14 +252,14 @@ function MessageContent({ msg, isOutbound }: { msg: any; isOutbound: boolean }) 
     return (
       <div className="space-y-1">
         {replyTitle && (
-          <div className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold border ${
-            isOutbound ? 'border-emerald-300 bg-emerald-400/20' : 'border-emerald-200 bg-emerald-50 text-emerald-800'
+          <div className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium ${
+            isOutbound ? 'bg-green-100 text-green-800' : 'bg-blue-50 text-blue-800'
           }`}>
-            <Check className="h-3 w-3" />
+            <Check className="h-3.5 w-3.5" />
             {replyTitle}
           </div>
         )}
-        {text && text !== replyTitle && <p className="text-sm">{text}</p>}
+        {text && text !== replyTitle && <p className="text-[14.5px] leading-snug text-gray-800 mt-1">{text}</p>}
       </div>
     );
   }
@@ -256,10 +270,10 @@ function MessageContent({ msg, isOutbound }: { msg: any; isOutbound: boolean }) 
     const btnText = btn.text || text;
     return (
       <div className="space-y-1">
-        <div className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold border ${
-          isOutbound ? 'border-emerald-300 bg-emerald-400/20' : 'border-blue-200 bg-blue-50 text-blue-800'
+        <div className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium ${
+          isOutbound ? 'bg-green-100 text-green-800' : 'bg-blue-50 text-blue-800'
         }`}>
-          <Check className="h-3 w-3" />
+          <Check className="h-3.5 w-3.5" />
           {btnText}
         </div>
       </div>
@@ -271,11 +285,13 @@ function MessageContent({ msg, isOutbound }: { msg: any; isOutbound: boolean }) 
     const order = payload.order || {};
     const itemCount = (order.product_items || []).length;
     return (
-      <div className="flex items-center gap-2 rounded-lg bg-black/10 px-3 py-2">
-        <span className="text-xl">🛒</span>
+      <div className={`flex items-center gap-3 rounded-lg px-3 py-2 border ${isOutbound ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'}`}>
+        <div className={`h-10 w-10 rounded-full flex items-center justify-center shrink-0 ${isOutbound ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'}`}>
+          <ShoppingCart className="h-5 w-5" />
+        </div>
         <div>
-          <p className="text-sm font-semibold">Order placed</p>
-          <p className="text-xs opacity-70">{itemCount > 0 ? `${itemCount} item${itemCount > 1 ? 's' : ''}` : 'From catalog'}</p>
+          <p className="text-[14px] font-semibold text-gray-900">Order placed</p>
+          <p className="text-[12px] text-gray-500">{itemCount > 0 ? `${itemCount} item${itemCount > 1 ? 's' : ''}` : 'From catalog'}</p>
         </div>
       </div>
     );
@@ -283,9 +299,9 @@ function MessageContent({ msg, isOutbound }: { msg: any; isOutbound: boolean }) 
 
   // Default: plain text (with line breaks)
   const displayText = text || '';
-  if (!displayText) return <p className="text-sm italic opacity-50">Empty message</p>;
+  if (!displayText) return <p className="text-sm italic text-gray-400">Empty message</p>;
   return (
-    <p className="text-sm leading-relaxed whitespace-pre-wrap">{displayText}</p>
+    <p className="text-[14.5px] leading-snug whitespace-pre-wrap text-gray-800 break-words">{displayText}</p>
   );
 }
 
@@ -544,63 +560,64 @@ function UnifiedInbox() {
     });
 
   return (
-    <div className="grid h-full min-h-0 min-w-0 grid-cols-1 gap-4 overflow-hidden xl:grid-cols-[320px_minmax(0,1fr)]">
+    <div className="grid h-full min-h-0 min-w-0 grid-cols-1 gap-0 overflow-hidden xl:grid-cols-[360px_minmax(0,1fr)] bg-white">
       {/* LEFT — Contacts panel */}
-        <div className={`b9-glass flex min-h-0 flex-col overflow-hidden rounded-lg ${selected ? 'hidden xl:flex' : 'flex'}`}>
+        <div className={`flex min-h-0 flex-col overflow-hidden border-r border-gray-200 bg-white ${selected ? 'hidden xl:flex' : 'flex'}`}>
           {/* Header */}
-          <div className="px-5 pt-5 pb-3">
-            <div className="flex items-center justify-between mb-3">
+          <div className="px-4 py-3 bg-[#f0f2f5] flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <h1 className="font-bold text-gray-800 text-xl">Chats</h1>
               <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-500/20">
-                  <Inbox className="h-4 w-4 text-cyan-400" />
-                </div>
-                <span className="font-bold text-white text-sm">Inbox</span>
+                <button className="p-2 rounded-full hover:bg-gray-200 text-gray-500 transition">
+                  <MessageCircle className="h-5 w-5" />
+                </button>
+                <button className="p-2 rounded-full hover:bg-gray-200 text-gray-500 transition">
+                  <MoreVertical className="h-5 w-5" />
+                </button>
               </div>
-              {contacts.length > 0 && (
-                <span className="rounded-full bg-cyan-500 px-2 py-0.5 text-[10px] font-bold text-white">{contacts.length}</span>
-              )}
             </div>
             {/* Search */}
-            <div className="relative mb-2">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+            <div className="relative flex items-center bg-white rounded-lg px-3 py-1.5 border-b-2 border-transparent focus-within:border-green-500 transition-colors shadow-sm">
+              <Search className="h-4 w-4 text-gray-400 shrink-0" />
               <input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder="Search contacts…"
-                className="w-full rounded-lg bg-white/8 border border-white/10 pl-8 pr-7 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/50"
+                placeholder="Search or start new chat"
+                className="w-full bg-transparent pl-3 pr-2 py-1 text-sm text-gray-700 placeholder-gray-400 focus:outline-none"
               />
               {search && (
-                <button onClick={() => setSearch('')}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-100 transition">
-                  <XCircle className="h-3.5 w-3.5" />
+                <button onClick={() => setSearch('')} className="text-gray-400 hover:text-gray-600 transition">
+                  <XCircle className="h-4 w-4" />
                 </button>
               )}
             </div>
             {/* Filter tabs */}
-            <div className="flex gap-1 mt-3 overflow-x-auto pb-1 scrollbar-hide">
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
               {(['all', 'whatsapp', 'instagram', 'facebook'] as const).map(ch => (
                 <button key={ch} onClick={() => setFilter(ch)}
-                  className={`shrink-0 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold transition-all ${
+                  className={`shrink-0 rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-all border ${
                     filter === ch
-                      ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/30'
-                      : 'text-slate-400 hover:bg-white/10 hover:text-slate-200'
+                      ? 'bg-green-100 border-green-200 text-green-800'
+                      : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                   }`}>
-                  {ch === 'all' ? 'All' : <span className="flex items-center gap-1"><ChannelIcon channel={ch} size={12} /><span className="hidden lg:inline">{CHANNEL_BADGE[ch]?.label}</span></span>}
+                  {ch === 'all' ? 'All' : <span className="flex items-center gap-1.5"><ChannelIcon channel={ch} size={14} /><span className="hidden lg:inline">{CHANNEL_BADGE[ch]?.label}</span></span>}
                 </button>
               ))}
             </div>
           </div>
 
           {/* Contact rows */}
-          <div className="flex-1 overflow-y-auto mt-1 px-2 pb-2 space-y-0.5">
+          <div className="flex-1 overflow-y-auto bg-white">
             {loading ? (
-              <div className="space-y-1 p-3">
-                {[1,2,3].map(i => <div key={i} className="h-14 rounded-xl bg-white/10 animate-pulse" />)}
+              <div className="space-y-0 p-2">
+                {[1,2,3,4,5].map(i => <div key={i} className="h-[72px] mx-2 my-1 rounded-lg bg-gray-100 animate-pulse" />)}
               </div>
             ) : filtered.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-48 gap-3">
-                <div className="h-14 w-14 rounded-2xl bg-white/5 flex items-center justify-center text-2xl">💬</div>
-                <p className="text-xs text-slate-500 text-center">No messages yet<br/>Connect WhatsApp to get started</p>
+                <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
+                  <MessageCircle className="h-8 w-8" />
+                </div>
+                <p className="text-sm text-gray-500 text-center">No messages yet<br/>Connect WhatsApp to get started</p>
               </div>
             ) : filtered.map(c => {
               const badge = CHANNEL_BADGE[c.channel] || { emoji: '', label: c.channel, color: '' };
@@ -609,37 +626,36 @@ function UnifiedInbox() {
               return (
                 <button key={`${c.channel}::${c.sender_id}`}
                   onClick={() => setSelected(c)}
-                  className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-all ${
-                    isSelected
-                      ? 'bg-cyan-500/20 ring-1 ring-cyan-500/40'
-                      : 'hover:bg-white/8'
+                  className={`w-full flex items-center gap-3 px-3 py-3 text-left transition-all border-b border-gray-100 last:border-0 ${
+                    isSelected ? 'bg-[#f0f2f5]' : 'bg-white hover:bg-[#f5f6f6]'
                   }`}>
                   {/* Avatar */}
-                  <div className="relative shrink-0">
-                    <div className={`flex h-10 w-10 items-center justify-center rounded-full text-base font-bold ${
-                      c.channel === 'whatsapp' ? 'bg-emerald-500/20 text-emerald-400' :
-                      c.channel === 'instagram' ? 'bg-pink-500/20 text-pink-400' :
-                      'bg-blue-500/20 text-blue-400'
+                  <div className="relative shrink-0 ml-1">
+                    <div className={`flex h-12 w-12 items-center justify-center rounded-full text-lg font-medium shadow-sm ${
+                      c.channel === 'whatsapp' ? 'bg-green-100 text-green-700' :
+                      c.channel === 'instagram' ? 'bg-pink-100 text-pink-700' :
+                      'bg-blue-100 text-blue-700'
                     }`}>
-                      {c.sender_name?.[0]?.toUpperCase() || badge.emoji}
+                      {c.sender_name?.[0]?.toUpperCase() || badge.emoji || <User className="h-6 w-6" />}
                     </div>
-                    <span className="absolute -bottom-0.5 -right-0.5"><ChannelIcon channel={c.channel} size={14} /></span>
-                    {/* Window dot */}
-                    <span className={`absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-slate-900 ${win.open ? 'bg-emerald-400' : 'bg-red-400'}`}
-                      title={win.open ? `Window open (${Math.round(win.hoursAgo)}h ago)` : 'Window closed — template required'} />
+                    <span className="absolute -bottom-1 -right-1 rounded-full border-2 border-white bg-white shadow-sm"><ChannelIcon channel={c.channel} size={16} /></span>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-1">
+                  <div className="min-w-0 flex-1 py-1 pr-2">
+                    <div className="flex items-center justify-between gap-1 mb-1">
                       <div className="flex items-center gap-1.5 min-w-0">
-                        <p className={`text-xs font-semibold truncate ${isSelected ? 'text-cyan-300' : 'text-slate-200'}`}>
+                        <p className="text-[16px] font-medium truncate text-gray-900">
                           {resolveContactName(c.sender_id) || c.sender_name}
                         </p>
-                        {c.lead_score === 'hot' && <span className="shrink-0 text-[8px] font-bold px-1 py-0.5 rounded bg-red-500/20 text-red-400">🔥</span>}
-                        {c.lead_score === 'warm' && <span className="shrink-0 text-[8px] font-bold px-1 py-0.5 rounded bg-amber-500/20 text-amber-400">☀️</span>}
+                        {c.lead_score === 'hot' && <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-red-600">🔥 HOT</span>}
                       </div>
-                      <p className="shrink-0 text-[10px] text-slate-500" title={c.last_time ? new Date(c.last_time + 'Z').toLocaleString() : ''}>{timeAgo(c.last_time)}</p>
+                      <p className={`shrink-0 text-[12px] font-medium ${c.unread ? 'text-green-600' : 'text-gray-500'}`} title={c.last_time ? new Date(c.last_time + 'Z').toLocaleString() : ''}>
+                        {timeAgo(c.last_time, 'short')}
+                      </p>
                     </div>
-                    <p className="text-[11px] text-slate-500 truncate mt-0.5">{c.last_text}</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-[14px] text-gray-500 truncate">{c.last_text}</p>
+                      {!win.open && <div className="h-2 w-2 rounded-full bg-red-400 shrink-0" title="Window closed" />}
+                    </div>
                   </div>
                 </button>
               );
@@ -649,50 +665,50 @@ function UnifiedInbox() {
 
         {/* RIGHT — Chat Thread + Lead Profile */}
         {selected ? (
-          <div className="b9-glass flex min-h-0 min-w-0 overflow-hidden rounded-lg">
-          <div className="flex flex-col flex-1 min-w-0">
+          <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden bg-white">
+          <div className="flex flex-col flex-1 min-w-0 bg-[#efeae2]">
             {/* Chat header */}
-            <div className="flex items-center gap-3 px-5 py-3.5 border-b border-white/10 shrink-0">
-              <button onClick={() => setSelected(null)} className="xl:hidden flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-slate-200 transition mr-1">
-                <ArrowLeft className="h-4 w-4" />
-                <span className="text-xs font-semibold">Back</span>
+            <div className="flex items-center gap-3 px-4 py-2.5 bg-[#f0f2f5] border-b border-gray-200 shrink-0 shadow-sm z-10">
+              <button onClick={() => setSelected(null)} className="xl:hidden flex items-center gap-1 p-2 rounded-full hover:bg-gray-200 text-gray-500 transition mr-1">
+                <ArrowLeft className="h-5 w-5" />
               </button>
-              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-base font-bold ${
-                selected.channel === 'whatsapp' ? 'bg-emerald-500/20 text-emerald-400' :
-                selected.channel === 'instagram' ? 'bg-pink-500/20 text-pink-400' :
-                'bg-blue-500/20 text-blue-400'
+              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-base font-medium shadow-sm ${
+                selected.channel === 'whatsapp' ? 'bg-green-100 text-green-700' :
+                selected.channel === 'instagram' ? 'bg-pink-100 text-pink-700' :
+                'bg-blue-100 text-blue-700'
               }`}>
-                {(resolveContactName(selected.sender_id) || selected.sender_name)?.[0]?.toUpperCase() || CHANNEL_BADGE[selected.channel]?.emoji}
+                {(resolveContactName(selected.sender_id) || selected.sender_name)?.[0]?.toUpperCase() || <User className="h-5 w-5" />}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-slate-100 truncate">
+              <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setProfileOpen(o => !o)}>
+                <p className="text-[16px] font-medium text-gray-900 truncate">
                   {resolveContactName(selected.sender_id) || selected.sender_name}
                 </p>
-                <div className="flex items-center gap-1.5 mt-0.5">
+                <div className="flex items-center gap-1.5 mt-0.5 opacity-80">
                   <ChannelIcon channel={selected.channel} size={12} />
-                  <p className="text-[11px] text-slate-400 capitalize">{selected.channel}</p>
-                  <span className="h-1 w-1 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-[10px] text-emerald-400">Active</span>
+                  <p className="text-[12px] text-gray-500 capitalize">{selected.channel}</p>
                 </div>
               </div>
               {/* Profile toggle */}
               <button
                 onClick={() => setProfileOpen(o => !o)}
-                title="Lead Profile"
-                className={`p-2 rounded-xl transition ${profileOpen ? 'bg-slate-900 text-white' : 'hover:bg-gray-100 text-gray-400 hover:text-gray-700'}`}
+                title="Contact Info"
+                className={`p-2.5 rounded-full transition ${profileOpen ? 'bg-gray-200 text-gray-800' : 'hover:bg-gray-200 text-gray-500 hover:text-gray-800'}`}
               >
-                <User className="h-5 w-5" />
+                <Phone className="h-5 w-5" />
+              </button>
+              <button className="p-2.5 rounded-full hover:bg-gray-200 text-gray-500 transition hidden sm:block">
+                <Search className="h-5 w-5" />
               </button>
               {/* 3-dot menu */}
               <div className="relative">
                 <button onClick={e => { e.stopPropagation(); setMenuOpen(o => !o); }}
-                  className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition">
+                  className="p-2.5 rounded-full hover:bg-gray-200 text-gray-500 transition">
                   <MoreVertical className="h-5 w-5" />
                 </button>
                 {menuOpen && (
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-                    <div className="absolute right-0 top-10 z-20 bg-white border border-gray-200 rounded-xl shadow-xl py-1 min-w-[160px]">
+                    <div className="absolute right-0 top-12 z-20 bg-white border border-gray-100 rounded-xl shadow-lg py-1.5 min-w-[180px]">
                       <button onClick={async () => {
                         setMenuOpen(false);
                         if (!confirm('Delete this entire conversation? This cannot be undone.')) return;
@@ -733,36 +749,47 @@ function UnifiedInbox() {
             </div>
 
             {/* Messages */}
-            <div ref={chatBoxRef} className="flex-1 overflow-y-auto p-4 space-y-2 b9-chat-area">
+            <div ref={chatBoxRef} className="flex-1 overflow-y-auto p-4 md:p-8 space-y-2 relative" style={{
+              backgroundImage: 'url("https://web.whatsapp.com/img/bg-chat-tile-dark_a4be512e7195b6b733d9110b408f075d.png")',
+              backgroundSize: '400px',
+              backgroundRepeat: 'repeat',
+              backgroundColor: '#efeae2',
+              backgroundBlendMode: 'overlay',
+            }}>
               {threadLoading ? (
-                <div className="flex justify-center pt-12"><Loader2 className="h-5 w-5 animate-spin text-gray-300" /></div>
+                <div className="flex justify-center pt-12"><Loader2 className="h-6 w-6 animate-spin text-gray-400" /></div>
               ) : thread.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-48 gap-2">
-                  <MessageCircle className="h-10 w-10 text-gray-200" />
-                  <p className="text-sm text-gray-400">No messages yet</p>
+                <div className="flex flex-col items-center justify-center h-full gap-3 opacity-70">
+                  <div className="bg-[#d9fdd3] text-green-900 px-4 py-2 rounded-lg text-sm shadow-sm inline-flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-amber-500" /> Messages are end-to-end encrypted
+                  </div>
                 </div>
               ) : thread.map(msg => {
                 const isOutbound = msg.direction === 'outbound';
                 const isPureMedia = ['image','video','audio','voice','sticker','location','document'].includes(msg.message_type);
                 return (
-                <div key={msg.id} className={`flex items-end gap-2 ${isOutbound ? 'justify-end' : 'justify-start'}`}>
-                  {!isOutbound && (
-                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-300 text-[10px] font-bold text-gray-600 mb-1">
-                      {(resolveContactName(selected.sender_id) || selected.sender_name)?.[0]?.toUpperCase() || '?'}
-                    </div>
-                  )}
-                  <div className={`max-w-[72%] rounded-2xl text-sm ${
+                <div key={msg.id} className={`flex items-end gap-2 w-full ${isOutbound ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[85%] md:max-w-[70%] lg:max-w-[60%] rounded-lg text-[14.5px] shadow-sm relative group ${
                     isOutbound
-                      ? 'bg-emerald-500 text-white rounded-br-none shadow-md shadow-emerald-100'
-                      : 'bg-white text-gray-900 border border-gray-100 rounded-bl-none shadow-sm'
-                  } ${isPureMedia ? 'p-1.5' : 'px-3.5 py-2'}`}>
+                      ? 'bg-[#d9fdd3] text-gray-900 rounded-tr-none'
+                      : 'bg-white text-gray-900 rounded-tl-none'
+                  } ${isPureMedia ? 'p-1' : 'px-3 py-1.5'}`}>
+                    {/* Tail svg (optional detail) */}
+                    <div className={`absolute top-0 w-3 h-3 ${isOutbound ? '-right-2 text-[#d9fdd3]' : '-left-2 text-white'}`}>
+                      <svg viewBox="0 0 8 13" width="8" height="13" className="fill-current">
+                        {isOutbound 
+                          ? <path d="M5.188 1H0v11.193l6.467-8.625C7.526 2.156 6.958 1 5.188 1z" />
+                          : <path d="M1.533 3.568L8 12.193V1H2.812C1.042 1 .474 2.156 1.533 3.568z" />}
+                      </svg>
+                    </div>
+
                     <MessageContent msg={msg} isOutbound={isOutbound} />
-                    <div className={`flex items-center justify-end gap-1 mt-1 ${isPureMedia ? 'px-2 pb-1' : ''}`}>
-                      <span className={`text-[10px] ${isOutbound ? 'text-emerald-100' : 'text-gray-400'}`}
+                    <div className={`flex items-center justify-end gap-1 mt-0.5 ${isPureMedia ? 'px-2 pb-1 absolute bottom-1 right-2 bg-black/20 rounded-full px-1.5 py-0.5' : ''}`}>
+                      <span className={`text-[10px] ${isPureMedia ? 'text-white' : 'text-gray-500'}`}
                         title={msg.created_at ? new Date(msg.created_at + 'Z').toLocaleString() : ''}>
-                        {timeAgo(msg.created_at)}
+                        {timeAgo(msg.created_at, 'time')}
                       </span>
-                      <DeliveryTick status={msg.status} delivery_status={msg.delivery_status} isOutbound={isOutbound} />
+                      {isOutbound && !isPureMedia && <DeliveryTick status={msg.status} delivery_status={msg.delivery_status} isOutbound={isOutbound} />}
                     </div>
                   </div>
                 </div>
@@ -772,120 +799,143 @@ function UnifiedInbox() {
             </div>
 
             {/* Reply box */}
-            <div className="border-t border-white/10 shrink-0">
+            <div className="bg-[#f0f2f5] px-4 py-3 shrink-0 relative">
               {/* 24-hour window compliance banner */}
               {selected && (() => {
                 const win = getWindowStatus(selected.last_time, selected.channel);
-                if (win.open) return (
-                  <div className="flex items-center gap-2 bg-emerald-500/10 border-b border-emerald-500/20 px-4 py-2">
-                    <span className="text-emerald-400 text-sm">●</span>
-                    <p className="text-[11px] text-emerald-300 flex-1">
-                      <strong>Free reply allowed</strong> — messaging window open. AI/manual replies are safe.
-                    </p>
-                  </div>
-                );
+                if (win.open) return null; // WhatsApp doesn't show a banner for open window, it's just normal
                 return (
-                  <div className="flex items-center gap-2 bg-amber-500/10 border-b border-amber-500/20 px-4 py-2">
-                    <span className="text-amber-400 text-sm">⚠️</span>
-                    <p className="text-[11px] text-amber-300 flex-1">
-                      <strong>Window closed</strong> — {Math.round(win.hoursAgo)}h since last message.
-                      Only approved templates can be sent.
-                    </p>
+                  <div className="flex items-center gap-3 bg-amber-50 rounded-lg border border-amber-200 px-4 py-2.5 mb-3 shadow-sm">
+                    <div className="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                      <Phone className="h-4 w-4 text-amber-600" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-[13px] font-medium text-amber-900">Active window closed</p>
+                      <p className="text-[12px] text-amber-700 mt-0.5">
+                        {Math.round(win.hoursAgo)}h since last message. Only approved templates can be sent to start a new 24h window.
+                      </p>
+                    </div>
                     <button onClick={() => { setTplOpen(true); setQrOpen(false); }}
-                      className="shrink-0 text-[10px] font-bold text-amber-400 border border-amber-500/40 rounded-lg px-2 py-1 hover:bg-amber-500/20 transition">
-                      Use Template →
+                      className="shrink-0 text-[13px] font-bold text-white bg-amber-600 rounded-lg px-4 py-2 hover:bg-amber-700 transition shadow-sm">
+                      Use Template
                     </button>
                   </div>
                 );
               })()}
+              
               {/* Quick Reply dropdown */}
               {qrOpen && (
-                <div ref={qrRef} className="border-b border-white/10 bg-white/5 px-4 py-2 max-h-40 overflow-y-auto">
+                <div ref={qrRef} className="absolute bottom-full left-4 mb-2 z-20 w-80 bg-white border border-gray-200 rounded-xl shadow-xl max-h-64 overflow-y-auto py-2">
+                  <div className="px-4 pb-2 border-b border-gray-100">
+                    <p className="text-[12px] font-semibold text-gray-500 uppercase tracking-wide">Quick Replies</p>
+                  </div>
                   {quickReplies.length === 0 ? (
-                    <p className="text-xs text-slate-400 py-1">No quick replies saved. Add in <a href="/dashboard/auto-replies" className="text-amber-400 underline">Auto Replies</a>.</p>
+                    <p className="text-[13px] text-gray-500 p-4">No quick replies saved. Add them in settings.</p>
                   ) : (
-                    <div className="space-y-1">
-                      <p className="text-[10px] font-semibold text-amber-400 mb-1.5">Quick Replies — click to insert</p>
+                    <div className="flex flex-col">
                       {quickReplies.map(qr => (
                         <button key={qr.id} onClick={() => { setReply(qr.message); setQrOpen(false); }}
-                          className="w-full text-left rounded-lg bg-white/10 border border-white/10 px-3 py-1.5 text-xs hover:bg-white/20 transition">
-                          <span className="font-semibold text-amber-300">{qr.title}</span>
-                          <span className="ml-2 text-slate-400 truncate">{qr.message.slice(0, 60)}{qr.message.length > 60 ? '…' : ''}</span>
+                          className="w-full text-left px-4 py-3 hover:bg-gray-50 transition border-b border-gray-50 last:border-0">
+                          <span className="font-semibold text-gray-800 text-[14px]">{qr.title}</span>
+                          <p className="text-[13px] text-gray-500 truncate mt-1">{qr.message}</p>
                         </button>
                       ))}
                     </div>
                   )}
                 </div>
               )}
-              <div className="flex items-center gap-2 px-4 py-3.5">
-                {/* Quick Reply ⚡ */}
-                <button onClick={() => { setQrOpen(v => !v); setTplOpen(false); }} title="Quick Replies"
-                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition ${qrOpen ? 'bg-amber-500/20 border-amber-500/40 text-amber-400' : 'border-white/10 bg-white/5 text-slate-400 hover:bg-amber-500/10 hover:text-amber-400'}`}>
-                  <Zap className="h-4 w-4" />
-                </button>
-                {/* Template send 📋 */}
-                <div className="relative" ref={tplRef}>
-                  <button onClick={() => { setTplOpen(v => !v); setQrOpen(false); }} title="Send Template"
-                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition ${tplOpen ? 'bg-blue-500/20 border-blue-500/40 text-blue-400' : 'border-white/10 bg-white/5 text-slate-400 hover:bg-blue-500/10 hover:text-blue-400'}`}>
-                    <FileText className="h-4 w-4" />
+              
+              <div className="flex items-end gap-2">
+                {/* Tools */}
+                <div className="flex items-center gap-1 pb-1">
+                  <button onClick={() => { setQrOpen(v => !v); setTplOpen(false); }} title="Quick Replies"
+                    className="p-2.5 rounded-full text-gray-500 hover:bg-gray-200 transition">
+                    <Zap className="h-6 w-6" />
                   </button>
-                  {tplOpen && (
-                    <div className="absolute bottom-12 left-0 z-30 w-80 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden">
-                      <div className="px-3 py-2.5 border-b border-white/10 flex items-center gap-2">
-                        <Search className="h-3.5 w-3.5 text-slate-400" />
-                        <input autoFocus value={tplSearch} onChange={e => setTplSearch(e.target.value)}
-                          placeholder="Search approved templates…"
-                          className="flex-1 text-xs outline-none bg-transparent text-slate-200 placeholder-slate-500" />
+                  <div className="relative" ref={tplRef}>
+                    <button onClick={() => { setTplOpen(v => !v); setQrOpen(false); }} title="Send Template"
+                      className="p-2.5 rounded-full text-gray-500 hover:bg-gray-200 transition">
+                      <FileText className="h-6 w-6" />
+                    </button>
+                    {tplOpen && (
+                      <div className="absolute bottom-12 left-0 z-30 w-80 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden flex flex-col max-h-[400px]">
+                        <div className="px-3 py-2.5 border-b border-gray-100 flex items-center gap-2 bg-gray-50 shrink-0">
+                          <Search className="h-4 w-4 text-gray-400" />
+                          <input autoFocus value={tplSearch} onChange={e => setTplSearch(e.target.value)}
+                            placeholder="Search templates…"
+                            className="flex-1 text-[13px] outline-none bg-transparent text-gray-800 placeholder-gray-400" />
+                        </div>
+                        <div className="flex-1 overflow-y-auto py-1">
+                          {templates.filter(t => !tplSearch || t.name?.toLowerCase().includes(tplSearch.toLowerCase())).length === 0 ? (
+                            <p className="text-[13px] text-gray-400 p-4 text-center">No approved templates</p>
+                          ) : templates
+                            .filter(t => !tplSearch || t.name?.toLowerCase().includes(tplSearch.toLowerCase()))
+                            .map((t: any) => {
+                              const body = t.components?.find((c: any) => c.type === 'BODY')?.text || t.body || '';
+                              return (
+                                <button key={t.id || t.name} onClick={async () => {
+                                  setTplOpen(false);
+                                  const count = templateVarCount(body);
+                                  if (count > 0) {
+                                    setTemplateDraft({ template: t, body, values: Array(count).fill('') });
+                                  } else {
+                                    await sendTemplate(t, body, []);
+                                  }
+                                }} className="w-full text-left px-4 py-3 hover:bg-gray-50 transition border-b border-gray-50 last:border-0 group">
+                                  <p className="text-[14px] font-semibold text-gray-900 group-hover:text-green-600 transition-colors">{t.name}</p>
+                                  <p className="text-[13px] text-gray-500 mt-1 line-clamp-2 leading-relaxed">{body}</p>
+                                  <span className="text-[11px] font-medium text-gray-400 mt-2 block bg-gray-100 w-fit px-2 py-0.5 rounded">{t.category}</span>
+                                </button>
+                              );
+                            })}
+                        </div>
                       </div>
-                      <div className="max-h-64 overflow-y-auto">
-                        {templates.filter(t => !tplSearch || t.name?.toLowerCase().includes(tplSearch.toLowerCase())).length === 0 ? (
-                          <p className="text-xs text-gray-400 p-4 text-center">No approved templates</p>
-                        ) : templates
-                          .filter(t => !tplSearch || t.name?.toLowerCase().includes(tplSearch.toLowerCase()))
-                          .map((t: any) => {
-                            const body = t.components?.find((c: any) => c.type === 'BODY')?.text || t.body || '';
-                            return (
-                              <button key={t.id || t.name} onClick={async () => {
-                                setTplOpen(false);
-                                const count = templateVarCount(body);
-                                if (count > 0) {
-                                  setTemplateDraft({ template: t, body, values: Array(count).fill('') });
-                                } else {
-                                  await sendTemplate(t, body, []);
-                                }
-                              }} className="w-full text-left px-4 py-3 hover:bg-blue-50 transition border-b border-gray-50 last:border-0">
-                                <p className="text-xs font-semibold text-gray-800">{t.name}</p>
-                                <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-2">{body}</p>
-                                <span className="text-[10px] text-blue-500 mt-1 inline-block">{t.language} · {t.category}</span>
-                              </button>
-                            );
-                          })}
-                      </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
+                  <button onClick={() => toast('Attachment feature coming soon!')} className="p-2.5 rounded-full text-gray-500 hover:bg-gray-200 transition">
+                    <Paperclip className="h-6 w-6" />
+                  </button>
                 </div>
+
+                {/* Input */}
                 {(() => {
                   const win = getWindowStatus(selected.last_time, selected.channel);
                   const blocked = !win.open && selected.channel === 'whatsapp';
                   return (
-                    <>
-                      <input
-                        type="text"
+                    <div className="flex-1 bg-white rounded-lg border border-transparent focus-within:border-green-500 flex items-end shadow-sm">
+                      <textarea
+                        rows={1}
                         value={reply}
-                        onChange={e => setReply(e.target.value)}
-                        onKeyDown={e => e.key === 'Enter' && !e.shiftKey && !blocked && sendReply()}
-                        placeholder={blocked ? 'Window closed — use template above' : `Message ${resolveContactName(selected.sender_id) || selected.sender_name}…`}
+                        onChange={e => {
+                          setReply(e.target.value);
+                          e.target.style.height = 'auto';
+                          e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+                        }}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            if (!blocked) sendReply();
+                          }
+                        }}
+                        placeholder={blocked ? 'Window closed — use template' : 'Type a message'}
                         disabled={blocked}
-                        className={`flex-1 rounded-xl border px-4 py-2.5 text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition ${blocked ? 'border-amber-500/20 bg-amber-500/5 text-slate-500 cursor-not-allowed' : 'border-white/10 bg-white/8 text-slate-200 focus:bg-white/15'}`}
+                        className={`w-full max-h-[120px] min-h-[44px] bg-transparent px-4 py-3 text-[15px] resize-none focus:outline-none scrollbar-hide ${blocked ? 'text-gray-400 cursor-not-allowed bg-gray-50 rounded-lg' : 'text-gray-800'}`}
                       />
-                      <button onClick={sendReply} disabled={sending || sendingTemplate || !reply.trim() || blocked}
-                        title={blocked ? '24h window closed — use template' : 'Send message'}
-                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white hover:bg-slate-700 disabled:opacity-30 transition shadow-md">
-                        {sending || sendingTemplate ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                      </button>
-                    </>
+                    </div>
                   );
                 })()}
+
+                {/* Send/Mic */}
+                <div className="pb-1 pl-1">
+                  <button onClick={() => reply.trim() ? sendReply() : toast('Voice messaging coming soon!')} disabled={sending || sendingTemplate || (!reply.trim() && !getWindowStatus(selected.last_time, selected.channel).open && selected.channel === 'whatsapp')}
+                    className={`flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full transition-colors ${
+                      reply.trim() 
+                        ? 'bg-green-600 text-white hover:bg-green-700 shadow-md' 
+                        : 'text-gray-500 hover:bg-gray-200'
+                    }`}>
+                    {sending || sendingTemplate ? <Loader2 className="h-5 w-5 animate-spin" /> : reply.trim() ? <Send className="h-5 w-5 ml-1" /> : <Mic className="h-6 w-6" />}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -934,118 +984,113 @@ function UnifiedInbox() {
 
           {/* LEAD PROFILE SIDEBAR */}
           {profileOpen && (
-            <div className="w-72 shrink-0 border-l border-white/10 flex flex-col overflow-y-auto">
-              <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wide text-slate-400">Lead Profile</span>
-                <button onClick={() => setProfileOpen(false)} className="text-gray-400 hover:text-gray-700 p-1 rounded-lg hover:bg-gray-100">
-                  <ChevronRight className="h-4 w-4" />
+            <div className="w-80 shrink-0 border-l border-gray-200 bg-white flex flex-col overflow-y-auto">
+              <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
+                <span className="text-sm font-semibold text-gray-800">Contact Info</span>
+                <button onClick={() => setProfileOpen(false)} className="text-gray-500 hover:text-gray-800 p-1.5 rounded-full hover:bg-gray-100 transition">
+                  <XCircle className="h-5 w-5" />
                 </button>
               </div>
               {profileLoading ? (
-                <div className="p-4 space-y-2">
-                  {[1,2,3].map(i => <div key={i} className="h-8 bg-gray-200 rounded-lg animate-pulse" />)}
+                <div className="p-5 space-y-4">
+                  <div className="h-24 w-24 rounded-full bg-gray-100 animate-pulse mx-auto" />
+                  <div className="h-4 w-32 bg-gray-100 animate-pulse mx-auto" />
+                  <div className="space-y-2 mt-8">
+                    {[1,2,3].map(i => <div key={i} className="h-10 bg-gray-100 rounded-lg animate-pulse" />)}
+                  </div>
                 </div>
               ) : leadProfile ? (
-                <div className="p-4 space-y-4">
+                <div className="p-0">
                   {/* Avatar + Name */}
-                  <div className="flex flex-col items-center gap-2 py-2">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-900 text-white text-xl font-bold">
-                      {leadProfile.name?.[0]?.toUpperCase() || '?'}
+                  <div className="flex flex-col items-center gap-3 py-8 px-5 border-b border-gray-100">
+                    <div className="flex h-32 w-32 items-center justify-center rounded-full bg-gray-100 text-gray-400 text-4xl font-medium shadow-sm">
+                      {leadProfile.name?.[0]?.toUpperCase() || <User className="h-12 w-12" />}
                     </div>
-                    <p className="font-bold text-gray-900 text-sm text-center">{leadProfile.name || 'Unknown'}</p>
-                    <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                    <div className="text-center">
+                      <p className="font-medium text-gray-900 text-xl">{leadProfile.name || 'Unknown Contact'}</p>
+                      <p className="text-sm text-gray-500 mt-1">{leadProfile.phone || selected.sender_id}</p>
+                    </div>
+                    <span className={`mt-1 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide ${
                       leadProfile.status === 'hot' ? 'bg-red-100 text-red-700' :
                       leadProfile.status === 'warm' ? 'bg-amber-100 text-amber-700' :
                       'bg-blue-100 text-blue-700'
                     }`}>{leadProfile.status || 'new'}</span>
                   </div>
-                  <div className="rounded-xl border border-cyan-100 bg-cyan-50 p-3">
-                    <p className="text-[10px] font-bold uppercase tracking-wide text-cyan-700">Owner Summary</p>
-                    <div className="mt-2 space-y-1 text-xs text-cyan-900">
-                      <p><span className="font-semibold">Intent:</span> {leadProfile.intent || leadProfile.ai_intent || leadProfile.tag || 'Needs review'}</p>
-                      <p><span className="font-semibold">Priority:</span> {leadProfile.status || selected.lead_score || 'cold'}</p>
-                      <p><span className="font-semibold">Next:</span> {leadProfile.status === 'hot' ? 'Call or send payment/catalog' : 'Reply, qualify, or schedule follow-up'}</p>
-                    </div>
-                  </div>
-                  {/* Details */}
-                  {[
-                    { label: 'Phone', value: leadProfile.phone, icon: '📞' },
-                    { label: 'Email', value: leadProfile.email, icon: '✉️' },
-                    { label: 'Source', value: leadProfile.source, icon: '📌' },
-                    { label: 'Assigned to', value: leadProfile.assigned_to, icon: '👤' },
-                  ].filter(d => d.value).map(d => (
-                    <div key={d.label} className="flex gap-2">
-                      <span className="text-sm shrink-0">{d.icon}</span>
-                      <div>
-                        <p className="text-[10px] text-gray-400 uppercase tracking-wide">{d.label}</p>
-                        <p className="text-xs font-medium text-gray-800">{d.value}</p>
+
+                  <div className="px-5 py-6 border-b border-gray-100 space-y-5">
+                    <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-3">AI Summary</p>
+                      <div className="space-y-2.5 text-[14px] text-gray-800">
+                        <p><span className="font-medium text-gray-500 w-16 inline-block">Intent:</span> {leadProfile.intent || leadProfile.ai_intent || leadProfile.tag || 'Needs review'}</p>
+                        <p><span className="font-medium text-gray-500 w-16 inline-block">Priority:</span> {leadProfile.status || selected.lead_score || 'cold'}</p>
+                        <p><span className="font-medium text-gray-500 w-16 inline-block">Next:</span> {leadProfile.status === 'hot' ? 'Call or send payment link' : 'Schedule follow-up'}</p>
                       </div>
                     </div>
-                  ))}
-                  {/* Last message */}
-                  {leadProfile.message && (
-                    <div>
-                      <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Last Message</p>
-                      <p className="text-xs text-gray-600 bg-white rounded-lg px-3 py-2 border border-gray-100 leading-relaxed">{leadProfile.message}</p>
-                    </div>
-                  )}
-                  {/* AI Summary */}
-                  {leadProfile.ai_summary && (
-                    <div>
-                      <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">🤖 AI Summary</p>
-                      <p className="text-xs text-gray-600 bg-purple-50 rounded-lg px-3 py-2 border border-purple-100 leading-relaxed italic">{leadProfile.ai_summary}</p>
-                    </div>
-                  )}
-                  {/* Persistent Lead Memory */}
-                  {leadMemory.length > 0 && (
-                    <div>
-                      <button
-                        onClick={() => setMemoryExpanded(e => !e)}
-                        className="flex items-center justify-between w-full text-[10px] text-gray-400 uppercase tracking-wide mb-1 hover:text-gray-600"
-                      >
-                        <span>🧠 AI Memory ({leadMemory.length} turns)</span>
-                        <span>{memoryExpanded ? '▲' : '▼'}</span>
-                      </button>
-                      {memoryExpanded && (
-                        <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                          {leadMemory.slice(-8).map((m: any, i: number) => (
-                            <div key={i} className={`text-[10px] rounded-lg px-2 py-1.5 leading-relaxed ${m.role === 'customer' ? 'bg-blue-50 text-blue-800' : 'bg-green-50 text-green-800'}`}>
-                              <span className="font-bold uppercase mr-1">{m.role === 'customer' ? '👤' : '🤖'}</span>
-                              {m.text}
-                            </div>
-                          ))}
+
+                    {/* Details */}
+                    <div className="space-y-4">
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Contact Details</p>
+                      {[
+                        { label: 'Email', value: leadProfile.email, icon: <FileText className="h-4 w-4" /> },
+                        { label: 'Source', value: leadProfile.source, icon: <MapPin className="h-4 w-4" /> },
+                        { label: 'Owner', value: leadProfile.assigned_to, icon: <User className="h-4 w-4" /> },
+                      ].filter(d => d.value).map(d => (
+                        <div key={d.label} className="flex gap-3 items-center">
+                          <div className="h-8 w-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 shrink-0">
+                            {d.icon}
+                          </div>
+                          <div>
+                            <p className="text-[11px] text-gray-500 font-medium">{d.label}</p>
+                            <p className="text-[14px] text-gray-900">{d.value}</p>
+                          </div>
                         </div>
-                      )}
+                      ))}
                     </div>
-                  )}
-                  {/* Tags */}
-                  {leadProfile.tag && (
-                    <div className="flex items-center gap-1.5">
-                      <Tag className="h-3.5 w-3.5 text-gray-400" />
-                      <span className="rounded-full bg-gray-200 px-2 py-0.5 text-[10px] font-semibold text-gray-600">{leadProfile.tag}</span>
-                    </div>
-                  )}
-                  {/* View full profile */}
-                  <a href="/dashboard/leads" className="flex items-center justify-center gap-1.5 mt-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition">
-                    View Full Profile →
-                  </a>
+
+                    {/* Tags */}
+                    {leadProfile.tag && (
+                      <div className="pt-2">
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-2">Tags</p>
+                        <div className="flex flex-wrap gap-2">
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-[12px] font-medium text-gray-700">
+                            <Tag className="h-3 w-3 text-gray-400" />
+                            {leadProfile.tag}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="p-5">
+                    <a href="/dashboard/leads" className="flex items-center justify-center gap-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-[14px] font-medium text-red-600 hover:bg-red-50 hover:border-red-100 transition">
+                      <Trash2 className="h-4 w-4" /> Delete Contact
+                    </a>
+                  </div>
                 </div>
               ) : (
-                <div className="p-4 text-center">
-                  <User className="h-8 w-8 text-gray-300 mx-auto mb-2" />
-                  <p className="text-xs text-gray-400">No lead profile found for this contact</p>
-                  <p className="text-[10px] text-gray-400 mt-1">{selected.sender_id}</p>
+                <div className="p-8 text-center flex flex-col items-center justify-center h-full opacity-50">
+                  <User className="h-16 w-16 text-gray-300 mb-4" />
+                  <p className="text-[15px] font-medium text-gray-600">No profile found</p>
+                  <p className="text-[13px] text-gray-400 mt-1">{selected.sender_id}</p>
                 </div>
               )}
             </div>
           )}
           </div>
         ) : (
-          <div className="b9-glass hidden xl:flex min-h-0 flex-col items-center justify-center gap-4 rounded-lg">
-            <MessageCircle className="h-16 w-16 text-slate-500" />
-            <div className="text-center">
-              <p className="font-bold text-slate-100">Your conversations</p>
-              <p className="text-sm text-slate-400 mt-1">Select a contact from the left to open chat</p>
+          <div className="hidden xl:flex min-h-0 flex-col items-center justify-center bg-[#f0f2f5] border-l border-gray-200">
+            <div className="text-center max-w-md px-6 flex flex-col items-center">
+              <div className="h-32 w-32 bg-white rounded-full flex items-center justify-center mb-8 shadow-sm">
+                <MessageCircle className="h-16 w-16 text-green-500" />
+              </div>
+              <h2 className="text-2xl font-light text-gray-800 mb-3">Brain AI Messages</h2>
+              <p className="text-[14px] text-gray-500 leading-relaxed">
+                Send and receive messages without keeping your phone online.<br/>
+                Use WhatsApp on up to 4 linked devices and 1 phone at the same time.
+              </p>
+              <div className="mt-8 pt-8 border-t border-gray-300 w-full flex items-center justify-center gap-2 text-[13px] text-gray-400">
+                <Zap className="h-4 w-4" /> End-to-end encrypted
+              </div>
             </div>
           </div>
         )}
@@ -1055,7 +1100,7 @@ function UnifiedInbox() {
 
 export default function MessagesPage() {
   return (
-    <div style={{ height: 'calc(100dvh - 80px)' }} className="flex flex-col">
+    <div style={{ height: 'calc(100dvh - 80px)' }} className="flex flex-col bg-white">
       <UnifiedInbox />
     </div>
   );
