@@ -588,7 +588,9 @@ export default function AutomationsPage() {
 
   const integrationStatusFor = (provider: string) => {
     const item = integrations.find((integration) => integration.provider === provider);
-    return item?.status?.split('_').join(' ') || 'not connected';
+    if (!item) return 'not connected';
+    if (item.status) return item.status.split('_').join(' ');
+    return item.connected ? 'connected' : 'not connected';
   };
 
   const workflowValidation = useMemo(() => {
