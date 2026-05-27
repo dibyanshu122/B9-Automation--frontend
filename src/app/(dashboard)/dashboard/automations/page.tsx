@@ -1739,8 +1739,10 @@ export default function AutomationsPage() {
                     setNodes(genNodes);
                     setEdges(genEdges);
                     if (genName) setWorkflowName(genName);
+                    setActiveWorkflowId('');
+                    setShowWorkflowList(false);
                     setShowGenerateModal(false);
-                    setTimeout(() => autoArrangeFlow(), 100);
+                    setTimeout(() => setNodes(items => arrangeNodes(items, genEdges)), 150);
                     toast.success('Flow generated! Review nodes and click Save.');
                   } catch (err: any) {
                     toast.error(err.response?.data?.detail || 'Generation failed. Try a more detailed description');
