@@ -1183,6 +1183,16 @@ export default function AutomationsPage() {
               }
             }
           }}
+          onToggleStatus={async (id, currentStatus) => {
+            const newStatus = currentStatus === 'active' ? 'draft' : 'active';
+            try {
+              await put(`/api/automation/workflows/${id}`, { status: newStatus });
+              setWorkflows((prev) => prev.map((w) => w.id === id ? { ...w, status: newStatus } : w));
+              toast.success(newStatus === 'active' ? 'Workflow activated' : 'Workflow paused');
+            } catch {
+              toast.error('Failed to update workflow status');
+            }
+          }}
           onRefresh={() => refresh()}
         />
       )}
@@ -1959,6 +1969,7 @@ function WorkflowListView({
   onOpen,
   onNew,
   onDelete,
+  onToggleStatus,
   onRefresh,
 }: {
   workflows: AutomationWorkflow[];
@@ -1966,6 +1977,7 @@ function WorkflowListView({
   onOpen: (wf: AutomationWorkflow) => void;
   onNew: () => void;
   onDelete: (id: string) => void;
+  onToggleStatus?: (id: string, currentStatus: string) => void;
   onRefresh?: () => void;
 }) {
   return (
@@ -2057,6 +2069,16 @@ function WorkflowListView({
                     <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${wf.status === 'active' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-white/10 text-slate-400'}`}>
                       {wf.status}
                     </span>
+                    {onToggleStatus && (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); onToggleStatus(wf.id, wf.status); }}
+                        className={`flex h-6 items-center gap-1 rounded-md px-2 text-[10px] font-semibold opacity-0 transition group-hover:opacity-100 ${wf.status === 'active' ? 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30' : 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30'}`}
+                        title={wf.status === 'active' ? 'Pause workflow' : 'Activate workflow'}
+                      >
+                        {wf.status === 'active' ? '⏸ Pause' : '▶ Activate'}
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={(e) => {
