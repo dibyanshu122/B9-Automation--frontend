@@ -2617,7 +2617,8 @@ function ActionBlockSettings({
     })
       .then(r => r.json())
       .then(data => {
-        setWaTemplates((data.data || []).filter((t: any) => t.status === 'APPROVED'));
+        const list = data.templates || data.data || [];
+        setWaTemplates(list.filter((t: any) => t.status === 'APPROVED' || t.status === 'approved'));
         setTemplatesLoaded(true);
       })
       .catch(() => {})
