@@ -897,6 +897,7 @@ export default function AutomationsPage() {
         message: { text: testMessage },
         whatsapp: { fromNumber: testLeadPhone, text: testMessage },
         user_message: testMessage,
+        is_test_run: true,
       };
       setNodeOutputs({});
       setExpandedOutputs(new Set());
