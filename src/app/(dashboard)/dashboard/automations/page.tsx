@@ -88,10 +88,10 @@ interface WorkflowValidationResult {
   trigger_paths?: Array<{ node_id: string; trigger_type: string; reachable_nodes: string[]; has_outgoing: boolean }>;
 }
 
-const FLOW_CENTER_Y = 300;   // main pipeline Y
-const BRANCH_OFFSET_Y = 220; // vertical gap per leaf slot
-const FLOW_START_X = 60;
-const FLOW_GAP_X = 320;
+const FLOW_CENTER_Y = 340;   // main pipeline Y
+const BRANCH_OFFSET_Y = 250; // vertical gap per leaf slot
+const FLOW_START_X = 80;
+const FLOW_GAP_X = 360;
 const AUTOSAVE_KEY = 'brainai:automation-builder:v1';
 
 const blockStyles = {
@@ -123,7 +123,7 @@ const baseLibrary: LibraryBlock[] = [
   { type: 'trigger', title: 'New Instagram Message', description: 'Runs on every incoming Instagram DM.', config: { trigger_type: 'new_instagram_message', source: 'instagram' } },
   { type: 'trigger', title: 'Payment Success', description: 'Fires after a successful Razorpay payment.', config: { trigger_type: 'payment_success' } },
   { type: 'trigger', title: 'IndiaMART Lead', description: 'Auto-polls IndiaMART every 15 min for new buyer leads.', config: { trigger_type: 'indiamart' } },
-  { type: 'ai', title: 'Agentic AI (Auto)', description: 'Agentic AI decides which approved tools to call: reply, catalog, payment, handover, and follow-up. Review before live sending.', config: { tool: 'agentic_agent', max_steps: '4', max_messages: '2', send_mode: 'draft', handover_enabled: 'true', template_fallback_enabled: 'true' } },
+  { type: 'ai', title: 'Agentic AI (Auto)', description: 'Agentic AI decides which approved tools to call: reply, catalog, payment, handover, and follow-up.', config: { tool: 'agentic_agent', max_steps: '4', max_messages: '2', send_mode: 'live', handover_enabled: 'true', template_fallback_enabled: 'true' } },
   { type: 'ai', title: 'AI Agent', description: 'Gemini Flash reply using lead, message and knowledge context.', config: { tool: 'ai_agent', tone: 'Friendly', response_length: 'Short', use_knowledge_base: 'true', use_previous_data: 'true' } },
   { type: 'ai', title: 'Conversation Flow', description: 'Uses uploaded chatbot flow PDF to decide the next reply.', config: { tool: 'conversation_flow_pdf', strict_mode: 'true', fallback_instruction: 'Ask one clarification question or hand over to team if flow is unclear.' } },
   { type: 'ai', title: 'Document Search', description: 'Find the right answer from uploaded docs.', config: { tool: 'document_routing' } },
@@ -179,22 +179,22 @@ const visibleLibrary: LibraryBlock[] = [
   { type: 'action', title: 'Schedule Reminder', description: 'Schedule a WhatsApp follow-up reminder to send automatically after X hours or days.', config: { tool: 'schedule_followup', hours: '24', days: '0', message: 'Hi {{lead.name}}, just checking in! Do you need any help?' } },
   { type: 'action', title: 'Wait 1 Hour', description: 'Pause the flow for 1 hour before the next step.', config: { tool: 'wait_node', delay_minutes: 60 } },
   // ── Actions ───────────────────────────────────────────────────────────────
-  { type: 'action', title: 'Send WhatsApp', description: 'Send WhatsApp message or approved template to the lead.', config: { tool: 'send_whatsapp_message', recipient: '{{lead.phone}}', message_body: '{{ai.response}}', message_mode: 'text', send_mode: 'draft', language_code: 'en_US' } },
-  { type: 'action', title: 'Send WhatsApp Image/Video', description: 'Send a product image, video, PDF, or document to the customer via WhatsApp.', config: { tool: 'send_whatsapp_media', recipient: '{{lead.phone}}', media_type: 'image', media_url: '', caption: '{{ai.response}}', send_mode: 'draft' } },
-  { type: 'action', title: 'Send WhatsApp Menu', description: 'Send an interactive list/menu message with up to 10 options for the customer to choose from.', config: { tool: 'send_whatsapp_list_message', recipient: '{{lead.phone}}', body_text: 'Please choose a service:', button_text: 'View Options', send_mode: 'draft', sections: '[{"title":"Services","rows":[{"id":"opt_1","title":"Option 1"},{"id":"opt_2","title":"Option 2"}]}]' } },
-  { type: 'action', title: 'WhatsApp Buttons (3)', description: 'Send up to 3 quick-reply buttons that customers can tap instantly.', config: { tool: 'send_whatsapp_buttons', recipient: '{{lead.phone}}', body_text: 'Which option suits you best?', buttons: '[{"id":"btn_0","title":"Option 1"},{"id":"btn_1","title":"Option 2"},{"id":"btn_2","title":"Option 3"}]', send_mode: 'draft' } },
-  { type: 'action', title: 'WhatsApp CTA Button', description: 'Send a call-to-action button that opens a URL or calls a phone number.', config: { tool: 'send_whatsapp_cta', recipient: '{{lead.phone}}', body_text: 'Click below to learn more:', buttons: '[{"type":"url","text":"Visit Website","url":"https://your-site.com"}]', send_mode: 'draft' } },
-  { type: 'action', title: 'WhatsApp Form (Flow)', description: 'Open an interactive Meta WhatsApp Flow for surveys, booking forms, and lead capture inside chat.', config: { tool: 'send_whatsapp_meta_flow', recipient: '{{lead.phone}}', flow_id: '', cta_text: 'Fill Form', body_text: 'Please fill in your details below:', send_mode: 'draft' } },
-  { type: 'action', title: 'Send Location', description: 'Send your business location pin to the customer via WhatsApp with name and address.', config: { tool: 'send_whatsapp_location', recipient: '{{lead.phone}}', latitude: '28.6139', longitude: '77.2090', name: 'Our Office', address: '123 Business Park, New Delhi', send_mode: 'draft' } },
-  { type: 'action', title: 'Send Single Product', description: 'Send a single product card from your Meta catalog with a Buy Now button.', config: { tool: 'send_whatsapp_single_product', recipient: '{{lead.phone}}', catalog_id: '', product_retailer_id: '', body_text: 'Check out this product:', send_mode: 'draft' } },
+  { type: 'action', title: 'Send WhatsApp', description: 'Send WhatsApp message or approved template to the lead.', config: { tool: 'send_whatsapp_message', recipient: '{{lead.phone}}', message_body: '{{ai.response}}', message_mode: 'text', send_mode: 'live', language_code: 'en_US' } },
+  { type: 'action', title: 'Send WhatsApp Image/Video', description: 'Send a product image, video, PDF, or document to the customer via WhatsApp.', config: { tool: 'send_whatsapp_media', recipient: '{{lead.phone}}', media_type: 'image', media_url: '', caption: '{{ai.response}}', send_mode: 'live' } },
+  { type: 'action', title: 'Send WhatsApp Menu', description: 'Send an interactive list/menu message with up to 10 options for the customer to choose from.', config: { tool: 'send_whatsapp_list_message', recipient: '{{lead.phone}}', body_text: 'Please choose a service:', button_text: 'View Options', send_mode: 'live', sections: '[{"title":"Services","rows":[{"id":"opt_1","title":"Option 1"},{"id":"opt_2","title":"Option 2"}]}]' } },
+  { type: 'action', title: 'WhatsApp Buttons (3)', description: 'Send up to 3 quick-reply buttons that customers can tap instantly.', config: { tool: 'send_whatsapp_buttons', recipient: '{{lead.phone}}', body_text: 'Which option suits you best?', buttons: '[{"id":"btn_0","title":"Option 1"},{"id":"btn_1","title":"Option 2"},{"id":"btn_2","title":"Option 3"}]', send_mode: 'live' } },
+  { type: 'action', title: 'WhatsApp CTA Button', description: 'Send a call-to-action button that opens a URL or calls a phone number.', config: { tool: 'send_whatsapp_cta', recipient: '{{lead.phone}}', body_text: 'Click below to learn more:', buttons: '[{"type":"url","text":"Visit Website","url":"https://your-site.com"}]', send_mode: 'live' } },
+  { type: 'action', title: 'WhatsApp Form (Flow)', description: 'Open an interactive Meta WhatsApp Flow for surveys, booking forms, and lead capture inside chat.', config: { tool: 'send_whatsapp_meta_flow', recipient: '{{lead.phone}}', flow_id: '', cta_text: 'Fill Form', body_text: 'Please fill in your details below:', send_mode: 'live' } },
+  { type: 'action', title: 'Send Location', description: 'Send your business location pin to the customer via WhatsApp with name and address.', config: { tool: 'send_whatsapp_location', recipient: '{{lead.phone}}', latitude: '28.6139', longitude: '77.2090', name: 'Our Office', address: '123 Business Park, New Delhi', send_mode: 'live' } },
+  { type: 'action', title: 'Send Single Product', description: 'Send a single product card from your Meta catalog with a Buy Now button.', config: { tool: 'send_whatsapp_single_product', recipient: '{{lead.phone}}', catalog_id: '', product_retailer_id: '', body_text: 'Check out this product:', send_mode: 'live' } },
   { type: 'action', title: 'Get Inbound Media URL', description: 'When a customer sends an image/video/document, fetch its download URL for processing.', config: { tool: 'get_whatsapp_media_url', media_id: '{{message.media_id}}' } },
-  { type: 'action', title: 'Request Payment (UPI)', description: 'Send a WhatsApp Pay UPI payment request. Requires WhatsApp Pay enabled on your Meta account.', config: { tool: 'send_whatsapp_payment_request', recipient: '{{lead.phone}}', amount: '{{extraction.fields.amount}}', description: 'Payment for your order', reference_id: '', send_mode: 'draft' } },
-  { type: 'action', title: 'Chat Flow Reply', description: 'Send a step-by-step reply from the uploaded conversation flow PDF, including buttons when choices exist.', config: { tool: 'send_whatsapp_flow_message', recipient: '{{lead.phone}}', send_mode: 'draft' } },
-  { type: 'action', title: 'Send Instagram DM', description: 'Reply to the Instagram DM with an AI-generated message.', config: { tool: 'send_instagram_dm', recipient: '{{instagram.senderId}}', message_body: '{{ai.response}}', send_mode: 'draft' } },
-  { type: 'action', title: 'Send Facebook Message', description: 'Reply to the Facebook Messenger message with an AI response.', config: { tool: 'send_facebook_message', recipient: '{{facebook.senderId}}', message_body: '{{ai.response}}', send_mode: 'draft' } },
-  { type: 'action', title: 'Send Catalog', description: 'Send your product catalog via WhatsApp with Buy buttons for top 3 products.', config: { tool: 'send_catalog', recipient: '{{lead.phone}}', send_mode: 'draft', intro_text: 'Please review our products:' } },
+  { type: 'action', title: 'Request Payment (UPI)', description: 'Send a WhatsApp Pay UPI payment request. Requires WhatsApp Pay enabled on your Meta account.', config: { tool: 'send_whatsapp_payment_request', recipient: '{{lead.phone}}', amount: '{{extraction.fields.amount}}', description: 'Payment for your order', reference_id: '', send_mode: 'live' } },
+  { type: 'action', title: 'Chat Flow Reply', description: 'Send a step-by-step reply from the uploaded conversation flow PDF, including buttons when choices exist.', config: { tool: 'send_whatsapp_flow_message', recipient: '{{lead.phone}}', send_mode: 'live' } },
+  { type: 'action', title: 'Send Instagram DM', description: 'Reply to the Instagram DM with an AI-generated message.', config: { tool: 'send_instagram_dm', recipient: '{{instagram.senderId}}', message_body: '{{ai.response}}', send_mode: 'live' } },
+  { type: 'action', title: 'Send Facebook Message', description: 'Reply to the Facebook Messenger message with an AI response.', config: { tool: 'send_facebook_message', recipient: '{{facebook.senderId}}', message_body: '{{ai.response}}', send_mode: 'live' } },
+  { type: 'action', title: 'Send Catalog', description: 'Send your product catalog via WhatsApp with Buy buttons for top 3 products.', config: { tool: 'send_catalog', recipient: '{{lead.phone}}', send_mode: 'live', intro_text: 'Please review our products:' } },
   { type: 'action', title: 'Collect Order Form', description: 'AI asks step-by-step questions to collect product choice, name, phone, address.', config: { tool: 'collect_order_form', fields: 'name, phone, product_choice, quantity, address' } },
-  { type: 'action', title: 'Send Payment Link', description: 'Create a Razorpay payment link and send it to the customer via WhatsApp.', config: { tool: 'create_customer_payment_link', amount: '{{extraction.fields.budget}}', description: 'Payment for {{extraction.fields.product_choice}}', recipient_phone: '{{lead.phone}}', send_mode: 'draft', send_via_whatsapp: 'true' } },
+  { type: 'action', title: 'Send Payment Link', description: 'Create a Razorpay payment link and send it to the customer via WhatsApp.', config: { tool: 'create_customer_payment_link', amount: '{{extraction.fields.budget}}', description: 'Payment for {{extraction.fields.product_choice}}', recipient_phone: '{{lead.phone}}', send_mode: 'live', send_via_whatsapp: 'true' } },
   { type: 'action', title: 'Generate GST Invoice', description: 'Create a GST-compliant invoice from order data and send via WhatsApp.', config: { tool: 'generate_gst_invoice', gst_rate: '18', buyer_name: '{{lead.name}}' } },
   { type: 'action', title: 'Send Email', description: 'Send an email to the lead using your connected Gmail account.', config: { tool: 'send_email', to: '{{lead.email}}', subject: 'Thank you for your inquiry', body: '{{ai.response}}' } },
   // ── Smart AI nodes ────────────────────────────────────────────────────────
@@ -203,7 +203,7 @@ const visibleLibrary: LibraryBlock[] = [
   { type: 'ai', title: 'Analyze Sentiment', description: 'Detect if customer is happy, neutral, frustrated, or complaining. Use with condition nodes to route complaints.', config: { tool: 'analyze_sentiment' } },
   { type: 'ai', title: 'Detect Language', description: 'Auto-detect Hindi/English/Hinglish from the message. AI replies will automatically use the detected language.', config: { tool: 'detect_language' } },
   { type: 'ai', title: 'Recommend Product', description: 'AI matches customer query to your Product Catalog and recommends the best matching products.', config: { tool: 'recommend_products' } },
-  { type: 'ai', title: 'Agentic AI (Auto)', description: 'AI decides the next safe tool call: reply, catalog, payment, follow-up, or handover.', config: { tool: 'agentic_agent', max_steps: '4', max_messages: '2', send_mode: 'draft', handover_enabled: 'true', template_fallback_enabled: 'true' } },
+  { type: 'ai', title: 'Agentic AI (Auto)', description: 'AI decides the next safe tool call: reply, catalog, payment, follow-up, or handover.', config: { tool: 'agentic_agent', max_steps: '4', max_messages: '2', send_mode: 'live', handover_enabled: 'true', template_fallback_enabled: 'true' } },
   { type: 'condition', title: 'If Complaint', description: 'Branch YES if customer is complaining, frustrated, or unhappy. Connect to Auto Handover for escalation.', config: { tool: 'ai_condition', condition_prompt: 'Is this customer making a complaint, expressing frustration, or asking for a manager/human?' } },
   { type: 'condition', title: 'If Price Inquiry', description: 'Branch YES if customer is asking about price, cost, fees, or charges.', config: { tool: 'ai_condition', condition_prompt: 'Is the customer asking about price, fees, cost, charges, or how much it costs?' } },
   { type: 'condition', title: 'If Booking Request', description: 'Branch YES if customer wants to book, schedule, or make an appointment.', config: { tool: 'ai_condition', condition_prompt: 'Does the customer want to book, schedule an appointment, or register for something?' } },
@@ -339,6 +339,14 @@ export default function AutomationsPage() {
     return [...visibleLibrary, ...advancedOnly];
   }, [libraryMode]);
 
+  // Force send_mode:'live' on all action/ai nodes that have a send_mode field
+  const forceLiveMode = (nodes: BuilderBlock[]): BuilderBlock[] =>
+    nodes.map((n) =>
+      (n.type === 'action' || n.type === 'ai') && n.config?.send_mode
+        ? { ...n, config: { ...n.config, send_mode: 'live' } }
+        : n
+    );
+
   const arrangeNodes = (items: BuilderBlock[], edgeItems: BuilderEdge[]): BuilderBlock[] => {
     if (items.length === 0) return items;
 
@@ -403,16 +411,21 @@ export default function AutomationsPage() {
     const totalLeaves = leafCount.get(root.id) ?? 1;
     assignPos(root.id, 0, -(totalLeaves - 1) / 2);
 
-    // Convert relative y → absolute (centre at FLOW_CENTER_Y)
+    // Dynamic center Y: ensure no node goes above y=100 (top margin)
+    // rawY_min = -(totalLeaves-1)/2 * BRANCH_OFFSET_Y
+    const rawYMin = -(totalLeaves - 1) / 2 * BRANCH_OFFSET_Y;
+    const dynamicCenterY = Math.max(FLOW_CENTER_Y, -rawYMin + 100);
+
+    // Convert relative y → absolute
     const result = new Map<string, { x: number; y: number }>();
-    positions.forEach((pos, id) => result.set(id, { x: pos.x, y: pos.y + FLOW_CENTER_Y }));
+    positions.forEach((pos, id) => result.set(id, { x: pos.x, y: pos.y + dynamicCenterY }));
 
     // Place any disconnected nodes to the right
     let maxCol = result.size ? Math.max(...[...result.values()].map((p) => Math.round((p.x - FLOW_START_X) / FLOW_GAP_X))) : 0;
     items.forEach((n) => {
       if (!result.has(n.id)) {
         maxCol++;
-        result.set(n.id, { x: FLOW_START_X + maxCol * FLOW_GAP_X, y: FLOW_CENTER_Y });
+        result.set(n.id, { x: FLOW_START_X + maxCol * FLOW_GAP_X, y: dynamicCenterY });
       }
     });
 
@@ -536,7 +549,7 @@ export default function AutomationsPage() {
     setWorkflowName(wf.name);
     const graph = wf.config as any;
     if (graph?.nodes?.length) {
-      const arranged = arrangeNodes(graph.nodes, graph.edges || []);
+      const arranged = arrangeNodes(forceLiveMode(graph.nodes), graph.edges || []);
       setNodes(arranged);
       setEdges(graph.edges || []);
       setSelectedNodeId(arranged[0]?.id || '');
@@ -552,7 +565,7 @@ export default function AutomationsPage() {
       const response = await get(`/api/automation/templates/${key}/nodes`);
       const graph = response.data;
       if (graph?.nodes?.length) {
-        const arranged = arrangeNodes(graph.nodes, graph.edges || []);
+        const arranged = arrangeNodes(forceLiveMode(graph.nodes), graph.edges || []);
         setNodes(arranged);
         setEdges(graph.edges || []);
         setSelectedNodeId(arranged[0]?.id || '');
@@ -1117,36 +1130,6 @@ export default function AutomationsPage() {
         </Button>
       </div>
 
-      {/* ── Blocker strip — only when builder is open (not in list view) ── */}
-      <div className="shrink-0 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-sm font-bold text-violet-950">Build an automation for my business</p>
-            <p className="mt-1 text-xs text-violet-700">Generate a full workflow with AI. The canvas stays editable, and advanced nodes/tools remain available.</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setShowGenerateModal(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2 text-sm font-bold text-white hover:bg-violet-700 transition"
-          >
-            <Sparkles className="h-4 w-4" /> Generate Automation with AI
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowLaunchAssistant(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 py-2 text-sm font-bold text-violet-700 hover:bg-violet-100 transition"
-          >
-            <Bot className="h-4 w-4" /> Draft Full Launch Plan
-          </button>
-          <button
-            type="button"
-            onClick={openWebhookSetup}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-100 transition"
-          >
-            <Link className="h-4 w-4" /> Webhook Setup
-          </button>
-        </div>
-      </div>
 
       {!showWorkflowList && (
         <div className="shrink-0 rounded-xl border border-indigo-100 bg-white px-4 py-3 shadow-sm">
@@ -1666,7 +1649,7 @@ export default function AutomationsPage() {
                       const graph = wf.config as any;
                       if (graph?.nodes?.length) {
                         const graphEdges = graph.edges || [];
-                        const arranged = arrangeNodes(graph.nodes, graphEdges);
+                        const arranged = arrangeNodes(forceLiveMode(graph.nodes), graphEdges);
                         setNodes(arranged);
                         setEdges(graphEdges);
                         setSelectedNodeId(arranged[0]?.id || '');
@@ -1764,14 +1747,20 @@ export default function AutomationsPage() {
                       platform: generatePlatform,
                     });
                     const { nodes: genNodes, edges: genEdges, name: genName } = res.data;
-                    setNodes(genNodes);
+                    // Force live mode on all action/ai nodes from AI generation
+                    const liveNodes = (genNodes as BuilderBlock[]).map((n) =>
+                      (n.type === 'action' || n.type === 'ai') && n.config?.send_mode
+                        ? { ...n, config: { ...n.config, send_mode: 'live' } }
+                        : n
+                    );
+                    setNodes(liveNodes);
                     setEdges(genEdges);
                     if (genName) setWorkflowName(genName);
                     setActiveWorkflowId('');
                     setShowWorkflowList(false);
                     setShowGenerateModal(false);
                     setTimeout(() => setNodes(items => arrangeNodes(items, genEdges)), 150);
-                    toast.success('Flow generated! Review nodes and click Save.');
+                    toast.success('Flow generated! Review and Save.');
                   } catch (err: any) {
                     toast.error(err.response?.data?.detail || 'Generation failed. Try a more detailed description');
                   } finally {
@@ -1885,7 +1874,12 @@ export default function AutomationsPage() {
                         platform: 'whatsapp',
                       });
                       const { nodes: genNodes, edges: genEdges, name: genName } = res.data;
-                      setNodes(genNodes);
+                      const liveNodes2 = (genNodes as BuilderBlock[]).map((n) =>
+                        (n.type === 'action' || n.type === 'ai') && n.config?.send_mode
+                          ? { ...n, config: { ...n.config, send_mode: 'live' } }
+                          : n
+                      );
+                      setNodes(liveNodes2);
                       setEdges(genEdges);
                       setWorkflowName(genName || launchPlan.automation?.name || 'Agentic Launch Automation');
                       setShowWorkflowList(false);
