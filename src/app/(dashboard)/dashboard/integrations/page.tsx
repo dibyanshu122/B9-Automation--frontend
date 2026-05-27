@@ -51,8 +51,8 @@ const integrationHealthSteps = (item: IntegrationCatalogItem) => {
       { label: 'Token saved', ok: hasValue(cfg.access_token) || hasValue(cfg.encrypted_access_token) || item.connected },
       { label: 'WABA selected', ok: hasValue(cfg.business_account_id) || hasValue(cfg.waba_id) },
       { label: 'Phone verified', ok: hasValue(cfg.phone_number_id) || hasValue(cfg.display_phone_number) },
-      { label: 'Webhook ready', ok: hasValue(cfg.webhook_url) || item.status === 'active' },
-      { label: 'Test passed', ok: hasValue(cfg.last_test_at) || hasValue(cfg.last_test_message_id) },
+      { label: 'Webhook ready', ok: item.connected || hasValue(cfg.webhook_url) || item.status === 'active' },
+      { label: 'Test passed', ok: item.connected || hasValue(cfg.last_test_at) || hasValue(cfg.last_test_message_id) },
     ];
   }
   if (item.provider === 'facebook' || item.provider === 'instagram') {
@@ -1694,7 +1694,7 @@ export default function IntegrationsPage() {
                     </div>
                   ) : (
                     <div className="mt-3">
-                      <p className="text-sm text-gray-600">Authorize Brain AI to access your Google Sheets and Drive.</p>
+                      <p className="text-sm text-gray-600">Authorize B9 Automation to access your Google Sheets and Drive.</p>
                       <Button className="mt-3" onClick={connectGoogleSheets} loading={gsOAuthLoading}>
                         <ExternalLink className="h-4 w-4" />Connect Google Account
                       </Button>
@@ -1889,7 +1889,7 @@ export default function IntegrationsPage() {
                     </div>
                   ) : (
                     <div className="mt-3">
-                      <p className="text-sm text-gray-600">Authorize Brain AI to send emails via your Gmail account.</p>
+                      <p className="text-sm text-gray-600">Authorize B9 Automation to send emails via your Gmail account.</p>
                       <Button className="mt-3" onClick={connectGmail} loading={gmailOAuthLoading}>
                         <Mail className="h-4 w-4" />Connect Gmail Account
                       </Button>
