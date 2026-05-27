@@ -55,8 +55,8 @@ export const PLAN_LIMITS_UI: Record<PlanKey, { workflowSteps: number; activeWork
   FREE: { workflowSteps: 0, activeWorkflows: 0, domains: 0, widgets: 0 },
   STARTER: { workflowSteps: 2, activeWorkflows: 1, domains: 1, widgets: 1 },
   GROWTH: { workflowSteps: 5, activeWorkflows: 3, domains: 2, widgets: 2 },
-  PRO: { workflowSteps: 10, activeWorkflows: 5, domains: 5, widgets: 5 },
-  BUSINESS: { workflowSteps: 20, activeWorkflows: 15, domains: 15, widgets: 15 },
+  PRO: { workflowSteps: 20, activeWorkflows: 5, domains: 5, widgets: 5 },
+  BUSINESS: { workflowSteps: 50, activeWorkflows: 15, domains: 15, widgets: 15 },
 };
 
 export function normalizePlan(plan?: string): PlanKey {

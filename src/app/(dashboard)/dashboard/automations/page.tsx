@@ -88,10 +88,10 @@ interface WorkflowValidationResult {
   trigger_paths?: Array<{ node_id: string; trigger_type: string; reachable_nodes: string[]; has_outgoing: boolean }>;
 }
 
-const FLOW_CENTER_Y = 280;   // main pipeline Y
-const BRANCH_OFFSET_Y = 190; // YES goes up this much, NO goes down
+const FLOW_CENTER_Y = 300;   // main pipeline Y
+const BRANCH_OFFSET_Y = 220; // vertical gap per leaf slot
 const FLOW_START_X = 60;
-const FLOW_GAP_X = 290;
+const FLOW_GAP_X = 320;
 const AUTOSAVE_KEY = 'brainai:automation-builder:v1';
 
 const blockStyles = {
@@ -345,60 +345,78 @@ export default function AutomationsPage() {
     const nodeIds = new Set(items.map((n) => n.id));
     const valid = edgeItems.filter((e) => nodeIds.has(e.source) && nodeIds.has(e.target));
 
-    const out = new Map<string, BuilderEdge[]>();
+    // Build child map — ordered: yes first (top), then (middle), no last (bottom)
+    const childMap = new Map<string, Array<{ id: string; label: string }>>();
     const indegree = new Map<string, number>();
-    items.forEach((n) => { out.set(n.id, []); indegree.set(n.id, 0); });
+    items.forEach((n) => { childMap.set(n.id, []); indegree.set(n.id, 0); });
+
+    const edgesBySource = new Map<string, BuilderEdge[]>();
     valid.forEach((e) => {
-      out.set(e.source, [...(out.get(e.source) ?? []), e]);
+      if (!edgesBySource.has(e.source)) edgesBySource.set(e.source, []);
+      edgesBySource.get(e.source)!.push(e);
       indegree.set(e.target, (indegree.get(e.target) ?? 0) + 1);
     });
-
-    const positions = new Map<string, { x: number; y: number }>();
-    const visited = new Set<string>();
-
-    type Q = { id: string; col: number; row: number };
-    const queue: Q[] = [];
-
-    const roots = items.filter(
-      (n) => n.type === 'trigger' || (indegree.get(n.id) ?? 0) === 0
-    );
-    (roots.length ? roots : [items[0]]).forEach((r, i) => {
-      if (!visited.has(r.id)) {
-        visited.add(r.id);
-        queue.push({ id: r.id, col: i, row: 0 });
-      }
+    edgesBySource.forEach((edges, src) => {
+      const sorted = [...edges].sort((a, b) => {
+        const rank = (e: BuilderEdge) => (e.label === 'yes' || e.sourceHandle === 'yes') ? 0 : (e.label === 'no' || e.sourceHandle === 'no') ? 2 : 1;
+        return rank(a) - rank(b);
+      });
+      sorted.forEach((e) => childMap.get(src)!.push({ id: e.target, label: e.label || 'then' }));
     });
 
-    while (queue.length > 0) {
-      const { id, col, row } = queue.shift()!;
+    // Find root
+    const roots = items.filter((n) => n.type === 'trigger' || (indegree.get(n.id) ?? 0) === 0);
+    const root = (roots.length ? roots : [items[0]])[0];
+
+    // Count leaf nodes in each subtree (used to space vertically)
+    const leafCount = new Map<string, number>();
+    const visited1 = new Set<string>();
+    const countLeaves = (id: string): number => {
+      if (visited1.has(id)) return leafCount.get(id) ?? 1;
+      visited1.add(id);
+      const ch = childMap.get(id) ?? [];
+      const total = ch.length === 0 ? 1 : ch.reduce((s, c) => s + countLeaves(c.id), 0);
+      leafCount.set(id, total);
+      return total;
+    };
+    countLeaves(root.id);
+
+    // Assign positions: each node centered over its subtree
+    const positions = new Map<string, { x: number; y: number }>();
+    const visited2 = new Set<string>();
+    const assignPos = (id: string, col: number, leafStart: number) => {
+      if (visited2.has(id)) return;
+      visited2.add(id);
+      const myLeaves = leafCount.get(id) ?? 1;
+      const centerLeaf = leafStart + (myLeaves - 1) / 2;
       positions.set(id, {
         x: FLOW_START_X + col * FLOW_GAP_X,
-        y: FLOW_CENTER_Y + row * BRANCH_OFFSET_Y,
+        y: centerLeaf * BRANCH_OFFSET_Y,
       });
-      for (const edge of (out.get(id) ?? [])) {
-        if (visited.has(edge.target)) continue;
-        visited.add(edge.target);
-        const isYes = edge.label === 'yes' || edge.sourceHandle === 'yes';
-        const isNo  = edge.label === 'no'  || edge.sourceHandle === 'no';
-        queue.push({
-          id: edge.target,
-          col: col + 1,
-          row: isYes ? row - 1 : isNo ? row + 1 : row,
-        });
+      let offset = leafStart;
+      for (const child of (childMap.get(id) ?? [])) {
+        assignPos(child.id, col + 1, offset);
+        offset += leafCount.get(child.id) ?? 1;
       }
-    }
+    };
 
-    let maxCol = positions.size
-      ? Math.max(...[...positions.values()].map((p) => Math.round((p.x - FLOW_START_X) / FLOW_GAP_X)))
-      : 0;
+    const totalLeaves = leafCount.get(root.id) ?? 1;
+    assignPos(root.id, 0, -(totalLeaves - 1) / 2);
+
+    // Convert relative y → absolute (centre at FLOW_CENTER_Y)
+    const result = new Map<string, { x: number; y: number }>();
+    positions.forEach((pos, id) => result.set(id, { x: pos.x, y: pos.y + FLOW_CENTER_Y }));
+
+    // Place any disconnected nodes to the right
+    let maxCol = result.size ? Math.max(...[...result.values()].map((p) => Math.round((p.x - FLOW_START_X) / FLOW_GAP_X))) : 0;
     items.forEach((n) => {
-      if (!positions.has(n.id)) {
+      if (!result.has(n.id)) {
         maxCol++;
-        positions.set(n.id, { x: FLOW_START_X + maxCol * FLOW_GAP_X, y: FLOW_CENTER_Y });
+        result.set(n.id, { x: FLOW_START_X + maxCol * FLOW_GAP_X, y: FLOW_CENTER_Y });
       }
     });
 
-    return items.map((n) => ({ ...n, ...positions.get(n.id) }));
+    return items.map((n) => ({ ...n, ...result.get(n.id) }));
   };
 
   // Nodes are stored with their real positions — no auto-rearrange on every render.
