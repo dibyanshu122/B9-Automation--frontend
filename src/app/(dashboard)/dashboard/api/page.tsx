@@ -205,45 +205,117 @@ export default function ApiKeysPage() {
           )}
 
           <div className="flex justify-end">
-            {!showForm && <Button onClick={() => setShowForm(true)} className="flex items-center gap-2"><Plus className="w-4 h-4" /> New API Key</Button>}
+            {!showForm && (
+              <Button onClick={() => {
+                setShowForm(true);
+                // Default to Full Access — most common use case
+                setSelectedScopes(ALL_SCOPES.map(s => s.value));
+              }} className="flex items-center gap-2">
+                <Plus className="w-4 h-4" /> New API Key
+              </Button>
+            )}
           </div>
 
           {showForm && (
             <Card className="p-5">
-              <h2 className="font-semibold text-gray-900 mb-4">Create New API Key</h2>
-              <div className="space-y-4">
+              <h2 className="font-semibold text-gray-900 mb-1">Create New API Key</h2>
+              <p className="text-xs text-gray-500 mb-4">One key works for all APIs. Choose a preset or customize permissions.</p>
+              <div className="space-y-5">
+                {/* Step 1: Name */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Key Name</label>
-                  <input type="text" placeholder="e.g. CRM Integration, Shopify Sync"
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary-100 text-primary-700 text-[10px] font-bold mr-1.5">1</span>
+                    Key Name
+                  </label>
+                  <input type="text" placeholder="e.g. My App, Shopify Sync, CRM Integration"
                     value={newKeyName} onChange={e => setNewKeyName(e.target.value)}
                     className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400" maxLength={100} />
                 </div>
+
+                {/* Step 2: Access Level Preset */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Permissions (Scopes)</label>
-                  {SCOPE_GROUPS.map(group => (
-                    <div key={group} className="mb-3">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1.5">{group}</p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                        {ALL_SCOPES.filter(s => s.group === group).map(scope => (
-                          <button key={scope.value} onClick={() => toggleScope(scope.value)}
-                            className={`flex items-start gap-2 p-2.5 rounded-lg border text-left transition-colors ${selectedScopes.includes(scope.value) ? 'border-primary-400 bg-primary-50' : 'border-gray-200 hover:border-gray-300'}`}>
-                            <div className={`w-4 h-4 rounded mt-0.5 flex-shrink-0 border-2 flex items-center justify-center ${selectedScopes.includes(scope.value) ? 'border-primary-500 bg-primary-500' : 'border-gray-300'}`}>
-                              {selectedScopes.includes(scope.value) && <Check className="w-2.5 h-2.5 text-white" />}
-                            </div>
-                            <div>
-                              <p className="text-xs font-semibold text-gray-800">{scope.label}</p>
-                              <p className="text-[10px] text-gray-500">{scope.desc}</p>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary-100 text-primary-700 text-[10px] font-bold mr-1.5">2</span>
+                    Access Level
+                  </label>
+                  <div className="grid grid-cols-3 gap-2 mb-3">
+                    {[
+                      { id: 'full', label: 'Full Access', desc: 'All APIs — recommended', icon: '🔓', scopes: ALL_SCOPES.map(s => s.value) },
+                      { id: 'read', label: 'Read Only',  desc: 'View data, no sends',   icon: '👁️', scopes: ALL_SCOPES.filter(s => s.value.endsWith(':read')).map(s => s.value) },
+                      { id: 'custom', label: 'Custom',   desc: 'Pick manually below',   icon: '⚙️', scopes: [] },
+                    ].map(preset => {
+                      const isActive = preset.id === 'custom'
+                        ? selectedScopes.length > 0 && !ALL_SCOPES.every(s => selectedScopes.includes(s.value)) && !selectedScopes.every(s => s.endsWith(':read'))
+                        : preset.id === 'full'
+                        ? ALL_SCOPES.every(s => selectedScopes.includes(s.value))
+                        : selectedScopes.length > 0 && selectedScopes.every(s => s.endsWith(':read'));
+                      return (
+                        <button key={preset.id}
+                          onClick={() => { if (preset.id !== 'custom') setSelectedScopes(preset.scopes); }}
+                          className={`flex flex-col items-start gap-1 p-3 rounded-xl border-2 text-left transition-all ${isActive ? 'border-primary-500 bg-primary-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                          <span className="text-base">{preset.icon}</span>
+                          <p className={`text-xs font-bold ${isActive ? 'text-primary-700' : 'text-gray-800'}`}>{preset.label}</p>
+                          <p className="text-[10px] text-gray-500 leading-tight">{preset.desc}</p>
+                          {isActive && <span className="text-[9px] font-bold text-primary-600 bg-primary-100 px-1.5 py-0.5 rounded-full mt-0.5">Selected</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Scope count summary */}
+                  {selectedScopes.length > 0 && (
+                    <p className="text-xs text-gray-500 mb-2">
+                      {selectedScopes.length} of {ALL_SCOPES.length} permissions selected
+                      <button onClick={() => setSelectedScopes([])} className="ml-2 text-red-400 hover:text-red-600">Clear</button>
+                    </p>
+                  )}
+
+                  {/* Custom scope selector — collapsed by default */}
+                  <details className="mt-1">
+                    <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-600 select-none">
+                      Customize individual permissions ↓
+                    </summary>
+                    <div className="mt-3 space-y-3">
+                      {SCOPE_GROUPS.map(group => (
+                        <div key={group}>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">{group}</p>
+                            <button onClick={() => {
+                              const groupScopes = ALL_SCOPES.filter(s => s.group === group).map(s => s.value);
+                              const allSelected = groupScopes.every(s => selectedScopes.includes(s));
+                              setSelectedScopes(prev => allSelected
+                                ? prev.filter(s => !groupScopes.includes(s))
+                                : [...new Set([...prev, ...groupScopes])]
+                              );
+                            }} className="text-[10px] text-primary-500 hover:text-primary-700 font-medium">
+                              {ALL_SCOPES.filter(s => s.group === group).every(s => selectedScopes.includes(s.value)) ? 'Deselect all' : 'Select all'}
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                            {ALL_SCOPES.filter(s => s.group === group).map(scope => (
+                              <button key={scope.value} onClick={() => toggleScope(scope.value)}
+                                className={`flex items-start gap-2 p-2.5 rounded-lg border text-left transition-colors ${selectedScopes.includes(scope.value) ? 'border-primary-400 bg-primary-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                                <div className={`w-4 h-4 rounded mt-0.5 flex-shrink-0 border-2 flex items-center justify-center ${selectedScopes.includes(scope.value) ? 'border-primary-500 bg-primary-500' : 'border-gray-300'}`}>
+                                  {selectedScopes.includes(scope.value) && <Check className="w-2.5 h-2.5 text-white" />}
+                                </div>
+                                <div>
+                                  <p className="text-xs font-semibold text-gray-800">{scope.label}</p>
+                                  <p className="text-[10px] text-gray-500">{scope.desc}</p>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  </details>
                 </div>
-                <div className="flex gap-3 justify-end pt-2">
+
+                <div className="flex gap-3 justify-end pt-1">
                   <Button variant="outline" onClick={() => { setShowForm(false); setNewKeyName(''); setSelectedScopes([]); }}>Cancel</Button>
                   <Button onClick={handleCreate} disabled={creating} className="flex items-center gap-2">
-                    {creating && <Loader2 className="w-4 h-4 animate-spin" />} Create Key
+                    {creating && <Loader2 className="w-4 h-4 animate-spin" />}
+                    <Key className="w-4 h-4" /> Generate Key
                   </Button>
                 </div>
               </div>
