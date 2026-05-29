@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const AUTH_PAGES = ['/login', '/signup'];
+// Pages that require authentication (redirect to login if not authenticated)
+const PROTECTED_PAGES = ['/api-docs'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Auth state primarily lives in the browser store. Middleware can only read
-  // cookies, so protected routes are guarded in the client dashboard layout.
   const authCookie = request.cookies.get('auth-token')?.value;
   const authStore = request.cookies.get('auth-store')?.value;
 
@@ -21,10 +21,18 @@ export function middleware(request: NextRequest) {
     }
   }
 
+  // Redirect authenticated users away from auth pages
   const isAuthPage = AUTH_PAGES.some((p) => pathname.startsWith(p));
-
   if (isAuthPage && isAuthenticated) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
+  }
+
+  // Redirect unauthenticated users away from protected pages
+  const isProtected = PROTECTED_PAGES.some((p) => pathname.startsWith(p));
+  if (isProtected && !isAuthenticated) {
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('redirect', pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
   return NextResponse.next();
@@ -34,6 +42,8 @@ export const config = {
   matcher: [
     '/dashboard/:path*',
     '/onboarding/:path*',
+    '/api-docs',
+    '/api-docs/:path*',
     '/login',
     '/signup',
   ],
