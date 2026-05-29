@@ -223,7 +223,10 @@ export const Sidebar = () => {
         )}
       >
         {/* Nav */}
-        <nav className={clsx('flex-1 overflow-y-auto overflow-x-hidden py-3 space-y-0.5', expanded ? 'px-2' : 'px-1')}>
+        <nav className={clsx(
+          'overflow-x-hidden py-3 space-y-0.5',
+          expanded ? 'flex-1 overflow-y-auto px-2' : 'flex-none px-1',  // mini: no flex-1, icons pack tightly
+        )}>
           {mainGroups.map((group) => {
             const Icon = ICONS[group.icon as keyof typeof ICONS];
             const open = openGroups.includes(group.id);
@@ -296,8 +299,11 @@ export const Sidebar = () => {
           })}
         </nav>
 
-        {/* Bottom: Launch / Billing / Settings + pin */}
-        <div className={clsx('shrink-0 border-t border-white/10 py-2 space-y-0.5', expanded ? 'px-2' : 'px-1')}>
+        {/* Bottom: Launch / Billing / Settings + pin — always sticks to bottom */}
+        <div className={clsx(
+          'shrink-0 space-y-0.5 mt-auto',
+          expanded ? 'border-t border-white/10 py-2 px-2' : 'py-2 px-1 border-t border-white/[0.06]',
+        )}>
           {bottomGroups.map((group) => {
             const Icon = ICONS[group.icon as keyof typeof ICONS];
             const a = isActive(group.href || '');
@@ -322,7 +328,7 @@ export const Sidebar = () => {
             className={clsx(
               'flex w-full items-center rounded-lg transition-all hover:bg-red-500/10 text-sm',
               'text-slate-500 hover:text-red-400',
-              expanded ? 'gap-3 px-3 py-2.5' : 'my-[2px] h-10 justify-center gap-0 p-0'
+              expanded ? 'gap-3 px-3 py-2.5' : 'h-10 justify-center gap-0 p-0'
             )}>
             <LogOut className="w-5 h-5 shrink-0" />
             <span className={lbl}>Logout</span>
