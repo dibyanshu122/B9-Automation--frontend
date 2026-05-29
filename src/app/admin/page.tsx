@@ -191,8 +191,8 @@ function SeverityBadge({ severity }: { severity?: string }) {
   );
 }
 
-const ADMIN_EMAIL = 'ddibyanshu2@gmail.com';
-const ADMIN_PASS = 'Rishusingh@7753';
+const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || '';
+const ADMIN_PASS = process.env.NEXT_PUBLIC_ADMIN_PASS || '';
 const ADMIN_SESSION_KEY = 'b9_admin_session';
 
 function AdminLoginGate({ onSuccess }: { onSuccess: (token: string) => void }) {
