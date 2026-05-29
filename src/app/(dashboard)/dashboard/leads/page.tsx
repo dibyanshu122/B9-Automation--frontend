@@ -994,6 +994,7 @@ export default function LeadsPage() {
 
           {/* INFO TAB */}
           {detailTab === 'info' && (
+            <>
           <div className="grid gap-3 text-sm md:grid-cols-2">
             <DetailRow label="Name" value={selectedLead.name || '-'} />
             <DetailRow label="Phone" value={selectedLead.phone || '-'} />
@@ -1168,7 +1169,7 @@ export default function LeadsPage() {
           <select value={selectedLead.status} onChange={(event) => updateStage(selectedLead, event.target.value).then(() => setSelectedLead({ ...selectedLead, status: event.target.value }))} className="input-field mt-4 max-w-xs">
             {stages.map((stage) => <option key={stage.key} value={stage.key}>{stage.label}</option>)}
           </select>
-          )} {/* end info tab */}
+          </> )} {/* end info tab */}
         </DetailCard>
       )}
 

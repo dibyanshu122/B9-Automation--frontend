@@ -5,7 +5,7 @@ import { useUIStore } from '@/store/uiStore';
 import { useApi } from '@/hooks/useApi';
 import { Button } from './button';
 import Link from 'next/link';
-import { Bell, LogOut, Settings, Menu, Workflow, Users, MessageCircle, X } from 'lucide-react';
+import { Bell, LogOut, Settings, Menu, Workflow, Users, MessageCircle, X, Building2, Save, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
@@ -28,7 +28,7 @@ function NotifIcon({ type }: { type: string }) {
 export const Navbar = () => {
   const { user, logout } = useAuthStore();
   const { toggleSidebar } = useUIStore();
-  const { get } = useApi();
+  const { get, post } = useApi();
   const router = useRouter();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
@@ -38,6 +38,86 @@ export const Navbar = () => {
   const [aiLimit, setAiLimit] = useState<number>(500);
   const notifRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Business Profile panel state
+  const [showBizProfile, setShowBizProfile] = useState(false);
+  const [bpLoading, setBpLoading] = useState(false);
+  const [bpSaving, setBpSaving] = useState(false);
+  const [bpForm, setBpForm] = useState({
+    business_name: '', business_type: '', industry: '', services: '',
+    target_audience: '', primary_goal: '', website_url: '', whatsapp_number: '',
+    instagram_handle: '', tone: 'friendly',
+    // WhatsApp Business Profile fields
+    wa_about: '', wa_address: '', wa_email: '', wa_websites: '',
+    wa_description: '', wa_vertical: '',
+  });
+
+  const openBizProfile = () => {
+    setShowUserMenu(false);
+    setShowBizProfile(true);
+    if (bpLoading) return;
+    setBpLoading(true);
+    Promise.allSettled([
+      get('/api/automation/business-profile').catch(() => ({ data: null })),
+      get('/api/automation/whatsapp/business-profile').catch(() => ({ data: null })),
+    ]).then(([b9Res, waRes]) => {
+      const b9 = (b9Res.status === 'fulfilled' ? b9Res.value?.data : null) || {};
+      const wa = ((waRes.status === 'fulfilled' ? waRes.value?.data?.profile : null) || {});
+      setBpForm({
+        business_name: b9.business_name || '',
+        business_type: b9.business_type || '',
+        industry: b9.industry || '',
+        services: b9.services || '',
+        target_audience: b9.target_audience || '',
+        primary_goal: b9.primary_goal || '',
+        website_url: b9.website_url || '',
+        whatsapp_number: b9.whatsapp_number || '',
+        instagram_handle: b9.instagram_handle || '',
+        tone: b9.tone || 'friendly',
+        wa_about: wa.about || '',
+        wa_address: wa.address || '',
+        wa_email: wa.email || '',
+        wa_websites: (wa.websites || []).join(', '),
+        wa_description: wa.description || '',
+        wa_vertical: wa.vertical || '',
+      });
+    }).finally(() => setBpLoading(false));
+  };
+
+  const saveBizProfile = async () => {
+    setBpSaving(true);
+    try {
+      await post('/api/automation/business-profile', {
+        business_name: bpForm.business_name,
+        business_type: bpForm.business_type,
+        industry: bpForm.industry,
+        services: bpForm.services,
+        target_audience: bpForm.target_audience,
+        primary_goal: bpForm.primary_goal,
+        website_url: bpForm.website_url,
+        whatsapp_number: bpForm.whatsapp_number,
+        instagram_handle: bpForm.instagram_handle,
+        tone: bpForm.tone,
+      });
+      // Save WA profile fields only if any filled
+      if (bpForm.wa_about || bpForm.wa_address || bpForm.wa_email || bpForm.wa_websites || bpForm.wa_description) {
+        await post('/api/automation/whatsapp/business-profile', {
+          about: bpForm.wa_about,
+          address: bpForm.wa_address,
+          email: bpForm.wa_email,
+          websites: bpForm.wa_websites.split(',').map((s: string) => s.trim()).filter(Boolean),
+          description: bpForm.wa_description,
+          vertical: bpForm.wa_vertical,
+        }).catch(() => {});
+      }
+      setShowBizProfile(false);
+    } catch {
+      // toast not available here — use alert as fallback
+      alert('Failed to save profile. Please try again.');
+    } finally {
+      setBpSaving(false);
+    }
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -107,6 +187,7 @@ export const Navbar = () => {
   };
 
   return (
+    <>
     <nav className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-slate-950/80 shadow-2xl shadow-black/20 backdrop-blur-2xl">
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
@@ -231,10 +312,17 @@ export const Navbar = () => {
                           <p className="text-xs font-semibold text-slate-300 truncate">{user.name || user.email}</p>
                           <p className="text-[10px] text-slate-500 truncate">{user.email}</p>
                         </div>
+                        <button
+                          onClick={openBizProfile}
+                          className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-slate-300 hover:bg-white/[0.08] hover:text-white transition"
+                        >
+                          <Building2 className="w-4 h-4 shrink-0 text-cyan-400" />
+                          Business Profile
+                        </button>
                         <Link
                           href="/dashboard/settings"
                           onClick={() => setShowUserMenu(false)}
-                          className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-300 hover:bg-white/8 hover:text-white transition"
+                          className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-300 hover:bg-white/[0.08] hover:text-white transition"
                         >
                           <Settings className="w-4 h-4 shrink-0" />
                           Settings
@@ -279,5 +367,138 @@ export const Navbar = () => {
         </div>
       </div>
     </nav>
+
+    {/* ── Business Profile Slide-Over Panel ── */}
+    {showBizProfile && (
+      <div className="fixed inset-0 z-[9999] flex">
+        {/* Backdrop */}
+        <div className="flex-1 bg-black/60 backdrop-blur-sm" onClick={() => setShowBizProfile(false)} />
+        {/* Panel */}
+        <div className="w-full max-w-md bg-slate-950 border-l border-white/10 flex flex-col h-full shadow-2xl">
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/10 border border-cyan-500/20">
+                <Building2 className="h-5 w-5 text-cyan-400" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-white">Business Profile</p>
+                <p className="text-[10px] text-slate-500">Visible to your customers on WhatsApp &amp; AI bot</p>
+              </div>
+            </div>
+            <button onClick={() => setShowBizProfile(false)} className="rounded-lg p-1.5 text-slate-400 hover:bg-white/10 hover:text-white transition">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          {/* Body */}
+          <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+            {bpLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <Loader2 className="h-6 w-6 animate-spin text-cyan-400" />
+              </div>
+            ) : (
+              <>
+                {/* B9 Business Info */}
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-cyan-400 mb-3">Business Information</p>
+                  <div className="space-y-3">
+                    {[
+                      { key: 'business_name', label: 'Business Name', placeholder: 'Your company name' },
+                      { key: 'business_type', label: 'Business Type', placeholder: 'e.g. Coaching, Real Estate, D2C' },
+                      { key: 'industry', label: 'Industry', placeholder: 'e.g. Education, Healthcare, Retail' },
+                      { key: 'services', label: 'Services / Products', placeholder: 'What do you sell or offer?' },
+                      { key: 'target_audience', label: 'Target Audience', placeholder: 'Who are your customers?' },
+                      { key: 'primary_goal', label: 'Primary Goal', placeholder: 'e.g. Generate leads, Book appointments' },
+                      { key: 'website_url', label: 'Website', placeholder: 'https://yourbusiness.com' },
+                      { key: 'whatsapp_number', label: 'WhatsApp Number', placeholder: '+91 98765 43210' },
+                      { key: 'instagram_handle', label: 'Instagram Handle', placeholder: '@yourbusiness' },
+                    ].map(f => (
+                      <div key={f.key}>
+                        <label className="block text-[10px] font-semibold text-slate-400 mb-1">{f.label}</label>
+                        <input
+                          value={(bpForm as any)[f.key]}
+                          onChange={e => setBpForm(p => ({ ...p, [f.key]: e.target.value }))}
+                          placeholder={f.placeholder}
+                          className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 focus:border-cyan-500/30"
+                        />
+                      </div>
+                    ))}
+                    <div>
+                      <label className="block text-[10px] font-semibold text-slate-400 mb-1">Communication Tone</label>
+                      <select
+                        value={bpForm.tone}
+                        onChange={e => setBpForm(p => ({ ...p, tone: e.target.value }))}
+                        className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-cyan-500/50"
+                      >
+                        {['friendly', 'professional', 'casual', 'formal'].map(t => (
+                          <option key={t} value={t} className="bg-slate-900">{t.charAt(0).toUpperCase() + t.slice(1)}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* WhatsApp Business Profile */}
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-green-400 mb-1">WhatsApp Business Profile</p>
+                  <p className="text-[10px] text-slate-500 mb-3">Shown on your WhatsApp Business number profile page</p>
+                  <div className="space-y-3">
+                    {[
+                      { key: 'wa_about', label: 'About (max 139 chars)', placeholder: 'Short bio visible on WA profile' },
+                      { key: 'wa_address', label: 'Address', placeholder: '123 Business Park, Mumbai' },
+                      { key: 'wa_email', label: 'Support Email', placeholder: 'support@yourbusiness.com' },
+                      { key: 'wa_websites', label: 'Website URLs (comma-separated)', placeholder: 'https://yourbusiness.com' },
+                      { key: 'wa_vertical', label: 'Business Category', placeholder: 'RETAIL / HEALTH / EDUCATION / BEAUTY…' },
+                    ].map(f => (
+                      <div key={f.key}>
+                        <label className="block text-[10px] font-semibold text-slate-400 mb-1">{f.label}</label>
+                        <input
+                          value={(bpForm as any)[f.key]}
+                          onChange={e => setBpForm(p => ({ ...p, [f.key]: e.target.value }))}
+                          placeholder={f.placeholder}
+                          className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-green-500/40 focus:border-green-500/30"
+                        />
+                      </div>
+                    ))}
+                    <div>
+                      <label className="block text-[10px] font-semibold text-slate-400 mb-1">Description</label>
+                      <textarea
+                        value={bpForm.wa_description}
+                        onChange={e => setBpForm(p => ({ ...p, wa_description: e.target.value }))}
+                        placeholder="Detailed description of your business"
+                        rows={3}
+                        className="w-full resize-none rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-green-500/40"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Footer */}
+          {!bpLoading && (
+            <div className="shrink-0 border-t border-white/10 px-6 py-4 flex gap-3">
+              <button
+                onClick={() => setShowBizProfile(false)}
+                className="flex-1 rounded-xl border border-white/10 py-2.5 text-sm font-semibold text-slate-400 hover:bg-white/[0.05] transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveBizProfile}
+                disabled={bpSaving}
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-500/20 border border-cyan-500/30 py-2.5 text-sm font-bold text-cyan-300 hover:bg-cyan-500/30 disabled:opacity-50 transition"
+              >
+                {bpSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                {bpSaving ? 'Saving…' : 'Save Profile'}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    )}
+    </>
   );
 };
