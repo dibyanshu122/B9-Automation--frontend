@@ -259,6 +259,8 @@ export default function IntegrationsPage() {
   const [waBusinessProfile, setWaBusinessProfile] = useState<any>(null);
   const [bpEditing, setBpEditing] = useState(false);
   const [bpForm, setBpForm] = useState({ about: '', address: '', description: '', email: '', websites: '', vertical: '' });
+  const [metaStatus, setMetaStatus] = useState<any>(null);
+  const [metaStatusLoading, setMetaStatusLoading] = useState(false);
 
   /* ── Shopify state ── */
   const [shopifyConnected, setShopifyConnected] = useState(false);
@@ -607,7 +609,8 @@ export default function IntegrationsPage() {
   const loadWhatsAppStatus = async () => {
     try {
       const response = await get('/api/integrations/whatsapp/status');
-      setWhatsappConnected(Boolean(response.data.connected));
+      const connected = Boolean(response.data.connected);
+      setWhatsappConnected(connected);
       setWhatsappWebhookUrl(response.data.webhookUrl || '');
       const connection = response.data.connection;
       if (connection) {
@@ -622,6 +625,14 @@ export default function IntegrationsPage() {
           default_assistant_id: connection.defaultAssistantId || '',
           sync_leads: String(connection.syncLeads ?? true),
         }));
+      }
+      // Load Meta tier/rating/verification in background when connected
+      if (connected) {
+        setMetaStatusLoading(true);
+        get('/api/integrations/whatsapp/meta-status')
+          .then(r => setMetaStatus(r.data))
+          .catch(() => {})
+          .finally(() => setMetaStatusLoading(false));
       }
     } catch {
       setWhatsappConnected(false);
@@ -2437,6 +2448,138 @@ export default function IntegrationsPage() {
                         Save to WhatsApp
                       </button>
                     </div>
+                  )}
+                </div>
+              )}
+
+              {/* ── Meta Status (Tier / Rating / Verification) ── */}
+              {whatsappConnected && (
+                <div className="mt-3 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-sm font-bold text-slate-800">Meta Status</p>
+                    {metaStatus && (
+                      <div className="flex items-center gap-3 text-xs text-slate-500">
+                        <span>📤 {metaStatus.messageSent24h ?? 0} sent</span>
+                        <span>📥 {metaStatus.msgReceived24h ?? 0} received</span>
+                        <span className="text-slate-400">last 24h</span>
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMetaStatusLoading(true);
+                        get('/api/integrations/whatsapp/meta-status')
+                          .then(r => setMetaStatus(r.data))
+                          .catch(() => {})
+                          .finally(() => setMetaStatusLoading(false));
+                      }}
+                      className="ml-auto text-[10px] font-semibold text-blue-500 hover:text-blue-700"
+                    >
+                      {metaStatusLoading ? 'Refreshing…' : '↻ Refresh'}
+                    </button>
+                  </div>
+
+                  {metaStatusLoading && !metaStatus ? (
+                    <p className="text-xs text-slate-400 text-center py-3">Loading Meta status…</p>
+                  ) : metaStatus ? (
+                    <div className="space-y-4">
+                      {/* TIER */}
+                      {(() => {
+                        const tiers = ['N/A', '250', '2K', '10K', '100K', '∞'];
+                        const cur = metaStatus.tier?.step ?? 0;
+                        const badge = cur >= 4 ? 'bg-blue-600 text-white' : cur >= 3 ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600';
+                        return (
+                          <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Tier</p>
+                              <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${badge}`}>{metaStatus.tier?.label ?? 'N/A'}</span>
+                            </div>
+                            <div className="relative flex items-center gap-0">
+                              <div className="absolute left-4 right-4 top-1/2 -translate-y-1/2 h-[2px] bg-slate-200 rounded-full" />
+                              <div
+                                className="absolute left-4 top-1/2 -translate-y-1/2 h-[2px] bg-blue-500 rounded-full transition-all"
+                                style={{ width: `calc(${Math.max(0, (cur / (tiers.length - 1)) * 100)}% - 8px)` }}
+                              />
+                              {tiers.map((t, i) => (
+                                <div key={t} className="relative flex flex-col items-center" style={{ flex: 1 }}>
+                                  <div className={`relative z-10 flex h-7 w-7 items-center justify-center rounded-full border-2 text-[10px] font-bold transition-all ${
+                                    i < cur ? 'border-blue-500 bg-blue-500 text-white' :
+                                    i === cur ? 'border-blue-500 bg-white text-blue-600 ring-2 ring-blue-200' :
+                                    'border-slate-300 bg-white text-slate-400'
+                                  }`}>
+                                    {i < cur ? '✓' : i + 1}
+                                  </div>
+                                  <p className="mt-1 text-[9px] text-slate-500">{t}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {/* RATING */}
+                      {(() => {
+                        const ratings = ['NA', 'Low', 'Med', 'High'];
+                        const cur = metaStatus.rating?.step ?? 0;
+                        const rColor = metaStatus.rating?.color ?? 'gray';
+                        const badge = rColor === 'green' ? 'bg-emerald-100 text-emerald-700' : rColor === 'yellow' ? 'bg-amber-100 text-amber-700' : rColor === 'red' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-500';
+                        const barColor = rColor === 'green' ? 'bg-emerald-500' : rColor === 'yellow' ? 'bg-amber-400' : rColor === 'red' ? 'bg-red-500' : 'bg-slate-300';
+                        const dotColor = (i: number) => i < cur ? `${barColor} border-transparent text-white` : i === cur ? `border-current bg-white ring-2 ring-offset-1 ${rColor === 'green' ? 'text-emerald-500 ring-emerald-200' : rColor === 'yellow' ? 'text-amber-500 ring-amber-200' : rColor === 'red' ? 'text-red-500 ring-red-200' : 'text-slate-400 ring-slate-200'}` : 'border-slate-300 bg-white text-slate-400';
+                        return (
+                          <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Rating</p>
+                              <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${badge}`}>{metaStatus.rating?.label ?? 'NA'}</span>
+                            </div>
+                            <div className="relative flex items-center">
+                              <div className="absolute left-4 right-4 top-1/2 -translate-y-1/2 h-[2px] bg-slate-200 rounded-full" />
+                              <div className={`absolute left-4 top-1/2 -translate-y-1/2 h-[2px] ${barColor} rounded-full transition-all`} style={{ width: `calc(${Math.max(0, (cur / (ratings.length - 1)) * 100)}% - 8px)` }} />
+                              {ratings.map((r, i) => (
+                                <div key={r} className="relative z-10 flex flex-col items-center" style={{ flex: 1 }}>
+                                  <div className={`flex h-7 w-7 items-center justify-center rounded-full border-2 text-[10px] font-bold transition-all ${dotColor(i)}`}>
+                                    {i < cur ? '✓' : i + 1}
+                                  </div>
+                                  <p className="mt-1 text-[9px] text-slate-500">{r}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {/* VERIFICATION */}
+                      {(() => {
+                        const steps = ['Not Verified', 'Basic Verified', 'Display Approved', 'Official Business'];
+                        const cur = metaStatus.verification?.step ?? 0;
+                        const badge = cur >= 3 ? 'bg-indigo-600 text-white' : cur >= 2 ? 'bg-blue-100 text-blue-700' : cur >= 1 ? 'bg-slate-100 text-slate-600' : 'bg-red-50 text-red-500';
+                        return (
+                          <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Verification</p>
+                              <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${badge}`}>{metaStatus.verification?.label ?? 'Not Verified'}</span>
+                            </div>
+                            <div className="relative flex items-center">
+                              <div className="absolute left-4 right-4 top-1/2 -translate-y-1/2 h-[2px] bg-slate-200 rounded-full" />
+                              <div className="absolute left-4 top-1/2 -translate-y-1/2 h-[2px] bg-blue-500 rounded-full transition-all" style={{ width: `calc(${Math.max(0, (cur / (steps.length - 1)) * 100)}% - 8px)` }} />
+                              {steps.map((s, i) => (
+                                <div key={s} className="relative z-10 flex flex-col items-center" style={{ flex: 1 }}>
+                                  <div className={`flex h-7 w-7 items-center justify-center rounded-full border-2 text-[10px] font-bold transition-all ${
+                                    i < cur ? 'border-blue-500 bg-blue-500 text-white' :
+                                    i === cur ? 'border-blue-500 bg-white text-blue-600 ring-2 ring-blue-200' :
+                                    'border-slate-300 bg-white text-slate-400'
+                                  }`}>
+                                    {i < cur ? '✓' : i + 1}
+                                  </div>
+                                  <p className="mt-1 text-[9px] text-slate-500 text-center leading-tight" style={{ maxWidth: 52 }}>{s}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-400 text-center py-2">Could not load Meta status. Check your API token.</p>
                   )}
                 </div>
               )}
