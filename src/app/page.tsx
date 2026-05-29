@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence, useAnimationFrame } from 'framer-motion';
 import Link from 'next/link';
-import { Button } from '@/components/button';
+// import { Button } from '@/components/button'; // reserved for future use
 import { Logo } from '@/components/logo';
 import { SplineViewer } from '@/components/spline-viewer';
 import { featureHighlights, workflowSteps, trustPoints, blogPosts, allFeatures } from '@/lib/marketing';
@@ -90,8 +90,8 @@ function InfiniteMarquee({ items }: { items: typeof liveIntegrations }) {
 }
 
 // ─── Bento Card ────────────────────────────────────────────────────────────────
-function BentoCard({ title, desc, tag, icon: Icon, accentCyan = true }: {
-  title: string; desc: string; tag: string; icon: React.ComponentType<{ className?: string }>; accentCyan?: boolean;
+function BentoCard({ title, desc, tag, icon: Icon }: {
+  title: string; desc: string; tag: string; icon: React.ComponentType<{ className?: string }>;
 }) {
   return (
     <div className="group relative rounded-2xl p-8 bg-white/[0.01] border border-white/[0.06] backdrop-blur-xl transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-2 hover:bg-white/[0.025] hover:border-[#00F2FE]/30 hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8),0_0_50px_rgba(0,242,254,0.04)] overflow-hidden cursor-default">
