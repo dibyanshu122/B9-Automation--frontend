@@ -160,20 +160,24 @@ export const Sidebar = () => {
   const groupActive = (children?: any[]): boolean =>
     children?.some(c => isActive(c.href)) ?? false;
 
-  // Item styles: dark sidebar, indigo active.
+  // Item styles — mini mode has centered icon with active left-border accent
   const item = (active: boolean, mini = false) => clsx(
-    'flex w-full items-center rounded-lg transition-all duration-150 text-sm font-medium',
+    'flex w-full items-center rounded-lg transition-all duration-150 text-sm font-medium relative',
     mini ? 'my-1 h-11 justify-center gap-0 px-0 py-0' : 'gap-3 px-3 py-2.5',
     active
-      ? 'bg-indigo-500/20 text-indigo-300 font-semibold'
-      : 'text-slate-400 hover:bg-white/8 hover:text-slate-100'
+      ? mini
+        ? 'bg-indigo-500/20 text-indigo-300 font-semibold shadow-[inset_2px_0_0_#6366f1]'
+        : 'bg-indigo-500/20 text-indigo-300 font-semibold'
+      : mini
+        ? 'text-slate-500 hover:bg-white/[0.07] hover:text-slate-200'
+        : 'text-slate-400 hover:bg-white/[0.07] hover:text-slate-100'
   );
   const child = (active: boolean) => clsx(
     'flex w-full items-center gap-3 rounded-lg transition-all duration-150 text-sm font-medium',
     'px-3 py-2',
     active
       ? 'bg-indigo-500/20 text-indigo-300 font-semibold'
-      : 'text-slate-400 hover:bg-white/8 hover:text-slate-100'
+      : 'text-slate-400 hover:bg-white/[0.07] hover:text-slate-100'
   );
 
   // Label fades in/out based on expanded state.
@@ -237,7 +241,11 @@ export const Sidebar = () => {
                     }}
                     className={item(gActive, !expanded)}
                   >
-                    <Icon className="w-5 h-5 shrink-0" />
+                    {/* Active indicator dot in mini mode */}
+                    {!expanded && gActive && (
+                      <span className="absolute left-1 top-1/2 -translate-y-1/2 w-1 h-5 rounded-full bg-indigo-400" />
+                    )}
+                    <Icon className={clsx('shrink-0', !expanded ? 'w-[18px] h-[18px]' : 'w-5 h-5', gActive ? 'text-indigo-300' : '')} />
                     <span className={clsx(lbl, 'flex-1 text-left')}>{group.name}</span>
                     <ChevronDown className={clsx(
                       'w-4 h-4 shrink-0 transition-all duration-200',
@@ -283,7 +291,10 @@ export const Sidebar = () => {
                 title={!expanded ? group.name : undefined}
                 className={item(singleActive, !expanded)}
                 onClick={() => setSidebarOpen(false)}>
-                <Icon className="w-5 h-5 shrink-0" />
+                {!expanded && singleActive && (
+                  <span className="absolute left-1 top-1/2 -translate-y-1/2 w-1 h-5 rounded-full bg-indigo-400" />
+                )}
+                <Icon className={clsx('shrink-0', !expanded ? 'w-[18px] h-[18px]' : 'w-5 h-5', singleActive ? 'text-indigo-300' : '')} />
                 <span className={lbl}>{group.name}</span>
               </Link>
             );
@@ -306,31 +317,36 @@ export const Sidebar = () => {
             );
           })}
 
+          {/* Separator */}
+          <div className="my-1 mx-2 h-px bg-white/[0.07]" />
+
           {/* Logout */}
           <button
             onClick={handleLogout}
             title={!expanded ? 'Logout' : undefined}
             className={clsx(
-              'flex w-full items-center rounded-lg text-red-400/70 transition-all hover:bg-red-500/10 hover:text-red-400 text-sm',
+              'flex w-full items-center rounded-lg transition-all hover:bg-red-500/10 text-sm',
+              'text-slate-500 hover:text-red-400',
               expanded ? 'gap-3 px-3 py-2.5' : 'my-1 h-11 justify-center gap-0 px-0 py-0'
             )}>
-            <LogOut className="w-4 h-4 shrink-0" />
+            <LogOut className={clsx('shrink-0', expanded ? 'w-4 h-4' : 'w-[18px] h-[18px]')} />
             <span className={lbl}>Logout</span>
           </button>
 
-          {/* Pin / Unpin */}
+          {/* Pin / Unpin — only show when sidebar is hovered or pinned */}
           <button onClick={toggleSidebarPinned}
             title={sidebarPinned ? 'Collapse sidebar' : 'Pin sidebar open'}
             className={clsx(
-              'flex w-full items-center rounded-lg text-slate-500 transition-all hover:bg-white/10 hover:text-slate-300 text-sm',
-              expanded ? 'gap-3 px-3 py-2.5' : 'my-1 h-11 justify-center gap-0 px-0 py-0'
+              'flex w-full items-center rounded-lg transition-all hover:bg-white/10 text-sm',
+              'text-slate-600 hover:text-slate-300',
+              expanded ? 'gap-3 px-3 py-2' : 'my-1 h-9 justify-center gap-0 px-0 py-0'
             )}>
             {sidebarPinned ? (
               <ChevronsLeft className="w-4 h-4 shrink-0" />
             ) : (
               <ChevronsRight className="w-4 h-4 shrink-0" />
             )}
-            <span className={lbl}>{sidebarPinned ? 'Collapse' : 'Pin open'}</span>
+            <span className={clsx(lbl, 'text-xs')}>{sidebarPinned ? 'Collapse' : 'Pin open'}</span>
           </button>
         </div>
       </aside>
