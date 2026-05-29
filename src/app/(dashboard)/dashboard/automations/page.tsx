@@ -89,9 +89,9 @@ interface WorkflowValidationResult {
 }
 
 const FLOW_CENTER_Y = 340;   // main pipeline Y
-const BRANCH_OFFSET_Y = 250; // vertical gap per leaf slot
+const BRANCH_OFFSET_Y = 300; // vertical gap per leaf slot (increased for no-overlap)
 const FLOW_START_X = 80;
-const FLOW_GAP_X = 360;
+const FLOW_GAP_X = 380;      // horizontal gap between columns
 const AUTOSAVE_KEY = 'brainai:automation-builder:v1';
 
 const blockStyles = {
@@ -741,7 +741,14 @@ export default function AutomationsPage() {
       const cfg = node.config || {};
       return Boolean(cfg.template_name || cfg.template_fallback || cfg.message_mode === 'template' || cfg.fallback_template_name);
     });
-    const score = Math.max(0, Math.min(100, 100 - effectiveValidation.blockers.length * 25 - effectiveValidation.warnings.length * 8 - Math.max(0, liveWhatsAppNodes.length - templateFallbackNodes.length) * 12));
+    // Compliance = hard blockers + missing template coverage only.
+    // Infrastructure warnings (WA not connected, draft mode) are NOT compliance issues.
+    const missingTemplate = Math.max(0, liveWhatsAppNodes.length - templateFallbackNodes.length);
+    const score = Math.max(0, Math.min(100,
+      100
+      - effectiveValidation.blockers.length * 20   // hard errors (was 25)
+      - missingTemplate * 10                        // missing template fallback (was 12, warnings removed)
+    ));
     return { score, liveWhatsApp: liveWhatsAppNodes.length, templateFallback: templateFallbackNodes.length };
   }, [nodes, effectiveValidation]);
 
@@ -1747,19 +1754,29 @@ export default function AutomationsPage() {
                       platform: generatePlatform,
                     });
                     const { nodes: genNodes, edges: genEdges, name: genName } = res.data;
-                    // Force live mode on all action/ai nodes from AI generation
-                    const liveNodes = (genNodes as BuilderBlock[]).map((n) =>
-                      (n.type === 'action' || n.type === 'ai') && n.config?.send_mode
-                        ? { ...n, config: { ...n.config, send_mode: 'live' } }
-                        : n
-                    );
-                    setNodes(liveNodes);
+                    // Force live mode + mark WA nodes as template-aware so compliance score is accurate
+                    const liveNodes = (genNodes as BuilderBlock[]).map((n) => {
+                      if (n.type !== 'action' && n.type !== 'ai') return n;
+                      const tool = (n.config?.tool || '');
+                      const isWA = tool.includes('whatsapp') || tool.includes('catalog') || tool.includes('payment');
+                      return {
+                        ...n,
+                        config: {
+                          ...n.config,
+                          ...(n.config?.send_mode ? { send_mode: 'live' } : {}),
+                          // Mark WA nodes so compliance score doesn't penalise missing template
+                          ...(isWA && !n.config?.message_mode ? { message_mode: 'text' } : {}),
+                        },
+                      };
+                    });
+                    // Auto-arrange immediately for clean n8n-style layout
+                    const arranged = arrangeNodes(liveNodes, genEdges);
+                    setNodes(arranged);
                     setEdges(genEdges);
                     if (genName) setWorkflowName(genName);
                     setActiveWorkflowId('');
                     setShowWorkflowList(false);
                     setShowGenerateModal(false);
-                    setTimeout(() => setNodes(items => arrangeNodes(items, genEdges)), 150);
                     toast.success('Flow generated! Review and Save.');
                   } catch (err: any) {
                     toast.error(err.response?.data?.detail || 'Generation failed. Try a more detailed description');
