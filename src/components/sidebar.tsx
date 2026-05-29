@@ -160,13 +160,15 @@ export const Sidebar = () => {
   const groupActive = (children?: any[]): boolean =>
     children?.some(c => isActive(c.href)) ?? false;
 
-  // Item styles: dark sidebar, indigo active.
+  // Item styles: dark sidebar, indigo active with left bar in mini.
   const item = (active: boolean, mini = false) => clsx(
     'flex w-full items-center rounded-lg transition-all duration-150 text-sm font-medium',
     mini ? 'my-1 h-11 justify-center gap-0 px-0 py-0' : 'gap-3 px-3 py-2.5',
     active
-      ? 'bg-indigo-500/20 text-indigo-300 font-semibold'
-      : 'text-slate-400 hover:bg-white/8 hover:text-slate-100'
+      ? mini
+        ? 'bg-indigo-500/25 text-white shadow-[inset_3px_0_0_#818cf8]'  // left bar in mini
+        : 'bg-indigo-500/20 text-indigo-200 font-semibold'
+      : 'text-slate-400 hover:bg-white/[0.08] hover:text-slate-100'
   );
   const child = (active: boolean) => clsx(
     'flex w-full items-center gap-3 rounded-lg transition-all duration-150 text-sm font-medium',
@@ -306,15 +308,18 @@ export const Sidebar = () => {
             );
           })}
 
+          {/* Separator before logout */}
+          <div className={clsx('h-px bg-white/[0.08]', expanded ? 'my-1 mx-1' : 'my-1 mx-2')} />
+
           {/* Logout */}
           <button
             onClick={handleLogout}
             title={!expanded ? 'Logout' : undefined}
             className={clsx(
-              'flex w-full items-center rounded-lg text-red-400/70 transition-all hover:bg-red-500/10 hover:text-red-400 text-sm',
+              'flex w-full items-center rounded-lg text-slate-500 transition-all hover:bg-red-500/10 hover:text-red-400 text-sm',
               expanded ? 'gap-3 px-3 py-2.5' : 'my-1 h-11 justify-center gap-0 px-0 py-0'
             )}>
-            <LogOut className="w-4 h-4 shrink-0" />
+            <LogOut className="w-5 h-5 shrink-0" />
             <span className={lbl}>Logout</span>
           </button>
 
