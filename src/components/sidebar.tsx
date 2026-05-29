@@ -164,7 +164,7 @@ export const Sidebar = () => {
   const item = (active: boolean, mini = false) => clsx(
     'flex w-full items-center rounded-lg transition-all duration-150 text-sm font-medium relative',
     mini
-      ? 'my-[2px] h-10 justify-center gap-0 p-0'
+      ? 'h-10 justify-center gap-0 p-0'
       : 'gap-3 px-3 py-2.5',
     active
       ? mini
@@ -224,8 +224,10 @@ export const Sidebar = () => {
       >
         {/* Nav */}
         <nav className={clsx(
-          'overflow-x-hidden py-3 space-y-0.5',
-          expanded ? 'flex-1 overflow-y-auto px-2' : 'flex-none px-1',  // mini: no flex-1, icons pack tightly
+          'overflow-x-hidden',
+          expanded
+            ? 'flex-1 overflow-y-auto px-2 py-3 space-y-0.5'
+            : 'flex-none px-1 pt-4 pb-2 space-y-1',  // mini: more top padding, consistent spacing
         )}>
           {mainGroups.map((group) => {
             const Icon = ICONS[group.icon as keyof typeof ICONS];
