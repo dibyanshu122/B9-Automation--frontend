@@ -93,7 +93,12 @@ export default function LeadsPage() {
   const [savingNote, setSavingNote] = useState(false);
   const [timeline, setTimeline] = useState<any[]>([]);
   const [timelineLoading, setTimelineLoading] = useState(false);
-  const [detailTab, setDetailTab] = useState<'info' | 'notes' | 'timeline' | 'deals'>('info');
+  const [detailTab, setDetailTab] = useState<'info' | 'notes' | 'timeline' | 'deals' | 'tags'>('info');
+  // Multi-tag state
+  const [leadTags, setLeadTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
+  const [allTags, setAllTags] = useState<string[]>([]);
+  const [savingTag, setSavingTag] = useState(false);
   const [deals, setDeals] = useState<any[]>([]);
   const [dealsLoading, setDealsLoading] = useState(false);
   const [dealForm, setDealForm] = useState({ title: '', value: '', stage: 'open', probability: '50' });
@@ -129,6 +134,31 @@ export default function LeadsPage() {
       await api.delete(`/api/leads/${leadId}/notes/${noteId}`);
       setNotes(prev => prev.filter(n => n.id !== noteId));
     } catch { toast.error('Failed to delete note'); }
+  };
+
+  const loadLeadTags = (leadId: string) => {
+    api.get(`/api/leads/${leadId}/tags`).then(r => setLeadTags(r.data || [])).catch(() => {});
+    if (allTags.length === 0) {
+      api.get('/api/leads/tags/all').then(r => setAllTags(r.data || [])).catch(() => {});
+    }
+  };
+  const addTag = async (leadId: string, tag: string) => {
+    const t = tag.trim().toLowerCase();
+    if (!t || leadTags.includes(t)) return;
+    setSavingTag(true);
+    try {
+      await api.post(`/api/leads/${leadId}/tags`, { tag: t });
+      setLeadTags(prev => [...prev, t]);
+      if (!allTags.includes(t)) setAllTags(prev => [...prev, t].sort());
+      setTagInput('');
+    } catch { toast.error('Failed to add tag'); }
+    finally { setSavingTag(false); }
+  };
+  const removeTag = async (leadId: string, tag: string) => {
+    try {
+      await api.delete(`/api/leads/${leadId}/tags/${tag}`);
+      setLeadTags(prev => prev.filter(t => t !== tag));
+    } catch { toast.error('Failed to remove tag'); }
   };
 
   const loadDeals = (leadId: string) => {
@@ -387,6 +417,8 @@ export default function LeadsPage() {
     setNotes([]);
     setTimeline([]);
     setDeals([]);
+    setLeadTags([]);
+    setTagInput('');
     setNoteText('');
     setShowDealForm(false);
     setDetailTab('info');
@@ -887,6 +919,7 @@ export default function LeadsPage() {
             {([
               { key: 'info', label: 'Info', icon: <Eye className="h-3.5 w-3.5" /> },
               { key: 'deals', label: 'Deals', icon: <Star className="h-3.5 w-3.5" /> },
+              { key: 'tags', label: 'Tags', icon: <span className="text-xs">🏷️</span> },
               { key: 'notes', label: 'Notes', icon: <StickyNote className="h-3.5 w-3.5" /> },
               { key: 'timeline', label: 'Activity', icon: <Activity className="h-3.5 w-3.5" /> },
             ] as const).map(tab => (
@@ -897,6 +930,7 @@ export default function LeadsPage() {
                   if (tab.key === 'notes' && notes.length === 0) loadNotes(selectedLead.id);
                   if (tab.key === 'timeline' && timeline.length === 0) loadTimeline(selectedLead.id);
                   if (tab.key === 'deals' && deals.length === 0) loadDeals(selectedLead.id);
+                  if (tab.key === 'tags') loadLeadTags(selectedLead.id);
                 }}
                 className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-semibold transition ${detailTab === tab.key ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
               >
@@ -951,6 +985,57 @@ export default function LeadsPage() {
                       </div>
                     );
                   })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAGS TAB */}
+          {detailTab === 'tags' && (
+            <div className="space-y-3">
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Multi-Tags</p>
+              {/* Current tags */}
+              <div className="flex flex-wrap gap-1.5 min-h-[32px]">
+                {leadTags.length === 0 ? (
+                  <p className="text-xs text-gray-400">No tags yet</p>
+                ) : leadTags.map(tag => (
+                  <span key={tag} className="inline-flex items-center gap-1 rounded-full bg-indigo-50 border border-indigo-200 px-2.5 py-1 text-xs font-semibold text-indigo-700">
+                    {tag}
+                    <button onClick={() => removeTag(selectedLead.id, tag)} className="ml-0.5 text-indigo-400 hover:text-red-500 transition">×</button>
+                  </span>
+                ))}
+              </div>
+              {/* Add tag */}
+              <div className="flex gap-2">
+                <input
+                  value={tagInput}
+                  onChange={e => setTagInput(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(selectedLead.id, tagInput); } }}
+                  placeholder="Add tag (press Enter)"
+                  list="tag-suggestions"
+                  className="flex-1 rounded-lg border border-gray-200 px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-300"
+                />
+                <datalist id="tag-suggestions">
+                  {allTags.filter(t => !leadTags.includes(t)).map(t => <option key={t} value={t} />)}
+                </datalist>
+                <button
+                  onClick={() => addTag(selectedLead.id, tagInput)}
+                  disabled={savingTag || !tagInput.trim()}
+                  className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-indigo-700 disabled:opacity-40 transition"
+                >+ Add</button>
+              </div>
+              {/* Suggested tags */}
+              {allTags.filter(t => !leadTags.includes(t)).length > 0 && (
+                <div>
+                  <p className="text-[10px] text-gray-400 mb-1">Suggestions:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {allTags.filter(t => !leadTags.includes(t)).slice(0, 10).map(t => (
+                      <button key={t} onClick={() => addTag(selectedLead.id, t)}
+                        className="rounded-full bg-gray-100 border border-gray-200 px-2 py-0.5 text-[10px] text-gray-600 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-700 transition">
+                        + {t}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
