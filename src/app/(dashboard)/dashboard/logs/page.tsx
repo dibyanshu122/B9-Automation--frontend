@@ -29,6 +29,8 @@ interface AutomationRun {
   user_message: string | null;
   intent: string | null;
   status: RunStatus;
+  trigger_type: string | null;
+  duration_ms: number | null;
   started_at: string | null;
   completed_at: string | null;
   error_message: string | null;

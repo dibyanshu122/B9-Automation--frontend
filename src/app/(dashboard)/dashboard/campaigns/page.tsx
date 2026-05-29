@@ -220,6 +220,12 @@ function CampaignRow({ idx, c, onDetail, onRefresh }: { idx: number; c: Campaign
       } else if (action === 'send-draft') {
         const r = await post(`/api/campaigns/${encodeURIComponent(c.name)}/send-draft`, {});
         toast.success(`Sending to ${r.data.queued} recipients`);
+      } else if (action === 'pause') {
+        const r = await post(`/api/campaigns/${encodeURIComponent(c.name)}/pause`, {});
+        toast.success(`Paused ${r.data.paused} messages`);
+      } else if (action === 'resume') {
+        const r = await post(`/api/campaigns/${encodeURIComponent(c.name)}/resume`, {});
+        toast.success(`Resumed ${r.data.resumed} messages`);
       }
       onRefresh();
     } catch (e: any) { toast.error(e.response?.data?.detail || 'Failed'); }
@@ -290,6 +296,8 @@ function CampaignRow({ idx, c, onDetail, onRefresh }: { idx: number; c: Campaign
               <button onClick={() => { setMenuOpen(false); onDetail(c.name); }} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-gray-700 flex items-center gap-2"><BarChart2 className="w-3.5 h-3.5" /> View Details</button>
               {c.status === 'draft' && <button onClick={() => doAction('send-draft')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-emerald-600 flex items-center gap-2"><Send className="w-3.5 h-3.5" /> Send Draft</button>}
               {c.failed > 0 && <button onClick={() => doAction('retry')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-blue-600 flex items-center gap-2"><RefreshCw className="w-3.5 h-3.5" /> Retry Failed ({c.failed})</button>}
+              {c.status === 'sending' && <button onClick={() => doAction('pause')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-amber-600 flex items-center gap-2">⏸ Pause Campaign</button>}
+              {c.status === 'paused' && <button onClick={() => doAction('resume')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-emerald-600 flex items-center gap-2">▶ Resume Campaign</button>}
               {(c.status === 'sending' || c.status === 'scheduled') && <button onClick={() => doAction('cancel')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-red-500 flex items-center gap-2"><Ban className="w-3.5 h-3.5" /> Cancel</button>}
             </div>
           </>

@@ -11,8 +11,8 @@ const API = process.env.NEXT_PUBLIC_API_URL || 'https://b9-automation-backend.on
 function TeamAcceptContent() {
   const params = useSearchParams();
   const router = useRouter();
-  const memberId = params.get('member_id') || '';
-  const token = params.get('token') || '';
+  const memberId = params?.get('member_id') || '';
+  const token = params?.get('token') || '';
 
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('');

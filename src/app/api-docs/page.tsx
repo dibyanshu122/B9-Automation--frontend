@@ -25,7 +25,7 @@ type ApiEndpoint = {
   path: string;
   description: string;
   auth?: boolean;
-  body?: Record<string, string>;
+  body?: Record<string, unknown>;
   params?: Array<{ name: string; desc: string }>;
 };
 

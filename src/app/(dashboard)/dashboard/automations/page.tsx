@@ -1201,6 +1201,15 @@ export default function AutomationsPage() {
               toast.error('Failed to update workflow status');
             }
           }}
+          onClone={async (id) => {
+            try {
+              const res = await post(`/api/automation/workflows/${id}/clone`, {});
+              toast.success(`Cloned as "${res.data.name}"`);
+              refresh();
+            } catch {
+              toast.error('Failed to clone workflow');
+            }
+          }}
           onRefresh={() => refresh()}
         />
       )}
@@ -1999,6 +2008,7 @@ function WorkflowListView({
   onNew,
   onDelete,
   onToggleStatus,
+  onClone,
   onRefresh,
 }: {
   workflows: AutomationWorkflow[];
@@ -2007,6 +2017,7 @@ function WorkflowListView({
   onNew: () => void;
   onDelete: (id: string) => void;
   onToggleStatus?: (id: string, currentStatus: string) => void;
+  onClone?: (id: string) => void;
   onRefresh?: () => void;
 }) {
   return (
@@ -2106,6 +2117,16 @@ function WorkflowListView({
                         title={wf.status === 'active' ? 'Pause workflow' : 'Activate workflow'}
                       >
                         {wf.status === 'active' ? '⏸ Pause' : '▶ Activate'}
+                      </button>
+                    )}
+                    {onClone && (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); onClone(wf.id); }}
+                        className="flex h-5 items-center gap-1 rounded-md px-1.5 text-[10px] font-semibold text-slate-500 opacity-0 transition hover:bg-white/10 hover:text-slate-200 group-hover:opacity-100"
+                        title="Clone workflow"
+                      >
+                        ⊕ Clone
                       </button>
                     )}
                     <button

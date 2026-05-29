@@ -157,10 +157,16 @@ export default function LeadsPage() {
     } catch { toast.error('Failed to update deal'); }
   };
 
+  const [leadTotal, setLeadTotal] = useState(0);
+  const [leadOffset, setLeadOffset] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const LEAD_PAGE_SIZE = 50;
+
   const refresh = () => {
     setLoading(true);
+    setLeadOffset(0);
     Promise.allSettled([
-      get('/api/leads'),
+      get(`/api/leads?limit=${LEAD_PAGE_SIZE}&offset=0`),
       get('/api/leads/inbox'),
       get('/api/leads/handover-queue'),
       api.get('/api/leads/labels'),
@@ -168,7 +174,11 @@ export default function LeadsPage() {
     ])
       .then(([leadResponse, inboxResponse, handoverResponse, labelResponse, memberResponse]) => {
         if (leadResponse.status === 'rejected') throw leadResponse.reason;
-        setLeads(leadResponse.value.data);
+        const data = leadResponse.value.data;
+        setLeads(Array.isArray(data) ? data : (data?.leads || data || []));
+        setLeadTotal(leadResponse.value.headers?.['x-total-count']
+          ? parseInt(leadResponse.value.headers['x-total-count'])
+          : (Array.isArray(data) ? data.length : (data?.total || data?.length || 0)));
         if (inboxResponse.status === 'fulfilled') setInbox(inboxResponse.value.data);
         if (handoverResponse.status === 'fulfilled') setHandoverQueue(handoverResponse.value.data?.items || []);
         if (labelResponse.status === 'fulfilled') setLeadLabels(labelResponse.value.data?.labels || []);
@@ -176,6 +186,19 @@ export default function LeadsPage() {
       })
       .catch((error) => toast.error(error.response?.data?.detail || 'Failed to load CRM data'))
       .finally(() => setLoading(false));
+  };
+
+  const loadMoreLeads = async () => {
+    const newOffset = leadOffset + LEAD_PAGE_SIZE;
+    setLoadingMore(true);
+    try {
+      const r = await get(`/api/leads?limit=${LEAD_PAGE_SIZE}&offset=${newOffset}`);
+      const data = r.data;
+      const newLeads = Array.isArray(data) ? data : (data?.leads || []);
+      setLeads(prev => [...prev, ...newLeads]);
+      setLeadOffset(newOffset);
+    } catch { toast.error('Failed to load more leads'); }
+    finally { setLoadingMore(false); }
   };
 
   useEffect(() => {
@@ -296,7 +319,7 @@ export default function LeadsPage() {
     try {
       await api.delete(`/api/leads/labels/${label.id}`);
       setLeadLabels((current) => current.filter((item) => item.id !== label.id));
-      setLeads((current) => current.map((lead) => (lead.tag === label.name ? { ...lead, tag: null } as Lead : lead)));
+      setLeads((current) => current.map((lead) => (lead.tag === label.name ? { ...lead, tag: undefined } as Lead : lead)));
       if (labelFilter === label.name) setLabelFilter('all');
       toast.success('Label deleted');
     } catch (error: any) {
@@ -705,6 +728,16 @@ export default function LeadsPage() {
               ))}
               {filteredLeads.length === 0 && <p className="py-6 text-center text-sm text-gray-500">No leads match this search.</p>}
             </div>
+            {/* Pagination — load more */}
+            {!loadingMore && leads.length < leadTotal && !searchQuery && statusFilter === 'all' && labelFilter === 'all' && !leadDateFrom && !leadDateTo && (
+              <div className="mt-3 flex items-center justify-between text-sm text-gray-500 border-t border-gray-100 pt-3">
+                <span>Showing {leads.length} of {leadTotal} leads</span>
+                <button onClick={loadMoreLeads} className="rounded-lg border border-primary-200 bg-primary-50 px-4 py-1.5 text-xs font-semibold text-primary-700 hover:bg-primary-100 transition">
+                  Load more
+                </button>
+              </div>
+            )}
+            {loadingMore && <p className="mt-2 text-center text-xs text-gray-400">Loading more leads…</p>}
           </Card>
           <div className="grid gap-4 xl:grid-cols-3">
           {stages.map((stage) => (

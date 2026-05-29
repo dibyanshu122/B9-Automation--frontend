@@ -8,14 +8,14 @@ import { ArrowRight, Bot, Sparkles, Workflow, MessageSquare, Camera, Facebook, M
 
 const fadeUp = {
   hidden: { opacity: 0, y: 28 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.65, ease: [0.16, 1, 0.3, 1] } },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.65, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } },
 };
 const stagger = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.09 } },
 };
 
-type CategoryFeature = { icon: React.ElementType; slug: string; title: string; desc: string; bullets: string[]; color: string };
+type CategoryFeature = { icon: React.ComponentType<{ className?: string }>; slug: string; title: string; desc: string; bullets: string[]; color: string };
 type Category = { id: string; label: string; desc: string; features: CategoryFeature[] };
 
 const CATEGORIES: Category[] = [

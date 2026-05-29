@@ -15,7 +15,7 @@ import {
 // ─── Animation Variants ────────────────────────────────────────────────────────
 const fadeUp = {
   hidden: { opacity: 0, y: 28 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.65, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.65, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] as [number, number, number, number] } },
 };
 const stagger = {
   hidden: {},
@@ -91,7 +91,7 @@ function InfiniteMarquee({ items }: { items: typeof liveIntegrations }) {
 
 // ─── Bento Card ────────────────────────────────────────────────────────────────
 function BentoCard({ title, desc, tag, icon: Icon, accentCyan = true }: {
-  title: string; desc: string; tag: string; icon: React.ElementType; accentCyan?: boolean;
+  title: string; desc: string; tag: string; icon: React.ComponentType<{ className?: string }>; accentCyan?: boolean;
 }) {
   return (
     <div className="group relative rounded-2xl p-8 bg-white/[0.01] border border-white/[0.06] backdrop-blur-xl transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-2 hover:bg-white/[0.025] hover:border-[#00F2FE]/30 hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8),0_0_50px_rgba(0,242,254,0.04)] overflow-hidden cursor-default">
@@ -217,7 +217,7 @@ export default function HomePage() {
                     initial={{ opacity: 0, y: -10, scale: 0.96 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -10, scale: 0.96 }}
-                    transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                    transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
                     className="absolute top-full left-0 mt-3 w-[420px] rounded-2xl border border-white/[0.07] bg-[#030712]/95 backdrop-blur-2xl p-3 shadow-[0_20px_60px_rgba(0,0,0,0.9),0_0_40px_rgba(0,242,254,0.03)] max-h-[480px] overflow-y-auto"
                     onMouseLeave={() => setFeaturesOpen(false)}
                   >
@@ -736,7 +736,7 @@ export default function HomePage() {
                 <AnimatePresence>
                   {openFaq === i && (
                     <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }} className="overflow-hidden">
+                      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }} className="overflow-hidden">
                       <div className="px-6 pb-6 text-zinc-500 text-sm leading-relaxed border-t border-white/[0.04] pt-4">{faq.a}</div>
                     </motion.div>
                   )}
