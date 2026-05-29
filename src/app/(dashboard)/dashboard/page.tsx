@@ -63,6 +63,7 @@ export default function DashboardPage() {
   const planFallback = PLAN_LIMITS_FALLBACK[planKey] ?? PLAN_LIMITS_FALLBACK.FREE;
   const { get } = useApi();
   const [apiLimits, setApiLimits] = useState<any>(null);
+  const [metaStatus, setMetaStatus] = useState<any>(null);
   const [onboarding, setOnboarding] = useState<OnboardingStatus | null>(null);
   const [selectedPack, setSelectedPack] = useState<IndustryPack>(DEFAULT_INDUSTRY_PACK);
   const [automationStats, setAutomationStats] = useState({
@@ -165,6 +166,12 @@ export default function DashboardPage() {
       }
       if (readRes.data) setReadiness(readRes.data);
       if (teamRes.data) setTeamMe(teamRes.data);
+      // Fetch Meta Status if WhatsApp is connected
+      if (statsRes.data?.whatsapp_connection_status?.send_enabled) {
+        silentGet('/api/integrations/whatsapp/meta-status').then(r => {
+          if (r?.data?.connected) setMetaStatus(r.data);
+        });
+      }
     });
   };
 
@@ -486,28 +493,85 @@ export default function DashboardPage() {
               <p className="mt-4 font-bold text-gray-950">Website Widget</p>
               <p className="mt-1 text-sm text-gray-600">{automationStats.widget_status?.active_domains || 0} allowed domains active</p>
             </Link>
-            <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
-              <div className="flex items-center justify-between">
-                <MessageCircle className="h-5 w-5 text-emerald-600" />
-                <span className={`rounded-full px-2 py-1 text-xs font-bold ${automationStats.whatsapp_connection_status?.send_enabled ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
-                  {automationStats.whatsapp_connection_status?.send_enabled ? '✓ Live' : 'Draft mode'}
-                </span>
+            {/* WhatsApp Status / Meta Status Card */}
+            {automationStats.whatsapp_connection_status?.send_enabled && metaStatus ? (
+              /* ── Connected: Show Meta Status ── */
+              <div className="rounded-xl border border-emerald-200 bg-white p-4 shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-xs font-bold text-emerald-700">WhatsApp Live</span>
+                  </div>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Meta Status</span>
+                </div>
+
+                {/* Tier */}
+                <div className="mb-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Tier</span>
+                    <span className="rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-bold text-white">{metaStatus.tier?.label ?? 'N/A'}</span>
+                  </div>
+                  <div className="relative flex items-center">
+                    <div className="absolute inset-x-2 top-1/2 -translate-y-1/2 h-0.5 bg-gray-200 rounded-full" />
+                    <div className="absolute left-2 top-1/2 -translate-y-1/2 h-0.5 bg-blue-500 rounded-full transition-all"
+                      style={{ width: `calc(${Math.max(0, ((metaStatus.tier?.step ?? 0) / 5) * 100)}% - 4px)` }} />
+                    {['N/A','250','2K','10K','100K','∞'].map((t, i) => (
+                      <div key={t} className="relative z-10 flex flex-col items-center" style={{ flex: 1 }}>
+                        <div className={`flex h-5 w-5 items-center justify-center rounded-full text-[8px] font-bold border transition-all ${
+                          i < (metaStatus.tier?.step ?? 0) ? 'border-blue-500 bg-blue-500 text-white' :
+                          i === (metaStatus.tier?.step ?? 0) ? 'border-blue-500 bg-white text-blue-600 ring-1 ring-blue-200' :
+                          'border-gray-300 bg-white text-gray-400'}`}>
+                          {i < (metaStatus.tier?.step ?? 0) ? '✓' : i + 1}
+                        </div>
+                        <p className="mt-0.5 text-[8px] text-gray-400">{t}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Rating + Verification row */}
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  <div className="rounded-lg bg-gray-50 p-2 text-center">
+                    <p className="text-[9px] font-bold uppercase tracking-wider text-gray-400 mb-0.5">Quality Rating</p>
+                    <span className={`text-xs font-black ${metaStatus.rating?.color === 'green' ? 'text-emerald-600' : metaStatus.rating?.color === 'yellow' ? 'text-amber-600' : metaStatus.rating?.color === 'red' ? 'text-red-500' : 'text-gray-500'}`}>
+                      {metaStatus.rating?.label ?? 'NA'}
+                    </span>
+                  </div>
+                  <div className="rounded-lg bg-gray-50 p-2 text-center">
+                    <p className="text-[9px] font-bold uppercase tracking-wider text-gray-400 mb-0.5">Verification</p>
+                    <span className="text-[10px] font-black text-gray-700 leading-tight">{metaStatus.verification?.label ?? 'Not Verified'}</span>
+                  </div>
+                </div>
+
+                {/* 24h stats + actions */}
+                <div className="flex items-center justify-between text-[10px] text-gray-400 mb-2">
+                  <span>📤 {metaStatus.messageSent24h ?? 0} sent</span>
+                  <span>📥 {metaStatus.msgReceived24h ?? 0} received</span>
+                  <span className="text-gray-300">last 24h</span>
+                </div>
+                <div className="flex gap-2">
+                  <Link href="/dashboard/messages" className="flex-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1.5 text-center text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition">
+                    Inbox
+                  </Link>
+                  <Link href="/dashboard/integrations" className="flex-1 rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-center text-xs font-semibold text-gray-600 hover:bg-gray-50 transition">
+                    Full Details
+                  </Link>
+                </div>
               </div>
-              <p className="mt-4 font-bold text-gray-950">WhatsApp Bot</p>
-              <p className="mt-1 text-sm text-gray-600">
-                {automationStats.whatsapp_connection_status?.send_enabled
-                  ? 'Live sending enabled — messages go directly to customers'
-                  : 'Not connected yet — drafts only'}
-              </p>
-              <div className="mt-3 flex gap-2">
-                <Link href="/dashboard/messages" className="flex-1 rounded-lg border border-emerald-200 bg-white px-2 py-1.5 text-center text-xs font-semibold text-emerald-700 hover:bg-emerald-50 transition">
-                  View Messages
-                </Link>
-                <Link href="/dashboard/integrations" className="flex-1 rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-center text-xs font-semibold text-gray-600 hover:bg-gray-100 transition">
-                  {automationStats.whatsapp_connection_status?.send_enabled ? 'Meta Status ↗' : 'Connect'}
+            ) : (
+              /* ── Not Connected: Simple connect card ── */
+              <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                <div className="flex items-center justify-between">
+                  <MessageCircle className="h-5 w-5 text-gray-400" />
+                  <span className="rounded-full bg-amber-50 px-2 py-1 text-xs font-bold text-amber-700">Not connected</span>
+                </div>
+                <p className="mt-3 font-bold text-gray-950">WhatsApp Bot</p>
+                <p className="mt-1 text-sm text-gray-500">Connect your WhatsApp Business number to enable live messaging and see Meta Status here.</p>
+                <Link href="/dashboard/integrations" className="mt-3 block w-full rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-center text-xs font-bold text-orange-700 hover:bg-orange-100 transition">
+                  Connect WhatsApp →
                 </Link>
               </div>
-            </div>
+            )}
           </div>
           <div className="mt-4 grid grid-cols-3 gap-2 rounded-xl bg-slate-950 p-3 text-center text-white">
             <div><p className="text-2xl font-black">{automationStats.hot_leads}</p><p className="text-xs text-red-200">Hot</p></div>
