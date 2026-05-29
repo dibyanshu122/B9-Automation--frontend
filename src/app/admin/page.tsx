@@ -191,8 +191,7 @@ function SeverityBadge({ severity }: { severity?: string }) {
   );
 }
 
-const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || '';
-const ADMIN_PASS = process.env.NEXT_PUBLIC_ADMIN_PASS || '';
+// Credentials validated server-side only — never in browser
 const ADMIN_SESSION_KEY = 'b9_admin_session';
 
 function AdminLoginGate({ onSuccess }: { onSuccess: (token: string) => void }) {
@@ -204,12 +203,10 @@ function AdminLoginGate({ onSuccess }: { onSuccess: (token: string) => void }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErr('');
-    if (email.trim().toLowerCase() !== ADMIN_EMAIL.toLowerCase() || password !== ADMIN_PASS) {
-      setErr('Invalid admin credentials.');
-      return;
-    }
+    if (!email.trim() || !password) { setErr('Email and password required.'); return; }
     setSubmitting(true);
     try {
+      // Backend validates against PLATFORM_ADMIN_EMAILS + PLATFORM_ADMIN_PASSWORD env vars
       const res = await getApiClient().post('/api/platform-admin/token', { email: email.trim(), password });
       const tok: string = res.data?.access_token || res.data?.token || '';
       if (!tok) { setErr('Login succeeded but no token returned.'); return; }
@@ -217,7 +214,7 @@ function AdminLoginGate({ onSuccess }: { onSuccess: (token: string) => void }) {
       if (typeof window !== 'undefined') sessionStorage.setItem(ADMIN_SESSION_KEY, '1');
       onSuccess(tok);
     } catch (e: any) {
-      setErr(e?.response?.data?.detail || 'Login failed. Check credentials.');
+      setErr(e?.response?.data?.detail || 'Invalid admin credentials.');
     } finally {
       setSubmitting(false);
     }
