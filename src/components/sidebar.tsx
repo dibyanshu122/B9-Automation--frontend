@@ -160,19 +160,19 @@ export const Sidebar = () => {
   const groupActive = (children?: any[]): boolean =>
     children?.some(c => isActive(c.href)) ?? false;
 
-  // Item styles — mini mode: perfectly centered icon with rounded active bg
+  // Item styles — mini: visible active state with left accent bar
   const item = (active: boolean, mini = false) => clsx(
-    'flex w-full items-center rounded-lg transition-all duration-150 text-sm font-medium relative',
+    'flex w-full items-center rounded-lg transition-all duration-200 text-sm font-medium relative',
     mini
       ? 'h-10 justify-center gap-0 p-0'
       : 'gap-3 px-3 py-2.5',
     active
       ? mini
-        ? 'bg-indigo-500/25 text-indigo-300 font-semibold'
-        : 'bg-indigo-500/20 text-indigo-300 font-semibold'
+        ? 'bg-indigo-500/30 text-white shadow-[inset_3px_0_0_#818cf8]'   // visible left bar + bg
+        : 'bg-indigo-500/20 text-indigo-200 font-semibold'
       : mini
-        ? 'text-slate-500 hover:bg-white/[0.06] hover:text-slate-200'
-        : 'text-slate-400 hover:bg-white/[0.07] hover:text-slate-100'
+        ? 'text-slate-500 hover:bg-white/[0.08] hover:text-slate-200'
+        : 'text-slate-400 hover:bg-white/[0.08] hover:text-slate-100'
   );
   const child = (active: boolean) => clsx(
     'flex w-full items-center gap-3 rounded-lg transition-all duration-150 text-sm font-medium',
