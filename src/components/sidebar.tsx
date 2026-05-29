@@ -222,12 +222,12 @@ export const Sidebar = () => {
           expanded && 'shadow-[4px_0_20px_rgba(0,0,0,0.3)]',
         )}
       >
-        {/* Nav */}
+        {/* Nav — flex-1 so it fills space naturally */}
         <nav className={clsx(
-          'overflow-x-hidden',
+          'overflow-x-hidden flex-1',
           expanded
-            ? 'overflow-y-auto px-2 py-3 space-y-0.5'   // no flex-1 — no empty stretch
-            : 'flex-none px-1 pt-4 pb-2 space-y-1',
+            ? 'overflow-y-auto px-2 py-3 space-y-0.5'
+            : 'flex flex-col px-1 pt-4 pb-3 gap-1',
         )}>
           {mainGroups.map((group) => {
             const Icon = ICONS[group.icon as keyof typeof ICONS];
@@ -299,16 +299,15 @@ export const Sidebar = () => {
               </Link>
             );
           })}
-        </nav>
 
-        {/* Spacer — pushes bottom section to bottom */}
-        <div className="flex-1" />
+          {/* Spacer pushes utility items to bottom inside nav */}
+          {expanded && <div className="flex-1" />}
+          {!expanded && <div className="mt-auto" />}
 
-        {/* Bottom: Launch / Billing / Settings + pin */}
-        <div className={clsx(
-          'shrink-0 space-y-0.5',
-          expanded ? 'border-t border-white/10 py-2 px-2' : 'py-2 px-1 border-t border-white/[0.06]',
-        )}>
+          {/* Separator */}
+          <div className={clsx('h-px bg-white/[0.08]', expanded ? 'my-1 mx-1' : 'my-1')} />
+
+          {/* Bottom utility items — Go Live Checklist, Logout, Pin */}
           {bottomGroups.map((group) => {
             const Icon = ICONS[group.icon as keyof typeof ICONS];
             const a = isActive(group.href || '');
@@ -323,9 +322,6 @@ export const Sidebar = () => {
             );
           })}
 
-          {/* Separator — only in expanded mode */}
-          {expanded && <div className="my-1 mx-2 h-px bg-white/[0.07]" />}
-
           {/* Logout */}
           <button
             onClick={handleLogout}
@@ -333,26 +329,21 @@ export const Sidebar = () => {
             className={clsx(
               'flex w-full items-center rounded-lg transition-all hover:bg-red-500/10 text-sm',
               'text-slate-500 hover:text-red-400',
-              expanded ? 'gap-3 px-3 py-2.5' : 'h-10 justify-center gap-0 p-0'
+              expanded ? 'gap-3 px-3 py-2.5' : 'h-10 w-10 mx-auto justify-center gap-0 p-0 rounded-xl'
             )}>
             <LogOut className="w-5 h-5 shrink-0" />
             <span className={lbl}>Logout</span>
           </button>
 
-          {/* Pin / Unpin — only show in expanded mode to avoid clutter in mini */}
+          {/* Pin — expanded only */}
           {expanded && (
             <button onClick={toggleSidebarPinned}
-              title={sidebarPinned ? 'Collapse sidebar' : 'Pin sidebar open'}
               className="flex w-full items-center gap-3 px-3 py-2 rounded-lg transition-all hover:bg-white/10 text-sm text-slate-600 hover:text-slate-300">
-              {sidebarPinned ? (
-                <ChevronsLeft className="w-4 h-4 shrink-0" />
-              ) : (
-                <ChevronsRight className="w-4 h-4 shrink-0" />
-              )}
+              {sidebarPinned ? <ChevronsLeft className="w-4 h-4 shrink-0" /> : <ChevronsRight className="w-4 h-4 shrink-0" />}
               <span className="text-xs">{sidebarPinned ? 'Collapse' : 'Pin open'}</span>
             </button>
           )}
-        </div>
+        </nav>
       </aside>
 
       {/* Mobile sidebar slide-in overlay. */}
