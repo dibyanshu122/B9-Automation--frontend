@@ -58,10 +58,11 @@ export default function DashboardPage() {
   const planAccess = usePlanAccess();
   const push = usePushNotifications();
 
-  // Derive plan limits — prefer live quota response, fall back to static map
+  // Derive plan limits — prefer live API limits, fall back to static map
   const planKey = ((quota?.plan || user?.plan || 'FREE') as string).toUpperCase();
   const planFallback = PLAN_LIMITS_FALLBACK[planKey] ?? PLAN_LIMITS_FALLBACK.FREE;
   const { get } = useApi();
+  const [apiLimits, setApiLimits] = useState<any>(null);
   const [onboarding, setOnboarding] = useState<OnboardingStatus | null>(null);
   const [selectedPack, setSelectedPack] = useState<IndustryPack>(DEFAULT_INDUSTRY_PACK);
   const [automationStats, setAutomationStats] = useState({
@@ -119,6 +120,9 @@ export default function DashboardPage() {
       if (!e.response) return { data: null }; // network error — handled by banner
       throw e;
     }).catch(() => ({ data: null }));
+
+    // Fetch live plan limits from backend (replaces hardcoded PLAN_LIMITS_FALLBACK)
+    silentGet('/api/billing/limits').then(r => { if (r?.data?.limits) setApiLimits(r.data.limits); });
 
     Promise.allSettled([
       silentGet('/api/analytics/dashboard'),
@@ -372,10 +376,10 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <UsageMeter label="AI queries" used={quota?.queries_used || 0} limit={quota?.queries_limit || planFallback.queries} />
-            <UsageMeter label="Automation runs" used={quota?.automation_executions_used || quota?.usage?.automation_executions_used || 0} limit={quota?.automation_executions_limit || planAccess.billing?.quotas?.automation_executions_day || planFallback.automations_day} />
-            <UsageMeter label="Leads today" used={quota?.leads_today || quota?.usage?.leads_today || 0} limit={quota?.leads_limit || planAccess.billing?.quotas?.leads_day || planFallback.leads_day} />
-            <UsageMeter label="Storage" used={Math.round(quota?.storage_used_mb || 0)} limit={quota?.storage_limit_mb || planFallback.storage_mb} suffix="MB" />
+            <UsageMeter label="AI queries" used={quota?.queries_used || 0} limit={quota?.queries_limit || apiLimits?.queries || planFallback.queries} />
+            <UsageMeter label="Automation runs" used={quota?.automation_executions_used || quota?.usage?.automation_executions_used || 0} limit={quota?.automation_executions_limit || apiLimits?.automation_executions_day || planAccess.billing?.quotas?.automation_executions_day || planFallback.automations_day} />
+            <UsageMeter label="Leads today" used={quota?.leads_today || quota?.usage?.leads_today || 0} limit={quota?.leads_limit || apiLimits?.leads_day || planAccess.billing?.quotas?.leads_day || planFallback.leads_day} />
+            <UsageMeter label="Storage" used={Math.round(quota?.storage_used_mb || 0)} limit={quota?.storage_limit_mb || apiLimits?.storage_mb || planFallback.storage_mb} suffix="MB" />
           </div>
         </Card>
 

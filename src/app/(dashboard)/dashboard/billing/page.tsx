@@ -103,19 +103,20 @@ export default function BillingPage() {
         image: '/brand-logo.svg',
         handler: () => {
           toast.success('Payment successful! Activating your plan...');
-          // Poll until plan updates in DB (webhook takes 2-5 sec)
+          // Poll until plan updates in DB — Razorpay webhook can take up to 60s
           let attempts = 0;
           const poll = setInterval(async () => {
             attempts++;
             try {
               const res = await get('/api/billing/current-plan');
-              if (res.data?.plan && res.data.plan !== 'FREE' && res.data.plan !== currentPlan?.plan) {
+              if (res.data?.plan && res.data.plan !== currentPlan?.plan) {
                 clearInterval(poll);
-                toast.success(`🎉 ${res.data.plan} plan activated!`);
+                toast.success(`🎉 ${res.data.plan} plan activated! Welcome to the next level.`);
                 setTimeout(() => window.location.reload(), 1500);
               }
             } catch { /* ignore */ }
-            if (attempts >= 10) { clearInterval(poll); window.location.reload(); }
+            // 30 attempts × 2s = 60 seconds max (covers delayed Razorpay webhooks)
+            if (attempts >= 30) { clearInterval(poll); window.location.reload(); }
           }, 2000);
         },
         prefill: {

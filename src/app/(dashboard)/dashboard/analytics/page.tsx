@@ -20,6 +20,7 @@ export default function AnalyticsPage() {
   const [templatePerf, setTemplatePerf] = useState<any>(null);
   const [waStats, setWaStats] = useState<any>(null);
   const [businessMetrics, setBusinessMetrics] = useState<any>(null);
+  const [globalDays, setGlobalDays] = useState(30); // shared date range for all sections
   const [waDays, setWaDays] = useState(30);
   const [waLoading, setWaLoading] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -27,15 +28,16 @@ export default function AnalyticsPage() {
 
   useEffect(() => {
     const fetchAnalytics = async () => {
+      setLoading(true);
       try {
         const [dashRes, trendsRes, impactRes, funnelRes, templatesRes, waRes, businessRes] = await Promise.all([
-          get('/api/analytics/dashboard').catch(() => ({ data: null })),
-          get('/api/analytics/usage-trends').catch(() => ({ data: null })),
-          get('/api/analytics/business-impact').catch(() => ({ data: null })),
-          get('/api/analytics/funnel').catch(() => ({ data: null })),
-          get('/api/analytics/template-performance').catch(() => ({ data: null })),
-          get(`/api/analytics/whatsapp?days=${waDays}`).catch(() => ({ data: null })),
-          get('/api/analytics/business-metrics').catch(() => ({ data: null })),
+          get(`/api/analytics/dashboard?days=${globalDays}`).catch(() => ({ data: null })),
+          get(`/api/analytics/usage-trends?days=${globalDays}`).catch(() => ({ data: null })),
+          get(`/api/analytics/business-impact?days=${globalDays}`).catch(() => ({ data: null })),
+          get(`/api/analytics/funnel?days=${globalDays}`).catch(() => ({ data: null })),
+          get(`/api/analytics/template-performance?days=${globalDays}`).catch(() => ({ data: null })),
+          get(`/api/analytics/whatsapp?days=${globalDays}`).catch(() => ({ data: null })),
+          get(`/api/analytics/business-metrics?days=${globalDays}`).catch(() => ({ data: null })),
         ]);
         setDashboard(dashRes.data);
         setTrends(trendsRes.data);
@@ -43,6 +45,7 @@ export default function AnalyticsPage() {
         setFunnel(funnelRes.data);
         setTemplatePerf(templatesRes.data);
         setWaStats(waRes.data);
+        setWaDays(globalDays);
         setBusinessMetrics(businessRes.data);
       } catch {
         toast.error('Failed to load analytics');
@@ -52,11 +55,11 @@ export default function AnalyticsPage() {
     };
 
     fetchAnalytics();
-  }, [get]); // eslint-disable-line
+  }, [globalDays]); // eslint-disable-line
 
-  // Reload WA stats when date range changes
+  // WA-specific reload (kept for backward compat with WA section filter)
   useEffect(() => {
-    if (loading) return; // skip during initial full load
+    if (loading || waDays === globalDays) return;
     setWaLoading(true);
     get(`/api/analytics/whatsapp?days=${waDays}`)
       .then(r => setWaStats(r.data))
@@ -89,11 +92,24 @@ export default function AnalyticsPage() {
     <div className="space-y-8">
       <div className="relative overflow-hidden rounded-xl border border-orange-100 bg-white p-6 shadow-sm">
         <div className="absolute right-6 top-6 h-20 w-20 rounded-full bg-orange-100 blur-2xl" />
-        <div className="relative">
-          <h1 className="text-4xl font-bold text-gray-950">Analytics</h1>
-          <p className="mt-2 max-w-2xl text-gray-600">
-            Track conversations, leads, automations, saved time, and launch readiness in one place.
-          </p>
+        <div className="relative flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="text-4xl font-bold text-gray-950">Analytics</h1>
+            <p className="mt-2 max-w-2xl text-gray-600">
+              Track conversations, leads, automations, saved time, and launch readiness in one place.
+            </p>
+          </div>
+          {/* Global date range selector — reloads ALL sections */}
+          <div className="flex items-center gap-1 rounded-lg border border-gray-200 p-0.5 bg-gray-50 self-start mt-1">
+            {[7, 14, 30, 90].map(d => (
+              <button key={d}
+                onClick={() => setGlobalDays(d)}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition ${globalDays === d ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+                {d}d
+              </button>
+            ))}
+            {loading && <span className="w-3.5 h-3.5 border-2 border-orange-400 border-t-transparent rounded-full animate-spin ml-1" />}
+          </div>
         </div>
       </div>
 

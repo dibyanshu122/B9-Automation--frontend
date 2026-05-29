@@ -352,38 +352,24 @@ export default function IntegrationsPage() {
   /* ── Detect OAuth popup return ── */
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('sheets_connected') === '1') {
-      window.opener?.postMessage({ type: 'sheets_connected' }, window.location.origin);
-      window.close();
-    }
-    if (params.get('sheets_error')) {
-      window.opener?.postMessage({ type: 'sheets_error', error: params.get('sheets_error') }, window.location.origin);
-      window.close();
-    }
-    if (params.get('gmail_connected') === '1') {
-      window.opener?.postMessage({ type: 'gmail_connected', email: params.get('gmail_email') || '' }, window.location.origin);
-      window.close();
-    }
-    if (params.get('gmail_error')) {
-      window.opener?.postMessage({ type: 'gmail_error', error: params.get('gmail_error') }, window.location.origin);
-      window.close();
-    }
-    if (params.get('facebook_connected') === '1') {
-      window.opener?.postMessage({ type: 'facebook_connected' }, window.location.origin);
-      window.close();
-    }
-    if (params.get('facebook_error')) {
-      window.opener?.postMessage({ type: 'facebook_error', error: params.get('facebook_error') }, window.location.origin);
-      window.close();
-    }
-    if (params.get('instagram_connected') === '1') {
-      window.opener?.postMessage({ type: 'instagram_connected' }, window.location.origin);
-      window.close();
-    }
-    if (params.get('instagram_error')) {
-      window.opener?.postMessage({ type: 'instagram_error', error: params.get('instagram_error') }, window.location.origin);
-      window.close();
-    }
+    const tryClose = (type: string, payload: object) => {
+      if (window.opener && !window.opener.closed) {
+        // Normal popup flow: notify parent and close
+        try { window.opener.postMessage({ type, ...payload }, window.location.origin); } catch { /* cross-origin */ }
+        window.close();
+      } else {
+        // Opened in new tab / direct navigation: just reload integrations page
+        window.location.replace('/dashboard/integrations');
+      }
+    };
+    if (params.get('sheets_connected') === '1') tryClose('sheets_connected', {});
+    if (params.get('sheets_error')) tryClose('sheets_error', { error: params.get('sheets_error') });
+    if (params.get('gmail_connected') === '1') tryClose('gmail_connected', { email: params.get('gmail_email') || '' });
+    if (params.get('gmail_error')) tryClose('gmail_error', { error: params.get('gmail_error') });
+    if (params.get('facebook_connected') === '1') tryClose('facebook_connected', {});
+    if (params.get('facebook_error')) tryClose('facebook_error', { error: params.get('facebook_error') });
+    if (params.get('instagram_connected') === '1') tryClose('instagram_connected', {});
+    if (params.get('instagram_error')) tryClose('instagram_error', { error: params.get('instagram_error') });
     // Load Meta FB SDK — fbAsyncInit must be set BEFORE script loads
     if (!document.getElementById('fb-sdk')) {
       const appId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || '';
