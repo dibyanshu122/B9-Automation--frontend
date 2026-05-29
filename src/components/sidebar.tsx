@@ -164,7 +164,7 @@ export const Sidebar = () => {
   const item = (active: boolean, mini = false) => clsx(
     'flex w-full items-center rounded-lg transition-all duration-200 text-sm font-medium relative',
     mini
-      ? 'h-10 justify-center gap-0 p-0'
+      ? 'h-10 w-10 mx-auto justify-center gap-0 p-0 rounded-xl'
       : 'gap-3 px-3 py-2.5',
     active
       ? mini
@@ -226,8 +226,8 @@ export const Sidebar = () => {
         <nav className={clsx(
           'overflow-x-hidden',
           expanded
-            ? 'flex-1 overflow-y-auto px-2 py-3 space-y-0.5'
-            : 'flex-none px-1 pt-4 pb-2 space-y-1',  // mini: more top padding, consistent spacing
+            ? 'overflow-y-auto px-2 py-3 space-y-0.5'   // no flex-1 — no empty stretch
+            : 'flex-none px-1 pt-4 pb-2 space-y-1',
         )}>
           {mainGroups.map((group) => {
             const Icon = ICONS[group.icon as keyof typeof ICONS];
@@ -301,9 +301,12 @@ export const Sidebar = () => {
           })}
         </nav>
 
-        {/* Bottom: Launch / Billing / Settings + pin — always sticks to bottom */}
+        {/* Spacer — pushes bottom section to bottom */}
+        <div className="flex-1" />
+
+        {/* Bottom: Launch / Billing / Settings + pin */}
         <div className={clsx(
-          'shrink-0 space-y-0.5 mt-auto',
+          'shrink-0 space-y-0.5',
           expanded ? 'border-t border-white/10 py-2 px-2' : 'py-2 px-1 border-t border-white/[0.06]',
         )}>
           {bottomGroups.map((group) => {
