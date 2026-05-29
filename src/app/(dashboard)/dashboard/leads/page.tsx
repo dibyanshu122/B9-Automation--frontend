@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import toast from 'react-hot-toast';
-import { AlertTriangle, Brain, ChevronDown, ChevronUp, Clock, Eye, Flame, Loader2, Mail, MessageSquare, Phone, Plus, Search, Send, Star, Trash2, Users } from 'lucide-react';
+import { AlertTriangle, Brain, ChevronDown, ChevronUp, Clock, Eye, Flame, Loader2, Mail, MessageSquare, Phone, Plus, Search, Send, Star, Trash2, Users, StickyNote, Activity, Send as SendIcon } from 'lucide-react';
 import { Button } from '@/components/button';
 import { Card } from '@/components/card';
 import { useApi, getApiClient } from '@/hooks/useApi';
@@ -71,6 +71,8 @@ export default function LeadsPage() {
   const [creatingLink, setCreatingLink] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [leadDateFrom, setLeadDateFrom] = useState('');
+  const [leadDateTo, setLeadDateTo] = useState('');
   const [selectedLeadIds, setSelectedLeadIds] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState('');
   const [leadMemory, setLeadMemory] = useState<string[]>([]);
@@ -84,6 +86,76 @@ export default function LeadsPage() {
   const [newLabelName, setNewLabelName] = useState('');
   const [newLabelColor, setNewLabelColor] = useState('#4F46E5');
   const [savingLabel, setSavingLabel] = useState(false);
+  // Notes & Timeline state
+  const [notes, setNotes] = useState<any[]>([]);
+  const [notesLoading, setNotesLoading] = useState(false);
+  const [noteText, setNoteText] = useState('');
+  const [savingNote, setSavingNote] = useState(false);
+  const [timeline, setTimeline] = useState<any[]>([]);
+  const [timelineLoading, setTimelineLoading] = useState(false);
+  const [detailTab, setDetailTab] = useState<'info' | 'notes' | 'timeline' | 'deals'>('info');
+  const [deals, setDeals] = useState<any[]>([]);
+  const [dealsLoading, setDealsLoading] = useState(false);
+  const [dealForm, setDealForm] = useState({ title: '', value: '', stage: 'open', probability: '50' });
+  const [savingDeal, setSavingDeal] = useState(false);
+  const [showDealForm, setShowDealForm] = useState(false);
+
+  const loadNotes = (leadId: string) => {
+    setNotesLoading(true);
+    api.get(`/api/leads/${leadId}/notes`)
+      .then(r => setNotes(r.data || []))
+      .catch(() => {})
+      .finally(() => setNotesLoading(false));
+  };
+  const loadTimeline = (leadId: string) => {
+    setTimelineLoading(true);
+    api.get(`/api/leads/${leadId}/timeline?limit=40`)
+      .then(r => setTimeline(r.data || []))
+      .catch(() => {})
+      .finally(() => setTimelineLoading(false));
+  };
+  const addNote = async (leadId: string) => {
+    if (!noteText.trim()) return;
+    setSavingNote(true);
+    try {
+      const r = await api.post(`/api/leads/${leadId}/notes`, { content: noteText.trim() });
+      setNotes(prev => [r.data, ...prev]);
+      setNoteText('');
+    } catch { toast.error('Failed to save note'); }
+    finally { setSavingNote(false); }
+  };
+  const deleteNote = async (leadId: string, noteId: string) => {
+    try {
+      await api.delete(`/api/leads/${leadId}/notes/${noteId}`);
+      setNotes(prev => prev.filter(n => n.id !== noteId));
+    } catch { toast.error('Failed to delete note'); }
+  };
+
+  const loadDeals = (leadId: string) => {
+    setDealsLoading(true);
+    api.get(`/api/leads/${leadId}/deals`)
+      .then(r => setDeals(r.data || []))
+      .catch(() => {})
+      .finally(() => setDealsLoading(false));
+  };
+  const createDeal = async (leadId: string) => {
+    if (!dealForm.title.trim()) return;
+    setSavingDeal(true);
+    try {
+      const r = await api.post(`/api/leads/${leadId}/deals`, { title: dealForm.title, value: parseFloat(dealForm.value) || 0, stage: dealForm.stage, probability: parseInt(dealForm.probability) || 50 });
+      setDeals(prev => [r.data, ...prev]);
+      setDealForm({ title: '', value: '', stage: 'open', probability: '50' });
+      setShowDealForm(false);
+      toast.success('Deal created');
+    } catch { toast.error('Failed to create deal'); }
+    finally { setSavingDeal(false); }
+  };
+  const updateDealStage = async (leadId: string, dealId: string, stage: string) => {
+    try {
+      await api.patch(`/api/leads/${leadId}/deals/${dealId}`, { stage });
+      setDeals(prev => prev.map(d => d.id === dealId ? { ...d, stage } : d));
+    } catch { toast.error('Failed to update deal'); }
+  };
 
   const refresh = () => {
     setLoading(true);
@@ -117,9 +189,17 @@ export default function LeadsPage() {
       const matchesStatus = statusFilter === 'all' || lead.status === statusFilter;
       const matchesLabel = labelFilter === 'all' || lead.tag === labelFilter;
       const matchesSearch = !query || [lead.name, lead.phone, lead.email].some((value) => (value || '').toLowerCase().includes(query));
+      if (leadDateFrom && lead.created_at) {
+        const d = new Date(lead.created_at.endsWith('Z') ? lead.created_at : lead.created_at + 'Z');
+        if (d < new Date(leadDateFrom)) return false;
+      }
+      if (leadDateTo && lead.created_at) {
+        const d = new Date(lead.created_at.endsWith('Z') ? lead.created_at : lead.created_at + 'Z');
+        if (d > new Date(leadDateTo + 'T23:59:59Z')) return false;
+      }
       return matchesStatus && matchesLabel && matchesSearch;
     });
-  }, [leads, searchQuery, statusFilter, labelFilter]);
+  }, [leads, searchQuery, statusFilter, labelFilter, leadDateFrom, leadDateTo]);
 
   const groupedByStage = useMemo(() => {
     return stages.reduce<Record<string, Lead[]>>((groups, stage) => {
@@ -281,6 +361,12 @@ export default function LeadsPage() {
     setMemoryOpen(false);
     setLeadMemory([]);
     setLeadIntelligence(null);
+    setNotes([]);
+    setTimeline([]);
+    setDeals([]);
+    setNoteText('');
+    setShowDealForm(false);
+    setDetailTab('info');
     try {
       const response = await api.get(`/api/leads/${lead.id}`);
       setSelectedLead(response.data);
@@ -446,6 +532,25 @@ export default function LeadsPage() {
           >
             Export CSV
           </a>
+        </div>
+
+        {/* Date filter row */}
+        <div className="mt-3 flex items-center gap-2 flex-wrap text-sm text-gray-500">
+          <span className="text-xs font-medium text-gray-400">Date range:</span>
+          <input type="date" value={leadDateFrom} onChange={e => setLeadDateFrom(e.target.value)}
+            className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white" />
+          <span className="text-xs text-gray-400">to</span>
+          <input type="date" value={leadDateTo} onChange={e => setLeadDateTo(e.target.value)}
+            className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white" />
+          {(leadDateFrom || leadDateTo) && (
+            <button onClick={() => { setLeadDateFrom(''); setLeadDateTo(''); }}
+              className="text-xs text-orange-500 hover:text-orange-700 font-medium flex items-center gap-1">
+              ✕ Clear dates
+            </button>
+          )}
+          {(leadDateFrom || leadDateTo) && (
+            <span className="text-xs text-gray-400">{filteredLeads.length} of {leads.length} leads</span>
+          )}
         </div>
 
         {/* Bulk action toolbar appears when leads are selected */}
@@ -744,6 +849,151 @@ export default function LeadsPage() {
 
       {selectedLead && (
         <DetailCard title="Lead details" onClose={() => setSelectedLead(null)}>
+          {/* Tabs */}
+          <div className="flex gap-1 rounded-xl bg-gray-100 p-1 mb-4">
+            {([
+              { key: 'info', label: 'Info', icon: <Eye className="h-3.5 w-3.5" /> },
+              { key: 'deals', label: 'Deals', icon: <Star className="h-3.5 w-3.5" /> },
+              { key: 'notes', label: 'Notes', icon: <StickyNote className="h-3.5 w-3.5" /> },
+              { key: 'timeline', label: 'Activity', icon: <Activity className="h-3.5 w-3.5" /> },
+            ] as const).map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => {
+                  setDetailTab(tab.key);
+                  if (tab.key === 'notes' && notes.length === 0) loadNotes(selectedLead.id);
+                  if (tab.key === 'timeline' && timeline.length === 0) loadTimeline(selectedLead.id);
+                  if (tab.key === 'deals' && deals.length === 0) loadDeals(selectedLead.id);
+                }}
+                className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-semibold transition ${detailTab === tab.key ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                {tab.icon}{tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* DEALS TAB */}
+          {detailTab === 'deals' && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Pipeline Deals</p>
+                <button onClick={() => setShowDealForm(v => !v)} className="rounded-lg bg-indigo-50 border border-indigo-200 px-3 py-1.5 text-xs font-bold text-indigo-700 hover:bg-indigo-100 transition">
+                  + New Deal
+                </button>
+              </div>
+              {showDealForm && (
+                <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-3 space-y-2">
+                  <input value={dealForm.title} onChange={e => setDealForm(p => ({...p, title: e.target.value}))} placeholder="Deal title" className="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-300" />
+                  <div className="grid grid-cols-3 gap-2">
+                    <input value={dealForm.value} onChange={e => setDealForm(p => ({...p, value: e.target.value}))} placeholder="Value ₹" type="number" className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-300" />
+                    <select value={dealForm.stage} onChange={e => setDealForm(p => ({...p, stage: e.target.value}))} className="rounded-lg border border-gray-200 px-2 py-1.5 text-sm">
+                      <option value="open">Open</option><option value="won">Won</option><option value="lost">Lost</option><option value="on_hold">On Hold</option>
+                    </select>
+                    <input value={dealForm.probability} onChange={e => setDealForm(p => ({...p, probability: e.target.value}))} placeholder="Prob %" type="number" min="0" max="100" className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm focus:outline-none" />
+                  </div>
+                  <button onClick={() => createDeal(selectedLead.id)} disabled={savingDeal || !dealForm.title.trim()} className="w-full rounded-lg bg-indigo-600 py-1.5 text-xs font-bold text-white hover:bg-indigo-700 disabled:opacity-40 transition">
+                    {savingDeal ? 'Saving...' : 'Create Deal'}
+                  </button>
+                </div>
+              )}
+              {dealsLoading ? (
+                <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-gray-400" /></div>
+              ) : deals.length === 0 ? (
+                <p className="py-6 text-center text-xs text-gray-400">No deals yet. Click "+ New Deal" to track this opportunity.</p>
+              ) : (
+                <div className="space-y-2">
+                  {deals.map(deal => {
+                    const stageColor = deal.stage === 'won' ? 'bg-emerald-100 text-emerald-700' : deal.stage === 'lost' ? 'bg-red-100 text-red-700' : deal.stage === 'on_hold' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700';
+                    return (
+                      <div key={deal.id} className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="text-sm font-semibold text-gray-900">{deal.title}</p>
+                            <p className="text-xs text-gray-500 mt-0.5">₹{Number(deal.value || 0).toLocaleString('en-IN')} · {deal.probability}% probability</p>
+                          </div>
+                          <select value={deal.stage} onChange={e => updateDealStage(selectedLead.id, deal.id, e.target.value)} className={`rounded-full px-2 py-0.5 text-[10px] font-bold border-0 cursor-pointer ${stageColor}`}>
+                            <option value="open">Open</option><option value="won">Won</option><option value="lost">Lost</option><option value="on_hold">On Hold</option>
+                          </select>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* NOTES TAB */}
+          {detailTab === 'notes' && (
+            <div className="space-y-3">
+              <div className="flex gap-2">
+                <textarea
+                  value={noteText}
+                  onChange={e => setNoteText(e.target.value)}
+                  placeholder="Add a note for your team..."
+                  rows={2}
+                  className="flex-1 resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                />
+                <button
+                  onClick={() => addNote(selectedLead.id)}
+                  disabled={savingNote || !noteText.trim()}
+                  className="self-end rounded-lg bg-indigo-600 px-3 py-2 text-white text-xs font-bold hover:bg-indigo-700 disabled:opacity-40 transition"
+                >
+                  {savingNote ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <SendIcon className="h-3.5 w-3.5" />}
+                </button>
+              </div>
+              {notesLoading ? (
+                <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-gray-400" /></div>
+              ) : notes.length === 0 ? (
+                <p className="py-6 text-center text-xs text-gray-400">No notes yet. Add the first one above.</p>
+              ) : (
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {notes.map(note => (
+                    <div key={note.id} className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-2">
+                      <p className="text-sm text-gray-800 whitespace-pre-wrap">{note.content}</p>
+                      <div className="mt-1 flex items-center justify-between">
+                        <span className="text-[10px] text-gray-400">{new Date(note.created_at).toLocaleString()}</span>
+                        <button onClick={() => deleteNote(selectedLead.id, note.id)} className="text-[10px] text-red-400 hover:text-red-600">Delete</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TIMELINE TAB */}
+          {detailTab === 'timeline' && (
+            <div>
+              {timelineLoading ? (
+                <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-gray-400" /></div>
+              ) : timeline.length === 0 ? (
+                <p className="py-6 text-center text-xs text-gray-400">No activity yet for this lead.</p>
+              ) : (
+                <div className="space-y-2 max-h-80 overflow-y-auto">
+                  {timeline.map((event, i) => {
+                    const typeIcon: Record<string, string> = { whatsapp: '💬', log: '📋', task: '✅', note: '📝', outbound: '📤' };
+                    const typeColor: Record<string, string> = { whatsapp: 'bg-green-50 border-green-200', log: 'bg-gray-50 border-gray-200', task: 'bg-blue-50 border-blue-200', note: 'bg-yellow-50 border-yellow-200', outbound: 'bg-purple-50 border-purple-200' };
+                    return (
+                      <div key={i} className={`rounded-lg border px-3 py-2 text-xs ${typeColor[event.type] || 'bg-gray-50 border-gray-200'}`}>
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="font-semibold text-gray-800">
+                            {typeIcon[event.type]} {event.type === 'whatsapp' ? (event.direction === 'inbound' ? 'Customer message' : 'Sent message') : event.type === 'task' ? event.title || 'Task' : event.action || event.type}
+                          </span>
+                          <span className="shrink-0 text-gray-400">{new Date(event.created_at).toLocaleString()}</span>
+                        </div>
+                        {event.content && <p className="mt-0.5 line-clamp-2 text-gray-600">{event.content}</p>}
+                        {event.status && <span className="mt-1 inline-block rounded-full bg-white/60 px-1.5 py-0.5 text-[10px] font-bold text-gray-500">{event.status}</span>}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* INFO TAB */}
+          {detailTab === 'info' && (
           <div className="grid gap-3 text-sm md:grid-cols-2">
             <DetailRow label="Name" value={selectedLead.name || '-'} />
             <DetailRow label="Phone" value={selectedLead.phone || '-'} />
@@ -918,6 +1168,7 @@ export default function LeadsPage() {
           <select value={selectedLead.status} onChange={(event) => updateStage(selectedLead, event.target.value).then(() => setSelectedLead({ ...selectedLead, status: event.target.value }))} className="input-field mt-4 max-w-xs">
             {stages.map((stage) => <option key={stage.key} value={stage.key}>{stage.label}</option>)}
           </select>
+          )} {/* end info tab */}
         </DetailCard>
       )}
 

@@ -14,6 +14,7 @@ import {
   RotateCcw,
   Search,
   XCircle,
+  Download,
 } from 'lucide-react';
 import { Button } from '@/components/button';
 import { Card } from '@/components/card';
@@ -229,6 +230,8 @@ export default function LogsPage() {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('');
   const [search, setSearch] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [total, setTotal] = useState(0);
@@ -265,19 +268,43 @@ export default function LogsPage() {
     }
   };
 
-  const filtered = search.trim()
-    ? runs.filter(r =>
-        r.user_message?.toLowerCase().includes(search.toLowerCase()) ||
-        r.intent?.toLowerCase().includes(search.toLowerCase()) ||
-        r.error_message?.toLowerCase().includes(search.toLowerCase())
-      )
-    : runs;
+  const filtered = runs.filter(r => {
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      const textMatch = r.user_message?.toLowerCase().includes(q) || r.intent?.toLowerCase().includes(q) || r.error_message?.toLowerCase().includes(q);
+      if (!textMatch) return false;
+    }
+    if (dateFrom && r.started_at) {
+      if (new Date(r.started_at) < new Date(dateFrom)) return false;
+    }
+    if (dateTo && r.started_at) {
+      if (new Date(r.started_at) > new Date(dateTo + 'T23:59:59Z')) return false;
+    }
+    return true;
+  });
+
+  const exportLogs = () => {
+    const header = ['Run ID', 'Status', 'Trigger', 'Message', 'Intent', 'Started', 'Duration (ms)', 'Error'];
+    const rows = filtered.map(r => [r.id, r.status, r.trigger_type || '', (r.user_message || '').replace(/"/g, '""'), r.intent || '', r.started_at || '', r.duration_ms || '', (r.error_message || '').replace(/"/g, '""')]);
+    const csv = [header, ...rows].map(row => row.map(v => `"${v}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'automation_logs.csv'; a.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Automation Logs</h1>
-        <p className="text-sm text-gray-500 mt-1">View and debug automation run history</p>
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Automation Logs</h1>
+          <p className="text-sm text-gray-500 mt-1">View and debug automation run history</p>
+        </div>
+        <button onClick={exportLogs}
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white transition hover:opacity-90"
+          style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e1b4b 100%)' }}>
+          <Download className="w-4 h-4" /> Export CSV
+        </button>
       </div>
 
       <Card className="p-4">
@@ -313,6 +340,20 @@ export default function LogsPage() {
               Refresh
             </Button>
           </div>
+        </div>
+        {/* Date filter */}
+        <div className="flex items-center gap-2 flex-wrap mt-2 pt-2 border-t border-gray-100">
+          <span className="text-xs font-medium text-gray-400">Date range:</span>
+          <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
+            className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-300 bg-white" />
+          <span className="text-xs text-gray-400">to</span>
+          <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
+            className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-300 bg-white" />
+          {(dateFrom || dateTo) && (
+            <button onClick={() => { setDateFrom(''); setDateTo(''); }}
+              className="text-xs text-red-400 hover:text-red-600 font-medium">✕ Clear</button>
+          )}
+          <span className="text-xs text-gray-400 ml-auto">{filtered.length} runs {filtered.length !== runs.length ? `(of ${runs.length})` : ''}</span>
         </div>
       </Card>
 

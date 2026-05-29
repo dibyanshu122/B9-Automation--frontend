@@ -20,17 +20,20 @@ export default function AnalyticsPage() {
   const [templatePerf, setTemplatePerf] = useState<any>(null);
   const [waStats, setWaStats] = useState<any>(null);
   const [businessMetrics, setBusinessMetrics] = useState<any>(null);
-  const [globalDays, setGlobalDays] = useState(30); // shared date range for all sections
+  const [globalDays, setGlobalDays] = useState(30);
   const [waDays, setWaDays] = useState(30);
   const [waLoading, setWaLoading] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [campaignRevenue, setCampaignRevenue] = useState<any>(null);
+  const [botDeflection, setBotDeflection] = useState<any>(null);
+  const [teamPerf, setTeamPerf] = useState<any>(null);
   const { get } = useApi();
 
   useEffect(() => {
     const fetchAnalytics = async () => {
       setLoading(true);
       try {
-        const [dashRes, trendsRes, impactRes, funnelRes, templatesRes, waRes, businessRes] = await Promise.all([
+        const [dashRes, trendsRes, impactRes, funnelRes, templatesRes, waRes, businessRes, campaignRevRes, deflectionRes, teamRes] = await Promise.all([
           get(`/api/analytics/dashboard?days=${globalDays}`).catch(() => ({ data: null })),
           get(`/api/analytics/usage-trends?days=${globalDays}`).catch(() => ({ data: null })),
           get(`/api/analytics/business-impact?days=${globalDays}`).catch(() => ({ data: null })),
@@ -38,6 +41,9 @@ export default function AnalyticsPage() {
           get(`/api/analytics/template-performance?days=${globalDays}`).catch(() => ({ data: null })),
           get(`/api/analytics/whatsapp?days=${globalDays}`).catch(() => ({ data: null })),
           get(`/api/analytics/business-metrics?days=${globalDays}`).catch(() => ({ data: null })),
+          get(`/api/analytics/campaign-revenue?days=${globalDays}`).catch(() => ({ data: null })),
+          get(`/api/analytics/bot-deflection?days=${globalDays}`).catch(() => ({ data: null })),
+          get(`/api/analytics/team-performance?days=${globalDays}`).catch(() => ({ data: null })),
         ]);
         setDashboard(dashRes.data);
         setTrends(trendsRes.data);
@@ -47,6 +53,9 @@ export default function AnalyticsPage() {
         setWaStats(waRes.data);
         setWaDays(globalDays);
         setBusinessMetrics(businessRes.data);
+        setCampaignRevenue(campaignRevRes.data);
+        setBotDeflection(deflectionRes.data);
+        setTeamPerf(teamRes.data);
       } catch {
         toast.error('Failed to load analytics');
       } finally {
@@ -461,6 +470,96 @@ export default function AnalyticsPage() {
           </Card>
         </section>
       )}
+
+      {/* ── Sprint 4: Revenue Attribution ── */}
+      {campaignRevenue && (
+        <section>
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <h2 className="text-lg font-bold text-gray-950 flex items-center gap-2">
+              <span>💰</span> Revenue Attribution
+            </h2>
+            <div className="text-sm text-gray-500">
+              Total: <span className="font-bold text-emerald-700">₹{Number(campaignRevenue.total_inr || 0).toLocaleString('en-IN')}</span> from campaigns
+            </div>
+          </div>
+          {(campaignRevenue.campaigns || []).length === 0 ? (
+            <Card hoverable={false}><p className="text-sm text-gray-500 text-center py-4">No campaign revenue tracked yet. Run campaigns with Razorpay payments to see attribution.</p></Card>
+          ) : (
+            <Card hoverable={false}>
+              <div className="space-y-3">
+                {(campaignRevenue.campaigns || []).slice(0, 10).map((c: any) => (
+                  <div key={c.campaign} className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-gray-800 min-w-0 flex-1 truncate">{c.campaign}</span>
+                    <div className="flex-1 h-2 rounded-full bg-gray-100 overflow-hidden">
+                      <div className="h-full rounded-full bg-emerald-400" style={{ width: `${Math.min(100, (c.revenue_inr / (campaignRevenue.total_inr || 1)) * 100)}%` }} />
+                    </div>
+                    <span className="text-sm font-bold text-emerald-700 shrink-0">₹{Number(c.revenue_inr).toLocaleString('en-IN')}</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+        </section>
+      )}
+
+      {/* ── Sprint 4: Bot Deflection + Team Performance ── */}
+      <section className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        {botDeflection && (
+          <Card hoverable={false}>
+            <h2 className="mb-4 font-bold text-gray-950">🤖 Bot Deflection Rate</h2>
+            <div className="text-center py-2">
+              <div className="text-5xl font-black text-indigo-600 mb-1">{botDeflection.deflection_rate_pct ?? 0}%</div>
+              <p className="text-sm text-gray-500">conversations handled by AI without human</p>
+            </div>
+            <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
+              <div className="rounded-lg bg-gray-50 p-2">
+                <p className="font-bold text-gray-900">{botDeflection.total_sessions ?? 0}</p>
+                <p className="text-gray-500">Total chats</p>
+              </div>
+              <div className="rounded-lg bg-emerald-50 p-2">
+                <p className="font-bold text-emerald-700">{botDeflection.deflected ?? 0}</p>
+                <p className="text-gray-500">Bot handled</p>
+              </div>
+              <div className="rounded-lg bg-amber-50 p-2">
+                <p className="font-bold text-amber-700">{botDeflection.handover_sessions ?? 0}</p>
+                <p className="text-gray-500">Escalated</p>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {teamPerf && (teamPerf.members || []).length > 0 && (
+          <Card hoverable={false}>
+            <h2 className="mb-4 font-bold text-gray-950">👥 Team Performance</h2>
+            <div className="space-y-2">
+              {(teamPerf.members || []).map((m: any) => (
+                <div key={m.user_id} className="flex items-center gap-3 text-sm rounded-lg border border-gray-100 px-3 py-2">
+                  <div className="h-7 w-7 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-700 shrink-0">
+                    {(m.email || '?')[0].toUpperCase()}
+                  </div>
+                  <span className="flex-1 text-gray-700 truncate min-w-0">{m.email}</span>
+                  <span className="text-xs text-gray-500">{m.leads_assigned} leads</span>
+                  <span className="text-xs font-bold text-emerald-700">{m.tasks_completed} tasks</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+      </section>
+
+      {/* ── Export Button ── */}
+      <section className="flex flex-wrap gap-3 pt-2">
+        {(['dashboard', 'leads', 'campaigns'] as const).map(type => (
+          <a
+            key={type}
+            href={`${process.env.NEXT_PUBLIC_API_URL || ''}/api/analytics/export?type=${type}&days=${globalDays}`}
+            download={`${type}_${globalDays}d.csv`}
+            className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 transition"
+          >
+            ↓ Export {type} CSV
+          </a>
+        ))}
+      </section>
     </div>
   );
 }
