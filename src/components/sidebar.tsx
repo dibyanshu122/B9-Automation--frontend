@@ -160,26 +160,20 @@ export const Sidebar = () => {
   const groupActive = (children?: any[]): boolean =>
     children?.some(c => isActive(c.href)) ?? false;
 
-  // Item styles — mini: visible active state with left accent bar
+  // Item styles: dark sidebar, indigo active.
   const item = (active: boolean, mini = false) => clsx(
-    'flex w-full items-center rounded-lg transition-all duration-200 text-sm font-medium relative',
-    mini
-      ? 'h-10 w-10 mx-auto justify-center gap-0 p-0 rounded-xl'
-      : 'gap-3 px-3 py-2.5',
+    'flex w-full items-center rounded-lg transition-all duration-150 text-sm font-medium',
+    mini ? 'my-1 h-11 justify-center gap-0 px-0 py-0' : 'gap-3 px-3 py-2.5',
     active
-      ? mini
-        ? 'bg-indigo-500/30 text-white shadow-[inset_3px_0_0_#818cf8]'   // visible left bar + bg
-        : 'bg-indigo-500/20 text-indigo-200 font-semibold'
-      : mini
-        ? 'text-slate-500 hover:bg-white/[0.08] hover:text-slate-200'
-        : 'text-slate-400 hover:bg-white/[0.08] hover:text-slate-100'
+      ? 'bg-indigo-500/20 text-indigo-300 font-semibold'
+      : 'text-slate-400 hover:bg-white/8 hover:text-slate-100'
   );
   const child = (active: boolean) => clsx(
     'flex w-full items-center gap-3 rounded-lg transition-all duration-150 text-sm font-medium',
     'px-3 py-2',
     active
       ? 'bg-indigo-500/20 text-indigo-300 font-semibold'
-      : 'text-slate-400 hover:bg-white/[0.07] hover:text-slate-100'
+      : 'text-slate-400 hover:bg-white/8 hover:text-slate-100'
   );
 
   // Label fades in/out based on expanded state.
@@ -222,13 +216,8 @@ export const Sidebar = () => {
           expanded && 'shadow-[4px_0_20px_rgba(0,0,0,0.3)]',
         )}
       >
-        {/* Nav — flex-1 so it fills space naturally */}
-        <nav className={clsx(
-          'overflow-x-hidden flex-1',
-          expanded
-            ? 'overflow-y-auto px-2 py-3 space-y-0.5'
-            : 'flex flex-col px-1 pt-4 pb-3 gap-1',
-        )}>
+        {/* Nav */}
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-3 px-2 space-y-0.5">
           {mainGroups.map((group) => {
             const Icon = ICONS[group.icon as keyof typeof ICONS];
             const open = openGroups.includes(group.id);
@@ -248,7 +237,7 @@ export const Sidebar = () => {
                     }}
                     className={item(gActive, !expanded)}
                   >
-                      <Icon className={clsx('shrink-0', !expanded ? 'w-5 h-5' : 'w-5 h-5', gActive && !expanded ? 'text-indigo-300' : '')} />
+                    <Icon className="w-5 h-5 shrink-0" />
                     <span className={clsx(lbl, 'flex-1 text-left')}>{group.name}</span>
                     <ChevronDown className={clsx(
                       'w-4 h-4 shrink-0 transition-all duration-200',
@@ -294,20 +283,15 @@ export const Sidebar = () => {
                 title={!expanded ? group.name : undefined}
                 className={item(singleActive, !expanded)}
                 onClick={() => setSidebarOpen(false)}>
-                <Icon className={clsx('shrink-0 w-5 h-5', singleActive && !expanded ? 'text-indigo-300' : '')} />
+                <Icon className="w-5 h-5 shrink-0" />
                 <span className={lbl}>{group.name}</span>
               </Link>
             );
           })}
+        </nav>
 
-          {/* Spacer pushes utility items to bottom inside nav */}
-          {expanded && <div className="flex-1" />}
-          {!expanded && <div className="mt-auto" />}
-
-          {/* Separator */}
-          <div className={clsx('h-px bg-white/[0.08]', expanded ? 'my-1 mx-1' : 'my-1')} />
-
-          {/* Bottom utility items — Go Live Checklist, Logout, Pin */}
+        {/* Bottom: Launch / Billing / Settings + pin */}
+        <div className="shrink-0 border-t border-white/10 py-2 px-2 space-y-0.5">
           {bottomGroups.map((group) => {
             const Icon = ICONS[group.icon as keyof typeof ICONS];
             const a = isActive(group.href || '');
@@ -316,7 +300,7 @@ export const Sidebar = () => {
                 title={!expanded ? group.name : undefined}
                 className={item(a, !expanded)}
                 onClick={() => setSidebarOpen(false)}>
-                <Icon className={clsx('shrink-0 w-5 h-5', a && !expanded ? 'text-indigo-300' : '')} />
+                <Icon className="w-5 h-5 shrink-0" />
                 <span className={lbl}>{group.name}</span>
               </Link>
             );
@@ -327,23 +311,28 @@ export const Sidebar = () => {
             onClick={handleLogout}
             title={!expanded ? 'Logout' : undefined}
             className={clsx(
-              'flex w-full items-center rounded-lg transition-all hover:bg-red-500/10 text-sm',
-              'text-slate-500 hover:text-red-400',
-              expanded ? 'gap-3 px-3 py-2.5' : 'h-10 w-10 mx-auto justify-center gap-0 p-0 rounded-xl'
+              'flex w-full items-center rounded-lg text-red-400/70 transition-all hover:bg-red-500/10 hover:text-red-400 text-sm',
+              expanded ? 'gap-3 px-3 py-2.5' : 'my-1 h-11 justify-center gap-0 px-0 py-0'
             )}>
-            <LogOut className="w-5 h-5 shrink-0" />
+            <LogOut className="w-4 h-4 shrink-0" />
             <span className={lbl}>Logout</span>
           </button>
 
-          {/* Pin — expanded only */}
-          {expanded && (
-            <button onClick={toggleSidebarPinned}
-              className="flex w-full items-center gap-3 px-3 py-2 rounded-lg transition-all hover:bg-white/10 text-sm text-slate-600 hover:text-slate-300">
-              {sidebarPinned ? <ChevronsLeft className="w-4 h-4 shrink-0" /> : <ChevronsRight className="w-4 h-4 shrink-0" />}
-              <span className="text-xs">{sidebarPinned ? 'Collapse' : 'Pin open'}</span>
-            </button>
-          )}
-        </nav>
+          {/* Pin / Unpin */}
+          <button onClick={toggleSidebarPinned}
+            title={sidebarPinned ? 'Collapse sidebar' : 'Pin sidebar open'}
+            className={clsx(
+              'flex w-full items-center rounded-lg text-slate-500 transition-all hover:bg-white/10 hover:text-slate-300 text-sm',
+              expanded ? 'gap-3 px-3 py-2.5' : 'my-1 h-11 justify-center gap-0 px-0 py-0'
+            )}>
+            {sidebarPinned ? (
+              <ChevronsLeft className="w-4 h-4 shrink-0" />
+            ) : (
+              <ChevronsRight className="w-4 h-4 shrink-0" />
+            )}
+            <span className={lbl}>{sidebarPinned ? 'Collapse' : 'Pin open'}</span>
+          </button>
+        </div>
       </aside>
 
       {/* Mobile sidebar slide-in overlay. */}
