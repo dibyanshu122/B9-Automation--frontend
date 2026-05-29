@@ -194,6 +194,29 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      {/* Persistent setup banner — shown until all 4 steps done */}
+      {readinessScore < 100 && (
+        <div className="rounded-xl border border-cyan-500/20 bg-gradient-to-r from-slate-900 to-slate-800 p-4 flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-cyan-500/10 border border-cyan-500/20">
+              <Sparkles className="h-4.5 w-4.5 text-cyan-400" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-white">
+                Setup {readinessScore}% complete — {readinessChecks.filter((c: any) => !c.done).length} steps remaining
+              </p>
+              <p className="text-xs text-gray-400">Complete setup to start receiving automated leads and messages</p>
+            </div>
+          </div>
+          <Link
+            href="/dashboard/onboarding"
+            className="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-cyan-500/15 border border-cyan-500/25 px-4 py-2 text-xs font-bold text-cyan-300 hover:bg-cyan-500/25 transition"
+          >
+            Continue Setup <ChevronRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+      )}
+
       {/* Welcome checklist shown once after onboarding. */}
       {showWelcome && (
         <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-5">

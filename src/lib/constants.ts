@@ -24,7 +24,7 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
   { id: 'assistants', name: 'AI Assistants', icon: 'Brain', href: '/dashboard/assistants' },
   {
     id: 'sales',
-    name: 'Sales',
+    name: 'Leads & CRM',
     icon: 'Target',
     children: [
       { name: 'Leads', href: '/dashboard/leads', icon: 'Users' },
@@ -36,7 +36,7 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
   },
   {
     id: 'support',
-    name: 'Support',
+    name: 'Inbox',
     icon: 'MessageSquare',
     children: [
       { name: 'Messages', href: '/dashboard/messages', icon: 'Send' },
@@ -60,7 +60,7 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
   },
   {
     id: 'knowledge',
-    name: 'Knowledge',
+    name: 'Knowledge Base',
     icon: 'Briefcase',
     children: [
       { name: 'Documents', href: '/dashboard/documents', icon: 'FileText' },
@@ -82,7 +82,7 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
       { name: 'Settings', href: '/dashboard/settings', icon: 'Settings' },
     ],
   },
-  { id: 'launch', name: 'Launch Center', icon: 'Rocket', href: '/dashboard/launch', position: 'bottom' },
+  { id: 'launch', name: 'Go Live Checklist', icon: 'Rocket', href: '/dashboard/launch', position: 'bottom' },
 ];
 
 export const SIDEBAR_ITEMS = SIDEBAR_GROUPS as any[];
