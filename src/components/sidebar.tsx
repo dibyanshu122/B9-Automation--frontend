@@ -68,7 +68,7 @@ const NAV_PERMISSIONS: Record<string, string[]> = {
 
 function canSeeHref(access: TeamAccess | null, href?: string) {
   if (!href) return true;
-  if (!access) return href === '/dashboard';
+  if (!access) return true; // Show all items while loading — filter only after API responds
   const perms = new Set(access.permissions || []);
   if (access.is_owner || access.role === 'owner' || perms.has('*')) return true;
   const required = NAV_PERMISSIONS[href];
