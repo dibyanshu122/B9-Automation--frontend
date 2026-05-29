@@ -50,31 +50,71 @@ export const getApiClient = (): AxiosInstance => {
     return config;
   });
 
+  // Track whether a token refresh is already in progress (prevent multiple simultaneous refreshes)
+  let _refreshPromise: Promise<string | null> | null = null;
+
+  const _attemptTokenRefresh = async (): Promise<string | null> => {
+    if (_refreshPromise) return _refreshPromise;
+    _refreshPromise = (async () => {
+      try {
+        const base = process.env.NEXT_PUBLIC_API_URL || '';
+        const res = await fetch(`${base}/api/auth/refresh`, {
+          method: 'POST',
+          credentials: 'include',  // Sends httpOnly refresh-token cookie
+          headers: { 'Content-Type': 'application/json' },
+        });
+        if (!res.ok) return null;
+        const data = await res.json();
+        const newToken = data.access_token || data.token;
+        if (newToken) {
+          useAuthStore.getState().setToken(newToken);
+          return newToken;
+        }
+        return null;
+      } catch {
+        return null;
+      } finally {
+        _refreshPromise = null;
+      }
+    })();
+    return _refreshPromise;
+  };
+
   apiClient.interceptors.response.use(
     (response) => response,
-    (error) => {
+    async (error) => {
       const status = error.response?.status;
+      const originalRequest = error.config;
 
-      if (status === 401) {
+      if (status === 401 && !originalRequest._retried) {
         const currentToken = useAuthStore.getState().token;
-        if (currentToken) {
-          // Only logout if the JWT is actually expired — not on every 401
-          // (backend cold-starts, endpoint-specific 401s should not log users out)
-          let tokenExpired = false;
-          try {
+        let tokenExpired = false;
+        try {
+          if (currentToken) {
             const payload = JSON.parse(atob(currentToken.split('.')[1]));
-            tokenExpired = payload.exp && payload.exp * 1000 < Date.now();
-          } catch { tokenExpired = false; }
-
-          if (tokenExpired) {
-            useAuthStore.getState().logout();
-            _dedupeToast('Session expired. Please login again.', 5000, 30000);
-            if (typeof window !== 'undefined') {
-              setTimeout(() => { window.location.href = '/login'; }, 1000);
-            }
+            tokenExpired = !payload.exp || payload.exp * 1000 < Date.now();
+          } else {
+            tokenExpired = true; // No token = definitely expired/missing
           }
-          // Non-expired token + 401 = endpoint permission issue, not session expiry — don't logout
+        } catch { tokenExpired = true; }
+
+        if (tokenExpired) {
+          // Try silent refresh using httpOnly refresh-token cookie
+          originalRequest._retried = true;
+          const newToken = await _attemptTokenRefresh();
+          if (newToken) {
+            // Retry original request with new token
+            originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
+            return apiClient!.request(originalRequest);
+          }
+          // Refresh failed — logout
+          useAuthStore.getState().logout();
+          _dedupeToast('Session expired. Please login again.', 5000, 30000);
+          if (typeof window !== 'undefined') {
+            setTimeout(() => { window.location.href = '/login'; }, 1000);
+          }
         }
+        // Non-expired 401 = permission issue — don't logout, don't retry
       } else if (status === 402) {
         const detail = error.response?.data?.detail;
         const msg = typeof detail === 'string' ? detail : detail?.message || 'Plan limit reached. Please upgrade.';
