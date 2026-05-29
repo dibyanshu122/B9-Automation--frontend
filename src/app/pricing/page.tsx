@@ -267,14 +267,16 @@ export default function PricingPage() {
               </thead>
               <tbody>
                 {[
-                  ['Assistants', ['1', '1', '3', '5', '10']],
-                  ['Sources', ['PDF', 'PDF, URL, YouTube', 'All core sources', 'All + web search', 'All + priority']],
-                  ['Widgets/domains', ['No widget', '1 / 1', '2 / 2', '5 / 5', '15 domains']],
-                  ['Integrations', ['None', 'Sheets', 'Sheets, Gmail, FB, WhatsApp', 'All', 'All']],
-                  ['Automation', ['None', '1 workflow / 2 steps', '3 workflows / 5 steps', '5 workflows / 10 steps', '15 workflows / 20 steps']],
-                  ['Branding', ['Watermark', 'Watermark', 'Removed', 'Removed', 'White-label']],
+                  ['Assistants', ['1', '2', '5', '15', 'Unlimited']],
+                  ['Sources', ['PDF only', 'PDF, URL, YouTube', 'All core sources', 'All + web search', 'All + priority']],
+                  ['Widgets/domains', ['No widget', '1 / 1 domain', '3 / 3 domains', '10 / 10 domains', 'Unlimited']],
+                  ['Integrations', ['None', 'Sheets + WhatsApp', 'Gmail, FB, IG, WhatsApp, Sheets, Shopify', 'All integrations', 'All integrations']],
+                  ['Automation', ['None', '10 workflows / 15 steps / 1K runs/day', 'Unlimited workflows & steps / 5K runs/day', 'Unlimited / 25K runs/day', 'Unlimited / Unlimited']],
+                  ['Campaigns', ['None', '100 recipients/send', '1,000 recipients/send', '5,000 recipients/send', '50,000 recipients/send']],
+                  ['Branding', ['B9 watermark', 'B9 watermark', 'Watermark removed', 'Watermark removed', 'Full white-label']],
                   ['AI credits', ['30 lifetime', '1,000/month', '5,000/month', '20,000/month', '50,000/month']],
-                  ['API & webhooks', ['No', 'No', 'No', 'Yes', 'Yes']],
+                  ['Team members', ['1', '2', '5', '15', '50']],
+                  ['API & webhooks', ['No', 'No', 'No', 'Yes (PRO+)', 'Yes']],
                 ].map(([label, values]) => (
                   <tr key={label as string} className="border-b border-white/[0.04] last:border-b-0 hover:bg-white/[0.01] transition-colors">
                     <td className="p-4 font-semibold text-zinc-300">{label}</td>
