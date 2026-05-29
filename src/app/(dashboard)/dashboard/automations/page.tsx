@@ -508,18 +508,25 @@ export default function AutomationsPage() {
     if (!autosaveReady || nodes.length === 0) return;
     const timer = window.setTimeout(() => {
       const savedAt = new Date().toISOString();
-      window.localStorage.setItem(
-        AUTOSAVE_KEY,
-        JSON.stringify({
-          workflowName,
-          activeWorkflowId,
-          nodes: layoutNodes,
-          edges: validEdges,
-          industry: industryPack.key,
-          savedAt,
-        })
-      );
-      setLastAutosavedAt(savedAt);
+      try {
+        window.localStorage.setItem(
+          AUTOSAVE_KEY,
+          JSON.stringify({
+            workflowName,
+            activeWorkflowId,
+            nodes: layoutNodes,
+            edges: validEdges,
+            industry: industryPack.key,
+            savedAt,
+          })
+        );
+        setLastAutosavedAt(savedAt);
+      } catch (err: any) {
+        // QuotaExceededError — localStorage full
+        if (err?.name === 'QuotaExceededError') {
+          console.warn('Autosave failed: localStorage full. Clear some data.');
+        }
+      }
     }, 700);
     return () => window.clearTimeout(timer);
   }, [autosaveReady, workflowName, activeWorkflowId, layoutNodes, validEdges, industryPack.key]);
