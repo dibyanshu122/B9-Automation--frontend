@@ -1,54 +1,49 @@
 {
-  "name": "B9 Automation - AI-Powered Knowledge Assistant",
+  "name": "B9 Automation - WhatsApp AI Platform",
   "short_name": "B9 Automation",
-  "description": "Create intelligent AI assistants from your documents",
+  "description": "Automate WhatsApp, capture leads, run campaigns with AI — built for Indian businesses",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#f97316",
+  "background_color": "#030712",
+  "theme_color": "#00F2FE",
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/logo.svg",
+      "src": "/brand-logo.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "/logo.svg",
+      "src": "/brand-logo.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "maskable"
     }
   ],
-  "categories": ["productivity", "utilities"],
+  "categories": ["productivity", "business"],
   "shortcuts": [
     {
-      "name": "Create Assistant",
-      "short_name": "New Assistant",
-      "description": "Create a new AI assistant",
-      "url": "/dashboard/assistants?action=create",
-      "icons": [
-        {
-          "src": "/logo.svg",
-          "sizes": "any",
-          "type": "image/svg+xml"
-        }
-      ]
+      "name": "Messages",
+      "short_name": "Inbox",
+      "description": "Open WhatsApp inbox",
+      "url": "/dashboard/messages",
+      "icons": [{ "src": "/brand-logo.svg", "sizes": "any", "type": "image/svg+xml" }]
     },
     {
-      "name": "Chat",
-      "short_name": "Chat",
-      "description": "Start a chat with your assistant",
-      "url": "/dashboard/chat",
-      "icons": [
-        {
-          "src": "/logo.svg",
-          "sizes": "any",
-          "type": "image/svg+xml"
-        }
-      ]
+      "name": "Leads",
+      "short_name": "Leads",
+      "description": "View and manage leads",
+      "url": "/dashboard/leads",
+      "icons": [{ "src": "/brand-logo.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "Automations",
+      "short_name": "Automate",
+      "description": "Build automation workflows",
+      "url": "/dashboard/automations",
+      "icons": [{ "src": "/brand-logo.svg", "sizes": "any", "type": "image/svg+xml" }]
     }
   ]
 }
