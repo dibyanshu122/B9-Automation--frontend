@@ -773,7 +773,12 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
   };
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'setup' | 'send'>('setup');
   const inputCls = 'w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500';
+
+  const canProceed = selected && name.trim() &&
+    !vars.some(v => !v.trim()) &&
+    (recipientMode === 'excel' ? excelPhones.length > 0 : true);
 
   return (
     <AnimatePresence>
@@ -785,12 +790,24 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
           className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[88vh]"
           onClick={e => e.stopPropagation()}>
 
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 flex-shrink-0">
-          <div>
-            <h2 className="text-lg font-bold text-gray-900">New Campaign</h2>
-            <p className="text-xs text-gray-400 mt-0.5">Select an approved template and send to your leads</p>
-          </div>
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
+          <h2 className="text-lg font-bold text-gray-900">New Campaign</h2>
           <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 text-gray-400"><X className="w-5 h-5" /></button>
+        </div>
+
+        {/* 2-Tab nav */}
+        <div className="flex border-b border-gray-100 flex-shrink-0 px-5">
+          {[
+            { key: 'setup', label: '1  Template & Recipients' },
+            { key: 'send',  label: '2  Preview & Send' },
+          ].map(tab => (
+            <button key={tab.key}
+              onClick={() => { if (tab.key === 'send' && !canProceed) { toast.error('Fill campaign name, select template, fill variables'); return; } if (tab.key === 'send') handlePreview(); setActiveTab(tab.key as any); }}
+              className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors -mb-px ${activeTab === tab.key ? 'border-orange-500 text-orange-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>
+              {tab.label}
+            </button>
+          ))}
         </div>
 
         <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-5">
@@ -1040,51 +1057,73 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
             </div>
           )}
 
-          {/* WhatsApp Preview */}
-          {selected && (
+          {/* WhatsApp Preview — always visible in Tab 1 */}
+          {activeTab === 'setup' && selected && (
             <WaPreview template={selected} vars={vars} />
           )}
 
-          {/* Schedule */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Schedule <span className="text-gray-400 font-normal">(optional)</span></label>
-            <input type="datetime-local" value={scheduled} onChange={e => setScheduled(e.target.value)}
-              className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
-          </div>
+          {/* TAB 2: Preview + Schedule */}
+          {activeTab === 'send' && (
+            <>
+              {/* Recipient count */}
+              {previewing && (
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <Loader2 className="w-4 h-4 animate-spin" /> Loading recipient count...
+                </div>
+              )}
+              {preview && (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+                  <div className="flex items-center gap-2 font-bold text-emerald-800 text-sm mb-2">
+                    <Users className="w-4 h-4" /> {preview.total_recipients} recipients will receive this campaign
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {preview.sample.map((s: any, i: number) => (
+                      <span key={i} className="text-xs bg-white border border-emerald-200 text-emerald-700 px-2 py-0.5 rounded-full">{s.name || s.phone}</span>
+                    ))}
+                    {preview.total_recipients > 5 && <span className="text-xs text-emerald-400">+{preview.total_recipients - 5} more</span>}
+                  </div>
+                </div>
+              )}
 
-          {/* Preview result */}
-          {preview && (
-            <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-sm">
-              <div className="flex items-center gap-2 font-semibold text-blue-800 mb-2">
-                <Users className="w-4 h-4" /> {preview.total_recipients} recipients
+              {/* Template preview */}
+              {selected && <WaPreview template={selected} vars={vars} />}
+
+              {/* Schedule */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  Schedule <span className="text-gray-400 font-normal">(optional — leave blank to send now)</span>
+                </label>
+                <input type="datetime-local" value={scheduled} onChange={e => setScheduled(e.target.value)}
+                  className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
               </div>
-              <div className="flex flex-wrap gap-1">
-                {preview.sample.map((s, i) => (
-                  <span key={i} className="text-xs bg-white border border-blue-200 text-blue-700 px-2 py-0.5 rounded-full">{s.name || s.phone}</span>
-                ))}
-                {preview.total_recipients > 5 && <span className="text-xs text-blue-400">+{preview.total_recipients - 5} more</span>}
-              </div>
-            </div>
+            </>
           )}
           </>
           )}
         </div>
 
-        {/* Footer */}
-        <div className="px-5 py-4 border-t border-gray-200 flex-shrink-0">
+        {/* Footer — tab-aware */}
+        <div className="px-5 py-4 border-t border-gray-100 flex-shrink-0">
           {sendMode === 'single' ? (
             <Button onClick={handleSingleSend} disabled={sending || !selected || !singlePhone.trim()}
               className="w-full justify-center flex items-center gap-2">
               {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               Send Template
             </Button>
+          ) : activeTab === 'setup' ? (
+            /* Tab 1 footer: Next → */
+            <Button onClick={() => { if (!canProceed) { toast.error('Fill name, select template, fill all variables'); return; } handlePreview(); setActiveTab('send'); }}
+              disabled={!canProceed} className="w-full justify-center flex items-center gap-2">
+              Next: Preview & Send →
+            </Button>
           ) : (
+            /* Tab 2 footer: Save Draft + Send */
             <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setActiveTab('setup')} className="flex items-center gap-1.5 flex-shrink-0">
+                ← Back
+              </Button>
               <Button variant="outline" onClick={() => handleSend(true)} disabled={sending} className="flex items-center gap-1.5 flex-shrink-0">
                 <FileText className="w-3.5 h-3.5" /> Save Draft
-              </Button>
-              <Button variant="outline" onClick={handlePreview} disabled={previewing} className="flex items-center gap-1.5 flex-shrink-0">
-                {previewing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Users className="w-3.5 h-3.5" />} Preview
               </Button>
               <Button onClick={() => handleSend(false)} disabled={sending || (recipientMode === 'leads' && !preview) || (recipientMode === 'excel' && !excelPhones.length)}
                 className="flex-1 justify-center flex items-center gap-1.5">
