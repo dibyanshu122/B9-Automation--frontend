@@ -219,7 +219,7 @@ export const Sidebar = () => {
         )}
       >
         {/* Nav */}
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-3 px-2 space-y-0.5">
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-3 px-2 space-y-2">
           {mainGroups.map((group) => {
             const Icon = ICONS[group.icon as keyof typeof ICONS];
             const open = openGroups.includes(group.id);
