@@ -504,7 +504,7 @@ export default function DashboardPage() {
                   View Messages
                 </Link>
                 <Link href="/dashboard/integrations" className="flex-1 rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-center text-xs font-semibold text-gray-600 hover:bg-gray-100 transition">
-                  {automationStats.whatsapp_connection_status?.send_enabled ? 'Settings' : 'Connect'}
+                  {automationStats.whatsapp_connection_status?.send_enabled ? 'Meta Status ↗' : 'Connect'}
                 </Link>
               </div>
             </div>

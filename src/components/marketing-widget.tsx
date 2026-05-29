@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Script from 'next/script';
 
-const HIDE_PATHS = ['/dashboard', '/login', '/signup', '/onboarding', '/admin', '/auth'];
+const HIDE_PATHS = ['/dashboard', '/login', '/signup', '/onboarding', '/admin', '/auth', '/forgot-password', '/reset-password', '/verify-email', '/api-docs'];
 
 function isMarketing(pathname: string) {
   return !HIDE_PATHS.some(p => pathname.startsWith(p));

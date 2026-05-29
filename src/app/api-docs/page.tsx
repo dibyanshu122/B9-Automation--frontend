@@ -1,10 +1,12 @@
 ﻿'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { MarketingNav, MarketingFooter } from '@/components/marketing-shell';
 import { ChevronDown, Copy, Check } from 'lucide-react';
+import { useAuthStore } from '@/store/authStore';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -231,6 +233,24 @@ function CopyButton({ text }: { text: string }) {
 
 export default function ApiDocsPage() {
   const [openGroup, setOpenGroup] = useState<string>('auth');
+  const { user, hasHydrated } = useAuthStore();
+  const router = useRouter();
+
+  // Protect this page — only logged-in users with PRO/BUSINESS/GROWTH plan can access API docs
+  useEffect(() => {
+    if (!hasHydrated) return;
+    if (!user) {
+      router.replace('/login?redirect=/api-docs');
+    }
+  }, [user, hasHydrated, router]);
+
+  if (!hasHydrated || !user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-black">
+        <div className="h-8 w-8 rounded-full border-2 border-[#00F2FE]/30 border-t-[#00F2FE] animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen bg-black text-white overflow-hidden">

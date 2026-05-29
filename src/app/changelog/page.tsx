@@ -173,7 +173,7 @@ export default function ChangelogPage() {
         </div>
       </section>
 
-      <MarketingFooter />
+      <MarketingFooter variant="dark" />
     </div>
   );
 }
