@@ -1,19 +1,17 @@
 'use client';
 
-import { useState, use } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { use } from 'react';
+import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { Button } from '@/components/button';
-import { Logo } from '@/components/logo';
+import { MarketingNav, MarketingFooter } from '@/components/marketing-shell';
 import {
   Bot, MessageCircle, Sparkles, Brain, Globe, CheckCircle2, Users, ArrowRight,
-  Zap, CreditCard, FileText, Workflow, ShoppingBag, Code2, BarChart3, Globe2,
-  Menu, X, Linkedin, Instagram, Youtube,
+  CreditCard, FileText, Workflow, ShoppingBag, Code2, BarChart3, Globe2,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
-const fadeUp = { hidden: { opacity: 0, y: 24 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5 } } };
-const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.08 } } };
+const fadeUp = { hidden: { opacity: 0, y: 28 }, visible: { opacity: 1, y: 0, transition: { duration: 0.65, ease: [0.16, 1, 0.3, 1] } } };
+const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.09 } } };
 
 type FeatureStep = { title: string; desc: string };
 type FeatureItem = { title: string; desc: string };
@@ -396,7 +394,7 @@ const featuresData: Record<string, FeatureData> = {
 };
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <p className="text-xs font-semibold tracking-[0.2em] uppercase text-gray-500 mb-4">{children}</p>;
+  return <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#00F2FE] mb-4">{children}</p>;
 }
 
 const colorMap: Record<string, { badge: string; step: string; glow: string }> = {
@@ -406,23 +404,22 @@ const colorMap: Record<string, { badge: string; step: string; glow: string }> = 
   orange:  { badge: 'border-orange-500/20 bg-orange-500/10 text-orange-400',   step: 'bg-orange-500/10 text-orange-300',   glow: 'from-orange-500/10' },
   green:   { badge: 'border-green-500/20 bg-green-500/10 text-green-400',       step: 'bg-green-500/10 text-green-300',       glow: 'from-green-500/10' },
   indigo:  { badge: 'border-indigo-500/20 bg-indigo-500/10 text-indigo-400',   step: 'bg-indigo-500/10 text-indigo-300',   glow: 'from-indigo-500/10' },
-  cyan:    { badge: 'border-cyan-500/20 bg-cyan-500/10 text-cyan-400',         step: 'bg-cyan-500/10 text-cyan-300',         glow: 'from-cyan-500/10' },
+  cyan:    { badge: 'border-[#00F2FE]/20 bg-[#00F2FE]/10 text-[#00F2FE]',     step: 'bg-[#00F2FE]/10 text-[#00F2FE]',     glow: 'from-[#00F2FE]/10' },
   pink:    { badge: 'border-pink-500/20 bg-pink-500/10 text-pink-400',         step: 'bg-pink-500/10 text-pink-300',         glow: 'from-pink-500/10' },
   amber:   { badge: 'border-amber-500/20 bg-amber-500/10 text-amber-400',       step: 'bg-amber-500/10 text-amber-300',       glow: 'from-amber-500/10' },
-  gray:    { badge: 'border-gray-500/20 bg-gray-500/10 text-gray-400',         step: 'bg-gray-500/10 text-gray-300',         glow: 'from-gray-500/10' },
+  gray:    { badge: 'border-white/[0.08] bg-white/[0.04] text-zinc-300',       step: 'bg-white/[0.05] text-zinc-300',       glow: 'from-zinc-500/10'  },
 };
 
 export default function FeaturePage({ params }: { params: Promise<{ slug: string }> }) {
-  const [mobileOpen, setMobileOpen] = useState(false);
   const { slug } = use(params);
   const feature = featuresData[slug];
 
   if (!feature) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center flex-col gap-4">
-        <h1 className="text-4xl font-bold">Feature page coming soon</h1>
-        <p className="text-gray-400">This feature is being documented. Check back shortly.</p>
-        <Link href="/features" className="text-primary-400 hover:text-primary-300 underline">
+        <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-zinc-400">Feature page coming soon</h1>
+        <p className="text-zinc-400">This feature is being documented. Check back shortly.</p>
+        <Link href="/features" className="text-[#00F2FE]/80 hover:text-[#00F2FE] underline">
           ← All Features
         </Link>
       </div>
@@ -433,77 +430,72 @@ export default function FeaturePage({ params }: { params: Promise<{ slug: string
   const colors = colorMap[feature.color] || colorMap.gray;
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      {/* Grid Background */}
-      <div className="fixed inset-0 pointer-events-none opacity-[0.015]">
-        <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-          <defs><pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="0.5" fill="white" /></pattern></defs>
-          <rect width="100%" height="100%" fill="url(#grid)" />
+    <div className="relative min-h-screen bg-black text-white overflow-hidden">
+      {/* Ambient blobs */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -top-32 -left-32 h-[500px] w-[600px] rounded-full bg-[#00F2FE]/[0.03] blur-[140px] animate-pulse" />
+        <div className="absolute top-1/2 -right-32 h-[400px] w-[400px] rounded-full bg-[#FF5722]/[0.02] blur-[160px]" />
+        <div className="absolute bottom-0 left-1/3 h-[300px] w-[700px] rounded-full bg-[#00F2FE]/[0.015] blur-[120px]" />
+      </div>
+
+      {/* Dot grid */}
+      <div className="pointer-events-none fixed inset-0 opacity-[0.016]">
+        <svg width="100%" height="100%">
+          <defs>
+            <pattern id="dots-feat-slug" x="0" y="0" width="36" height="36" patternUnits="userSpaceOnUse">
+              <circle cx="1" cy="1" r="1" fill="white" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#dots-feat-slug)" />
         </svg>
       </div>
 
-      {/* NAVBAR */}
-      <nav className="sticky top-0 z-50 border-b border-white/[0.06] bg-black/90 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Logo variant="dark" />
-          <div className="hidden md:flex items-center gap-8">
-            <Link href="/features" className="text-sm text-gray-400 hover:text-white transition-colors">Features</Link>
-            <Link href="/pricing" className="text-sm text-gray-400 hover:text-white transition-colors">Pricing</Link>
-            <Link href="/blog" className="text-sm text-gray-400 hover:text-white transition-colors">Blog</Link>
-            <Link href="/about" className="text-sm text-gray-400 hover:text-white transition-colors">About</Link>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link href="/login" className="hidden sm:block text-sm text-gray-400 hover:text-white transition-colors">Log In</Link>
-            <Link href="/signup"><Button size="sm" className="bg-white text-black hover:bg-gray-100">Get Started</Button></Link>
-            <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden p-2 text-gray-400 hover:text-white">
-              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
-          </div>
-        </div>
-        <AnimatePresence>
-          {mobileOpen && (
-            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-              className="md:hidden border-t border-white/[0.06] bg-black/95">
-              <div className="px-4 py-4 space-y-3">
-                {[['Features','/features'],['Pricing','/pricing'],['Blog','/blog'],['About','/about']].map(([l,h]) => (
-                  <Link key={h} href={h} className="block text-sm text-gray-400 hover:text-white py-2">{l}</Link>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </nav>
+      <MarketingNav variant="dark" />
 
       {/* Breadcrumb */}
-      <div className="border-b border-white/[0.04] bg-white/[0.01]">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3 flex items-center gap-2 text-xs text-gray-600">
-          <Link href="/features" className="hover:text-gray-400 transition-colors">Features</Link>
+      <div className="relative border-b border-white/[0.04]">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3 flex items-center gap-2 text-xs text-zinc-600">
+          <Link href="/features" className="hover:text-zinc-400 transition-colors">Features</Link>
           <span>/</span>
-          <span className="text-gray-400">{feature.title}</span>
+          <span className="text-zinc-400">{feature.title}</span>
         </div>
       </div>
 
       {/* HERO */}
-      <section className="relative border-b border-white/[0.06] py-24">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
-          <motion.div initial="hidden" animate="visible" variants={stagger}>
-            <motion.div variants={fadeUp} className="inline-flex items-center gap-2 rounded-full border px-4 py-1.5 backdrop-blur-sm mb-6 mx-auto"
-              style={{}} className={`inline-flex items-center gap-2 rounded-full border px-4 py-1.5 backdrop-blur-sm mb-6 ${colors.badge}`}>
-              <Icon className="h-4 w-4" />
-              <span className="text-sm font-medium">{feature.badge} · {feature.title}</span>
+      <section className="relative border-b border-white/[0.04] px-6 pb-24 pt-16 lg:px-8">
+        <div className="mx-auto max-w-7xl text-center">
+          <motion.div initial="hidden" animate="visible" variants={stagger} className="flex flex-col items-center gap-5">
+            <motion.div variants={fadeUp}>
+              <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] ${colors.badge}`}>
+                <Icon className="h-3 w-3" />
+                {feature.badge} · {feature.title}
+              </span>
             </motion.div>
-            <motion.h1 variants={fadeUp} className="text-5xl lg:text-6xl font-bold mb-6 leading-tight">{feature.title}</motion.h1>
-            <motion.p variants={fadeUp} className="text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">{feature.subtitle}</motion.p>
-            <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/signup">
-                <button className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-white text-black font-semibold hover:bg-gray-100 transition-all">
-                  Start Free Trial <ArrowRight className="h-5 w-5" />
-                </button>
+
+            <motion.h1
+              variants={fadeUp}
+              className="max-w-3xl text-5xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-zinc-400 lg:text-6xl"
+              style={{ letterSpacing: '-0.03em', lineHeight: 1.07 }}
+            >
+              {feature.title}
+            </motion.h1>
+
+            <motion.p variants={fadeUp} className="max-w-2xl text-lg font-light text-zinc-400 leading-relaxed">
+              {feature.subtitle}
+            </motion.p>
+
+            <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-4 items-center">
+              <Link
+                href="/signup"
+                className="inline-flex items-center gap-2 rounded-xl border border-[#00F2FE]/35 bg-[#00F2FE]/[0.12] px-6 py-3 text-sm font-semibold text-white backdrop-blur transition-all duration-300 hover:bg-[#00F2FE]/[0.2] hover:shadow-[0_0_30px_rgba(0,242,254,0.2)]"
+              >
+                Start Free <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link href="/signup?demo=1">
-                <button className="px-6 py-3 rounded-lg bg-white/5 text-white border border-white/10 font-semibold hover:bg-white/10 transition-all">
-                  Book Demo Call
-                </button>
+              <Link
+                href="/signup?demo=1"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-6 py-3 text-sm font-semibold text-zinc-300 transition-all duration-300 hover:text-white"
+              >
+                Book Demo Call
               </Link>
             </motion.div>
           </motion.div>
@@ -511,24 +503,26 @@ export default function FeaturePage({ params }: { params: Promise<{ slug: string
       </section>
 
       {/* HOW IT WORKS */}
-      <section className="relative border-b border-white/[0.06] py-24">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-100px' }} variants={stagger} className="text-center mb-16">
+      <section className="relative border-b border-white/[0.04] px-6 py-20 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={stagger} className="text-center mb-12">
             <motion.div variants={fadeUp}>
               <SectionLabel>How It Works</SectionLabel>
-              <h2 className="text-4xl font-bold">Get started in 3 steps</h2>
+              <h2 className="text-4xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-zinc-500" style={{ letterSpacing: '-0.02em' }}>
+                Get started in 3 steps
+              </h2>
             </motion.div>
           </motion.div>
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-100px' }} variants={stagger}
-            className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={stagger}
+            className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {feature.steps.map((step, idx) => (
-              <motion.div key={idx} variants={fadeUp} className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-8 relative">
-                <div className={`h-10 w-10 rounded-full flex items-center justify-center text-lg font-bold mb-5 ${colors.step}`}>
+              <motion.div key={idx} variants={fadeUp} className="group relative rounded-2xl border border-white/[0.06] bg-white/[0.01] p-8 backdrop-blur-xl transition-all duration-500 hover:border-[#00F2FE]/20 hover:bg-white/[0.025] hover:-translate-y-1">
+                <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-b from-[#00F2FE]/[0.02] to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                <div className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-[#00F2FE]/30 bg-[#00F2FE]/[0.08] text-sm font-bold text-[#00F2FE] mb-5">
                   {idx + 1}
                 </div>
-                {idx < 2 && <div className="hidden md:block absolute top-10 right-0 translate-x-1/2 w-6 h-px bg-white/10" />}
-                <h3 className="text-xl font-bold mb-3">{step.title}</h3>
-                <p className="text-gray-400 leading-relaxed">{step.desc}</p>
+                <h3 className="relative text-base font-bold text-white mb-2">{step.title}</h3>
+                <p className="relative text-sm text-zinc-400 leading-relaxed">{step.desc}</p>
               </motion.div>
             ))}
           </motion.div>
@@ -536,21 +530,26 @@ export default function FeaturePage({ params }: { params: Promise<{ slug: string
       </section>
 
       {/* KEY FEATURES GRID */}
-      <section className="relative border-b border-white/[0.06] py-24">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-100px' }} variants={stagger} className="text-center mb-16">
+      <section className="relative border-b border-white/[0.04] px-6 py-20 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={stagger} className="text-center mb-12">
             <motion.div variants={fadeUp}>
               <SectionLabel>What You Get</SectionLabel>
-              <h2 className="text-4xl font-bold">Everything included</h2>
+              <h2 className="text-4xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-zinc-500" style={{ letterSpacing: '-0.02em' }}>
+                Everything included
+              </h2>
             </motion.div>
           </motion.div>
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-100px' }} variants={stagger}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={stagger}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {feature.features.map((feat, idx) => (
-              <motion.div key={idx} variants={fadeUp} className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 hover:border-white/[0.15] transition-all">
-                <CheckCircle2 className="h-5 w-5 text-gray-500 mb-3" />
-                <h3 className="text-base font-bold mb-2">{feat.title}</h3>
-                <p className="text-sm text-gray-400 leading-relaxed">{feat.desc}</p>
+              <motion.div key={idx} variants={fadeUp} className="group relative rounded-2xl border border-white/[0.06] bg-white/[0.01] p-6 backdrop-blur-xl transition-all duration-500 hover:border-[#00F2FE]/20 hover:bg-white/[0.025] hover:-translate-y-0.5">
+                <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-b from-[#00F2FE]/[0.02] to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                <div className="relative mb-3 flex h-7 w-7 items-center justify-center rounded-full border border-[#00F2FE]/20 bg-[#00F2FE]/[0.07]">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-[#00F2FE]" />
+                </div>
+                <h3 className="relative text-sm font-bold text-white mb-1.5">{feat.title}</h3>
+                <p className="relative text-xs text-zinc-400 leading-relaxed">{feat.desc}</p>
               </motion.div>
             ))}
           </motion.div>
@@ -558,20 +557,23 @@ export default function FeaturePage({ params }: { params: Promise<{ slug: string
       </section>
 
       {/* USE CASES */}
-      <section className="relative border-b border-white/[0.06] py-24">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-100px' }} variants={stagger} className="text-center mb-16">
+      <section className="relative border-b border-white/[0.04] px-6 py-20 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={stagger} className="text-center mb-12">
             <motion.div variants={fadeUp}>
               <SectionLabel>Real-World Use Cases</SectionLabel>
-              <h2 className="text-4xl font-bold">How Indian businesses use it</h2>
+              <h2 className="text-4xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-zinc-500" style={{ letterSpacing: '-0.02em' }}>
+                How Indian businesses use it
+              </h2>
             </motion.div>
           </motion.div>
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-100px' }} variants={stagger}
-            className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={stagger}
+            className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {feature.useCases.map((useCase, idx) => (
-              <motion.div key={idx} variants={fadeUp} className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-8">
-                <div className={`text-xs font-bold uppercase tracking-wider mb-3 ${colors.badge.split(' ').pop()}`}>{useCase.industry}</div>
-                <p className="text-gray-300 text-sm leading-relaxed">{useCase.flow}</p>
+              <motion.div key={idx} variants={fadeUp} className="group relative rounded-2xl border border-white/[0.06] bg-white/[0.01] p-8 backdrop-blur-xl transition-all duration-500 hover:border-[#00F2FE]/20 hover:bg-white/[0.025] hover:-translate-y-0.5">
+                <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-b from-[#00F2FE]/[0.02] to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                <p className="relative text-[10px] font-bold uppercase tracking-[0.18em] text-[#00F2FE]/80 mb-3">{useCase.industry}</p>
+                <p className="relative text-sm text-zinc-300 leading-relaxed">{useCase.flow}</p>
               </motion.div>
             ))}
           </motion.div>
@@ -579,68 +581,50 @@ export default function FeaturePage({ params }: { params: Promise<{ slug: string
       </section>
 
       {/* CTA */}
-      <section className="relative border-b border-white/[0.06] py-24">
-        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-100px' }} variants={stagger}
-            className="rounded-3xl border border-white/[0.10] bg-white/[0.03] p-12 lg:p-16 text-center">
-            <motion.div variants={fadeUp}>
-              <SectionLabel>Get Started</SectionLabel>
-              <h2 className="text-4xl lg:text-5xl font-bold mb-6">Ready to automate?</h2>
-              <p className="text-xl text-gray-400 mb-10 max-w-2xl mx-auto">
-                Free plan available. No credit card required. Setup in under 5 minutes.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/signup">
-                  <button className="inline-flex items-center gap-2 px-8 py-3 rounded-lg bg-white text-black font-semibold hover:bg-gray-100 transition-all">
-                    Start Free Trial <ArrowRight className="h-5 w-5" />
-                  </button>
-                </Link>
-                <Link href="/features">
-                  <button className="px-8 py-3 rounded-lg bg-white/5 text-white border border-white/10 font-semibold hover:bg-white/10 transition-all">
+      <section className="relative border-b border-white/[0.04] px-6 py-24 lg:px-8">
+        <div className="mx-auto max-w-4xl">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={stagger}>
+            <motion.div
+              variants={fadeUp}
+              className="relative overflow-hidden rounded-2xl border border-[#00F2FE]/10 bg-[#00F2FE]/[0.02] p-12 text-center backdrop-blur-xl lg:p-16"
+            >
+              {/* Corner blobs */}
+              <div className="pointer-events-none absolute -left-20 -top-20 h-60 w-60 rounded-full bg-[#00F2FE]/[0.06] blur-[80px]" />
+              <div className="pointer-events-none absolute -bottom-20 -right-20 h-60 w-60 rounded-full bg-[#00F2FE]/[0.04] blur-[80px]" />
+
+              <div className="relative">
+                <div className="mb-4"><SectionLabel>Get Started</SectionLabel></div>
+                <motion.h2
+                  variants={fadeUp}
+                  className="mb-5 text-4xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-zinc-400 lg:text-5xl"
+                  style={{ letterSpacing: '-0.03em', lineHeight: 1.07 }}
+                >
+                  Ready to automate?
+                </motion.h2>
+                <motion.p variants={fadeUp} className="mx-auto mb-10 max-w-xl text-lg font-light text-zinc-400">
+                  Free plan available. No credit card required. Setup in under 5 minutes.
+                </motion.p>
+                <motion.div variants={fadeUp} className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+                  <Link
+                    href="/signup"
+                    className="inline-flex items-center gap-2 rounded-xl border border-[#00F2FE]/35 bg-[#00F2FE]/[0.12] px-8 py-3 text-sm font-semibold text-white backdrop-blur transition-all duration-300 hover:bg-[#00F2FE]/[0.2] hover:shadow-[0_0_30px_rgba(0,242,254,0.2)]"
+                  >
+                    Start Free <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <Link
+                    href="/features"
+                    className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-8 py-3 text-sm font-semibold text-zinc-300 transition-all duration-300 hover:text-white"
+                  >
                     ← All Features
-                  </button>
-                </Link>
+                  </Link>
+                </motion.div>
               </div>
             </motion.div>
           </motion.div>
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="border-t border-white/[0.06] bg-black pt-16 pb-8">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pb-12 border-b border-white/[0.04]">
-            <div>
-              <Logo variant="dark" />
-              <p className="text-sm text-gray-600 mt-4 leading-relaxed">WhatsApp Agentic Automation for Indian businesses.</p>
-              <div className="flex gap-3 mt-6">
-                {[{ icon: <Linkedin className="h-4 w-4" />, href: 'https://linkedin.com/company/b9automation' },
-                  { icon: <Instagram className="h-4 w-4" />, href: 'https://instagram.com/b9automation' },
-                  { icon: <Youtube className="h-4 w-4" />, href: 'https://youtube.com/@b9automation' }].map((s, i) => (
-                  <a key={i} href={s.href} target="_blank" rel="noopener noreferrer"
-                    className="text-gray-600 hover:text-gray-300 transition-colors">{s.icon}</a>
-                ))}
-              </div>
-            </div>
-            {[['Product',[['Features','/features'],['Pricing','/pricing'],['How It Works','/how-it-works'],['API Docs','/api-docs']]],
-              ['Company',[['About','/about'],['Blog','/blog'],['Changelog','/changelog']]],
-              ['Legal',[['Privacy','/privacy'],['Terms','/terms'],['Cookies','/cookies']]]].map(([title, links]) => (
-              <div key={title as string}>
-                <h4 className="text-xs font-bold uppercase tracking-widest text-gray-600 mb-4">{title as string}</h4>
-                <ul className="space-y-3">
-                  {(links as [string, string][]).map(([label, href]) => (
-                    <li key={href}><Link href={href} className="text-sm text-gray-500 hover:text-gray-300 transition-colors">{label}</Link></li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-          <div className="pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <p className="text-xs text-gray-700">© 2026 B9 Automation. All rights reserved.</p>
-            <p className="text-xs text-gray-700">Made in India 🇮🇳</p>
-          </div>
-        </div>
-      </footer>
+      <MarketingFooter variant="dark" />
     </div>
   );
 }

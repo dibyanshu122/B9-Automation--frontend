@@ -9,60 +9,73 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Premium SaaS theme: clean white surfaces with blue/cyan primary actions.
         primary: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
+          50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd',
+          400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8',
+          800: '#1e40af', 900: '#1e3a8a',
         },
         accent: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          500: '#3b82f6',
+          cyan: '#00F2FE',
+          orange: '#FF5722',
           blue: '#3b82f6',
-          cyan: '#06b6d4',
           emerald: '#10b981',
           amber: '#f59e0b',
           red: '#ef4444',
           violet: '#8b5cf6',
           pink: '#ec4899',
-          purple: '#a855f7',
           indigo: '#6366f1',
         },
         dark: {
-          50: '#f9fafb',
-          100: '#f3f4f6',
-          200: '#e5e7eb',
-          500: '#6b7280',
-          900: '#111827',
-        }
+          50: '#f9fafb', 100: '#f3f4f6', 200: '#e5e7eb',
+          500: '#6b7280', 900: '#111827',
+        },
+        google: {
+          blue: '#4285F4', red: '#EA4335', yellow: '#FBBC04',
+          green: '#34A853', gray: '#F1F3F4', dark: '#202124',
+        },
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system'],
         mono: ['Fira Code', 'monospace'],
       },
+      transitionTimingFunction: {
+        'premium-out': 'cubic-bezier(0.16, 1, 0.3, 1)',
+        'premium-in-out': 'cubic-bezier(0.45, 0, 0.15, 1)',
+      },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-in-out',
         'slide-in': 'slideIn 0.3s ease-in-out',
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'float': 'float 6s ease-in-out infinite',
+        'shimmer': 'shimmer 2.5s linear infinite',
+        'gradient-x': 'gradientX 4s ease infinite',
+        'glow-pulse': 'glowPulse 3s ease-in-out infinite',
       },
       keyframes: {
-        fadeIn: {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
-        },
+        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
         slideIn: {
           '0%': { transform: 'translateX(-10px)', opacity: '0' },
           '100%': { transform: 'translateX(0)', opacity: '1' },
         },
+        float: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-10px)' },
+        },
+        shimmer: {
+          '0%': { backgroundPosition: '-200% center' },
+          '100%': { backgroundPosition: '200% center' },
+        },
+        gradientX: {
+          '0%, 100%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
+        },
+        glowPulse: {
+          '0%, 100%': { opacity: '0.4' },
+          '50%': { opacity: '0.8' },
+        },
+      },
+      backgroundSize: {
+        '200': '200% auto',
       },
     },
   },

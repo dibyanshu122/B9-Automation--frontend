@@ -2,8 +2,8 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Image from 'next/image';
 import { Button } from '@/components/button';
+import { Logo } from '@/components/logo';
 import { useApi } from '@/hooks/useApi';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -63,7 +63,7 @@ function VerifyEmailContent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary-50 to-white px-4">
       <div className="w-full max-w-md rounded-2xl border border-orange-100 bg-white p-6 text-center shadow-xl">
-        <Image src="/b9-automation-logo.jpg" alt="B9 Automation logo" width={220} height={148} className="mx-auto mb-6 h-28 w-auto object-contain" priority />
+        <div className="mb-6 flex justify-center"><Logo variant="light" /></div>
         <h1 className="mb-2 text-2xl font-bold text-gray-900">
           {status === 'loading' ? 'Verifying email...' : status === 'success' ? 'Email verified' : 'Verification failed'}
         </h1>

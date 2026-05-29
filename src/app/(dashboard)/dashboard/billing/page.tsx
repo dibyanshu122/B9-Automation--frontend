@@ -100,7 +100,7 @@ export default function BillingPage() {
         currency: 'INR',
         name: 'B9 Automation',
         description: `${plan.charAt(0) + plan.slice(1).toLowerCase()} Plan - ${billingCycle === 'yearly' ? 'Annual' : 'Monthly'}`,
-        image: '/logo.png',
+        image: '/brand-logo.svg',
         handler: () => {
           toast.success('Payment successful! Activating your plan...');
           // Poll until plan updates in DB (webhook takes 2-5 sec)

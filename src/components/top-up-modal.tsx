@@ -68,7 +68,7 @@ export function TopUpModal({ isOpen, onClose }: TopUpModalProps) {
         currency: 'INR',
         name: 'B9 Automation',
         description: `${packLabel} — AI Reply Credits`,
-        image: '/logo.svg',
+        image: '/brand-logo.svg',
         handler: () => {
           toast.success(`${packLabel} added! Your AI replies will reflect shortly.`);
           onClose();

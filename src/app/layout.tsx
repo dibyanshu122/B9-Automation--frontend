@@ -6,7 +6,7 @@ import { MarketingWidget } from '@/components/marketing-widget';
 
 const inter = Inter({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
+  weight: ['300', '400', '500', '600', '700', '800', '900'],
   display: 'swap',
   variable: '--font-inter',
 });
@@ -44,8 +44,8 @@ export const metadata: Metadata = {
     images: ['/og-image.png'],
   },
   icons: {
-    icon: '/logo.svg',
-    apple: '/logo.svg',
+    icon: '/brand-logo.svg',
+    apple: '/brand-logo.svg',
   },
   manifest: '/manifest.json',
   appleWebApp: {
@@ -77,12 +77,12 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         {/* Favicon */}
-        <link rel="icon" href="/logo.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/logo.svg" />
+        <link rel="icon" href="/brand-logo.svg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="/brand-logo.svg" />
 
         {/* Theme color */}
-        <meta name="theme-color" content="#f97316" />
-        <meta name="color-scheme" content="light" />
+        <meta name="theme-color" content="#060608" />
+        <meta name="color-scheme" content="dark" />
 
         {/* DNS Prefetch for performance */}
         <link rel="dns-prefetch" href="https://b9-automation-backend.onrender.com" />

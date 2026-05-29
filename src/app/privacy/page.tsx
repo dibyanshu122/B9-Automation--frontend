@@ -74,7 +74,7 @@ We share only the minimum data necessary for each integration to function. We do
 To exercise these rights, email privacy@b9automation.com or use Settings → Data & Privacy in your dashboard. We will respond within 5 business days.`,
   },
   {
-    title: 'Children\'s Privacy',
+    title: "Children's Privacy",
     body: `B9 Automation is a business platform and is not directed at children under 13. We do not knowingly collect personal information from children. If we become aware that a child under 13 has provided personal information, we will delete it immediately.`,
   },
   {
@@ -95,36 +95,46 @@ B9 Automation — Registered in India.`,
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="relative min-h-screen bg-black text-white overflow-hidden">
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -top-32 -left-32 h-[500px] w-[600px] rounded-full bg-[#00F2FE]/[0.03] blur-[140px]" />
+        <div className="absolute top-1/2 -right-32 h-[400px] w-[400px] rounded-full bg-[#FF5722]/[0.02] blur-[160px]" />
+      </div>
+      <div className="pointer-events-none fixed inset-0 opacity-[0.016]">
+        <svg width="100%" height="100%"><defs><pattern id="dots-priv" x="0" y="0" width="36" height="36" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="white" /></pattern></defs><rect width="100%" height="100%" fill="url(#dots-priv)" /></svg>
+      </div>
+
       <MarketingNav variant="dark" />
 
-      <section className="border-b border-white/[0.06] px-4 py-20 sm:px-6 lg:px-8">
+      <section className="relative border-b border-white/[0.06] px-4 py-20 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl">
-          <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">Legal</p>
-          <h1 className="text-4xl font-black text-white">Privacy Policy</h1>
-          <p className="mt-3 text-slate-400 text-sm">Last updated: May 2026</p>
-          <p className="mt-5 text-slate-400 leading-relaxed">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#00F2FE] mb-4">Legal</p>
+          <h1 className="text-4xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-zinc-400">
+            Privacy Policy
+          </h1>
+          <p className="mt-3 text-zinc-500 text-sm">Last updated: May 2026</p>
+          <p className="mt-5 text-zinc-400 leading-relaxed">
             B9 Automation (&ldquo;we&rdquo;, &ldquo;us&rdquo;, &ldquo;our&rdquo;) is committed to protecting your privacy and the privacy of your customers. This policy explains what data we collect, how we use it, and your rights — including our obligations under the Meta Platform Terms for WhatsApp Business API, Facebook Graph API, and Instagram API.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link href="/deletion" className="inline-flex items-center gap-1.5 rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1.5 text-xs font-semibold text-red-400 hover:bg-red-500/20 transition-colors">
               Request Data Deletion →
             </Link>
-            <Link href="/terms" className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-gray-400 hover:text-white transition-colors">
+            <Link href="/terms" className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-zinc-400 hover:text-white transition-colors">
               Terms of Service →
             </Link>
           </div>
         </div>
       </section>
 
-      <section className="px-4 py-16 sm:px-6 lg:px-8">
+      <section className="relative px-4 py-16 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl space-y-6">
           {sections.map((s, i) => (
-            <div key={s.title} className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6">
-              <h2 className="text-base font-bold text-white mb-3">
-                <span className="mr-2 text-slate-600 text-sm">{i + 1}.</span>{s.title}
+            <div key={s.title} className="rounded-2xl border border-white/[0.06] bg-white/[0.01] backdrop-blur-xl p-6">
+              <h2 className="text-base font-bold text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-zinc-400 mb-3">
+                <span className="mr-2 text-zinc-600 text-sm not-italic bg-none [-webkit-text-fill-color:theme(colors.zinc.600)]">{i + 1}.</span>{s.title}
               </h2>
-              <p className="text-sm text-slate-400 leading-relaxed whitespace-pre-line">{s.body}</p>
+              <p className="text-sm text-zinc-400 leading-relaxed whitespace-pre-line">{s.body}</p>
             </div>
           ))}
         </div>

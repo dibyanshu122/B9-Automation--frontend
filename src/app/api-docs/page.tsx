@@ -1,9 +1,9 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { MarketingNav } from '@/components/marketing-shell';
+import { MarketingNav, MarketingFooter } from '@/components/marketing-shell';
 import { ChevronDown, Copy, Check } from 'lucide-react';
 
 const fadeUp = {
@@ -39,7 +39,7 @@ const apiGroups: ApiGroup[] = [
   {
     tag: 'v1',
     label: 'REST API v1 — External Integrations',
-    color: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
+    color: 'text-[#00F2FE] bg-[#00F2FE]/10 border-[#00F2FE]/20',
     description: 'These endpoints use API Key authentication (b9_xxx). Generate a key from your dashboard → API Access. Pass it as: Authorization: Bearer YOUR_API_KEY',
     endpoints: [
       { method: 'GET',   path: '/api/v1/',                        description: 'API info — version, available endpoints, your plan',         auth: true },
@@ -170,7 +170,7 @@ const apiGroups: ApiGroup[] = [
   {
     tag: 'billing',
     label: 'Billing',
-    color: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
+    color: 'text-[#00F2FE] bg-[#00F2FE]/10 border-[#00F2FE]/20',
     description: 'Manage plans, payments, and invoices via Razorpay.',
     endpoints: [
       { method: 'GET', path: '/api/billing/current-plan', description: 'Get current subscription plan', auth: true },
@@ -233,16 +233,22 @@ export default function ApiDocsPage() {
   const [openGroup, setOpenGroup] = useState<string>('auth');
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      {/* Grid Background */}
-      <div className="fixed inset-0 pointer-events-none opacity-20">
-        <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+    <div className="relative min-h-screen bg-black text-white overflow-hidden">
+      {/* Ambient blobs */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -top-32 -left-32 h-[500px] w-[600px] rounded-full bg-[#00F2FE]/[0.03] blur-[140px] animate-pulse" />
+        <div className="absolute top-1/2 -right-32 h-[400px] w-[400px] rounded-full bg-[#FF5722]/[0.02] blur-[160px]" />
+        <div className="absolute bottom-0 left-1/3 h-[300px] w-[700px] rounded-full bg-[#00F2FE]/[0.015] blur-[120px]" />
+      </div>
+      {/* Dot grid */}
+      <div className="pointer-events-none fixed inset-0 opacity-[0.016]">
+        <svg width="100%" height="100%">
           <defs>
-            <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
-              <circle cx="25" cy="25" r="0.5" fill="white" />
+            <pattern id="dots-api-docs" x="0" y="0" width="36" height="36" patternUnits="userSpaceOnUse">
+              <circle cx="1" cy="1" r="1" fill="white" />
             </pattern>
           </defs>
-          <rect width="100%" height="100%" fill="url(#grid)" />
+          <rect width="100%" height="100%" fill="url(#dots-api-docs)" />
         </svg>
       </div>
 
@@ -252,10 +258,11 @@ export default function ApiDocsPage() {
       <section className="relative border-b border-white/[0.06] py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
           <motion.div initial="hidden" animate="visible" variants={stagger}>
-            <motion.div variants={fadeUp} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 mb-6">
-              <span className="text-sm font-medium text-gray-300">API Reference</span>
+            <motion.div variants={fadeUp} className="inline-flex items-center gap-2 rounded-full border border-[#00F2FE]/20 bg-[#00F2FE]/[0.06] px-3 py-1 mb-6">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#00F2FE] animate-pulse" />
+              <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#00F2FE]">API Reference</span>
             </motion.div>
-            <motion.h1 variants={fadeUp} className="text-5xl lg:text-6xl font-bold mb-4">
+            <motion.h1 variants={fadeUp} className="text-5xl lg:text-6xl font-bold mb-4 tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-zinc-400">
               B9 Automation API
             </motion.h1>
             <motion.p variants={fadeUp} className="text-xl text-gray-400 max-w-2xl mx-auto mb-8">
@@ -270,11 +277,11 @@ export default function ApiDocsPage() {
             </motion.div>
 
             <motion.div variants={fadeUp} className="flex flex-wrap justify-center gap-3">
-              <Link href="/dashboard/api" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-black font-semibold text-sm hover:bg-gray-100 transition-colors">
+              <Link href="/dashboard/api" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[#00F2FE]/35 bg-[#00F2FE]/[0.12] text-white font-semibold text-sm backdrop-blur-xl transition-all duration-300 hover:bg-[#00F2FE]/[0.2] hover:shadow-[0_0_24px_rgba(0,242,254,0.2)]">
                 Get API Key →
               </Link>
               <a href={`${BASE_URL}/docs`} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/20 text-white font-semibold text-sm hover:bg-white/10 transition-colors">
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-white font-semibold text-sm backdrop-blur-xl transition-all duration-300 hover:border-white/20 hover:bg-white/[0.06]">
                 Open Swagger UI ↗
               </a>
             </motion.div>
@@ -287,9 +294,9 @@ export default function ApiDocsPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* API Key auth */}
-            <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.04] p-5">
+            <div className="rounded-xl border border-[#00F2FE]/20 bg-[#00F2FE]/[0.04] p-5">
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs font-bold bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded">REST API v1</span>
+                <span className="text-xs font-bold bg-[#00F2FE]/10 text-[#00F2FE] px-2 py-0.5 rounded">REST API v1</span>
                 <h3 className="font-semibold text-white text-sm">API Key Authentication</h3>
               </div>
               <p className="text-gray-400 text-xs mb-3">
@@ -297,7 +304,7 @@ export default function ApiDocsPage() {
               </p>
               <div className="flex items-center gap-2 rounded-lg bg-black/50 border border-white/[0.06] px-3 py-2 font-mono text-xs">
                 <span className="text-gray-500">Authorization:</span>
-                <span className="text-emerald-400">Bearer b9_xxxxxxxxxxxx</span>
+                <span className="text-[#00F2FE]">Bearer b9_xxxxxxxxxxxx</span>
                 <CopyButton text="Authorization: Bearer b9_xxxxxxxxxxxx" />
               </div>
             </div>
@@ -334,8 +341,8 @@ export default function ApiDocsPage() {
                     onClick={() => setOpenGroup(g.tag)}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${
                       openGroup === g.tag
-                        ? 'bg-white/10 text-white'
-                        : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
+                        ? 'bg-[#00F2FE]/[0.08] text-[#00F2FE] border border-[#00F2FE]/20'
+                        : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'
                     }`}
                   >
                     {g.label}
@@ -366,7 +373,7 @@ export default function ApiDocsPage() {
                       <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${group.color}`}>
                         {group.endpoints.length} endpoints
                       </span>
-                      <h2 className="text-xl font-bold">{group.label}</h2>
+                      <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-zinc-400">{group.label}</h2>
                     </div>
                     <ChevronDown className={`h-5 w-5 text-gray-500 transition-transform ${openGroup === group.tag ? 'rotate-180' : ''}`} />
                   </button>
@@ -392,7 +399,7 @@ export default function ApiDocsPage() {
                                   {ep.method}
                                 </span>
                                 {ep.auth && (
-                                  <span className="text-xs text-yellow-500">🔒 Auth</span>
+                                  <span className="text-xs text-yellow-500">AUTH</span>
                                 )}
                                 <div className="flex items-center gap-2 flex-1 min-w-0">
                                   <code className="text-sm text-gray-300 font-mono break-all">{ep.path}</code>
@@ -439,15 +446,8 @@ export default function ApiDocsPage() {
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="border-t border-white/[0.06] bg-black pt-16 pb-8 mt-12">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-700">
-            <p>© 2026 B9 Automation Pvt. Ltd. All rights reserved.</p>
-            <p>Made with ♥ in India</p>
-          </div>
-        </div>
-      </footer>
+      <MarketingFooter variant="dark" />
     </div>
   );
 }
+

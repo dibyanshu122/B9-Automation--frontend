@@ -7,6 +7,7 @@ Disallow: /login
 Disallow: /signup
 Disallow: /onboarding
 Disallow: /api/
+Disallow: /forgot-password
 
 # Sitemap
 Sitemap: https://b9automation.com/sitemap.xml

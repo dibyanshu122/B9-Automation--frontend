@@ -5,10 +5,10 @@ import { useUIStore } from '@/store/uiStore';
 import { useApi } from '@/hooks/useApi';
 import { Button } from './button';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Bell, LogOut, Settings, Menu, Workflow, Users, MessageCircle, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 
 function timeAgo(iso: string): string {
   if (!iso) return '';
@@ -112,16 +112,14 @@ export const Navbar = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/dashboard" className="flex items-center gap-3">
-            <span className="flex h-11 w-11 items-center justify-center rounded-full border border-cyan-300/25 bg-white shadow-lg shadow-cyan-500/10">
-              <Image
-                src="/b9-mark-logo.jpg"
-                alt="B9 Automation logo"
-                width={140}
-                height={114}
-                className="h-8 w-8 rounded-full object-contain"
-                priority
-              />
-            </span>
+            <Image
+              src="/brand-logo.svg"
+              alt="B9 Automation logo"
+              width={36}
+              height={36}
+              className="shrink-0"
+              priority
+            />
             <div className="hidden sm:block leading-tight">
               <p className="bg-gradient-to-r from-blue-200 via-cyan-100 to-sky-300 bg-clip-text text-lg font-black tracking-tight text-transparent">
                 B9 Automation

@@ -100,7 +100,7 @@
       ".brainai-stage{display:flex;flex-direction:column;align-items:flex-end;gap:8px}",
       ".brainai-launch{display:flex;flex-direction:column;align-items:center}",
       ".brainai-bubble{position:relative;max-width:240px;background:#fff;color:#111827;border-radius:18px;padding:12px 18px;font:700 14px/1.4 inherit;box-shadow:0 12px 40px rgba(0,0,0,.18);text-align:center;transition:all 0.3s ease;border:1.5px solid rgba(255,255,255,.9);backdrop-filter:blur(8px);}",
-      ".brainai-bubble::after{content:'';position:absolute;bottom:-9px;left:50%;transform:translateX(-50%);border-left:9px solid transparent;border-right:9px solid transparent;border-top:9px solid #fff;}",
+      ".brainai-bubble::after{content:'';position:absolute;bottom:-9px;left:50%;transform:translateX(-50%);border-left:9px solid transparent;border-right:9px solid transparent;border-top:6px solid #34b1c5;}",
       ".brainai-bubble.intro{background:linear-gradient(135deg,#ff6b6b,#845ef7,#3b82f6);background-size:200% 200%;animation:brainai-gradient-shift 3s ease infinite,brainai-pop 0.5s cubic-bezier(.175,.885,.32,1.275) forwards;color:#fff;border:none;font-size:15px;font-weight:800;padding:14px 22px;box-shadow:0 16px 48px rgba(132,94,247,.45);line-height:1.4;}",
       ".brainai-bubble.intro::after{border-top-color:transparent;}",
       /* Robot */

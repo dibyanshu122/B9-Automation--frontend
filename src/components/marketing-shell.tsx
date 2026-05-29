@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/button';
 import { Logo } from '@/components/logo';
@@ -24,20 +23,7 @@ export function MarketingNav({ variant = 'light' }: { variant?: 'light' | 'dark'
       }`}
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {isDark ? (
-          <Logo variant="dark" />
-        ) : (
-          <Link href="/" className="flex items-center">
-            <Image
-              src="/b9-automation-logo.jpg"
-              alt="B9 Automation logo"
-              width={165}
-              height={110}
-              className="h-12 w-auto object-contain"
-              priority
-            />
-          </Link>
-        )}
+        <Logo variant={isDark ? 'dark' : 'light'} />
 
         <nav className="hidden items-center gap-7 md:flex">
           {/* Features dropdown */}
@@ -108,15 +94,16 @@ export function MarketingNav({ variant = 'light' }: { variant?: 'light' | 'dark'
           >
             {user ? 'Dashboard' : 'Sign In'}
           </Link>
-          <Link href={user ? '/dashboard' : '/signup'}>
-            <Button
-              variant="primary"
-              size="sm"
-              style={isDark ? { background: 'white', color: '#111827', boxShadow: 'none' } : undefined}
-            >
-              Get Started
-              <ArrowRight className="h-4 w-4" />
-            </Button>
+          <Link
+            href={user ? '/dashboard' : '/signup'}
+            className={`inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition-all duration-300 ${
+              isDark
+                ? 'border border-[#00F2FE]/35 bg-[#00F2FE]/[0.12] text-white backdrop-blur-xl hover:bg-[#00F2FE]/[0.22] hover:shadow-[0_0_20px_rgba(0,242,254,0.25)]'
+                : 'bg-gray-950 text-white hover:bg-gray-800'
+            }`}
+          >
+            Get Started
+            <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
       </div>
@@ -128,22 +115,10 @@ export function MarketingFooter({ variant = 'light' }: { variant?: 'light' | 'da
   const isDark = variant === 'dark';
 
   return (
-    <footer className={`border-t ${isDark ? 'bg-slate-900 border-white/[0.06]' : 'bg-white border-orange-100'}`}>
+    <footer className={`border-t ${isDark ? 'bg-black border-white/[0.06]' : 'bg-white border-orange-100'}`}>
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr] lg:px-8">
         <div>
-          {isDark ? (
-            <Logo variant="dark" />
-          ) : (
-            <div className="flex items-center">
-              <Image
-                src="/b9-automation-logo.jpg"
-                alt="B9 Automation logo"
-                width={220}
-                height={147}
-                className="h-24 w-auto object-contain"
-              />
-            </div>
-          )}
+          <Logo variant={isDark ? 'dark' : 'light'} size="lg" />
           <p className={`mt-4 max-w-sm text-sm leading-6 ${isDark ? 'text-gray-500' : 'text-gray-600'}`}>
             India&apos;s WhatsApp Agentic AI platform — qualify leads, collect payments, and run campaigns automatically.
           </p>
@@ -161,7 +136,7 @@ export function MarketingFooter({ variant = 'light' }: { variant?: 'light' | 'da
                 <Link
                   key={label}
                   href={href}
-                  className={`block text-sm ${isDark ? 'text-gray-500 hover:text-primary-400' : 'text-gray-600 hover:text-primary-600'}`}
+                  className={`block text-sm ${isDark ? 'text-zinc-500 hover:text-[#00F2FE] transition-colors' : 'text-gray-600 hover:text-gray-950 transition-colors'}`}
                 >
                   {label}
                 </Link>
@@ -190,18 +165,34 @@ export function MarketingCta({ variant = 'light' }: { variant?: 'light' | 'dark'
   const isDark = variant === 'dark';
 
   return (
-    <section className={`px-4 py-20 sm:px-6 lg:px-8 ${isDark ? 'bg-slate-950' : ''}`}>
-      <div className="mx-auto max-w-5xl overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8 text-white shadow-2xl md:p-12">
-        <div className="grid gap-8 md:grid-cols-[1.4fr_0.6fr] md:items-center">
-          <div>
-            <h2 className="text-3xl font-bold md:text-4xl">Turn your knowledge into an AI assistant today.</h2>
-            <p className="mt-3 text-slate-400">Start free, create your first assistant, upload documents, and ask your first question in minutes.</p>
-          </div>
-          <Link href="/signup" className="md:justify-self-end">
-            <Button className="w-full bg-cyan-500 text-white hover:bg-cyan-400 md:w-auto shadow-lg shadow-cyan-500/20" size="lg">
-              Get Started Free
-              <ArrowRight className="h-5 w-5" />
-            </Button>
+    <section className={`relative border-t px-6 py-20 lg:px-8 ${isDark ? 'bg-black border-white/[0.04]' : 'bg-gray-50 border-gray-200'}`}>
+      {isDark && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden">
+          <div className="h-[300px] w-[600px] rounded-full bg-[#00F2FE]/[0.04] blur-[100px]" />
+        </div>
+      )}
+      <div className="relative mx-auto max-w-3xl text-center">
+        <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] mb-5 ${isDark ? 'border border-[#00F2FE]/20 bg-[#00F2FE]/[0.06] text-[#00F2FE]' : 'border border-gray-200 bg-white text-gray-500'}`}>
+          Get Started
+        </span>
+        <h2 className={`mb-4 text-4xl font-bold tracking-tight ${isDark ? 'text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-zinc-400' : 'text-gray-950'}`} style={{ letterSpacing: '-0.02em' }}>
+          Turn your knowledge into an AI assistant today.
+        </h2>
+        <p className={`mb-8 leading-relaxed ${isDark ? 'text-zinc-400' : 'text-gray-600'}`}>
+          Start free, create your first assistant, upload documents, and ask your first question in minutes.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link
+            href="/signup"
+            className={`inline-flex items-center justify-center gap-2 rounded-xl px-8 py-3 font-bold backdrop-blur-xl transition-all duration-300 ${isDark ? 'border border-[#00F2FE]/35 bg-[#00F2FE]/[0.12] text-white hover:bg-[#00F2FE]/[0.2] hover:shadow-[0_0_30px_rgba(0,242,254,0.2)]' : 'bg-gray-950 text-white hover:bg-gray-800'}`}
+          >
+            Start Free <ArrowRight className="h-4 w-4" />
+          </Link>
+          <Link
+            href="/pricing"
+            className={`inline-flex items-center justify-center gap-2 rounded-xl px-8 py-3 font-semibold transition-all duration-300 ${isDark ? 'border border-white/[0.08] bg-white/[0.03] text-zinc-300 backdrop-blur-xl hover:border-white/20 hover:bg-white/[0.06]' : 'border border-gray-200 text-gray-700 hover:border-gray-300'}`}
+          >
+            See Pricing
           </Link>
         </div>
       </div>

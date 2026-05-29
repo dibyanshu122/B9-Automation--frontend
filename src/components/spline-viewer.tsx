@@ -1,31 +1,14 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface SplineViewerProps {
   scene: string;
   className?: string;
+  style?: React.CSSProperties;
 }
 
-// Module-level flag — shared across ALL SplineViewer instances on the page.
-// Prevents double-loading the script (which causes a "custom element already defined" error
-// that silently kills every spline-viewer on the page).
-let _scriptInjected = false;
-
-function ensureSplineScript() {
-  if (_scriptInjected) return;
-  if (typeof window === 'undefined') return;
-  // Also skip if the element is already registered (e.g. hot-reload)
-  if (window.customElements?.get('spline-viewer')) {
-    _scriptInjected = true;
-    return;
-  }
-  _scriptInjected = true;
-  const script = document.createElement('script');
-  script.type = 'module';
-  script.src = 'https://unpkg.com/@splinetool/viewer@1.12.92/build/spline-viewer.js';
-  document.head.appendChild(script);
-}
+const SPLINE_SCRIPT = 'https://unpkg.com/@splinetool/viewer@1.12.95/build/spline-viewer.js';
 
 const HIDE_STYLE = `
   #logo, a, [data-spline-logo], .spline-logo, .logo, .spline-hint, .hint,
@@ -37,12 +20,22 @@ const HIDE_STYLE = `
   }
 `;
 
-export function SplineViewer({ scene, className = '' }: SplineViewerProps) {
+export function SplineViewer({ scene, className = '', style }: SplineViewerProps) {
   const viewerRef = useRef<HTMLElement | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
-  // Load script once (global guard)
+  // Load script once — guard against double-registration
   useEffect(() => {
-    ensureSplineScript();
+    if (customElements.get('spline-viewer')) return;
+    if (document.querySelector(`script[src="${SPLINE_SCRIPT}"]`)) return;
+    const script = document.createElement('script');
+    script.type = 'module';
+    script.src = SPLINE_SCRIPT;
+    document.head.appendChild(script);
+  }, []);
+
+  useEffect(() => {
+    setIsMounted(true);
   }, []);
 
   // Inject watermark-hiding styles into the shadow DOM
@@ -75,7 +68,6 @@ export function SplineViewer({ scene, className = '' }: SplineViewerProps) {
       return true;
     };
 
-    // Try immediately, then poll until shadow DOM is ready (max 6s)
     if (!applyHide()) {
       intervalId = setInterval(() => {
         if (applyHide() && intervalId !== null) {
@@ -97,8 +89,12 @@ export function SplineViewer({ scene, className = '' }: SplineViewerProps) {
 
   const SplineTag = 'spline-viewer' as any;
 
+  if (!isMounted) {
+    return <div className={className} style={style} />;
+  }
+
   return (
-    <div className={className}>
+    <div className={className} style={style}>
       <SplineTag
         ref={viewerRef}
         url={scene}

@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 205 180">
+  <defs>
+    <!-- Purple diamond gradient: indigo top → violet mid → lilac bottom -->
+    <linearGradient id="lg" x1="7" y1="44" x2="133" y2="170" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#3535CC"/>
+      <stop offset="38%"  stop-color="#7533BC"/>
+      <stop offset="100%" stop-color="#BC60CC"/>
+    </linearGradient>
+    <!-- Teal diamond gradient: emerald top → teal bottom -->
+    <linearGradient id="rg" x1="70" y1="7" x2="196" y2="133" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#00BA98"/>
+      <stop offset="100%" stop-color="#00CCBC"/>
+    </linearGradient>
+    <clipPath id="lc">
+      <polygon points="70,44 133,107 70,170 7,107"/>
+    </clipPath>
+    <clipPath id="rc">
+      <polygon points="133,7 196,70 133,133 70,70"/>
+    </clipPath>
+  </defs>
+
+  <!-- LEFT diamond (purple) — 10 concentric outlines, step 6 -->
+  <g clip-path="url(#lc)" fill="none" stroke="url(#lg)" stroke-width="3" stroke-linejoin="miter">
+    <polygon points="70,44  133,107 70,170 7,107"/>
+    <polygon points="70,50  127,107 70,164 13,107"/>
+    <polygon points="70,56  121,107 70,158 19,107"/>
+    <polygon points="70,62  115,107 70,152 25,107"/>
+    <polygon points="70,68  109,107 70,146 31,107"/>
+    <polygon points="70,74  103,107 70,140 37,107"/>
+    <polygon points="70,80  97,107  70,134 43,107"/>
+    <polygon points="70,86  91,107  70,128 49,107"/>
+    <polygon points="70,92  85,107  70,122 55,107"/>
+    <polygon points="70,98  79,107  70,116 61,107"/>
+  </g>
+
+  <!-- RIGHT diamond (teal) — 10 concentric outlines, step 6 -->
+  <g clip-path="url(#rc)" fill="none" stroke="url(#rg)" stroke-width="3" stroke-linejoin="miter">
+    <polygon points="133,7  196,70 133,133 70,70"/>
+    <polygon points="133,13 190,70 133,127 76,70"/>
+    <polygon points="133,19 184,70 133,121 82,70"/>
+    <polygon points="133,25 178,70 133,115 88,70"/>
+    <polygon points="133,31 172,70 133,109 94,70"/>
+    <polygon points="133,37 166,70 133,103 100,70"/>
+    <polygon points="133,43 160,70 133,97  106,70"/>
+    <polygon points="133,49 154,70 133,91  112,70"/>
+    <polygon points="133,55 148,70 133,85  118,70"/>
+    <polygon points="133,61 142,70 133,79  124,70"/>
+  </g>
+</svg>

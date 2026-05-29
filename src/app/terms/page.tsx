@@ -11,15 +11,27 @@ const LAST_UPDATED = 'May 16, 2026';
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="relative min-h-screen bg-black text-white overflow-hidden">
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -top-32 -left-32 h-[500px] w-[600px] rounded-full bg-[#00F2FE]/[0.03] blur-[140px]" />
+        <div className="absolute top-1/2 -right-32 h-[400px] w-[400px] rounded-full bg-[#FF5722]/[0.02] blur-[160px]" />
+      </div>
+      <div className="pointer-events-none fixed inset-0 opacity-[0.016]">
+        <svg width="100%" height="100%"><defs><pattern id="dots-terms" x="0" y="0" width="36" height="36" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="white" /></pattern></defs><rect width="100%" height="100%" fill="url(#dots-terms)" /></svg>
+      </div>
+
       <MarketingNav variant="dark" />
-      <div className="mx-auto max-w-3xl px-4 py-24 sm:px-6 lg:px-8">
+
+      <div className="relative mx-auto max-w-3xl px-4 py-24 sm:px-6 lg:px-8">
         <div className="mb-10">
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Terms of Service</h1>
-          <p className="mt-2 text-slate-400 text-sm">Last updated: {LAST_UPDATED}</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#00F2FE] mb-4">Legal</p>
+          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-zinc-400">
+            Terms of Service
+          </h1>
+          <p className="mt-2 text-zinc-500 text-sm">Last updated: {LAST_UPDATED}</p>
         </div>
 
-        <div className="prose prose-invert prose-slate max-w-none space-y-8 text-slate-300 [&_h2]:text-white [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mt-8 [&_h3]:text-slate-100 [&_h3]:font-semibold [&_strong]:text-white">
+        <div className="prose prose-invert max-w-none space-y-8 text-zinc-300 [&_h2]:text-transparent [&_h2]:bg-clip-text [&_h2]:bg-gradient-to-b [&_h2]:from-white [&_h2]:via-white [&_h2]:to-zinc-400 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mt-8 [&_h3]:text-zinc-100 [&_h3]:font-semibold [&_strong]:text-white">
 
           <section>
             <h2>1. Acceptance of Terms</h2>
@@ -29,7 +41,7 @@ export default function TermsPage() {
           <section>
             <h2>2. Description of Service</h2>
             <p>B9 Automation is a SaaS platform that enables businesses to automate customer conversations on WhatsApp, Instagram, and Facebook using artificial intelligence. The Service includes:</p>
-            <ul className="list-disc pl-5 space-y-1 text-slate-300">
+            <ul className="list-disc pl-5 space-y-1 text-zinc-300">
               <li>WhatsApp Business API automation and chatbots</li>
               <li>Instagram DM automation</li>
               <li>Facebook Lead Ads integration and automation</li>
@@ -52,8 +64,8 @@ export default function TermsPage() {
           <section>
             <h2>5. Meta Platform Compliance</h2>
             <p>By using WhatsApp, Instagram, and Facebook features, you agree to comply with:</p>
-            <ul className="list-disc pl-5 space-y-1 text-slate-300">
-              <li><strong>Meta's Terms of Service</strong> and Platform Policies</li>
+            <ul className="list-disc pl-5 space-y-1 text-zinc-300">
+              <li><strong>Meta&rsquo;s Terms of Service</strong> and Platform Policies</li>
               <li><strong>WhatsApp Business Policy</strong> — including messaging opt-in requirements</li>
               <li><strong>Instagram Platform Policy</strong></li>
               <li><strong>Facebook Developer Policy</strong></li>
@@ -64,7 +76,7 @@ export default function TermsPage() {
           <section>
             <h2>6. Prohibited Uses</h2>
             <p>You may not use the Service to:</p>
-            <ul className="list-disc pl-5 space-y-1 text-slate-300">
+            <ul className="list-disc pl-5 space-y-1 text-zinc-300">
               <li>Send spam, unsolicited messages, or bulk messages without user opt-in</li>
               <li>Violate any applicable law or regulation (including India&rsquo;s IT Act, 2000)</li>
               <li>Harass, threaten, or defraud users</li>
@@ -82,7 +94,7 @@ export default function TermsPage() {
 
           <section>
             <h2>8. Data and Privacy</h2>
-            <p>Your use of the Service is also governed by our <Link href="/privacy" className="text-primary-400 underline">Privacy Policy</Link>. We process data in compliance with India&rsquo;s Digital Personal Data Protection Act (DPDPA), 2023. Your customer data is never used to train our AI models.</p>
+            <p>Your use of the Service is also governed by our <Link href="/privacy" className="text-[#00F2FE] underline">Privacy Policy</Link>. We process data in compliance with India&rsquo;s Digital Personal Data Protection Act (DPDPA), 2023. Your customer data is never used to train our AI models.</p>
           </section>
 
           <section>
@@ -117,7 +129,7 @@ export default function TermsPage() {
 
           <section>
             <h2>15. Contact</h2>
-            <p>For questions about these terms, contact us at <a href="mailto:legal@b9automation.com" className="text-primary-400 underline">legal@b9automation.com</a></p>
+            <p>For questions about these terms, contact us at <a href="mailto:legal@b9automation.com" className="text-[#00F2FE] underline">legal@b9automation.com</a></p>
           </section>
         </div>
       </div>

@@ -1,6 +1,6 @@
 ﻿import Link from 'next/link';
-import Image from 'next/image';
 import { Github, Twitter, Linkedin, Mail } from 'lucide-react';
+import { Logo } from '@/components/logo';
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -11,14 +11,8 @@ export const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           {/* Brand */}
           <div>
-            <div className="mb-4 flex items-center gap-2">
-              <Image
-                src="/b9-automation-logo.jpg"
-                alt="B9 Automation logo"
-                width={180}
-                height={120}
-                className="h-20 w-auto object-contain"
-              />
+            <div className="mb-4">
+              <Logo variant="light" />
             </div>
             <p className="text-gray-600 text-sm">
               Creating intelligent AI assistants from documents

@@ -2,8 +2,8 @@
 
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Image from 'next/image';
 import Link from 'next/link';
+import { Logo } from '@/components/logo';
 import { Button } from '@/components/button';
 import { useApi } from '@/hooks/useApi';
 import toast from 'react-hot-toast';
@@ -50,7 +50,7 @@ function ResetPasswordContent() {
       <div className="absolute -bottom-24 left-10 h-72 w-72 rounded-full bg-blue-500/20 blur-3xl" />
       <div className="relative w-full max-w-md rounded-3xl border border-white/10 bg-white/[0.08] p-8 shadow-2xl shadow-blue-950/40 backdrop-blur">
         <div className="mb-8 flex justify-center">
-          <Image src="/b9-automation-logo.jpg" alt="B9 Automation logo" width={240} height={160} className="h-32 w-auto object-contain" priority />
+          <Logo variant="dark" />
         </div>
         <h1 className="mb-2 text-center text-3xl font-bold text-white">Create new password</h1>
         <p className="mb-8 text-center text-slate-300">Set a new password for your B9 Automation account.</p>
