@@ -125,7 +125,8 @@ export const Navbar = () => {
       get('/api/automation/notifications')
         .then((res) => {
           setUnreadCount(res.data?.unread_count || 0);
-          setNotifications((res.data?.events || []).slice(0, 5));
+          // Store up to 50 — dropdown is scrollable so user can see all
+          setNotifications(res.data?.events || []);
         })
         .catch(() => {});
     };
@@ -181,7 +182,8 @@ export const Navbar = () => {
     setUnreadCount(0);
     get('/api/automation/notifications')
       .then((res) => {
-        setNotifications((res.data?.events || []).slice(0, 5));
+        // Load all notifications — dropdown is scrollable
+        setNotifications(res.data?.events || []);
       })
       .catch(() => {});
   };
@@ -253,38 +255,50 @@ export const Navbar = () => {
                   </button>
 
                   {showNotifDropdown && (
-                    <div className="absolute right-0 top-full mt-2 w-80 rounded-xl border border-slate-700 bg-slate-900 shadow-2xl shadow-black/80" style={{ zIndex: 9999 }}>
-                      <div className="flex items-center justify-between border-b border-white/10 px-4 py-2.5">
-                        <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Notifications</p>
+                    <div className="absolute right-0 top-full mt-2 w-80 rounded-xl border border-slate-700 bg-slate-900 shadow-2xl shadow-black/80 flex flex-col" style={{ zIndex: 9999, maxHeight: '420px' }}>
+                      {/* Header — fixed, doesn't scroll */}
+                      <div className="flex items-center justify-between border-b border-white/10 px-4 py-2.5 shrink-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Notifications</p>
+                          {notifications.length > 0 && (
+                            <span className="rounded-full bg-white/[0.08] px-1.5 py-0.5 text-[10px] font-bold text-slate-400">
+                              {notifications.length}
+                            </span>
+                          )}
+                        </div>
                         <button onClick={() => setShowNotifDropdown(false)} className="text-slate-600 hover:text-slate-300">
                           <X className="h-3.5 w-3.5" />
                         </button>
                       </div>
+
+                      {/* Scrollable notification list */}
                       {notifications.length === 0 ? (
                         <p className="px-4 py-6 text-center text-xs text-slate-600">No notifications yet</p>
                       ) : (
-                        <div className="divide-y divide-white/[0.04]">
+                        <div className="overflow-y-auto flex-1 divide-y divide-white/[0.04]">
                           {notifications.map((n) => (
-                            <div key={n.id} className="flex items-start gap-3 px-4 py-3 hover:bg-white/[0.03]">
+                            <div key={n.id} className="flex items-start gap-3 px-4 py-3 hover:bg-white/[0.03] transition">
                               <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-white/[0.06]">
                                 <NotifIcon type={n.type} />
                               </div>
                               <div className="min-w-0 flex-1">
-                                <p className="truncate text-xs font-semibold text-slate-200">{n.title}</p>
-                                {n.body && <p className="mt-0.5 truncate text-[11px] text-slate-500">{n.body}</p>}
+                                <p className="text-xs font-semibold text-slate-200 leading-snug">{n.title}</p>
+                                {n.body && <p className="mt-0.5 text-[11px] text-slate-500 leading-snug line-clamp-2">{n.body}</p>}
                               </div>
-                              <p className="shrink-0 text-[10px] text-slate-600">{timeAgo(n.created_at)}</p>
+                              <p className="shrink-0 text-[10px] text-slate-600 mt-0.5">{timeAgo(n.created_at)}</p>
                             </div>
                           ))}
                         </div>
                       )}
-                      <div className="border-t border-white/10 px-4 py-2">
+
+                      {/* Footer — fixed, doesn't scroll */}
+                      <div className="border-t border-white/10 px-4 py-2.5 shrink-0">
                         <Link
                           href="/dashboard/notifications"
                           onClick={() => setShowNotifDropdown(false)}
-                          className="text-xs font-semibold text-primary-400 hover:text-primary-300"
+                          className="text-xs font-semibold text-primary-400 hover:text-primary-300 transition"
                         >
-                          View all notifications →
+                          View all on Notifications page →
                         </Link>
                       </div>
                     </div>
