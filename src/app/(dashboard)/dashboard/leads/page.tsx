@@ -52,7 +52,7 @@ const scoreStyles = {
 };
 
 export default function LeadsPage() {
-  const { get } = useApi();
+  const { get, post } = useApi();
   const api = getApiClient();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [inbox, setInbox] = useState<InboxItem[]>([]);
@@ -104,6 +104,39 @@ export default function LeadsPage() {
   const [dealForm, setDealForm] = useState({ title: '', value: '', stage: 'open', probability: '50' });
   const [savingDeal, setSavingDeal] = useState(false);
   const [showDealForm, setShowDealForm] = useState(false);
+  // Merge/dedup state
+  const [showMergeModal, setShowMergeModal] = useState(false);
+  const [duplicateGroups, setDuplicateGroups] = useState<any[]>([]);
+  const [dupLoading, setDupLoading] = useState(false);
+  const [merging, setMerging] = useState(false);
+  const [selectedDupGroup, setSelectedDupGroup] = useState<any | null>(null);
+  const [primaryLeadId, setPrimaryLeadId] = useState<string>('');
+
+  const openMergeModal = async () => {
+    setShowMergeModal(true);
+    setDupLoading(true);
+    setSelectedDupGroup(null);
+    try {
+      const r = await get('/api/leads/duplicates');
+      setDuplicateGroups(r.data?.groups || []);
+    } catch { toast.error('Could not load duplicates'); }
+    finally { setDupLoading(false); }
+  };
+
+  const mergeDuplicates = async () => {
+    if (!selectedDupGroup || !primaryLeadId) return;
+    const dupIds = selectedDupGroup.leads.filter((l: any) => l.id !== primaryLeadId).map((l: any) => l.id);
+    if (!dupIds.length) return;
+    setMerging(true);
+    try {
+      await post('/api/leads/merge', { primary_lead_id: primaryLeadId, duplicate_lead_ids: dupIds });
+      toast.success(`Merged ${dupIds.length} duplicate(s) into primary lead`);
+      setDuplicateGroups(prev => prev.filter(g => g !== selectedDupGroup));
+      setSelectedDupGroup(null);
+      refresh();
+    } catch (e: any) { toast.error(e?.response?.data?.detail || 'Merge failed'); }
+    finally { setMerging(false); }
+  };
 
   const loadNotes = (leadId: string) => {
     setNotesLoading(true);
@@ -188,15 +221,15 @@ export default function LeadsPage() {
   };
 
   const [leadTotal, setLeadTotal] = useState(0);
-  const [leadOffset, setLeadOffset] = useState(0);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const LEAD_PAGE_SIZE = 50;
 
   const refresh = () => {
     setLoading(true);
-    setLeadOffset(0);
+    setNextCursor(null);
     Promise.allSettled([
-      get(`/api/leads?limit=${LEAD_PAGE_SIZE}&offset=0`),
+      get(`/api/leads?limit=${LEAD_PAGE_SIZE}`),
       get('/api/leads/inbox'),
       get('/api/leads/handover-queue'),
       api.get('/api/leads/labels'),
@@ -205,10 +238,14 @@ export default function LeadsPage() {
       .then(([leadResponse, inboxResponse, handoverResponse, labelResponse, memberResponse]) => {
         if (leadResponse.status === 'rejected') throw leadResponse.reason;
         const data = leadResponse.value.data;
-        setLeads(Array.isArray(data) ? data : (data?.leads || data || []));
+        const newLeads = Array.isArray(data) ? data : (data?.leads || data || []);
+        setLeads(newLeads);
         setLeadTotal(leadResponse.value.headers?.['x-total-count']
           ? parseInt(leadResponse.value.headers['x-total-count'])
           : (Array.isArray(data) ? data.length : (data?.total || data?.length || 0)));
+        // Store cursor for "Load More" (avoids slow OFFSET scan on large tables)
+        const cursor = leadResponse.value.headers?.['x-next-cursor'];
+        setNextCursor(cursor || null);
         if (inboxResponse.status === 'fulfilled') setInbox(inboxResponse.value.data);
         if (handoverResponse.status === 'fulfilled') setHandoverQueue(handoverResponse.value.data?.items || []);
         if (labelResponse.status === 'fulfilled') setLeadLabels(labelResponse.value.data?.labels || []);
@@ -219,14 +256,15 @@ export default function LeadsPage() {
   };
 
   const loadMoreLeads = async () => {
-    const newOffset = leadOffset + LEAD_PAGE_SIZE;
+    if (!nextCursor) return;
     setLoadingMore(true);
     try {
-      const r = await get(`/api/leads?limit=${LEAD_PAGE_SIZE}&offset=${newOffset}`);
+      const r = await get(`/api/leads?limit=${LEAD_PAGE_SIZE}&cursor=${encodeURIComponent(nextCursor)}`);
       const data = r.data;
       const newLeads = Array.isArray(data) ? data : (data?.leads || []);
       setLeads(prev => [...prev, ...newLeads]);
-      setLeadOffset(newOffset);
+      const cursor = r.headers?.['x-next-cursor'];
+      setNextCursor(cursor || null);
     } catch { toast.error('Failed to load more leads'); }
     finally { setLoadingMore(false); }
   };
@@ -579,6 +617,14 @@ export default function LeadsPage() {
             <Plus className="h-4 w-4" />
             New Label
           </Button>
+          {/* Merge Duplicates */}
+          <button
+            type="button"
+            onClick={openMergeModal}
+            className="inline-flex h-11 items-center gap-2 rounded-lg border border-orange-200 bg-orange-50 px-3 text-xs font-semibold text-orange-700 hover:bg-orange-100 transition"
+          >
+            Merge Duplicates
+          </button>
           {/* Export CSV */}
           <a
             href={`${typeof window !== 'undefined' ? '' : ''}/api/leads/export?format=csv${statusFilter !== 'all' ? `&status=${statusFilter}` : ''}`}
@@ -760,8 +806,8 @@ export default function LeadsPage() {
               ))}
               {filteredLeads.length === 0 && <p className="py-6 text-center text-sm text-gray-500">No leads match this search.</p>}
             </div>
-            {/* Pagination — load more */}
-            {!loadingMore && leads.length < leadTotal && !searchQuery && statusFilter === 'all' && labelFilter === 'all' && !leadDateFrom && !leadDateTo && (
+            {/* Pagination — cursor-based load more (no slow OFFSET scan) */}
+            {!loadingMore && nextCursor && !searchQuery && statusFilter === 'all' && labelFilter === 'all' && !leadDateFrom && !leadDateTo && (
               <div className="mt-3 flex items-center justify-between text-sm text-gray-500 border-t border-gray-100 pt-3">
                 <span>Showing {leads.length} of {leadTotal} leads</span>
                 <button onClick={loadMoreLeads} className="rounded-lg border border-primary-200 bg-primary-50 px-4 py-1.5 text-xs font-semibold text-primary-700 hover:bg-primary-100 transition">
@@ -1385,6 +1431,71 @@ export default function LeadsPage() {
               <Button variant="secondary" onClick={() => setPaymentLinkTarget(null)}>
                 Cancel
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Merge Duplicates Modal */}
+      {showMergeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+              <div>
+                <h3 className="text-base font-bold text-gray-900">Merge Duplicate Leads</h3>
+                <p className="text-xs text-gray-500 mt-0.5">Leads with identical phone numbers</p>
+              </div>
+              <button onClick={() => setShowMergeModal(false)} className="rounded-lg p-2 text-gray-400 hover:bg-gray-100">✕</button>
+            </div>
+            <div className="p-5">
+              {dupLoading ? (
+                <div className="flex items-center justify-center py-8 gap-2 text-gray-400">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span className="text-sm">Scanning for duplicates...</span>
+                </div>
+              ) : duplicateGroups.length === 0 ? (
+                <div className="py-8 text-center text-sm text-gray-500">
+                  No duplicate leads found. Your CRM is clean!
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {duplicateGroups.map((group, gi) => (
+                    <div key={gi} className={`rounded-xl border p-3 cursor-pointer transition ${selectedDupGroup === group ? 'border-orange-400 bg-orange-50' : 'border-gray-200 hover:border-orange-300'}`}
+                      onClick={() => { setSelectedDupGroup(group); setPrimaryLeadId(group.leads[0]?.id || ''); }}>
+                      <p className="text-xs font-bold text-gray-700 mb-2">Phone: {group.phone} · {group.count} duplicates</p>
+                      <div className="space-y-1">
+                        {group.leads.map((lead: any) => (
+                          <label key={lead.id} className="flex items-center gap-2 cursor-pointer text-xs">
+                            <input
+                              type="radio"
+                              name={`primary-${gi}`}
+                              checked={primaryLeadId === lead.id && selectedDupGroup === group}
+                              onChange={() => { setSelectedDupGroup(group); setPrimaryLeadId(lead.id); }}
+                              onClick={e => e.stopPropagation()}
+                            />
+                            <span className={`font-semibold ${primaryLeadId === lead.id && selectedDupGroup === group ? 'text-orange-700' : 'text-gray-700'}`}>
+                              {lead.name || 'Unnamed'} — {new Date(lead.created_at).toLocaleDateString()}
+                              {primaryLeadId === lead.id && selectedDupGroup === group && <span className="ml-1 text-[10px] bg-orange-100 text-orange-700 rounded px-1">Keep (primary)</span>}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="flex gap-2 border-t border-gray-100 px-5 py-4">
+              <button
+                onClick={mergeDuplicates}
+                disabled={!selectedDupGroup || !primaryLeadId || merging}
+                className="flex-1 rounded-xl bg-orange-600 px-4 py-2 text-sm font-bold text-white hover:bg-orange-700 disabled:opacity-40 transition"
+              >
+                {merging ? 'Merging...' : 'Merge into Primary'}
+              </button>
+              <button onClick={() => setShowMergeModal(false)} className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">
+                Close
+              </button>
             </div>
           </div>
         </div>

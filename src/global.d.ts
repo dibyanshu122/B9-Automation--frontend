@@ -1,10 +1,7 @@
 import type { DetailedHTMLProps, HTMLAttributes } from 'react';
 
-// CSS module declarations — fixes "Cannot find module" for side-effect CSS imports
-declare module '*.css' {
-  const content: Record<string, string>;
-  export default content;
-}
+// Side-effect CSS import declaration — fixes ts(2882) for import './globals.css'
+declare module '*.css' {}
 
 declare global {
   namespace JSX {
