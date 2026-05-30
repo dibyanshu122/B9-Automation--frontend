@@ -9,7 +9,7 @@ import { useApi } from '@/hooks/useApi';
 import { useQuota } from '@/hooks/useQuota';
 import { BusinessProfile } from '@/types';
 import toast from 'react-hot-toast';
-import { CheckCircle2, XCircle, Loader2, ExternalLink, KeyRound, Cpu, Zap, CreditCard } from 'lucide-react';
+import { CheckCircle2, XCircle, Loader2, ExternalLink, KeyRound, Cpu, Zap, CreditCard, Activity, Shield } from 'lucide-react';
 
 export default function SettingsPage() {
   const { user, logout } = useAuthStore();
@@ -22,6 +22,22 @@ export default function SettingsPage() {
   const planQueryLimit = quota?.queries_limit || PLAN_QUERY_LIMITS[(user?.plan || 'FREE').toUpperCase()] || 500;
   const remainingReplies = Math.max(0, planQueryLimit - (quota?.queries_used ?? 0));
   const [name, setName] = useState('');
+  // Activity log state
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [auditLoaded, setAuditLoaded] = useState(false);
+
+  const loadAuditLogs = async () => {
+    if (auditLoaded) return;
+    setAuditLoading(true);
+    try {
+      const r = await get('/api/audit-logs?limit=50');
+      setAuditLogs(r.data || []);
+      setAuditLoaded(true);
+    } catch { /* silent */ }
+    finally { setAuditLoading(false); }
+  };
+
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingBusiness, setSavingBusiness] = useState(false);
   const [savingWhatsapp, setSavingWhatsapp] = useState(false);
@@ -774,6 +790,65 @@ export default function SettingsPage() {
             </a>
           </div>
         </div>
+      </Card>
+
+      {/* Activity Log */}
+      <Card>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Shield className="h-5 w-5 text-indigo-500" />
+            <h2 className="text-xl font-bold text-gray-900">Activity Log</h2>
+          </div>
+          <button
+            onClick={loadAuditLogs}
+            disabled={auditLoading}
+            className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-100 disabled:opacity-50 transition"
+          >
+            {auditLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Activity className="h-3.5 w-3.5" />}
+            {auditLoaded ? 'Refresh' : 'Load Activity'}
+          </button>
+        </div>
+        <p className="text-sm text-gray-500 mb-4">
+          Audit trail of all AI actions, agentic runs, and API calls on your account.
+        </p>
+        {!auditLoaded ? (
+          <div className="rounded-xl border border-gray-100 bg-gray-50 py-8 text-center text-sm text-gray-400">
+            Click "Load Activity" to view your audit log
+          </div>
+        ) : auditLogs.length === 0 ? (
+          <div className="rounded-xl border border-gray-100 bg-gray-50 py-8 text-center text-sm text-gray-400">
+            No activity recorded yet
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="border-b border-gray-100">
+                <tr>
+                  <th className="px-3 py-2 text-left text-xs font-bold text-gray-500">Action</th>
+                  <th className="px-3 py-2 text-left text-xs font-bold text-gray-500">Resource</th>
+                  <th className="px-3 py-2 text-left text-xs font-bold text-gray-500">Status</th>
+                  <th className="px-3 py-2 text-left text-xs font-bold text-gray-500">Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {auditLogs.map((log) => (
+                  <tr key={log.id} className="border-b border-gray-50 hover:bg-gray-50">
+                    <td className="px-3 py-2 font-mono text-xs text-indigo-700">{log.action}</td>
+                    <td className="px-3 py-2 text-xs text-gray-600">{log.resource_type || '—'}</td>
+                    <td className="px-3 py-2">
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${log.status === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}>
+                        {log.status}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 text-xs text-gray-400">
+                      {log.created_at ? new Date(log.created_at).toLocaleString() : '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </Card>
 
       {/* Danger Zone */}

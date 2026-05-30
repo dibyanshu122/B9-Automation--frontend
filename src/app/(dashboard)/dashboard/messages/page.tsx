@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Check, CheckCheck, FileText, Loader2, MapPin, MessageCircle, MoreVertical, Play, Search, Send, Tag, Trash2, User, XCircle, Zap, Paperclip, Image as ImageIcon, Mic, Phone, ShoppingCart, Sticker } from 'lucide-react';
+import { ArrowLeft, Bot, Check, CheckCheck, FileText, Loader2, MapPin, MessageCircle, MoreVertical, Play, Search, Send, Tag, Trash2, User, XCircle, Zap, Paperclip, Image as ImageIcon, Mic, Phone, ShoppingCart, Sticker } from 'lucide-react';
 import { Button } from '@/components/button';
 import { useApi } from '@/hooks/useApi';
 import { useAuthStore } from '@/store/authStore';
@@ -313,6 +313,8 @@ function UnifiedInbox() {
   const [selected, setSelected] = useState<Contact | null>(null);
   const [thread, setThread] = useState<any[]>([]);
   const [threadLoading, setThreadLoading] = useState(false);
+  const [agentStatus, setAgentStatus] = useState<string | null>(null);
+  const agentSseRef = useRef<EventSource | null>(null);
   const [reply, setReply] = useState('');
   const [sending, setSending] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -441,6 +443,39 @@ function UnifiedInbox() {
       setTemplates(all.filter((t: any) => t.status === 'APPROVED'));
     }).catch(() => {});
   }, []); // eslint-disable-line
+
+  // Agentic SSE — connect when contact selected, show typing indicator
+  useEffect(() => {
+    if (agentSseRef.current) { agentSseRef.current.close(); agentSseRef.current = null; }
+    setAgentStatus(null);
+    if (!selected) return;
+    try {
+      const token = typeof window !== 'undefined'
+        ? (document.cookie.match(/(?:^|;\s*)auth-token=([^;]*)/) || [])[1] || ''
+        : '';
+      if (!token) return;
+      const base = process.env.NEXT_PUBLIC_API_URL || '';
+      const sse = new EventSource(`${base}/api/analytics/stream/agentic?token=${encodeURIComponent(token)}&lead_id=${selected.sender_id}`);
+      sse.onmessage = (e) => {
+        try {
+          const d = JSON.parse(e.data);
+          if (d.status === 'connected' || d.error) return;
+          const toolLabel: Record<string, string> = {
+            send_whatsapp_message: 'Sending message',
+            send_whatsapp_buttons: 'Preparing buttons',
+            send_catalog: 'Sending catalog',
+            create_customer_payment_link: 'Creating payment link',
+            done: 'Finishing up',
+          };
+          const label = toolLabel[d.tool] || `Step ${d.step}`;
+          setAgentStatus(d.status === 'done' || d.status === 'complete' ? null : label);
+        } catch { /* ignore parse errors */ }
+      };
+      sse.onerror = () => setAgentStatus(null);
+      agentSseRef.current = sse;
+    } catch { /* SSE not supported or Redis unavailable */ }
+    return () => { agentSseRef.current?.close(); agentSseRef.current = null; };
+  }, [selected?.sender_id]); // eslint-disable-line
 
   // Load lead profile when contact selected
   useEffect(() => {
@@ -822,6 +857,21 @@ function UnifiedInbox() {
                 );
               })()}
               
+              {/* Agentic typing indicator — shows when AI is processing */}
+              {agentStatus && (
+                <div className="flex items-center gap-2 px-4 py-1.5 mb-1">
+                  <div className="flex h-7 items-center gap-1.5 rounded-full bg-white px-3 py-1.5 shadow-sm border border-gray-200">
+                    <Bot className="h-3.5 w-3.5 text-indigo-500 animate-pulse" />
+                    <span className="text-xs font-medium text-indigo-600">{agentStatus}...</span>
+                    <span className="flex gap-0.5">
+                      {[0,1,2].map(i => (
+                        <span key={i} className="h-1.5 w-1.5 rounded-full bg-indigo-400 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                      ))}
+                    </span>
+                  </div>
+                </div>
+              )}
+
               {/* Quick Reply dropdown */}
               {qrOpen && (
                 <div ref={qrRef} className="absolute bottom-full left-4 mb-2 z-20 w-80 bg-white border border-gray-200 rounded-xl shadow-xl max-h-64 overflow-y-auto py-2">

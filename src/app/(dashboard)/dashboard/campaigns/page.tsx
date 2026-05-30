@@ -12,6 +12,7 @@ import toast from 'react-hot-toast';
 
 import { Button } from '@/components/button';
 import { useApi } from '@/hooks/useApi';
+import { useCampaigns, useInvalidate } from '@/hooks/useQueryCache';
 
 //  Types 
 
@@ -1152,23 +1153,18 @@ const STATUS_TABS = [
 
 export default function CampaignsPage() {
   const { get } = useApi();
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('all');
   const [showNew, setShowNew] = useState(false);
   const [detailName, setDetailName] = useState<string | null>(null);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
-  const load = () => {
-    setLoading(true);
-    get('/api/campaigns')
-      .then(r => setCampaigns(r.data?.campaigns || []))
-      .catch(() => toast.error('Failed to load campaigns'))
-      .finally(() => setLoading(false));
-  };
+  // React Query — cached 30s, no refetch on nav away/back
+  const { data: campaignData, isLoading: loading, refetch: load } = useCampaigns();
+  const { invalidateCampaigns } = useInvalidate();
+  const campaigns: Campaign[] = Array.isArray(campaignData) ? campaignData : (campaignData?.campaigns ?? []);
 
-  useEffect(() => { load(); }, []); // eslint-disable-line
+  useEffect(() => { /* React Query handles initial fetch */ }, []);
 
   const filtered = campaigns.filter(c => {
     if (tab !== 'all' && c.status !== tab) return false;
@@ -1255,7 +1251,7 @@ export default function CampaignsPage() {
           )}
         </div>
       ) : (
-        <CampaignTable campaigns={filtered} onDetail={setDetailName} onRefresh={load} />
+        <CampaignTable campaigns={filtered} onDetail={setDetailName} onRefresh={() => { invalidateCampaigns(); load(); }} />
       )}
 
       {/* New campaign panel */}
@@ -1265,7 +1261,7 @@ export default function CampaignsPage() {
 
       {/* Detail drawer */}
       <AnimatePresence>
-        {detailName && <DetailDrawer name={detailName} onClose={() => setDetailName(null)} onRefresh={load} />}
+        {detailName && <DetailDrawer name={detailName} onClose={() => setDetailName(null)} onRefresh={() => { invalidateCampaigns(); load(); }} />}
       </AnimatePresence>
     </div>
   );

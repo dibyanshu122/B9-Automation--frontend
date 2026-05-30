@@ -7,6 +7,7 @@ import { AlertTriangle, Brain, ChevronDown, ChevronUp, Clock, Eye, Flame, Loader
 import { Button } from '@/components/button';
 import { Card } from '@/components/card';
 import { useApi, getApiClient } from '@/hooks/useApi';
+import { useInvalidate } from '@/hooks/useQueryCache';
 import { Lead } from '@/types';
 
 interface InboxItem {
@@ -54,6 +55,7 @@ const scoreStyles = {
 export default function LeadsPage() {
   const { get, post } = useApi();
   const api = getApiClient();
+  const { invalidateLeads } = useInvalidate();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [inbox, setInbox] = useState<InboxItem[]>([]);
   const [handoverQueue, setHandoverQueue] = useState<any[]>([]);
@@ -133,6 +135,7 @@ export default function LeadsPage() {
       toast.success(`Merged ${dupIds.length} duplicate(s) into primary lead`);
       setDuplicateGroups(prev => prev.filter(g => g !== selectedDupGroup));
       setSelectedDupGroup(null);
+      invalidateLeads();
       refresh();
     } catch (e: any) { toast.error(e?.response?.data?.detail || 'Merge failed'); }
     finally { setMerging(false); }
