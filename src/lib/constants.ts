@@ -78,6 +78,7 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
       { name: 'Team', href: '/dashboard/team', icon: 'UserCog' },
       { name: 'Integrations', href: '/dashboard/integrations', icon: 'Plug' },
       { name: 'API Keys', href: '/dashboard/api', icon: 'Key' },
+      { name: 'Segments', href: '/dashboard/segments', icon: 'Filter' },
       { name: 'API Docs', href: '/developers', icon: 'Code2' },
       { name: 'Billing', href: '/dashboard/billing', icon: 'CreditCard' },
       { name: 'Settings', href: '/dashboard/settings', icon: 'Settings' },

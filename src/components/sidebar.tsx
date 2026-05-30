@@ -14,7 +14,7 @@ import {
   Rocket, ChevronDown, ChevronsLeft, ChevronsRight, LayoutDashboard,
   ShoppingCart, Send, Layout, Upload, ScrollText, Key, Megaphone,
   MessageSquare, Zap, Database, Building2, Layers, QrCode, FlaskConical,
-  Bot, UserCog, UserX, Target, LogOut,
+  Bot, UserCog, UserX, Target, Filter, LogOut,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { Button } from './button';
@@ -24,7 +24,7 @@ const ICONS = {
   CreditCard, Settings, Briefcase, CheckSquare, Users, Workflow, Plug,
   Rocket, ChevronDown, ShoppingCart, Send, Layout, Upload, ScrollText,
   Key, Megaphone, MessageSquare, Zap, Database, Building2, Layers, QrCode,
-  FlaskConical, Bot, UserCog, UserX, Target,
+  FlaskConical, Bot, UserCog, UserX, Target, Filter,
 };
 
 // Dark sidebar with premium contrast against the white dashboard.
