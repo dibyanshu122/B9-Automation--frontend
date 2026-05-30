@@ -1,49 +1,60 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 205 180">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
   <defs>
-    <!-- Purple diamond gradient: indigo top → violet mid → lilac bottom -->
-    <linearGradient id="lg" x1="7" y1="44" x2="133" y2="170" gradientUnits="userSpaceOnUse">
-      <stop offset="0%"   stop-color="#3535CC"/>
-      <stop offset="38%"  stop-color="#7533BC"/>
-      <stop offset="100%" stop-color="#BC60CC"/>
+
+    <!-- Background: deep dark navy -->
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#07070F"/>
+      <stop offset="100%" stop-color="#0C0519"/>
     </linearGradient>
-    <!-- Teal diamond gradient: emerald top → teal bottom -->
-    <linearGradient id="rg" x1="70" y1="7" x2="196" y2="133" gradientUnits="userSpaceOnUse">
-      <stop offset="0%"   stop-color="#00BA98"/>
-      <stop offset="100%" stop-color="#00CCBC"/>
+
+    <!-- Mark: cyan → indigo → violet -->
+    <linearGradient id="mg" x1="10" y1="50" x2="190" y2="155" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#00F2FE"/>
+      <stop offset="50%"  stop-color="#818CF8"/>
+      <stop offset="100%" stop-color="#7C3AED"/>
     </linearGradient>
-    <clipPath id="lc">
-      <polygon points="70,44 133,107 70,170 7,107"/>
-    </clipPath>
-    <clipPath id="rc">
-      <polygon points="133,7 196,70 133,133 70,70"/>
-    </clipPath>
+
+    <!-- Ambient top glow -->
+    <radialGradient id="topglow" cx="50%" cy="10%" r="60%" fx="50%" fy="10%">
+      <stop offset="0%"   stop-color="#00F2FE" stop-opacity="0.13"/>
+      <stop offset="100%" stop-color="#00F2FE" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Soft glow around the mark -->
+    <filter id="glow" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur stdDeviation="3.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
   </defs>
 
-  <!-- LEFT diamond (purple) — 10 concentric outlines, step 6 -->
-  <g clip-path="url(#lc)" fill="none" stroke="url(#lg)" stroke-width="3" stroke-linejoin="miter">
-    <polygon points="70,44  133,107 70,170 7,107"/>
-    <polygon points="70,50  127,107 70,164 13,107"/>
-    <polygon points="70,56  121,107 70,158 19,107"/>
-    <polygon points="70,62  115,107 70,152 25,107"/>
-    <polygon points="70,68  109,107 70,146 31,107"/>
-    <polygon points="70,74  103,107 70,140 37,107"/>
-    <polygon points="70,80  97,107  70,134 43,107"/>
-    <polygon points="70,86  91,107  70,128 49,107"/>
-    <polygon points="70,92  85,107  70,122 55,107"/>
-    <polygon points="70,98  79,107  70,116 61,107"/>
-  </g>
+  <!-- ── Background ── -->
+  <rect width="200" height="200" rx="42" fill="url(#bg)"/>
+  <rect width="200" height="200" rx="42" fill="url(#topglow)"/>
+  <!-- Hairline cyan border — defines logo on any background -->
+  <rect width="200" height="200" rx="42" fill="none"
+        stroke="#00F2FE" stroke-width="1.2" stroke-opacity="0.20"/>
 
-  <!-- RIGHT diamond (teal) — 10 concentric outlines, step 6 -->
-  <g clip-path="url(#rc)" fill="none" stroke="url(#rg)" stroke-width="3" stroke-linejoin="miter">
-    <polygon points="133,7  196,70 133,133 70,70"/>
-    <polygon points="133,13 190,70 133,127 76,70"/>
-    <polygon points="133,19 184,70 133,121 82,70"/>
-    <polygon points="133,25 178,70 133,115 88,70"/>
-    <polygon points="133,31 172,70 133,109 94,70"/>
-    <polygon points="133,37 166,70 133,103 100,70"/>
-    <polygon points="133,43 160,70 133,97  106,70"/>
-    <polygon points="133,49 154,70 133,91  112,70"/>
-    <polygon points="133,55 148,70 133,85  118,70"/>
-    <polygon points="133,61 142,70 133,79  124,70"/>
+  <!-- ── B 9 Mark ── -->
+  <g stroke="url(#mg)" stroke-linecap="round" fill="none"
+     stroke-width="14" filter="url(#glow)">
+
+    <!-- Letter B -->
+    <line x1="28" y1="50"  x2="28"  y2="155"/>   <!-- stem         -->
+    <line x1="28" y1="50"  x2="64"  y2="50"/>    <!-- top bar      -->
+    <line x1="28" y1="100" x2="62"  y2="100"/>   <!-- middle bar   -->
+    <line x1="28" y1="155" x2="64"  y2="155"/>   <!-- bottom bar   -->
+    <!-- upper bump: semicircle r=25 (top-right → mid-right) -->
+    <path d="M 64,50  A 25,25   0 0 1 62,100" stroke-linecap="butt"/>
+    <!-- lower bump: slightly larger r=27.5 (mid-right → bottom-right) -->
+    <path d="M 62,100 A 27.5,27.5 0 0 1 64,155" stroke-linecap="butt"/>
+
+    <!-- Number 9 -->
+    <circle cx="142" cy="80" r="30"/>             <!-- circle       -->
+    <line   x1="163" y1="101" x2="163" y2="155"/> <!-- tail         -->
+
   </g>
 </svg>
