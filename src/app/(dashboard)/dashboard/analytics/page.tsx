@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Card } from '@/components/card';
 import { useApi } from '@/hooks/useApi';
+import { useAnalyticsDashboard } from '@/hooks/useQueryCache';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import toast from 'react-hot-toast';
 import { Activity, Bot, CheckCheck, Clock, IndianRupee, MessageCircle, MessageSquare, Send, Target, TrendingUp, Users, Zap } from 'lucide-react';
@@ -13,7 +14,6 @@ type UsageTrend = {
 };
 
 export default function AnalyticsPage() {
-  const [dashboard, setDashboard] = useState<any>(null);
   const [impact, setImpact] = useState<any>(null);
   const [trends, setTrends] = useState<UsageTrend[]>([]);
   const [funnel, setFunnel] = useState<any>(null);
@@ -29,12 +29,14 @@ export default function AnalyticsPage() {
   const [teamPerf, setTeamPerf] = useState<any>(null);
   const { get } = useApi();
 
+  // Dashboard metrics — React Query cached (60s stale, no refetch on nav)
+  const { data: dashboard, isLoading: dashLoading } = useAnalyticsDashboard(globalDays);
+
   useEffect(() => {
     const fetchAnalytics = async () => {
       setLoading(true);
       try {
-        const [dashRes, trendsRes, impactRes, funnelRes, templatesRes, waRes, businessRes, campaignRevRes, deflectionRes, teamRes] = await Promise.all([
-          get(`/api/analytics/dashboard?days=${globalDays}`).catch(() => ({ data: null })),
+        const [trendsRes, impactRes, funnelRes, templatesRes, waRes, businessRes, campaignRevRes, deflectionRes, teamRes] = await Promise.all([
           get(`/api/analytics/usage-trends?days=${globalDays}`).catch(() => ({ data: null })),
           get(`/api/analytics/business-impact?days=${globalDays}`).catch(() => ({ data: null })),
           get(`/api/analytics/funnel?days=${globalDays}`).catch(() => ({ data: null })),
@@ -45,7 +47,6 @@ export default function AnalyticsPage() {
           get(`/api/analytics/bot-deflection?days=${globalDays}`).catch(() => ({ data: null })),
           get(`/api/analytics/team-performance?days=${globalDays}`).catch(() => ({ data: null })),
         ]);
-        setDashboard(dashRes.data);
         setTrends(trendsRes.data);
         setImpact(impactRes.data);
         setFunnel(funnelRes.data);
@@ -65,6 +66,11 @@ export default function AnalyticsPage() {
 
     fetchAnalytics();
   }, [globalDays]); // eslint-disable-line
+
+  // Sync loading state with React Query
+  useEffect(() => {
+    if (!dashLoading) setLoading(false);
+  }, [dashLoading]);
 
   // WA-specific reload (kept for backward compat with WA section filter)
   useEffect(() => {
