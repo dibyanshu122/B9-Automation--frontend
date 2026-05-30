@@ -9,7 +9,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useRouter } from 'next/navigation';
 import { Logo } from '@/components/logo';
 import {
-  Bell, Brain, FileText, MessageCircle, Code, BarChart3, CreditCard,
+  Bell, Brain, FileText, MessageCircle, Code, Code2, BarChart3, CreditCard,
   Settings, X, Menu, Briefcase, CheckSquare, Users, Workflow, Plug,
   Rocket, ChevronDown, ChevronsLeft, ChevronsRight, LayoutDashboard,
   ShoppingCart, Send, Layout, Upload, ScrollText, Key, Megaphone,
@@ -20,7 +20,7 @@ import clsx from 'clsx';
 import { Button } from './button';
 
 const ICONS = {
-  Bell, LayoutDashboard, Brain, FileText, MessageCircle, Code, BarChart3,
+  Bell, LayoutDashboard, Brain, FileText, MessageCircle, Code, Code2, BarChart3,
   CreditCard, Settings, Briefcase, CheckSquare, Users, Workflow, Plug,
   Rocket, ChevronDown, ShoppingCart, Send, Layout, Upload, ScrollText,
   Key, Megaphone, MessageSquare, Zap, Database, Building2, Layers, QrCode,

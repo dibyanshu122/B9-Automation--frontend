@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
 import { MarketingWidget } from '@/components/marketing-widget';
+import { PWAInstaller } from '@/components/pwa-installer';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -90,6 +91,7 @@ export default function RootLayout({
       <body className={`${inter.className} font-sans`} suppressHydrationWarning>
         <Providers>{children}</Providers>
         <MarketingWidget />
+        <PWAInstaller />
       </body>
     </html>
   );
