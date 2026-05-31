@@ -204,24 +204,21 @@ export const Navbar = () => {
               priority
             />
             <div className="hidden sm:block leading-none select-none">
-              <p className="flex items-center gap-[0.22em] text-[16px] font-extrabold tracking-[-0.025em] leading-none">
-                {/* B9 — cyan → violet premium gradient */}
-                <span
-                  style={{
-                    background: 'linear-gradient(135deg, #00F2FE 0%, #818CF8 55%, #7C3AED 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                    fontWeight: 900,
-                    letterSpacing: '-0.03em',
-                  }}
-                >
-                  B9
-                </span>
-                {/* Automation — crisp white */}
-                <span className="font-bold text-white/90 tracking-[-0.015em]">
-                  Automation
-                </span>
+              {/* B9 Automation — dono words pe full premium gradient */}
+              <p
+                style={{
+                  fontFamily: "var(--font-space-grotesk), 'Inter', ui-sans-serif, system-ui, sans-serif",
+                  fontSize: '16px',
+                  fontWeight: 700,
+                  letterSpacing: '-0.02em',
+                  lineHeight: 1,
+                  background: 'linear-gradient(125deg, #00F2FE 0%, #a78bfa 45%, #7C3AED 75%, #f472b6 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}
+              >
+                B9 Automation
               </p>
               <p className="mt-[3px] text-[9.5px] font-semibold uppercase tracking-[0.25em] text-slate-500">
                 WhatsApp AI Platform

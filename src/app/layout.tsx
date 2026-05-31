@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, Space_Grotesk } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
 import { MarketingWidget } from '@/components/marketing-widget';
@@ -10,6 +10,13 @@ const inter = Inter({
   weight: ['300', '400', '500', '600', '700', '800', '900'],
   display: 'swap',
   variable: '--font-inter',
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  display: 'swap',
+  variable: '--font-space-grotesk',
 });
 
 export const metadata: Metadata = {
@@ -88,7 +95,7 @@ export default function RootLayout({
         {/* DNS Prefetch for performance */}
         <link rel="dns-prefetch" href="https://b9-automation-backend.onrender.com" />
       </head>
-      <body className={`${inter.className} font-sans`} suppressHydrationWarning>
+      <body className={`${inter.className} ${spaceGrotesk.variable} font-sans`} suppressHydrationWarning>
         <Providers>{children}</Providers>
         <MarketingWidget />
         <PWAInstaller />
