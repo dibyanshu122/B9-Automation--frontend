@@ -428,19 +428,54 @@
     // Microphone / voice input
     var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-    function showMicError(msg) {
-      input.placeholder = msg;
-      setTimeout(function () { input.placeholder = "Ask me anything..."; }, 3500);
+    // Floating tooltip above mic button
+    function showMicTooltip(msg) {
+      var existing = shadow.querySelector(".brainai-mic-tip");
+      if (existing) existing.remove();
+      var tip = document.createElement("div");
+      tip.className = "brainai-mic-tip";
+      tip.textContent = msg;
+      tip.style.cssText = [
+        "position:absolute",
+        "bottom:calc(100% + 8px)",
+        "left:50%",
+        "transform:translateX(-50%)",
+        "background:#1e293b",
+        "color:#fff",
+        "font-size:12px",
+        "font-weight:600",
+        "padding:6px 12px",
+        "border-radius:8px",
+        "white-space:nowrap",
+        "pointer-events:none",
+        "z-index:999",
+        "box-shadow:0 4px 14px rgba(0,0,0,0.35)",
+        "animation:brainai-tip-in .15s ease"
+      ].join(";");
+      // Arrow down
+      tip.insertAdjacentHTML("beforeend",
+        "<span style='position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);width:0;height:0;" +
+        "border-left:5px solid transparent;border-right:5px solid transparent;" +
+        "border-top:5px solid #1e293b'></span>"
+      );
+      // Add keyframe if not added
+      if (!shadow.querySelector("#brainai-tip-style")) {
+        var s = document.createElement("style");
+        s.id = "brainai-tip-style";
+        s.textContent = "@keyframes brainai-tip-in{from{opacity:0;transform:translateX(-50%) translateY(4px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}";
+        shadow.appendChild(s);
+      }
+      mic.style.position = "relative";
+      mic.appendChild(tip);
+      setTimeout(function () { if (tip.parentNode) tip.remove(); }, 3000);
     }
 
     if (!SpeechRec) {
-      // Browser doesn't support speech — hide mic button
       mic.style.display = "none";
     } else {
       var activeRecognition = null;
 
       mic.addEventListener("click", function () {
-        // Stop if already recording
         if (activeRecognition) {
           activeRecognition.stop();
           activeRecognition = null;
@@ -448,26 +483,15 @@
           return;
         }
 
-        // HTTPS check — mic won't work on HTTP
+        // HTTPS check
         if (location.protocol !== "https:" && location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
-          showMicError("Voice needs HTTPS. Type instead.");
+          showMicTooltip("🔒 Voice needs HTTPS");
           return;
         }
 
-        // Check mic permission first
-        if (navigator.permissions) {
-          navigator.permissions.query({ name: "microphone" }).then(function (result) {
-            if (result.state === "denied") {
-              showMicError("Mic blocked. Allow in browser settings.");
-              return;
-            }
-            startRecognition();
-          }).catch(function () {
-            startRecognition(); // Permission API not supported, try anyway
-          });
-        } else {
-          startRecognition();
-        }
+        // Skip permission.query — it can return stale "denied" even after user allows
+        // Just try startRecognition directly; onerror handles real denials
+        startRecognition();
       });
 
       function startRecognition() {
@@ -490,13 +514,13 @@
           mic.classList.remove("active");
           activeRecognition = null;
           if (e.error === "not-allowed" || e.error === "permission-denied") {
-            showMicError("Allow mic access in browser.");
+            showMicTooltip("🎤 Allow mic in browser");
           } else if (e.error === "no-speech") {
-            showMicError("No speech detected. Try again.");
+            showMicTooltip("🔇 No speech heard");
           } else if (e.error === "network") {
-            showMicError("Network error. Check connection.");
+            showMicTooltip("🌐 Network error");
           } else {
-            showMicError("Mic error. Try typing instead.");
+            showMicTooltip("⚠️ Mic error, try again");
           }
         };
 
