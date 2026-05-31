@@ -1224,6 +1224,8 @@ export default function TemplatesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'APPROVED' | 'PENDING' | 'REJECTED'>('ALL');
+  const [catFilter, setCatFilter] = useState<'ALL' | 'MARKETING' | 'UTILITY' | 'AUTHENTICATION'>('ALL');
+  const [nameSearch, setNameSearch] = useState('');
   const [activeTab, setActiveTab] = useState<'mine' | 'library'>('mine');
   const [rejectionModal, setRejectionModal] = useState<any | null>(null);
   const [showPicker, setShowPicker] = useState(false);
@@ -1290,7 +1292,15 @@ export default function TemplatesPage() {
     setHoveredTpl(null);
   };
 
-  const filtered = statusFilter === 'ALL' ? templates : templates.filter(t => t.status === statusFilter);
+  const filtered = templates
+    .filter(t => statusFilter === 'ALL' || t.status === statusFilter)
+    .filter(t => catFilter === 'ALL' || t.category === catFilter)
+    .filter(t => !nameSearch.trim() || t.name.toLowerCase().includes(nameSearch.toLowerCase()));
+
+  const duplicateTemplate = (t: any) => {
+    const form = parseTemplateToForm(t);
+    openCreate({ ...form, name: `${form.name || t.name}_copy` });
+  };
   const getBody = (components: any[]) => components?.find((c: any) => c.type === 'BODY')?.text || '';
 
   return (
@@ -1357,6 +1367,28 @@ export default function TemplatesPage() {
                   </button>
                 );
               })}
+            </div>
+          )}
+
+          {/* Name search + Category filter */}
+          {!loading && templates.length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="relative">
+                <input
+                  value={nameSearch}
+                  onChange={e => setNameSearch(e.target.value)}
+                  placeholder="Search by name…"
+                  className="border border-gray-200 rounded-lg pl-8 pr-8 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white w-48"
+                />
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-gray-400 pointer-events-none" />
+                {nameSearch && <button onClick={() => setNameSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"><X className="h-3 w-3" /></button>}
+              </div>
+              {(['ALL', 'MARKETING', 'UTILITY', 'AUTHENTICATION'] as const).map(c => (
+                <button key={c} onClick={() => setCatFilter(c)}
+                  className={`rounded-full px-3 py-1 text-[11px] font-bold border transition ${catFilter === c ? (CAT_ACTIVE[c] || 'bg-gray-900 text-white border-gray-900') : (CAT_STYLE[c] ? CAT_STYLE[c] + ' border-transparent' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400')}`}>
+                  {c === 'ALL' ? 'All Categories' : c.charAt(0) + c.slice(1).toLowerCase()}
+                </button>
+              ))}
             </div>
           )}
 
@@ -1445,6 +1477,10 @@ export default function TemplatesPage() {
                         Edit
                       </button>
                     )}
+                    <button onClick={() => duplicateTemplate(t)}
+                      className="text-xs font-semibold text-violet-600 border border-violet-200 rounded-lg px-2 py-1 hover:bg-violet-50 transition whitespace-nowrap">
+                      Duplicate
+                    </button>
                     <DeactivateButton template={t} onDone={loadTemplates} />
                   </div>
                 </div>

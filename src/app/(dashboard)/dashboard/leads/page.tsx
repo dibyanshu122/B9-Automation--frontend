@@ -121,6 +121,10 @@ export default function LeadsPage() {
   const [merging, setMerging] = useState(false);
   const [selectedDupGroup, setSelectedDupGroup] = useState<any | null>(null);
   const [primaryLeadId, setPrimaryLeadId] = useState<string>('');
+  // Dead leads / last-contact filter
+  const [deadLeadsOnly, setDeadLeadsOnly] = useState(false);
+  const [bulkAssignUser, setBulkAssignUser] = useState('');
+  const [bulkAssignLoading, setBulkAssignLoading] = useState(false);
   // Kanban view state
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
   const [draggingLeadId, setDraggingLeadId] = useState<string | null>(null);
@@ -316,9 +320,17 @@ export default function LeadsPage() {
         const d = new Date(lead.created_at.endsWith('Z') ? lead.created_at : lead.created_at + 'Z');
         if (d > new Date(leadDateTo + 'T23:59:59Z')) return false;
       }
+      // Dead leads: no update in last 30 days
+      if (deadLeadsOnly) {
+        const cutoff = Date.now() - 30 * 24 * 3600 * 1000;
+        const lastUpdate = lead.updated_at || lead.created_at;
+        if (!lastUpdate) return false;
+        const ts = new Date(lastUpdate.endsWith('Z') ? lastUpdate : lastUpdate + 'Z').getTime();
+        if (ts >= cutoff) return false;
+      }
       return matchesStatus && matchesLabel && matchesTagFilter && matchesSearch;
     });
-  }, [leads, searchQuery, statusFilter, labelFilter, tagFilterActive, leadTagsMap, leadDateFrom, leadDateTo]);
+  }, [leads, searchQuery, statusFilter, labelFilter, tagFilterActive, leadTagsMap, leadDateFrom, leadDateTo, deadLeadsOnly]);
 
   const groupedByStage = useMemo(() => {
     return stages.reduce<Record<string, Lead[]>>((groups, stage) => {
@@ -696,6 +708,19 @@ export default function LeadsPage() {
           </a>
         </div>
 
+        {/* Dead leads toggle */}
+        <div className="mt-3 flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => setDeadLeadsOnly(v => !v)}
+            className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${deadLeadsOnly ? 'bg-gray-900 border-gray-900 text-white' : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50'}`}
+          >
+            💀 Dead Leads {deadLeadsOnly ? '(on)' : '(no activity 30d)'}
+          </button>
+          {deadLeadsOnly && filteredLeads.length > 0 && (
+            <span className="text-xs text-gray-400">{filteredLeads.length} dead lead{filteredLeads.length !== 1 ? 's' : ''} found</span>
+          )}
+        </div>
+
         {/* Date filter row */}
         <div className="mt-3 flex items-center gap-2 flex-wrap text-sm text-gray-500">
           <span className="text-xs font-medium text-gray-400">Date range:</span>
@@ -725,7 +750,38 @@ export default function LeadsPage() {
             >
               Clear
             </button>
-            <div className="flex gap-2 ml-auto">
+            <div className="flex gap-2 ml-auto flex-wrap items-center">
+              {/* Bulk assign to team member */}
+              {teamMembers.length > 0 && (
+                <div className="flex items-center gap-1">
+                  <select
+                    value={bulkAssignUser}
+                    onChange={e => setBulkAssignUser(e.target.value)}
+                    className="rounded-md border border-gray-200 bg-white px-2 py-1 text-xs focus:outline-none"
+                  >
+                    <option value="">Assign to…</option>
+                    {teamMembers.map(m => <option key={m.id} value={m.user_id || m.id}>{m.display_name || m.email}</option>)}
+                  </select>
+                  <button
+                    disabled={!bulkAssignUser || bulkAssignLoading}
+                    onClick={async () => {
+                      if (!bulkAssignUser) return;
+                      setBulkAssignLoading(true);
+                      try {
+                        await api.post('/api/leads/bulk-update', { lead_ids: [...selectedLeadIds], assigned_to_user_id: bulkAssignUser });
+                        setLeads(prev => prev.map(l => selectedLeadIds.has(l.id) ? { ...l, assigned_to_user_id: bulkAssignUser } : l));
+                        setSelectedLeadIds(new Set());
+                        toast.success(`${selectedLeadIds.size} leads assigned`);
+                        setBulkAssignUser('');
+                      } catch { toast.error('Bulk assign failed'); }
+                      finally { setBulkAssignLoading(false); }
+                    }}
+                    className="rounded-md border border-indigo-200 bg-indigo-50 px-2 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 transition disabled:opacity-40"
+                  >
+                    {bulkAssignLoading ? '...' : 'Assign'}
+                  </button>
+                </div>
+              )}
               {['contacted', 'qualified', 'won', 'lost'].map((s) => (
                 <button
                   key={s}

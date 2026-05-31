@@ -2027,13 +2027,35 @@ function WorkflowListView({
   onClone?: (id: string) => void;
   onRefresh?: () => void;
 }) {
+  const [wfSearch, setWfSearch] = useState('');
+  const [wfStatus, setWfStatus] = useState<'all' | 'active' | 'draft'>('all');
+  const [selectedWfIds, setSelectedWfIds] = useState<Set<string>>(new Set());
+  const [bulkActing, setBulkActing] = useState(false);
+
+  const displayedWfs = workflows
+    .filter(w => wfStatus === 'all' || w.status === wfStatus)
+    .filter(w => !wfSearch.trim() || w.name.toLowerCase().includes(wfSearch.toLowerCase()));
+
+  const bulkSetStatus = async (newStatus: string) => {
+    if (!selectedWfIds.size || !onToggleStatus) return;
+    setBulkActing(true);
+    for (const id of selectedWfIds) {
+      const wf = workflows.find(w => w.id === id);
+      if (wf && wf.status !== newStatus) {
+        try { onToggleStatus(id, wf.status); } catch { /* ignore */ }
+      }
+    }
+    setSelectedWfIds(new Set());
+    setBulkActing(false);
+  };
+
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto rounded-2xl border border-slate-200 bg-slate-950 p-6">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-4 flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-white">Workflows</h2>
           <p className="mt-0.5 text-sm text-slate-500">
-            {loading ? 'Loading...' : `${workflows.length} saved · click to open, or create new`}
+            {loading ? 'Loading...' : `${displayedWfs.length}${displayedWfs.length !== workflows.length ? ` of ${workflows.length}` : ''} workflows`}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -2056,6 +2078,45 @@ function WorkflowListView({
           </button>
         </div>
       </div>
+
+      {/* Search + filter row */}
+      {!loading && workflows.length > 0 && (
+        <div className="mb-4 flex items-center gap-2 flex-wrap">
+          <div className="relative flex-1 min-w-[160px] max-w-xs">
+            <input
+              value={wfSearch}
+              onChange={e => setWfSearch(e.target.value)}
+              placeholder="Search workflows…"
+              className="w-full rounded-lg border border-white/10 bg-white/5 pl-8 pr-3 py-1.5 text-xs text-slate-300 placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-primary-400"
+            />
+            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-600 text-[10px]">🔍</span>
+            {wfSearch && <button onClick={() => setWfSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-200 text-xs">✕</button>}
+          </div>
+          {(['all', 'active', 'draft'] as const).map(s => (
+            <button key={s} onClick={() => setWfStatus(s)}
+              className={`rounded-full px-3 py-1 text-[11px] font-semibold transition border ${wfStatus === s ? (s === 'active' ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400' : s === 'draft' ? 'bg-amber-500/20 border-amber-500/30 text-amber-400' : 'bg-white/10 border-white/20 text-white') : 'border-white/10 text-slate-500 hover:text-slate-300 hover:border-white/20'}`}>
+              {s === 'all' ? 'All' : s === 'active' ? '● Active' : '○ Draft'}
+            </button>
+          ))}
+        </div>
+      )}
+      {/* Bulk action toolbar */}
+      {selectedWfIds.size > 0 && (
+        <div className="mb-3 flex items-center gap-2 rounded-lg border border-primary-500/30 bg-primary-500/10 px-3 py-2">
+          <span className="text-xs font-semibold text-primary-300">{selectedWfIds.size} selected</span>
+          <button onClick={() => setSelectedWfIds(new Set())} className="text-xs text-primary-400 hover:text-white">Clear</button>
+          <div className="ml-auto flex gap-2">
+            <button disabled={bulkActing} onClick={() => bulkSetStatus('active')}
+              className="rounded-md bg-emerald-500/20 px-2 py-1 text-[10px] font-bold text-emerald-400 hover:bg-emerald-500/30 transition disabled:opacity-40">
+              ▶ Activate All
+            </button>
+            <button disabled={bulkActing} onClick={() => bulkSetStatus('draft')}
+              className="rounded-md bg-amber-500/20 px-2 py-1 text-[10px] font-bold text-amber-400 hover:bg-amber-500/30 transition disabled:opacity-40">
+              ⏸ Pause All
+            </button>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -2097,7 +2158,7 @@ function WorkflowListView({
           </button>
 
           {/* Existing workflow cards */}
-          {workflows.map((wf) => {
+          {displayedWfs.map((wf) => {
             const graph = wf.config as any;
             const wfNodes: any[] = graph?.nodes || [];
             const triggerLabel = (wf.trigger_type || '').replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
@@ -2111,7 +2172,23 @@ function WorkflowListView({
                 className="group flex flex-col gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 text-left hover:border-primary-400/30 hover:bg-white/[0.06] transition cursor-pointer"
               >
                 <div className="flex items-start justify-between gap-2">
-                  <p className="truncate font-bold text-slate-100 group-hover:text-white">{wf.name}</p>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <input
+                      type="checkbox"
+                      checked={selectedWfIds.has(wf.id)}
+                      onClick={e => e.stopPropagation()}
+                      onChange={e => {
+                        e.stopPropagation();
+                        setSelectedWfIds(prev => {
+                          const next = new Set(prev);
+                          if (e.target.checked) next.add(wf.id); else next.delete(wf.id);
+                          return next;
+                        });
+                      }}
+                      className="h-3.5 w-3.5 shrink-0 rounded accent-primary-400 cursor-pointer"
+                    />
+                    <p className="truncate font-bold text-slate-100 group-hover:text-white">{wf.name}</p>
+                  </div>
                   <div className="flex shrink-0 items-center gap-1.5">
                     <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${wf.status === 'active' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-white/10 text-slate-400'}`}>
                       {wf.status}

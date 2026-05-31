@@ -310,6 +310,8 @@ function UnifiedInbox() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'whatsapp' | 'instagram' | 'facebook'>('all');
+  const [scoreFilter, setScoreFilter] = useState<'all' | 'hot' | 'warm' | 'cold'>('all');
+  const [unreadOnly, setUnreadOnly] = useState(false);
   const [selected, setSelected] = useState<Contact | null>(null);
   const [thread, setThread] = useState<any[]>([]);
   const [threadLoading, setThreadLoading] = useState(false);
@@ -590,6 +592,8 @@ function UnifiedInbox() {
 
   const filtered = contacts
     .filter(c => filter === 'all' || c.channel === filter)
+    .filter(c => scoreFilter === 'all' || (c.lead_score || 'cold') === scoreFilter)
+    .filter(c => !unreadOnly || c.unread > 0)
     .filter(c => {
       if (!search.trim()) return true;
       const q = search.toLowerCase();
@@ -641,6 +645,30 @@ function UnifiedInbox() {
                   {ch === 'all' ? 'All' : <span className="flex items-center gap-1.5"><ChannelIcon channel={ch} size={14} /><span className="hidden lg:inline">{CHANNEL_BADGE[ch]?.label}</span></span>}
                 </button>
               ))}
+            </div>
+            {/* Score filter + Unread toggle */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              {(['all', 'hot', 'warm', 'cold'] as const).map(s => (
+                <button key={s} onClick={() => setScoreFilter(s)}
+                  className={`shrink-0 rounded-full px-3 py-1 text-[12px] font-medium transition-all border ${
+                    scoreFilter === s
+                      ? s === 'hot' ? 'bg-red-100 border-red-200 text-red-700'
+                        : s === 'warm' ? 'bg-amber-100 border-amber-200 text-amber-700'
+                        : s === 'cold' ? 'bg-sky-100 border-sky-200 text-sky-700'
+                        : 'bg-green-100 border-green-200 text-green-800'
+                      : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
+                  }`}>
+                  {s === 'all' ? 'All leads' : s === 'hot' ? '🔥 Hot' : s === 'warm' ? '☀️ Warm' : '❄️ Cold'}
+                </button>
+              ))}
+              <button
+                onClick={() => setUnreadOnly(v => !v)}
+                className={`shrink-0 ml-auto rounded-full px-3 py-1 text-[12px] font-medium transition-all border ${
+                  unreadOnly ? 'bg-blue-100 border-blue-200 text-blue-700' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
+                }`}
+              >
+                {unreadOnly ? '● Unread' : 'Unread'}
+              </button>
             </div>
           </div>
 

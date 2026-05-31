@@ -227,6 +227,9 @@ function CampaignRow({ idx, c, onDetail, onRefresh }: { idx: number; c: Campaign
       } else if (action === 'resume') {
         const r = await post(`/api/campaigns/${encodeURIComponent(c.name)}/resume`, {});
         toast.success(`Resumed ${r.data.resumed} messages`);
+      } else if (action === 'clone') {
+        const r = await post(`/api/campaigns/${encodeURIComponent(c.name)}/clone`, {});
+        toast.success(`Cloned as draft: ${r.data.new_name}`);
       }
       onRefresh();
     } catch (e: any) { toast.error(e.response?.data?.detail || 'Failed'); }
@@ -300,6 +303,7 @@ function CampaignRow({ idx, c, onDetail, onRefresh }: { idx: number; c: Campaign
               {c.status === 'sending' && <button onClick={() => doAction('pause')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-amber-600 flex items-center gap-2">⏸ Pause Campaign</button>}
               {c.status === 'paused' && <button onClick={() => doAction('resume')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-emerald-600 flex items-center gap-2">▶ Resume Campaign</button>}
               {(c.status === 'sending' || c.status === 'scheduled') && <button onClick={() => doAction('cancel')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-red-500 flex items-center gap-2"><Ban className="w-3.5 h-3.5" /> Cancel</button>}
+              <button onClick={() => doAction('clone')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-violet-600 flex items-center gap-2"><RefreshCw className="w-3.5 h-3.5" /> Clone as Draft</button>
             </div>
           </>
         )}
@@ -1158,6 +1162,7 @@ export default function CampaignsPage() {
   const [detailName, setDetailName] = useState<string | null>(null);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [nameSearch, setNameSearch] = useState('');
 
   // React Query — cached 30s, no refetch on nav away/back
   const { data: campaignData, isLoading: loading, refetch: load } = useCampaigns();
@@ -1168,6 +1173,10 @@ export default function CampaignsPage() {
 
   const filtered = campaigns.filter(c => {
     if (tab !== 'all' && c.status !== tab) return false;
+    if (nameSearch.trim()) {
+      const q = nameSearch.toLowerCase();
+      if (!c.name.toLowerCase().includes(q) && !(c.template_name || '').toLowerCase().includes(q)) return false;
+    }
     if (dateFrom && c.created_at) {
       const d = new Date(c.created_at.endsWith('Z') ? c.created_at : c.created_at + 'Z');
       if (d < new Date(dateFrom)) return false;
@@ -1203,10 +1212,20 @@ export default function CampaignsPage() {
         </div>
       </div>
 
-      {/* Date filter bar */}
+      {/* Filter bar */}
       <div className="flex items-center gap-2 flex-wrap">
+        <div className="relative flex-1 min-w-[180px] max-w-xs">
+          <input
+            value={nameSearch}
+            onChange={e => setNameSearch(e.target.value)}
+            placeholder="Search name or template…"
+            className="w-full border border-gray-200 rounded-lg pl-8 pr-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white"
+          />
+          <Filter className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
+          {nameSearch && <button onClick={() => setNameSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"><X className="w-3 h-3" /></button>}
+        </div>
         <div className="flex items-center gap-1.5 text-sm text-gray-500">
-          <Filter className="w-3.5 h-3.5" /> Filter by date:
+          <Filter className="w-3.5 h-3.5" /> Date:
         </div>
         <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
           className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white" />
