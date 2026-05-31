@@ -427,21 +427,55 @@
 
     // Microphone / voice input
     var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    function showMicError(msg) {
+      input.placeholder = msg;
+      setTimeout(function () { input.placeholder = "Ask me anything..."; }, 3500);
+    }
+
     if (!SpeechRec) {
+      // Browser doesn't support speech — hide mic button
       mic.style.display = "none";
     } else {
       var activeRecognition = null;
+
       mic.addEventListener("click", function () {
+        // Stop if already recording
         if (activeRecognition) {
           activeRecognition.stop();
           activeRecognition = null;
           mic.classList.remove("active");
           return;
         }
+
+        // HTTPS check — mic won't work on HTTP
+        if (location.protocol !== "https:" && location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
+          showMicError("Voice needs HTTPS. Type instead.");
+          return;
+        }
+
+        // Check mic permission first
+        if (navigator.permissions) {
+          navigator.permissions.query({ name: "microphone" }).then(function (result) {
+            if (result.state === "denied") {
+              showMicError("Mic blocked. Allow in browser settings.");
+              return;
+            }
+            startRecognition();
+          }).catch(function () {
+            startRecognition(); // Permission API not supported, try anyway
+          });
+        } else {
+          startRecognition();
+        }
+      });
+
+      function startRecognition() {
         var r = new SpeechRec();
         r.lang = navigator.language || "hi-IN";
         r.interimResults = false;
         r.continuous = false;
+
         r.onresult = function (e) {
           var t = e.results && e.results[0] && e.results[0][0] && e.results[0][0].transcript;
           if (t) {
@@ -451,12 +485,36 @@
             sendMessage();
           }
         };
-        r.onerror = function () { mic.classList.remove("active"); activeRecognition = null; };
-        r.onend = function () { mic.classList.remove("active"); activeRecognition = null; };
-        activeRecognition = r;
-        mic.classList.add("active");
-        r.start();
-      });
+
+        r.onerror = function (e) {
+          mic.classList.remove("active");
+          activeRecognition = null;
+          if (e.error === "not-allowed" || e.error === "permission-denied") {
+            showMicError("Allow mic access in browser.");
+          } else if (e.error === "no-speech") {
+            showMicError("No speech detected. Try again.");
+          } else if (e.error === "network") {
+            showMicError("Network error. Check connection.");
+          } else {
+            showMicError("Mic error. Try typing instead.");
+          }
+        };
+
+        r.onend = function () {
+          mic.classList.remove("active");
+          activeRecognition = null;
+        };
+
+        try {
+          activeRecognition = r;
+          mic.classList.add("active");
+          r.start();
+        } catch {
+          mic.classList.remove("active");
+          activeRecognition = null;
+          showMicError("Could not start mic. Try again.");
+        }
+      }
     }
   }
 

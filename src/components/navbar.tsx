@@ -203,11 +203,29 @@ export const Navbar = () => {
               className="shrink-0"
               priority
             />
-            <div className="hidden sm:block leading-tight">
-              <p className="bg-gradient-to-r from-blue-200 via-cyan-100 to-sky-300 bg-clip-text text-lg font-black tracking-tight text-transparent">
-                B9 Automation
+            <div className="hidden sm:block leading-none select-none">
+              <p className="flex items-center gap-[0.22em] text-[16px] font-extrabold tracking-[-0.025em] leading-none">
+                {/* B9 — cyan → violet premium gradient */}
+                <span
+                  style={{
+                    background: 'linear-gradient(135deg, #00F2FE 0%, #818CF8 55%, #7C3AED 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    fontWeight: 900,
+                    letterSpacing: '-0.03em',
+                  }}
+                >
+                  B9
+                </span>
+                {/* Automation — crisp white */}
+                <span className="font-bold text-white/90 tracking-[-0.015em]">
+                  Automation
+                </span>
               </p>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">Business AI OS</p>
+              <p className="mt-[3px] text-[9.5px] font-semibold uppercase tracking-[0.25em] text-slate-500">
+                WhatsApp AI Platform
+              </p>
             </div>
           </Link>
 
