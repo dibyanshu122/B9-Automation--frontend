@@ -685,6 +685,7 @@ function UnifiedInbox() {
                           {resolveContactName(c.sender_id) || c.sender_name}
                         </p>
                         {c.lead_score === 'hot' && <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-red-600">🔥 HOT</span>}
+                        {c.lead_score === 'warm' && <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">☀️ WARM</span>}
                       </div>
                       <p className={`shrink-0 text-[12px] font-medium ${c.unread ? 'text-green-600' : 'text-gray-500'}`} title={c.last_time ? new Date(c.last_time + 'Z').toLocaleString() : ''}>
                         {timeAgo(c.last_time, 'short')}
@@ -747,6 +748,29 @@ function UnifiedInbox() {
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
                     <div className="absolute right-0 top-12 z-20 bg-white border border-gray-100 rounded-xl shadow-lg py-1.5 min-w-[180px]">
+                      {/* Export Chat */}
+                      <button onClick={() => {
+                        setMenuOpen(false);
+                        if (!thread.length) { toast.error('No messages to export'); return; }
+                        const contactName = resolveContactName(selected.sender_id) || selected.sender_name;
+                        const lines = thread.map(m => {
+                          const dir = m.direction === 'outbound' ? (m.is_automated ? '🤖 Bot' : '👤 You') : `👤 ${contactName}`;
+                          const time = m.created_at ? new Date(m.created_at + 'Z').toLocaleString() : '';
+                          const text = m.text || `[${m.message_type}]`;
+                          return `[${time}] ${dir}: ${text}`;
+                        });
+                        const header = `Chat with ${contactName} (${selected.channel})\nExported: ${new Date().toLocaleString()}\n${'─'.repeat(50)}\n\n`;
+                        const blob = new Blob([header + lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `chat-${contactName.replace(/\s+/g,'_')}-${Date.now()}.txt`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                        toast.success('Chat exported');
+                      }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 text-gray-700 flex items-center gap-2">
+                        <FileText className="h-4 w-4" /> Export Chat
+                      </button>
                       <button onClick={async () => {
                         setMenuOpen(false);
                         if (!confirm('Delete this entire conversation? This cannot be undone.')) return;
@@ -800,10 +824,20 @@ function UnifiedInbox() {
                 </div>
               ) : thread.map(msg => {
                 const isOutbound = msg.direction === 'outbound';
+                const isAutomated = !!(msg.is_automated);
                 const isPureMedia = ['image','video','audio','voice','sticker','location','document'].includes(msg.message_type);
                 return (
-                <div key={msg.id} className={`flex items-end gap-2 w-full ${isOutbound ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[85%] md:max-w-[70%] lg:max-w-[60%] rounded-lg text-[14.5px] shadow-sm relative group ${
+                <div key={msg.id} className={`flex flex-col w-full ${isOutbound ? 'items-end' : 'items-start'}`}>
+                  {/* AI badge above automated outbound messages */}
+                  {isAutomated && isOutbound && (
+                    <div className="flex items-center gap-1 mb-0.5 mr-1">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold text-violet-700">
+                        <Bot className="h-2.5 w-2.5" /> AI Auto-reply
+                      </span>
+                    </div>
+                  )}
+                  <div className={`flex items-end gap-2 max-w-[85%] md:max-w-[70%] lg:max-w-[60%]`}>
+                  <div className={`w-full rounded-lg text-[14.5px] shadow-sm relative group ${
                     isOutbound
                       ? 'bg-[#d9fdd3] text-gray-900 rounded-tr-none'
                       : 'bg-white text-gray-900 rounded-tl-none'
@@ -826,6 +860,7 @@ function UnifiedInbox() {
                       {isOutbound && !isPureMedia && <DeliveryTick status={msg.status} delivery_status={msg.delivery_status} isOutbound={isOutbound} />}
                     </div>
                   </div>
+                  </div>
                 </div>
                 );
               })}
@@ -833,6 +868,7 @@ function UnifiedInbox() {
             </div>
 
             {/* Reply box */}
+
             <div className="bg-[#f0f2f5] px-4 py-3 shrink-0 relative">
               {/* 24-hour window compliance banner */}
               {selected && (() => {
