@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import toast from 'react-hot-toast';
-import { AlertTriangle, Brain, ChevronDown, ChevronUp, Clock, Eye, Flame, Loader2, Mail, MessageSquare, Phone, Plus, Search, Send, Star, Trash2, Users, StickyNote, Activity, Send as SendIcon } from 'lucide-react';
+import { AlertTriangle, Brain, ChevronDown, ChevronUp, Clock, Eye, Flame, Loader2, Mail, MessageSquare, Phone, Plus, Search, Send, Star, Trash2, Users, StickyNote, Activity, Send as SendIcon, List, Kanban, GripVertical, Tag, X } from 'lucide-react';
 import { Button } from '@/components/button';
 import { Card } from '@/components/card';
 import { useApi, getApiClient } from '@/hooks/useApi';
@@ -45,6 +45,14 @@ const stages = [
   { key: 'won', label: 'Won' },
   { key: 'lost', label: 'Lost' },
 ];
+
+const stageConfig: Record<string, { border: string; header: string; dot: string; count: string }> = {
+  new:       { border: 'border-blue-200',    header: 'bg-blue-50 text-blue-700',      dot: 'bg-blue-400',    count: 'bg-blue-100 text-blue-700' },
+  contacted: { border: 'border-violet-200',  header: 'bg-violet-50 text-violet-700',  dot: 'bg-violet-400',  count: 'bg-violet-100 text-violet-700' },
+  qualified: { border: 'border-amber-200',   header: 'bg-amber-50 text-amber-700',    dot: 'bg-amber-400',   count: 'bg-amber-100 text-amber-700' },
+  won:       { border: 'border-emerald-200', header: 'bg-emerald-50 text-emerald-700',dot: 'bg-emerald-400', count: 'bg-emerald-100 text-emerald-700' },
+  lost:      { border: 'border-red-200',     header: 'bg-red-50 text-red-700',        dot: 'bg-red-400',     count: 'bg-red-100 text-red-700' },
+};
 
 const scoreStyles = {
   hot: 'bg-red-50 text-red-700 ring-red-100',
@@ -113,6 +121,13 @@ export default function LeadsPage() {
   const [merging, setMerging] = useState(false);
   const [selectedDupGroup, setSelectedDupGroup] = useState<any | null>(null);
   const [primaryLeadId, setPrimaryLeadId] = useState<string>('');
+  // Kanban view state
+  const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
+  const [draggingLeadId, setDraggingLeadId] = useState<string | null>(null);
+  const [dragOverStage, setDragOverStage] = useState<string | null>(null);
+  // Multi-tag segmentation map: leadId → tags[]
+  const [leadTagsMap, setLeadTagsMap] = useState<Record<string, string[]>>({});
+  const [tagFilterActive, setTagFilterActive] = useState<string>('');
 
   const openMergeModal = async () => {
     setShowMergeModal(true);
@@ -185,6 +200,7 @@ export default function LeadsPage() {
     try {
       await api.post(`/api/leads/${leadId}/tags`, { tag: t });
       setLeadTags(prev => [...prev, t]);
+      setLeadTagsMap(prev => ({ ...prev, [leadId]: [...(prev[leadId] || []), t] }));
       if (!allTags.includes(t)) setAllTags(prev => [...prev, t].sort());
       setTagInput('');
     } catch { toast.error('Failed to add tag'); }
@@ -194,6 +210,7 @@ export default function LeadsPage() {
     try {
       await api.delete(`/api/leads/${leadId}/tags/${tag}`);
       setLeadTags(prev => prev.filter(t => t !== tag));
+      setLeadTagsMap(prev => ({ ...prev, [leadId]: (prev[leadId] || []).filter(t => t !== tag) }));
     } catch { toast.error('Failed to remove tag'); }
   };
 
@@ -243,6 +260,12 @@ export default function LeadsPage() {
         const data = leadResponse.value.data;
         const newLeads = Array.isArray(data) ? data : (data?.leads || data || []);
         setLeads(newLeads);
+        // Preload multi-tags for all current leads (batch, non-blocking)
+        Promise.allSettled(newLeads.slice(0, 60).map((l: any) => api.get(`/api/leads/${l.id}/tags`))).then(tagResults => {
+          const map: Record<string, string[]> = {};
+          tagResults.forEach((r, i) => { if (r.status === 'fulfilled') map[newLeads[i].id] = r.value.data || []; });
+          setLeadTagsMap(map);
+        });
         setLeadTotal(leadResponse.value.headers?.['x-total-count']
           ? parseInt(leadResponse.value.headers['x-total-count'])
           : (Array.isArray(data) ? data.length : (data?.total || data?.length || 0)));
@@ -282,6 +305,8 @@ export default function LeadsPage() {
       const query = searchQuery.trim().toLowerCase();
       const matchesStatus = statusFilter === 'all' || lead.status === statusFilter;
       const matchesLabel = labelFilter === 'all' || lead.tag === labelFilter;
+      // Multi-tag filter: check leadTagsMap first, fall back to lead.tag
+      const matchesTagFilter = !tagFilterActive || (leadTagsMap[lead.id] || []).includes(tagFilterActive) || lead.tag === tagFilterActive;
       const matchesSearch = !query || [lead.name, lead.phone, lead.email].some((value) => (value || '').toLowerCase().includes(query));
       if (leadDateFrom && lead.created_at) {
         const d = new Date(lead.created_at.endsWith('Z') ? lead.created_at : lead.created_at + 'Z');
@@ -291,9 +316,9 @@ export default function LeadsPage() {
         const d = new Date(lead.created_at.endsWith('Z') ? lead.created_at : lead.created_at + 'Z');
         if (d > new Date(leadDateTo + 'T23:59:59Z')) return false;
       }
-      return matchesStatus && matchesLabel && matchesSearch;
+      return matchesStatus && matchesLabel && matchesTagFilter && matchesSearch;
     });
-  }, [leads, searchQuery, statusFilter, labelFilter, leadDateFrom, leadDateTo]);
+  }, [leads, searchQuery, statusFilter, labelFilter, tagFilterActive, leadTagsMap, leadDateFrom, leadDateTo]);
 
   const groupedByStage = useMemo(() => {
     return stages.reduce<Record<string, Lead[]>>((groups, stage) => {
@@ -562,25 +587,58 @@ export default function LeadsPage() {
           <h1 className="text-3xl font-bold text-gray-950">Lead CRM</h1>
           <p className="mt-2 text-gray-600">Qualified leads, pipeline stages, conversation context, and handover actions.</p>
         </div>
-        <div className="grid grid-cols-3 gap-2 rounded-lg border border-orange-100 bg-white p-2">
-          {[
-            ['pipeline', 'Pipeline'],
-            ['qualified', 'Qualified'],
-            ['inbox', 'Inbox'],
-          ].map(([key, label]) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setActiveTab(key as any)}
-              className={`rounded-md px-3 py-2 text-sm font-semibold ${
-                activeTab === key ? 'bg-orange-50 text-primary-700' : 'text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Pipeline view toggle — shown only on Pipeline tab */}
+          {activeTab === 'pipeline' && (
+            <div className="flex items-center rounded-lg border border-gray-200 bg-white p-1 gap-1">
+              <button
+                onClick={() => setViewMode('list')}
+                title="List view"
+                className={`rounded-md p-1.5 transition ${viewMode === 'list' ? 'bg-orange-50 text-primary-700' : 'text-gray-400 hover:text-gray-600'}`}
+              >
+                <List className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('kanban')}
+                title="Kanban board"
+                className={`rounded-md p-1.5 transition ${viewMode === 'kanban' ? 'bg-orange-50 text-primary-700' : 'text-gray-400 hover:text-gray-600'}`}
+              >
+                <Kanban className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+          <div className="grid grid-cols-3 gap-2 rounded-lg border border-orange-100 bg-white p-2">
+            {[
+              ['pipeline', 'Pipeline'],
+              ['qualified', 'Qualified'],
+              ['inbox', 'Inbox'],
+            ].map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setActiveTab(key as any)}
+                className={`rounded-md px-3 py-2 text-sm font-semibold ${
+                  activeTab === key ? 'bg-orange-50 text-primary-700' : 'text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
+
+      {/* Multi-tag active filter pill */}
+      {tagFilterActive && (
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-500">Filtering by tag:</span>
+          <span className="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-2.5 py-1 text-xs font-semibold text-indigo-700">
+            <Tag className="h-3 w-3" />
+            {tagFilterActive}
+            <button onClick={() => setTagFilterActive('')} className="ml-0.5 hover:text-indigo-900"><X className="h-3 w-3" /></button>
+          </span>
+        </div>
+      )}
 
       {handoverQueue.length > 0 && (
         <Card className="border-red-100 bg-red-50 shadow-sm" hoverable={false}>
@@ -773,88 +831,174 @@ export default function LeadsPage() {
           </div>
         </Card>
       ) : activeTab === 'pipeline' ? (
-        <section className="space-y-4">
-          <Card className="border-orange-100 shadow-sm" hoverable={false}>
-            <div className="hidden grid-cols-[24px_1.1fr_1fr_1fr_0.8fr_0.8fr_0.9fr_90px] gap-3 border-b border-gray-100 pb-3 text-xs font-bold uppercase text-gray-500 md:grid">
-              <input type="checkbox" className="rounded" checked={selectedLeadIds.size === filteredLeads.length && filteredLeads.length > 0} onChange={(e) => setSelectedLeadIds(e.target.checked ? new Set(filteredLeads.map(l => l.id)) : new Set())} />
-              <span>Name</span><span>Phone</span><span>Email</span><span>Source</span><span>Status</span><span>Created date</span><span>Action</span>
+        viewMode === 'kanban' ? (
+          /* ── KANBAN BOARD ─────────────────────────────────────────────── */
+          <section>
+            <div className="overflow-x-auto pb-4 -mx-1 px-1">
+              <div className="flex gap-4" style={{ minWidth: `${stages.length * 300}px` }}>
+                {stages.map((stage) => {
+                  const cfg = stageConfig[stage.key];
+                  const stageLeads = groupedByStage[stage.key] || [];
+                  const isOver = dragOverStage === stage.key;
+                  return (
+                    <div
+                      key={stage.key}
+                      onDragOver={(e) => { e.preventDefault(); setDragOverStage(stage.key); }}
+                      onDragLeave={() => setDragOverStage(null)}
+                      onDrop={() => {
+                        if (draggingLeadId) {
+                          const lead = leads.find(l => l.id === draggingLeadId);
+                          if (lead && lead.status !== stage.key) updateStage(lead, stage.key);
+                          setDraggingLeadId(null);
+                          setDragOverStage(null);
+                        }
+                      }}
+                      className={`flex w-72 shrink-0 flex-col rounded-2xl border-2 transition-all ${cfg.border} ${isOver ? 'ring-2 ring-offset-1 ring-primary-300 scale-[1.01]' : ''} bg-white/70`}
+                    >
+                      {/* Column header */}
+                      <div className={`flex items-center justify-between rounded-t-xl px-4 py-3 ${cfg.header}`}>
+                        <div className="flex items-center gap-2">
+                          <div className={`h-2.5 w-2.5 rounded-full ${cfg.dot}`} />
+                          <span className="text-sm font-bold">{stage.label}</span>
+                        </div>
+                        <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${cfg.count}`}>{stageLeads.length}</span>
+                      </div>
+
+                      {/* Lead cards */}
+                      <div className="flex flex-col gap-2 overflow-y-auto p-3" style={{ maxHeight: '70vh' }}>
+                        {stageLeads.length === 0 && (
+                          <div className={`rounded-xl border-2 border-dashed p-6 text-center text-xs text-gray-400 ${isOver ? 'border-primary-300 bg-primary-50/30' : 'border-gray-200'}`}>
+                            {isOver ? 'Drop here' : 'No leads'}
+                          </div>
+                        )}
+                        {stageLeads.map((lead) => {
+                          const multiTags = leadTagsMap[lead.id] || [];
+                          const displayTags = [...new Set([...(lead.tag ? [lead.tag] : []), ...multiTags])].slice(0, 3);
+                          return (
+                            <div
+                              key={lead.id}
+                              draggable
+                              onDragStart={() => setDraggingLeadId(lead.id)}
+                              onDragEnd={() => { setDraggingLeadId(null); setDragOverStage(null); }}
+                              className={`group rounded-xl border border-gray-100 bg-white p-3 shadow-sm transition select-none cursor-grab active:cursor-grabbing ${draggingLeadId === lead.id ? 'opacity-40 scale-95 shadow-lg' : 'hover:shadow-md hover:border-primary-200'}`}
+                            >
+                              <div className="flex items-start gap-2 mb-1.5">
+                                <GripVertical className="h-4 w-4 text-gray-300 mt-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-semibold text-sm text-gray-900 truncate">{lead.name || 'Unnamed'}</p>
+                                  {lead.phone && <p className="text-xs text-gray-500 truncate">{lead.phone}</p>}
+                                </div>
+                                {lead.score_label && (
+                                  <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold ring-1 ${scoreStyles[lead.score_label as keyof typeof scoreStyles]}`}>
+                                    {lead.score_label}
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Multi-tag chips */}
+                              {displayTags.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mb-2">
+                                  {displayTags.map(t => (
+                                    <button
+                                      key={t}
+                                      onClick={() => setTagFilterActive(t)}
+                                      className="inline-flex items-center gap-0.5 rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-700 hover:bg-indigo-100 transition"
+                                    >
+                                      <Tag className="h-2.5 w-2.5" />{t}
+                                    </button>
+                                  ))}
+                                  {multiTags.length > 3 && (
+                                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-500">+{multiTags.length - 3}</span>
+                                  )}
+                                </div>
+                              )}
+
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] text-gray-400">
+                                  {lead.source?.includes('whatsapp') ? '💬' : lead.source?.includes('facebook') ? '📘' : lead.source?.includes('instagram') ? '📸' : lead.source?.includes('website') || lead.source?.includes('widget') ? '🌐' : '📋'}
+                                  {' '}{(lead.source || 'unknown').replace(/_/g, ' ')}
+                                </span>
+                                <button
+                                  onClick={() => openLeadDetail(lead)}
+                                  className="text-[10px] font-semibold text-primary-600 hover:text-primary-800 hover:underline"
+                                >
+                                  Details →
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-            <div className="divide-y divide-gray-100">
-              {filteredLeads.map((lead) => (
-                <div key={lead.id} className="grid gap-2 py-3 text-sm md:grid-cols-[24px_1.1fr_1fr_1fr_0.8fr_0.8fr_0.9fr_90px] md:items-center">
-                  <input
-                    type="checkbox"
-                    className="rounded"
-                    checked={selectedLeadIds.has(lead.id)}
-                    onChange={(e) => {
-                      const next = new Set(selectedLeadIds);
-                      if (e.target.checked) next.add(lead.id);
-                      else next.delete(lead.id);
-                      setSelectedLeadIds(next);
-                    }}
-                  />
-                  <span className="font-semibold text-gray-950">{lead.name || 'Unnamed lead'}</span>
-                  <span className="text-gray-600">{lead.phone || '-'}</span>
-                  <span className="text-gray-600">{lead.email || '-'}</span>
-                  <span className="flex items-center gap-1.5 text-gray-600">
-                    {lead.source?.includes('whatsapp') ? '💬' : lead.source?.includes('instagram') ? '📸' : lead.source?.includes('facebook') ? '📘' : lead.source?.includes('website') || lead.source?.includes('widget') ? '🌐' : '📋'}
-                    {lead.source?.replace(/_/g, ' ') || '-'}
-                  </span>
-                  <span className="capitalize text-gray-600">{lead.status}</span>
-                  <span className="text-gray-500">{new Date(lead.created_at).toLocaleDateString()}</span>
-                  <Button variant="ghost" size="sm" onClick={() => openLeadDetail(lead)} loading={busyAction === `view-${lead.id}`}>
-                    <Eye className="h-4 w-4" />View
-                  </Button>
+            <p className="mt-2 text-center text-xs text-gray-400">Drag cards between columns to move stages</p>
+          </section>
+        ) : (
+          /* ── LIST VIEW ─────────────────────────────────────────────────── */
+          <section className="space-y-4">
+            <Card className="border-orange-100 shadow-sm" hoverable={false}>
+              <div className="hidden grid-cols-[24px_1.1fr_1fr_1fr_0.8fr_0.6fr_0.9fr_90px] gap-3 border-b border-gray-100 pb-3 text-xs font-bold uppercase text-gray-500 md:grid">
+                <input type="checkbox" className="rounded" checked={selectedLeadIds.size === filteredLeads.length && filteredLeads.length > 0} onChange={(e) => setSelectedLeadIds(e.target.checked ? new Set(filteredLeads.map(l => l.id)) : new Set())} />
+                <span>Name</span><span>Phone</span><span>Email</span><span>Tags</span><span>Status</span><span>Created</span><span>Action</span>
+              </div>
+              <div className="divide-y divide-gray-100">
+                {filteredLeads.map((lead) => {
+                  const multiTags = leadTagsMap[lead.id] || [];
+                  const displayTags = [...new Set([...(lead.tag ? [lead.tag] : []), ...multiTags])].slice(0, 3);
+                  return (
+                    <div key={lead.id} className="grid gap-2 py-3 text-sm md:grid-cols-[24px_1.1fr_1fr_1fr_0.8fr_0.6fr_0.9fr_90px] md:items-center">
+                      <input
+                        type="checkbox"
+                        className="rounded"
+                        checked={selectedLeadIds.has(lead.id)}
+                        onChange={(e) => {
+                          const next = new Set(selectedLeadIds);
+                          if (e.target.checked) next.add(lead.id);
+                          else next.delete(lead.id);
+                          setSelectedLeadIds(next);
+                        }}
+                      />
+                      <span className="font-semibold text-gray-950">{lead.name || 'Unnamed lead'}</span>
+                      <span className="text-gray-600">{lead.phone || '-'}</span>
+                      <span className="text-gray-600 truncate">{lead.email || '-'}</span>
+                      {/* Multi-tag chips in list row */}
+                      <div className="flex flex-wrap gap-1">
+                        {displayTags.length > 0 ? displayTags.map(t => (
+                          <button
+                            key={t}
+                            onClick={() => setTagFilterActive(t)}
+                            className="inline-flex items-center gap-0.5 rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-700 hover:bg-indigo-100 transition"
+                          >
+                            {t}
+                          </button>
+                        )) : <span className="text-gray-400 text-xs">—</span>}
+                      </div>
+                      <span className="capitalize text-gray-600">{lead.status}</span>
+                      <span className="text-gray-500">{new Date(lead.created_at).toLocaleDateString()}</span>
+                      <Button variant="ghost" size="sm" onClick={() => openLeadDetail(lead)} loading={busyAction === `view-${lead.id}`}>
+                        <Eye className="h-4 w-4" />View
+                      </Button>
+                    </div>
+                  );
+                })}
+                {filteredLeads.length === 0 && <p className="py-6 text-center text-sm text-gray-500">No leads match this search.</p>}
+              </div>
+              {/* Pagination */}
+              {!loadingMore && nextCursor && !searchQuery && statusFilter === 'all' && labelFilter === 'all' && !leadDateFrom && !leadDateTo && (
+                <div className="mt-3 flex items-center justify-between text-sm text-gray-500 border-t border-gray-100 pt-3">
+                  <span>Showing {leads.length} of {leadTotal} leads</span>
+                  <button onClick={loadMoreLeads} className="rounded-lg border border-primary-200 bg-primary-50 px-4 py-1.5 text-xs font-semibold text-primary-700 hover:bg-primary-100 transition">
+                    Load more
+                  </button>
                 </div>
-              ))}
-              {filteredLeads.length === 0 && <p className="py-6 text-center text-sm text-gray-500">No leads match this search.</p>}
-            </div>
-            {/* Pagination — cursor-based load more (no slow OFFSET scan) */}
-            {!loadingMore && nextCursor && !searchQuery && statusFilter === 'all' && labelFilter === 'all' && !leadDateFrom && !leadDateTo && (
-              <div className="mt-3 flex items-center justify-between text-sm text-gray-500 border-t border-gray-100 pt-3">
-                <span>Showing {leads.length} of {leadTotal} leads</span>
-                <button onClick={loadMoreLeads} className="rounded-lg border border-primary-200 bg-primary-50 px-4 py-1.5 text-xs font-semibold text-primary-700 hover:bg-primary-100 transition">
-                  Load more
-                </button>
-              </div>
-            )}
-            {loadingMore && <p className="mt-2 text-center text-xs text-gray-400">Loading more leads…</p>}
-          </Card>
-          <div className="grid gap-4 xl:grid-cols-3">
-          {stages.map((stage) => (
-            <Card key={stage.key} className="border-orange-100 shadow-sm" hoverable={false}>
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="font-bold text-gray-950">{stage.label}</h2>
-                <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-600">
-                  {groupedByStage[stage.key]?.length || 0}
-                </span>
-              </div>
-              <div className="space-y-3">
-                {(groupedByStage[stage.key] || []).map((lead) => (
-                  <LeadCard
-                    key={lead.id}
-                    lead={lead}
-                    labels={leadLabels}
-                    members={teamMembers}
-                    busyAction={busyAction}
-                    onFollowUp={sendFollowUp}
-                    onTask={createTask}
-                    onHistory={openChatHistory}
-                    onQualify={qualifyLead}
-                    onStage={updateStage}
-                    onTag={(nextTag) => updateLeadMeta(lead, { tag: nextTag || null } as any, nextTag ? 'Lead label updated' : 'Lead label cleared')}
-                    onAssign={(memberId) => updateLeadMeta(lead, { assigned_to_user_id: memberId || null } as any, memberId ? 'Lead assigned' : 'Lead unassigned')}
-                    onView={openLeadDetail}
-                  />
-                ))}
-                {(!groupedByStage[stage.key] || groupedByStage[stage.key].length === 0) && (
-                  <p className="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">No leads in this stage.</p>
-                )}
-              </div>
+              )}
+              {loadingMore && <p className="mt-2 text-center text-xs text-gray-400">Loading more leads…</p>}
             </Card>
-          ))}
-          </div>
-        </section>
+          </section>
+        )
       ) : activeTab === 'qualified' ? (
         <section className="grid gap-4 lg:grid-cols-3">
           {(['hot', 'warm', 'cold'] as const).map((label) => (
