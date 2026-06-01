@@ -80,8 +80,8 @@ export default function BillingClient({ initialPlan, initialInvoices }: BillingC
       toast.error('Please fill all fields');
       return;
     }
-    if (!/^\+?[0-9]{10,13}$/.test(billingDetails.phone.replace(/\s/g, ''))) {
-      toast.error('Enter a valid mobile number');
+    if (!/^\+?[\d\s\-()]{8,15}$/.test(billingDetails.phone)) {
+      toast.error('Enter a valid mobile number (e.g. +91 9876543210)');
       return;
     }
     setShowBillingForm(false);
@@ -107,7 +107,7 @@ export default function BillingClient({ initialPlan, initialInvoices }: BillingC
         description: `${plan.charAt(0) + plan.slice(1).toLowerCase()} Plan - ${pendingCycle === 'yearly' ? 'Annual' : 'Monthly'}`,
         image: '/brand-logo.svg',
         handler: () => {
-          toast.success('Payment successful! Activating your plan...');
+          toast.success('Payment confirmed! Activating your plan — this takes up to 60 seconds...');
           let attempts = 0;
           const poll = setInterval(async () => {
             attempts++;
@@ -115,11 +115,16 @@ export default function BillingClient({ initialPlan, initialInvoices }: BillingC
               const res = await get('/api/billing/current-plan');
               if (res.data?.plan && res.data.plan !== currentPlan?.plan) {
                 clearInterval(poll);
-                toast.success(`🎉 ${res.data.plan} plan activated! Unused credits from your old plan have been saved as top-up credits (valid 90 days).`);
+                toast.success(`${res.data.plan} plan activated! Unused credits from your old plan saved as top-up (valid 90 days).`);
                 setTimeout(() => window.location.reload(), 1500);
               }
-            } catch { /* ignore */ }
-            if (attempts >= 30) { clearInterval(poll); window.location.reload(); }
+            } catch { /* ignore polling error */ }
+            // 60 attempts × 2s = 120s max wait
+            if (attempts >= 60) {
+              clearInterval(poll);
+              toast('Plan activation is taking longer than usual. Refreshing...', { icon: 'ℹ️' });
+              window.location.reload();
+            }
           }, 2000);
         },
         prefill: {

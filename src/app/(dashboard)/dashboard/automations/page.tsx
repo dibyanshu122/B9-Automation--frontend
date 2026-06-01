@@ -576,9 +576,8 @@ export default function AutomationsPage() {
         );
         setLastAutosavedAt(savedAt);
       } catch (err: any) {
-        // QuotaExceededError — localStorage full
         if (err?.name === 'QuotaExceededError') {
-          console.warn('Autosave failed: localStorage full. Clear some data.');
+          toast.error('⚠️ Autosave failed — browser storage is full. Please save manually by clicking Save, then clear some browser data.');
         }
       }
     }, 700);
@@ -1104,11 +1103,11 @@ export default function AutomationsPage() {
 
         {/* Undo/Redo */}
         <div className="flex items-center gap-0.5 rounded-lg border border-gray-200 bg-gray-50 shrink-0">
-          <button type="button" onClick={undo} disabled={!canUndo} title="Undo (Ctrl+Z)"
+          <button type="button" onClick={undo} disabled={!canUndo} title="Undo (Ctrl+Z)" aria-label="Undo last action"
             className="rounded-md px-2 py-1.5 text-gray-500 hover:bg-gray-100 disabled:opacity-25 disabled:cursor-not-allowed transition text-sm leading-none">
             ↩
           </button>
-          <button type="button" onClick={redo} disabled={!canRedo} title="Redo (Ctrl+Y)"
+          <button type="button" onClick={redo} disabled={!canRedo} title="Redo (Ctrl+Y)" aria-label="Redo last action"
             className="rounded-md px-2 py-1.5 text-gray-500 hover:bg-gray-100 disabled:opacity-25 disabled:cursor-not-allowed transition text-sm leading-none">
             ↪
           </button>

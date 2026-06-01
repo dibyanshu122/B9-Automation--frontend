@@ -160,15 +160,18 @@ export const Navbar = () => {
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
-        setShowNotifDropdown(false);
-      }
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
-        setShowUserMenu(false);
-      }
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setShowNotifDropdown(false);
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) setShowUserMenu(false);
+    };
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { setShowNotifDropdown(false); setShowUserMenu(false); }
     };
     document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('keydown', handleKey);
+    };
   }, []);
 
   const handleLogout = () => {
@@ -258,6 +261,7 @@ export const Navbar = () => {
                         openNotifications();
                       }
                     }}
+                    aria-label="Notifications"
                     className="relative flex h-9 w-9 items-center justify-center rounded-full text-slate-400 hover:bg-white/10 hover:text-white transition"
                   >
                     <Bell className="h-5 w-5" />

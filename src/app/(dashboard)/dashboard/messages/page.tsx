@@ -716,6 +716,9 @@ function UnifiedInbox() {
                       <div className="px-4 py-3">
                         <button
                           onClick={() => setUnreadOnly(v => !v)}
+                          role="switch"
+                          aria-checked={unreadOnly}
+                          aria-label="Show unread messages only"
                           className="w-full flex items-center justify-between"
                         >
                           <div>

@@ -174,12 +174,14 @@ export default function AnalyticsPage() {
               <span className="font-medium">Custom:</span>
               <input
                 type="date"
+                max={new Date().toISOString().split('T')[0]}
                 className="border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white"
                 onChange={e => {
                   if (e.target.value) {
                     const from = new Date(e.target.value);
+                    if (from > new Date()) return; // reject future dates
                     const days = Math.max(1, Math.round((Date.now() - from.getTime()) / 86400000));
-                    setGlobalDays(days);
+                    setGlobalDays(Math.min(days, 365)); // max 1 year
                   }
                 }}
               />
