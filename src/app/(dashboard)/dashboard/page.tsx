@@ -415,7 +415,6 @@ export default function DashboardPage() {
             <div>
               <p className="text-sm font-semibold uppercase tracking-wide text-gray-500">Current plan</p>
               <h2 className="mt-1 text-3xl font-black text-gray-950">{planAccess.currentPlan}</h2>
-              <p className="mt-1 text-sm text-gray-500">Usage resets by billing period except Free lifetime queries.</p>
             </div>
             <div className="flex gap-2">
               {/* Show Buy top-up only when credits are low */}

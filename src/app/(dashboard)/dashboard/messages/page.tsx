@@ -815,7 +815,11 @@ function UnifiedInbox() {
                     </div>
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-[14px] text-gray-500 truncate">{c.last_text}</p>
-                      {!win.open && <div className="h-2 w-2 rounded-full bg-red-400 shrink-0" title="Window closed" />}
+                      {!win.open && (
+                        <span className="shrink-0 rounded-full bg-red-50 border border-red-200 px-1.5 py-0.5 text-[10px] font-semibold text-red-500 whitespace-nowrap" title="24-hour window closed — only approved templates can be sent">
+                          Template only
+                        </span>
+                      )}
                     </div>
                   </div>
                 </button>

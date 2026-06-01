@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react';
 import { Card } from '@/components/card';
 import { useApi } from '@/hooks/useApi';
 import { useAnalyticsDashboard } from '@/hooks/useQueryCache';
+import { useAuthStore } from '@/store/authStore';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import toast from 'react-hot-toast';
-import { Activity, Bot, CheckCheck, Clock, IndianRupee, MessageCircle, MessageSquare, Send, Target, TrendingUp, Users, Zap } from 'lucide-react';
+import { Activity, Bot, CheckCheck, Clock, IndianRupee, MessageCircle, MessageSquare, Send, Target, TrendingUp, Users, Zap, Lock } from 'lucide-react';
 
 type UsageTrend = {
   date: string;
@@ -14,6 +15,8 @@ type UsageTrend = {
 };
 
 export default function AnalyticsPage() {
+  const { user } = useAuthStore();
+  const isStarterOrFree = ['FREE', 'STARTER'].includes((user?.plan || 'FREE').toUpperCase());
   const [impact, setImpact] = useState<any>(null);
   const [trends, setTrends] = useState<UsageTrend[]>([]);
   const [funnel, setFunnel] = useState<any>(null);
@@ -105,6 +108,23 @@ export default function AnalyticsPage() {
 
   return (
     <div className="space-y-8">
+      {/* Plan gate banner for STARTER/FREE */}
+      {isStarterOrFree && (
+        <div className="flex items-center justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100">
+              <Lock className="h-4 w-4 text-amber-600" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-amber-900">Analytics requires Growth plan</p>
+              <p className="text-xs text-amber-700">You are seeing limited data (last 7 days only). Upgrade to Growth for full analytics, team performance, funnel view, and campaign revenue tracking.</p>
+            </div>
+          </div>
+          <a href="/dashboard/billing" className="shrink-0 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-amber-600 transition">
+            Upgrade →
+          </a>
+        </div>
+      )}
       <div className="relative overflow-hidden rounded-xl border border-orange-100 bg-white p-6 shadow-sm">
         <div className="absolute right-6 top-6 h-20 w-20 rounded-full bg-orange-100 blur-2xl" />
         <div className="relative flex items-start justify-between gap-4 flex-wrap">
