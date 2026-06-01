@@ -153,21 +153,79 @@ export default function BillingClient({ initialPlan, initialInvoices }: BillingC
     );
   }
 
+  // Days remaining calculation
+  const daysRemaining: number | null = currentPlan?.days_remaining ?? null;
+  const periodEnd: string | null = currentPlan?.current_period_end ?? null;
+  const isExpiringSoon = daysRemaining !== null && daysRemaining <= 7 && daysRemaining > 0;
+  const isExpired = daysRemaining !== null && daysRemaining <= 0;
+
   return (
     <div className="space-y-8">
+      {/* Renewal reminder banner */}
+      {currentPlan?.plan !== 'FREE' && isExpiringSoon && (
+        <div className="flex items-center justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+          <div className="flex items-center gap-3">
+            <span className="h-2.5 w-2.5 rounded-full bg-amber-500 animate-pulse shrink-0" />
+            <div>
+              <p className="text-sm font-bold text-amber-900">
+                Your {currentPlan.plan} plan expires in {daysRemaining} day{daysRemaining !== 1 ? 's' : ''}!
+              </p>
+              <p className="text-xs text-amber-700">
+                Renew before {periodEnd ? new Date(periodEnd).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'}) : ''} to avoid service interruption.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => document.getElementById('plan-cards')?.scrollIntoView({behavior:'smooth'})}
+            className="shrink-0 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-amber-600 transition"
+          >
+            Renew Now →
+          </button>
+        </div>
+      )}
+
+      {/* Expired banner */}
+      {currentPlan?.plan !== 'FREE' && isExpired && (
+        <div className="flex items-center justify-between gap-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+          <div className="flex items-center gap-3">
+            <span className="h-2.5 w-2.5 rounded-full bg-red-500 shrink-0" />
+            <div>
+              <p className="text-sm font-bold text-red-900">Your plan has expired</p>
+              <p className="text-xs text-red-700">Features are restricted. Upgrade to restore full access.</p>
+            </div>
+          </div>
+          <button
+            onClick={() => document.getElementById('plan-cards')?.scrollIntoView({behavior:'smooth'})}
+            className="shrink-0 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-700 transition"
+          >
+            Upgrade Now →
+          </button>
+        </div>
+      )}
+
       {currentPlan && (
         <div>
           <h2 className="mb-4 text-2xl font-bold text-gray-900">Current Plan</h2>
           <Card className="border-primary-200 bg-gradient-to-br from-primary-50 to-primary-100">
             <div className="flex items-start justify-between">
               <div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-wrap">
                   <h3 className="text-3xl font-bold text-primary-600">
                     {currentPlan.plan}
                   </h3>
                   <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${currentPlan.billing_cycle === 'annual' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}`}>
                     {currentPlan.billing_cycle === 'annual' ? 'Annual' : 'Monthly'}
                   </span>
+                  {/* Days remaining badge */}
+                  {daysRemaining !== null && currentPlan.plan !== 'FREE' && (
+                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                      isExpired ? 'bg-red-100 text-red-700' :
+                      isExpiringSoon ? 'bg-amber-100 text-amber-700' :
+                      'bg-gray-100 text-gray-600'
+                    }`}>
+                      {isExpired ? 'Expired' : `${daysRemaining}d remaining`}
+                    </span>
+                  )}
                 </div>
                 {currentPlan.billing_cycle === 'annual' ? (
                   <p className="mt-2 text-lg font-medium text-primary-600">
@@ -177,6 +235,15 @@ export default function BillingClient({ initialPlan, initialInvoices }: BillingC
                 ) : (
                   <p className="mt-2 text-lg font-medium text-primary-600">
                     Rs {PLANS.find((p) => p.type === currentPlan.plan)?.price || 0} / month
+                  </p>
+                )}
+                {/* Expiry date */}
+                {periodEnd && currentPlan.plan !== 'FREE' && (
+                  <p className="mt-1 text-xs text-gray-500">
+                    {isExpired ? 'Expired on' : 'Renews on'}{' '}
+                    <span className="font-semibold text-gray-700">
+                      {new Date(periodEnd).toLocaleDateString('en-IN', {day:'numeric',month:'long',year:'numeric'})}
+                    </span>
                   </p>
                 )}
               </div>
@@ -282,7 +349,7 @@ export default function BillingClient({ initialPlan, initialInvoices }: BillingC
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
+        <div id="plan-cards" className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
           {PLANS.map((plan: any) => {
             const isAnnual = billingCycle === 'yearly';
             const displayPrice = isAnnual && plan.annual_price ? plan.annual_price : plan.price;
