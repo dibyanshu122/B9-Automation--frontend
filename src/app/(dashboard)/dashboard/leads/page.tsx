@@ -123,12 +123,9 @@ export default function LeadsPage() {
   const [primaryLeadId, setPrimaryLeadId] = useState<string>('');
   // Lead Scoring Rules
   const [scoringRulesOpen, setScoringRulesOpen] = useState(false);
-  const [scoringRules, setScoringRules] = useState([
-    { id: '1', condition: 'source', operator: 'equals', value: 'facebook', points: 3, label: 'Facebook Lead' },
-    { id: '2', condition: 'source', operator: 'equals', value: 'whatsapp', points: 2, label: 'WhatsApp Lead' },
-    { id: '3', condition: 'status', operator: 'equals', value: 'contacted', points: 5, label: 'Contacted' },
-    { id: '4', condition: 'status', operator: 'equals', value: 'qualified', points: 8, label: 'Qualified' },
-  ]);
+  const [scoringRules, setScoringRules] = useState<{ id: string; condition: string; operator: string; value: string; points: number }[]>([]);
+  const [scoringRulesLoading, setScoringRulesLoading] = useState(false);
+  const [scoringRulesSaving, setScoringRulesSaving] = useState(false);
   // Dead leads / last-contact filter
   const [deadLeadsOnly, setDeadLeadsOnly] = useState(false);
   const [bulkAssignUser, setBulkAssignUser] = useState('');
@@ -140,6 +137,25 @@ export default function LeadsPage() {
   // Multi-tag segmentation map: leadId → tags[]
   const [leadTagsMap, setLeadTagsMap] = useState<Record<string, string[]>>({});
   const [tagFilterActive, setTagFilterActive] = useState<string>('');
+
+  const loadScoringRules = async () => {
+    setScoringRulesLoading(true);
+    try {
+      const r = await get('/api/leads/scoring-rules');
+      setScoringRules(r.data?.rules || []);
+    } catch { /* silent — use defaults if error */ }
+    finally { setScoringRulesLoading(false); }
+  };
+
+  const saveScoringRulesBackend = async () => {
+    setScoringRulesSaving(true);
+    try {
+      await api.put('/api/leads/scoring-rules', { rules: scoringRules });
+      toast.success('Scoring rules saved');
+      setScoringRulesOpen(false);
+    } catch { toast.error('Failed to save scoring rules'); }
+    finally { setScoringRulesSaving(false); }
+  };
 
   const openMergeModal = async () => {
     setShowMergeModal(true);
@@ -709,7 +725,7 @@ export default function LeadsPage() {
           {/* Scoring Rules */}
           <button
             type="button"
-            onClick={() => setScoringRulesOpen(true)}
+            onClick={() => { setScoringRulesOpen(true); if (scoringRules.length === 0) loadScoringRules(); }}
             className="inline-flex h-11 items-center gap-2 rounded-lg border border-violet-200 bg-violet-50 px-3 text-xs font-semibold text-violet-700 hover:bg-violet-100 transition"
           >
             ⚡ Scoring Rules
@@ -1737,7 +1753,13 @@ export default function LeadsPage() {
                 <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-700">
                   <strong>How it works:</strong> AI assigns base scores, then these rules add bonus points. Score 1-3 = cold, 4-6 = warm, 7-10 = hot.
                 </div>
-                {scoringRules.map((rule, i) => (
+                {scoringRulesLoading ? (
+                  <div className="flex items-center justify-center py-6">
+                    <Loader2 className="h-5 w-5 animate-spin text-orange-400" />
+                    <span className="ml-2 text-sm text-gray-400">Loading rules…</span>
+                  </div>
+                ) : null}
+                {!scoringRulesLoading && scoringRules.map((rule, i) => (
                   <div key={rule.id} className="flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 p-3">
                     <div className="flex-1 grid grid-cols-3 gap-2 min-w-0">
                       <select
@@ -1777,7 +1799,7 @@ export default function LeadsPage() {
                   </div>
                 ))}
                 <button
-                  onClick={() => setScoringRules(prev => [...prev, { id: Date.now().toString(), condition: 'source', operator: 'equals', value: 'whatsapp', points: 2, label: 'New Rule' }])}
+                  onClick={() => setScoringRules(prev => [...prev, { id: Date.now().toString(), condition: 'source', operator: 'equals', value: 'whatsapp', points: 2 }])}
                   className="w-full rounded-xl border-2 border-dashed border-gray-200 py-2 text-xs font-semibold text-gray-400 hover:border-orange-300 hover:text-orange-600 transition"
                 >
                   + Add Rule
@@ -1785,13 +1807,13 @@ export default function LeadsPage() {
               </div>
               <div className="flex gap-2 border-t border-gray-100 px-5 py-4">
                 <button
-                  onClick={() => {
-                    toast.success('Scoring rules saved (applied to new leads)');
-                    setScoringRulesOpen(false);
-                  }}
-                  className="flex-1 rounded-xl bg-orange-500 py-2 text-xs font-bold text-white hover:bg-orange-600 transition"
+                  onClick={saveScoringRulesBackend}
+                  disabled={scoringRulesSaving}
+                  className="flex-1 rounded-xl bg-orange-500 py-2 text-xs font-bold text-white hover:bg-orange-600 transition disabled:opacity-50 flex items-center justify-center gap-1.5"
                 >
-                  Save Rules
+                  {scoringRulesSaving ? (
+                    <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Saving…</>
+                  ) : 'Save Rules'}
                 </button>
                 <button onClick={() => setScoringRulesOpen(false)} className="rounded-xl border border-gray-200 px-4 py-2 text-xs text-gray-500 hover:bg-gray-50 transition">
                   Cancel
