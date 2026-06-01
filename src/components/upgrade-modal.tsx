@@ -39,11 +39,11 @@ export function UpgradeModal({
         </div>
 
         <div>
-          <p className="text-sm font-bold text-gray-950">Unlock with {needed}</p>
+          <p className="text-sm font-bold text-slate-100">Unlock with {needed}</p>
           <div className="mt-3 space-y-2">
             {items.map((item) => (
-              <div key={item} className="flex items-start gap-2 text-sm text-gray-700">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600" />
+              <div key={item} className="flex items-start gap-2 text-sm text-slate-300">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-400" />
                 <span>{item}</span>
               </div>
             ))}
