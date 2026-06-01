@@ -141,7 +141,6 @@ export default function PricingPage() {
             className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-5"
           >
             {PLANS.map((plan) => {
-              const price = isAnnual && plan.annual_price ? plan.annual_price : plan.price;
               const annualMonthlyEquivalent = plan.annual_price ? Math.round(plan.annual_price / 12) : null;
               const annualSaving = plan.annual_price ? (plan.price * 12) - plan.annual_price : 0;
               const isPopular = plan.type === 'GROWTH';
@@ -173,17 +172,31 @@ export default function PricingPage() {
                   <p className="relative text-zinc-400 text-sm mb-4 min-h-[60px]">{plan.description}</p>
 
                   <div className="relative mb-6">
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-4xl font-bold text-white">₹{price.toLocaleString('en-IN')}</span>
-                      <span className="text-zinc-500 text-sm">{isAnnual && plan.annual_price ? '/year' : '/month'}</span>
-                    </div>
-                    <p className="text-xs text-zinc-500 mt-2">
-                      {plan.annual_price
-                        ? isAnnual
-                          ? `≈ ₹${annualMonthlyEquivalent?.toLocaleString('en-IN')}/mo — save ₹${annualSaving.toLocaleString('en-IN')}/yr`
-                          : `Annual: ₹${plan.annual_price.toLocaleString('en-IN')}/year`
-                        : 'Free forever'}
-                    </p>
+                    {/* Annual: show monthly equivalent prominently */}
+                    {isAnnual && plan.annual_price ? (
+                      <>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-4xl font-bold text-white">₹{annualMonthlyEquivalent?.toLocaleString('en-IN')}</span>
+                          <span className="text-zinc-500 text-sm">/month</span>
+                        </div>
+                        <p className="text-xs text-zinc-500 mt-1">
+                          ₹{plan.annual_price.toLocaleString('en-IN')} billed yearly
+                          <span className="ml-2 text-green-400 font-semibold">Save ₹{annualSaving.toLocaleString('en-IN')}/yr</span>
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-4xl font-bold text-white">₹{plan.price === 0 ? '0' : plan.price.toLocaleString('en-IN')}</span>
+                          <span className="text-zinc-500 text-sm">/month</span>
+                        </div>
+                        <p className="text-xs text-zinc-500 mt-1">
+                          {plan.annual_price
+                            ? `₹${Math.round(plan.annual_price / 12).toLocaleString('en-IN')}/mo if billed yearly`
+                            : 'Free forever'}
+                        </p>
+                      </>
+                    )}
                   </div>
 
                   <Link href="/signup" className="relative block w-full mb-6">

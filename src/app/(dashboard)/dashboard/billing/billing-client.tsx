@@ -312,24 +312,36 @@ export default function BillingClient({ initialPlan, initialInvoices }: BillingC
                     <p className="text-2xl font-bold text-gray-900">Rs 0</p>
                   ) : (
                     <>
-                      <div className="flex items-end gap-1">
-                        <p className="text-2xl font-bold text-primary-500">Rs {displayPrice.toLocaleString('en-IN')}</p>
-                        <p className="mb-0.5 text-xs font-medium text-gray-500">{isAnnual && plan.annual_price ? '/year' : '/month'}</p>
-                      </div>
-                      {isAnnual && plan.annual_price && (
-                        <div className="mt-1 space-y-0.5">
-                          <p className="text-[11px] text-gray-500">
-                            Equivalent to Rs {annualMonthlyEquivalent?.toLocaleString('en-IN')}/month
-                          </p>
-                          <p className="text-[11px] font-semibold text-green-600">
-                            Save Rs {annualSaving.toLocaleString('en-IN')}/year
-                          </p>
-                        </div>
-                      )}
-                      {!isAnnual && plan.annual_price && (
-                        <p className="mt-0.5 text-[11px] text-gray-400">
-                          Annual Rs {plan.annual_price.toLocaleString('en-IN')}/year
-                        </p>
+                      {/* Annual: show monthly equivalent prominently, yearly total below */}
+                      {isAnnual && plan.annual_price ? (
+                        <>
+                          <div className="flex items-end gap-1">
+                            <p className="text-2xl font-bold text-primary-500">
+                              Rs {annualMonthlyEquivalent?.toLocaleString('en-IN')}
+                            </p>
+                            <p className="mb-0.5 text-xs font-medium text-gray-500">/month</p>
+                          </div>
+                          <div className="mt-1 space-y-0.5">
+                            <p className="text-[11px] text-gray-400">
+                              Rs {plan.annual_price.toLocaleString('en-IN')} billed yearly
+                            </p>
+                            <p className="text-[11px] font-semibold text-green-600">
+                              Save Rs {annualSaving.toLocaleString('en-IN')}/year
+                            </p>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex items-end gap-1">
+                            <p className="text-2xl font-bold text-primary-500">Rs {plan.price.toLocaleString('en-IN')}</p>
+                            <p className="mb-0.5 text-xs font-medium text-gray-500">/month</p>
+                          </div>
+                          {plan.annual_price && (
+                            <p className="mt-0.5 text-[11px] text-gray-400">
+                              Rs {Math.round(plan.annual_price / 12).toLocaleString('en-IN')}/mo if billed yearly
+                            </p>
+                          )}
+                        </>
                       )}
                     </>
                   )}
