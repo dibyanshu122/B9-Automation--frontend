@@ -449,8 +449,15 @@ function UnifiedInbox() {
   // Load APPROVED templates once
   useEffect(() => {
     get('/api/automation/whatsapp/templates').then(r => {
-      const all = r.data?.data || r.data || [];
-      setTemplates(all.filter((t: any) => t.status === 'APPROVED'));
+      const payload = r.data;
+      const all = Array.isArray(payload?.templates)
+        ? payload.templates
+        : Array.isArray(payload?.data)
+          ? payload.data
+          : Array.isArray(payload)
+            ? payload
+            : [];
+      setTemplates(all.filter((t: any) => String(t.status || '').toUpperCase() === 'APPROVED'));
     }).catch(() => {});
   }, []); // eslint-disable-line
 
