@@ -57,12 +57,13 @@ export const FEATURE_RULES: Record<FeatureKey, { requiredPlan: PlanKey; message:
   'integration.razorpay': { requiredPlan: 'STARTER', message: 'Razorpay is available on Starter plan and above.', benefits: ['Send payment links via WhatsApp', 'Track payments in CRM', 'Auto invoice on payment'] },
 };
 
+// Matches backend app/lib/billing/plans.py exactly
 export const PLAN_LIMITS_UI: Record<PlanKey, { workflowSteps: number; activeWorkflows: number; domains: number; widgets: number }> = {
-  FREE:     { workflowSteps: 0,     activeWorkflows: 0,  domains: 0,  widgets: 0 },
-  STARTER:  { workflowSteps: 15,    activeWorkflows: 2,  domains: 1,  widgets: 1 },
-  GROWTH:   { workflowSteps: 9999,  activeWorkflows: 10, domains: 5,  widgets: 5 },
-  PRO:      { workflowSteps: 9999,  activeWorkflows: 25, domains: 10, widgets: 10 },
-  BUSINESS: { workflowSteps: 9999,  activeWorkflows: 100,domains: 50, widgets: 50 },
+  FREE:     { workflowSteps: 0,     activeWorkflows: 0,    domains: 0,  widgets: 0 },
+  STARTER:  { workflowSteps: 15,    activeWorkflows: 10,   domains: 1,  widgets: 1 },
+  GROWTH:   { workflowSteps: 9999,  activeWorkflows: 9999, domains: 3,  widgets: 3 },
+  PRO:      { workflowSteps: 9999,  activeWorkflows: 9999, domains: 10, widgets: 10 },
+  BUSINESS: { workflowSteps: 9999,  activeWorkflows: 9999, domains: 9999, widgets: 9999 },
 };
 
 export function normalizePlan(plan?: string): PlanKey {

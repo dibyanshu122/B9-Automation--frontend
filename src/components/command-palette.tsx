@@ -141,7 +141,7 @@ export function CommandPalette() {
     } finally {
       setLoading(false);
     }
-  }, [get]); // eslint-disable-line
+  }, [get]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const t = setTimeout(() => search(query), 250);

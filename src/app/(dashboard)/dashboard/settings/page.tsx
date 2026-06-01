@@ -1018,7 +1018,10 @@ export default function SettingsPage() {
                 </div>
                 <button
                   onClick={() => setNotifPrefs(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none shrink-0 ${notifPrefs[item.key] ? 'bg-emerald-500' : 'bg-gray-200'}`}
+                  role="switch"
+                  aria-checked={!!notifPrefs[item.key]}
+                  aria-label={item.label}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400 shrink-0 ${notifPrefs[item.key] ? 'bg-emerald-500' : 'bg-gray-200'}`}
                 >
                   <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${notifPrefs[item.key] ? 'translate-x-6' : 'translate-x-1'}`} />
                 </button>

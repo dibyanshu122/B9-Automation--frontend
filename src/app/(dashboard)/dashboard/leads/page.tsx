@@ -753,10 +753,10 @@ export default function LeadsPage() {
             className={`inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-xs font-semibold transition ${deadLeadsOnly ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'}`}
           >
             <Skull className="h-3.5 w-3.5" />
-            Dead Leads {deadLeadsOnly ? '(on)' : '(30d inactive)'}
+            Inactive Leads {deadLeadsOnly ? '(on)' : '(30d+)'}
           </button>
           {deadLeadsOnly && filteredLeads.length > 0 && (
-            <span className="text-xs text-gray-400">{filteredLeads.length} dead lead{filteredLeads.length !== 1 ? 's' : ''} found</span>
+            <span className="text-xs text-gray-400">{filteredLeads.length} inactive lead{filteredLeads.length !== 1 ? 's' : ''} found</span>
           )}
         </div>
 

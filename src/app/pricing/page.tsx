@@ -121,7 +121,7 @@ export default function PricingPage() {
                 >
                   Annual
                   <span className="absolute -top-8 right-0 rounded-md border border-[#00F2FE]/20 bg-[#00F2FE]/[0.08] px-2 py-0.5 text-[10px] font-bold text-[#00F2FE] whitespace-nowrap">
-                    Save up to ₹24,000/yr
+                    Save up to 30% yearly
                   </span>
                 </button>
               </div>

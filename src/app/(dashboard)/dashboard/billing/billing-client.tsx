@@ -214,7 +214,7 @@ export default function BillingClient({ initialPlan, initialInvoices }: BillingC
                             setCancelling(false);
                           }
                         }}
-                        className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-700 disabled:opacity-50"
+                        className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {cancelling ? 'Cancelling...' : 'Yes, cancel'}
                       </button>
