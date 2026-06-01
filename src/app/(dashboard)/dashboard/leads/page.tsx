@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import toast from 'react-hot-toast';
-import { AlertTriangle, Brain, ChevronDown, ChevronUp, Clock, Eye, Flame, Loader2, Mail, MessageSquare, Phone, Plus, Send, Star, Trash2, Users, StickyNote, Activity, Send as SendIcon, List, Kanban, GripVertical, Tag, X } from 'lucide-react';
+import { AlertTriangle, Brain, CalendarDays, ChevronDown, ChevronUp, Clock, Download, Eye, Flame, GitMerge, Loader2, Mail, MessageSquare, Phone, Plus, Send, Skull, Star, Trash2, Users, StickyNote, Activity, Send as SendIcon, List, Kanban, GripVertical, Tag, X } from 'lucide-react';
 import { Button } from '@/components/button';
 import { Card } from '@/components/card';
 import { useApi, getApiClient } from '@/hooks/useApi';
@@ -83,6 +83,8 @@ export default function LeadsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [leadDateFrom, setLeadDateFrom] = useState('');
   const [leadDateTo, setLeadDateTo] = useState('');
+  const leadDateFromRef = useRef<HTMLInputElement>(null);
+  const leadDateToRef = useRef<HTMLInputElement>(null);
   const [selectedLeadIds, setSelectedLeadIds] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState('');
   const [leadMemory, setLeadMemory] = useState<string[]>([]);
@@ -693,7 +695,7 @@ export default function LeadsPage() {
       )}
 
       <Card className="border-orange-100 shadow-sm" hoverable={false}>
-        <div className="grid gap-3 md:grid-cols-[minmax(260px,1fr)_180px_180px_auto_auto] md:items-center">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(260px,1fr)_160px_160px_auto_auto_auto_auto] xl:items-center">
           <label className="relative min-w-0">
             <input
               value={searchQuery}
@@ -718,35 +720,40 @@ export default function LeadsPage() {
           <button
             type="button"
             onClick={openMergeModal}
-            className="inline-flex h-11 items-center gap-2 rounded-lg border border-orange-200 bg-orange-50 px-3 text-xs font-semibold text-orange-700 hover:bg-orange-100 transition"
+            className="inline-flex h-11 items-center justify-center gap-1.5 rounded-lg border border-orange-200 bg-orange-50 px-3 text-xs font-semibold text-orange-700 transition hover:bg-orange-100"
           >
+            <GitMerge className="h-3.5 w-3.5" />
             Merge Duplicates
           </button>
           {/* Scoring Rules */}
           <button
             type="button"
             onClick={() => { setScoringRulesOpen(true); if (scoringRules.length === 0) loadScoringRules(); }}
-            className="inline-flex h-11 items-center gap-2 rounded-lg border border-violet-200 bg-violet-50 px-3 text-xs font-semibold text-violet-700 hover:bg-violet-100 transition"
+            className="inline-flex h-11 items-center justify-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50 px-3 text-xs font-semibold text-violet-700 transition hover:bg-violet-100"
           >
-            ⚡ Scoring Rules
+            <Activity className="h-3.5 w-3.5" />
+            Scoring Rules
           </button>
           {/* Export CSV */}
           <a
             href={`${typeof window !== 'undefined' ? '' : ''}/api/leads/export?format=csv${statusFilter !== 'all' ? `&status=${statusFilter}` : ''}`}
             download="leads.csv"
-            className="inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-emerald-200 bg-emerald-50 px-4 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
+            className="inline-flex h-11 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-emerald-200 bg-emerald-50 px-3 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
           >
+            <Download className="h-3.5 w-3.5" />
             Export CSV
           </a>
         </div>
 
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-3">
         {/* Dead leads toggle */}
-        <div className="mt-3 flex items-center gap-2 flex-wrap">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => setDeadLeadsOnly(v => !v)}
-            className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${deadLeadsOnly ? 'bg-gray-900 border-gray-900 text-white' : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50'}`}
+            className={`inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-xs font-semibold transition ${deadLeadsOnly ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'}`}
           >
-            💀 Dead Leads {deadLeadsOnly ? '(on)' : '(no activity 30d)'}
+            <Skull className="h-3.5 w-3.5" />
+            Dead Leads {deadLeadsOnly ? '(on)' : '(30d inactive)'}
           </button>
           {deadLeadsOnly && filteredLeads.length > 0 && (
             <span className="text-xs text-gray-400">{filteredLeads.length} dead lead{filteredLeads.length !== 1 ? 's' : ''} found</span>
@@ -754,22 +761,39 @@ export default function LeadsPage() {
         </div>
 
         {/* Date filter row */}
-        <div className="mt-3 flex items-center gap-2 flex-wrap text-sm text-gray-500">
-          <span className="text-xs font-medium text-gray-400">Date range:</span>
-          <input type="date" value={leadDateFrom} onChange={e => setLeadDateFrom(e.target.value)}
-            className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white" />
+        <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500">
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-gray-500">
+            <Clock className="h-3.5 w-3.5" />
+            Date range
+          </span>
+          <label className="relative">
+            <input ref={leadDateFromRef} type="date" value={leadDateFrom} onChange={e => setLeadDateFrom(e.target.value)}
+              className="h-9 rounded-lg border border-gray-200 bg-white px-2.5 pr-8 text-xs focus:outline-none focus:ring-2 focus:ring-orange-300" />
+            <button type="button" aria-label="Open start date picker" onClick={() => { leadDateFromRef.current?.focus(); leadDateFromRef.current?.showPicker?.(); }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 transition hover:text-orange-600">
+              <CalendarDays className="h-3.5 w-3.5" />
+            </button>
+          </label>
           <span className="text-xs text-gray-400">to</span>
-          <input type="date" value={leadDateTo} onChange={e => setLeadDateTo(e.target.value)}
-            className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white" />
+          <label className="relative">
+            <input ref={leadDateToRef} type="date" value={leadDateTo} onChange={e => setLeadDateTo(e.target.value)}
+              className="h-9 rounded-lg border border-gray-200 bg-white px-2.5 pr-8 text-xs focus:outline-none focus:ring-2 focus:ring-orange-300" />
+            <button type="button" aria-label="Open end date picker" onClick={() => { leadDateToRef.current?.focus(); leadDateToRef.current?.showPicker?.(); }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 transition hover:text-orange-600">
+              <CalendarDays className="h-3.5 w-3.5" />
+            </button>
+          </label>
           {(leadDateFrom || leadDateTo) && (
             <button onClick={() => { setLeadDateFrom(''); setLeadDateTo(''); }}
               className="text-xs text-orange-500 hover:text-orange-700 font-medium flex items-center gap-1">
-              ✕ Clear dates
+              <X className="h-3 w-3" />
+              Clear
             </button>
           )}
           {(leadDateFrom || leadDateTo) && (
             <span className="text-xs text-gray-400">{filteredLeads.length} of {leads.length} leads</span>
           )}
+        </div>
         </div>
 
         {/* Bulk action toolbar appears when leads are selected */}

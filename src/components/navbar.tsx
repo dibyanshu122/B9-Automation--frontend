@@ -12,7 +12,8 @@ import Image from 'next/image';
 
 function timeAgo(iso: string): string {
   if (!iso) return '';
-  const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  const utcIso = iso.endsWith('Z') || iso.includes('+') ? iso : `${iso}Z`;
+  const diff = Math.max(0, Math.floor((Date.now() - new Date(utcIso).getTime()) / 1000));
   if (diff < 60) return `${diff}s ago`;
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
