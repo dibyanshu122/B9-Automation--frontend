@@ -51,6 +51,14 @@ export default function DashboardLayout({
     }
   }, [hasHydrated, user, token, logout, router]);
 
+  // Warmup ping — wakes up Render backend immediately so campaigns/analytics don't stall
+  useEffect(() => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+    if (apiUrl) {
+      fetch(`${apiUrl}/health`, { method: 'GET', mode: 'no-cors' }).catch(() => {});
+    }
+  }, []); // runs once on dashboard mount
+
   useEffect(() => {
     if (!hasHydrated || !user || !token) return;
     // Only check onboarding ONCE when the user first loads the dashboard, not on every route change

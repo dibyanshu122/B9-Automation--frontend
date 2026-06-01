@@ -21,7 +21,7 @@ const dashboardCSP = [
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
   "img-src 'self' data: blob: https:",
-  `connect-src 'self' ${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'} https://accounts.google.com https://connect.facebook.net https://graph.facebook.com https://www.facebook.com wss: https://api.razorpay.com`,
+  `connect-src 'self' ${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'} https://accounts.google.com https://connect.facebook.net https://graph.facebook.com https://www.facebook.com wss: https://api.razorpay.com https://prod.spline.design https://api.resend.com`,
   "frame-src https://accounts.google.com https://www.facebook.com https://web.facebook.com https://api.razorpay.com https://checkout.razorpay.com",
   "worker-src 'self' blob:",
   "object-src 'none'",

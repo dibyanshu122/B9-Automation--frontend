@@ -85,10 +85,33 @@ export default function AnalyticsPage() {
       .finally(() => setWaLoading(false));
   }, [waDays]); // eslint-disable-line
 
+  // While loading, show header skeleton so H1 "Analytics" is always visible
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-primary-500" />
+      <div className="space-y-8">
+        {isStarterOrFree && (
+          <div className="flex items-center justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100">
+                <Lock className="h-4 w-4 text-amber-600" />
+              </div>
+              <p className="text-sm font-bold text-amber-900">Analytics requires Growth plan</p>
+            </div>
+            <a href="/dashboard/billing" className="shrink-0 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-amber-600 transition">Upgrade →</a>
+          </div>
+        )}
+        <div className="relative overflow-hidden rounded-xl border border-orange-100 bg-white p-6 shadow-sm">
+          <h1 className="text-4xl font-bold text-gray-950">Analytics</h1>
+          <p className="mt-2 text-gray-600">Track conversations, leads, automations, saved time, and launch readiness.</p>
+        </div>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {[1,2,3,4,5,6,7,8].map(i => (
+            <div key={i} className="rounded-xl border border-orange-100 bg-white p-5 shadow-sm animate-pulse">
+              <div className="h-4 w-24 bg-gray-200 rounded mb-3" />
+              <div className="h-8 w-16 bg-gray-100 rounded" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
