@@ -1149,6 +1149,9 @@ export default function AutomationsPage() {
               <button type="button" onClick={autoArrangeFlow} className="flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50">
                 <Route className="h-3.5 w-3.5 text-gray-400" /> Auto Arrange
               </button>
+              <button type="button" onClick={openWebhookSetup} className="flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50">
+                <Globe className="h-3.5 w-3.5 text-gray-400" /> Inbound Webhook
+              </button>
               {activeWorkflowId && (
                 <div className="border-t border-gray-100 pt-1">
                   <VersionHistoryButton workflowId={activeWorkflowId} onRollback={(nodes, edges, name) => { setNodes(nodes); setEdges(edges); setWorkflowName(name); }} />
@@ -1695,7 +1698,8 @@ export default function AutomationsPage() {
                           <button
                             onClick={() => setExpandedOutputs(prev => {
                               const s = new Set(prev);
-                              isExpanded ? s.delete(n.id) : s.add(n.id);
+                              if (isExpanded) s.delete(n.id);
+                              else s.add(n.id);
                               return s;
                             })}
                             className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-violet-50 transition"
