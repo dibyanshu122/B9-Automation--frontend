@@ -137,9 +137,9 @@ export const Navbar = () => {
 
   useEffect(() => {
     if (!user) return;
-    // Plan-based fallback so the credit chip never shows wrong limit
+    // Plan-based fallback — matches backend plans.py exactly
     const PLAN_QUERY_LIMITS: Record<string, number> = {
-      FREE: 30, STARTER: 500, GROWTH: 1200, PRO: 2500, BUSINESS: 7500,
+      FREE: 30, STARTER: 1000, GROWTH: 5000, PRO: 20000, BUSINESS: 50000,
     };
     const planDefault = PLAN_QUERY_LIMITS[(user.plan || 'FREE').toUpperCase()] ?? 500;
 

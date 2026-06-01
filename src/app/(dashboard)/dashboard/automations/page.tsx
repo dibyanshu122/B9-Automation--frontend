@@ -1125,7 +1125,7 @@ export default function AutomationsPage() {
             ··· More
           </Button>
           {overflowMenuOpen && (
-            <div className="absolute left-0 top-full z-50 mt-1 w-48 rounded-xl border border-gray-100 bg-white py-1.5 shadow-xl" onClick={() => setOverflowMenuOpen(false)}>
+            <div className="absolute right-0 top-full z-50 mt-1 w-52 rounded-xl border border-gray-200 bg-white py-1.5 shadow-2xl" onClick={() => setOverflowMenuOpen(false)}>
               <button type="button" onClick={() => setShowLaunchAssistant(true)} className="flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50">
                 <Bot className="h-3.5 w-3.5 text-gray-400" /> Launch Assistant
               </button>
@@ -1790,7 +1790,7 @@ export default function AutomationsPage() {
                   onChange={e => setGenerateDesc(e.target.value)}
                   rows={5}
                   className="input-field resize-none text-sm"
-                  placeholder={`Examples:\n- "I run a coaching center. Ask class, subject, phone number, then share demo details."\n- "Real estate workflow. Ask budget, location preference, then book a site visit."\n- "Salon booking. Show services, collect name and phone, then confirm appointment."`}
+                  placeholder={`Examples:\n- "Coaching center: Ask 9th/10th/11th-12th class, collect name+phone, share fees, schedule demo call"\n- "Real estate: Ask budget (50L/1Cr/1Cr+), location preference, collect contact, book site visit, send payment token"\n- "D2C brand: Show product menu, collect order details, address, send Razorpay payment link, confirm order"\n- "SaaS: Ask use-case (team size, industry), qualify lead, book demo, send pricing PDF"`}
                 />
               </div>
               <div>
@@ -1809,12 +1809,14 @@ export default function AutomationsPage() {
                   ))}
                 </div>
               </div>
-              <div className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3 text-xs text-amber-700">
-                <p className="font-semibold mb-1">Tips for best results:</p>
+              <div className="rounded-xl bg-violet-50 border border-violet-100 px-4 py-3 text-xs text-violet-800">
+                <p className="font-semibold mb-1">✨ For a powerful 15-20 node flow, include:</p>
                 <ul className="space-y-0.5 list-disc list-inside">
-                  <li>Mention specific options/choices customers will have</li>
-                  <li>Mention if you want to collect details (name, phone, address)</li>
-                  <li>Mention if you want to show a product catalog or payment link</li>
+                  <li>Your business type + what you sell/offer</li>
+                  <li>Menu options customers can choose (e.g. pricing, demo, support)</li>
+                  <li>What details to collect (name, phone, budget, city)</li>
+                  <li>Whether to send a payment link or booking</li>
+                  <li>Follow-up timing (e.g. "remind after 24 hours")</li>
                 </ul>
               </div>
             </div>
@@ -1830,7 +1832,7 @@ export default function AutomationsPage() {
                     const res = await post('/api/automation/workflows/generate-from-description', {
                       description: generateDesc.trim(),
                       platform: generatePlatform,
-                    });
+                    }, { timeout: 90000 });
                     const { nodes: genNodes, edges: genEdges, name: genName } = res.data;
                     // Force live mode + mark WA nodes as template-aware so compliance score is accurate
                     const liveNodes = (genNodes as BuilderBlock[]).map((n) => {
@@ -1863,7 +1865,7 @@ export default function AutomationsPage() {
                   }
                 }}
               >
-                {generating ? 'Generating...' : 'Generate Flow'}
+                {generating ? '✨ Building flow (may take ~30s)...' : '✨ Generate Full Flow'}
               </Button>
             </div>
           </div>

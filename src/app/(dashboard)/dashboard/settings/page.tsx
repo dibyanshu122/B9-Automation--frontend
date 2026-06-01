@@ -17,7 +17,7 @@ export default function SettingsPage() {
   const { get, post, put, delete: del } = useApi();
   const isFreePlan = !user?.plan || user.plan === 'FREE';
   const PLAN_QUERY_LIMITS: Record<string, number> = {
-    FREE: 30, STARTER: 500, GROWTH: 1200, PRO: 2500, BUSINESS: 7500,
+    FREE: 30, STARTER: 1000, GROWTH: 5000, PRO: 20000, BUSINESS: 50000,
   };
   const planQueryLimit = quota?.queries_limit || PLAN_QUERY_LIMITS[(user?.plan || 'FREE').toUpperCase()] || 500;
   const remainingReplies = Math.max(0, planQueryLimit - (quota?.queries_used ?? 0));
