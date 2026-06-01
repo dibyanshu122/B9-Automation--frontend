@@ -32,6 +32,7 @@ export default function BillingClient({ initialPlan, initialInvoices }: BillingC
   const [loading, setLoading] = useState(!initialPlan);
   const [upgrading, setUpgrading] = useState<string | null>(null);
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+  const [pendingCycle, setPendingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [showBillingForm, setShowBillingForm] = useState(false);
@@ -70,6 +71,7 @@ export default function BillingClient({ initialPlan, initialInvoices }: BillingC
       phone: '',
     });
     setPendingPlan(plan);
+    setPendingCycle(billingCycle); // lock cycle at click time to prevent mismatch
     setShowBillingForm(true);
   };
 
@@ -86,7 +88,7 @@ export default function BillingClient({ initialPlan, initialInvoices }: BillingC
     const plan = pendingPlan!;
     setUpgrading(plan);
     try {
-      const response = await post(`/api/billing/create-order/${plan}`, { billing_cycle: billingCycle });
+      const response = await post(`/api/billing/create-order/${plan}`, { billing_cycle: pendingCycle });
       const { order_id, amount, razorpay_key } = response.data;
 
       try {
@@ -102,7 +104,7 @@ export default function BillingClient({ initialPlan, initialInvoices }: BillingC
         amount,
         currency: 'INR',
         name: 'B9 Automation',
-        description: `${plan.charAt(0) + plan.slice(1).toLowerCase()} Plan - ${billingCycle === 'yearly' ? 'Annual' : 'Monthly'}`,
+        description: `${plan.charAt(0) + plan.slice(1).toLowerCase()} Plan - ${pendingCycle === 'yearly' ? 'Annual' : 'Monthly'}`,
         image: '/brand-logo.svg',
         handler: () => {
           toast.success('Payment successful! Activating your plan...');

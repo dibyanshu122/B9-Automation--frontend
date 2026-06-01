@@ -121,7 +121,7 @@ export default function PricingPage() {
                 >
                   Annual
                   <span className="absolute -top-8 right-0 rounded-md border border-[#00F2FE]/20 bg-[#00F2FE]/[0.08] px-2 py-0.5 text-[10px] font-bold text-[#00F2FE] whitespace-nowrap">
-                    Save yearly
+                    Save up to ₹24,000/yr
                   </span>
                 </button>
               </div>
@@ -253,6 +253,7 @@ export default function PricingPage() {
               Compare all features
             </h2>
           </div>
+          <p className="mb-2 text-[11px] text-zinc-600 sm:hidden">← Scroll to compare all plans →</p>
           <div className="overflow-x-auto rounded-2xl border border-white/[0.06]">
             <table className="min-w-[880px] w-full border-collapse bg-white/[0.01] text-sm backdrop-blur-xl">
               <thead>

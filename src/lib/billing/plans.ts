@@ -9,7 +9,7 @@
 //   FREE/STARTER -> Gemini 2.5 Flash Lite  (shown as "B9 Agentic Core" on UI)
 //   GROWTH       -> Groq 70B + Gemini      (shown as "B9 Agentic Core" on UI)
 //   PRO          -> Real DeepSeek-V3 + Groq 70B  (shown as "DeepSeek V3")
-//   BUSINESS     -> Real DeepSeek-V3 + R1 Reasoner (shown as "DeepSeek V3 + Reasoner")
+//   BUSINESS     -> Real DeepSeek-V3 + Groq 70B (highest priority queue)
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const TOPUP_PACKS = {
@@ -90,7 +90,7 @@ export const PLAN_LIMITS = {
     description: 'Scale with AI automation across all channels',
     bestFor: 'Growing businesses, agencies, multi-channel teams',
     watermark: 'Watermark removed',
-    integrations: 'All 12 integrations (Slack, Shopify, HubSpot, Zoho, Calendly, Zapier...)',
+    integrations: 'WhatsApp, Gmail, Facebook, Instagram, Google Sheets, Shopify, IndiaMART + more',
     automation: 'High-volume workflows + steps, 5,000 runs/day',
     ai_engine: 'Groq llama-3.3-70B + Gemini fallback',
     ai_label: 'B9 Agentic Core',
@@ -104,7 +104,7 @@ export const PLAN_LIMITS = {
       'WhatsApp Flows (form builder) included',
       'A/B Testing for campaigns included',
       'Agentic AI loop (basic) included',
-      'All 12 integrations included',
+      'WhatsApp, Gmail, FB, IG, Sheets, Shopify + more',
       'Analytics dashboard',
       '1,000 leads/day, 5 team members',
     ],
@@ -152,15 +152,15 @@ export const PLAN_LIMITS = {
     watermark: 'Full white-label - your brand only',
     integrations: 'All integrations + White-label + Custom domain',
     automation: 'High-volume workflows, steps, and runs with fair usage',
-    ai_engine: 'DeepSeek-V3 + DeepSeek-R1 Reasoner',
-    ai_label: 'DeepSeek V3 + Reasoner',
+    ai_engine: 'DeepSeek-V3 + Groq 70B (highest priority queue)',
+    ai_label: 'DeepSeek V3 Priority',
     badge: 'Enterprise',
     features: [
       'High-volume assistants',
       '100GB storage, high-volume uploads',
       '50,000 AI credits/month',
       '10 WhatsApp connections',
-      'DeepSeek-R1 Deep Reasoning included',
+      'Highest priority AI queue (fastest responses)',
       'White-label - your own branding included',
       'Custom domain included',
       'Role-based permissions included',
