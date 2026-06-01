@@ -133,6 +133,9 @@ const baseLibrary: LibraryBlock[] = [
   { type: 'condition', title: 'If Lead Is Hot', description: 'Branch when urgency or buying intent is detected.', config: { field: 'lead_score', operator: 'greater_than', value: '7', then_action: 'notify_owner', else_action: 'create_task' } },
   { type: 'condition', title: 'If AI Confidence Low', description: 'Escalate when AI is not confident.', config: { field: 'extraction.confidence', operator: 'confidence_below', value: '0.7', then_action: 'human_handover', else_action: 'reply' } },
   { type: 'action', title: 'Send WhatsApp Message', description: 'Send WhatsApp text or approved template.', config: { tool: 'send_whatsapp_message', recipient: '{{lead.phone}}', message_body: '{{flow.flowResponse}}', message_mode: 'text', language_code: 'en_US' } },
+  { type: 'action', title: 'Send Image', description: 'Send a JPG/PNG image to customer via WhatsApp.', config: { tool: 'send_whatsapp_media', recipient: '{{lead.phone}}', media_type: 'image', media_url: '', caption: '', send_mode: 'live' } },
+  { type: 'action', title: 'Send PDF / Document', description: 'Send a PDF or document to customer via WhatsApp.', config: { tool: 'send_whatsapp_media', recipient: '{{lead.phone}}', media_type: 'document', media_url: '', caption: '', filename: 'document.pdf', send_mode: 'live' } },
+  { type: 'action', title: 'Send Video', description: 'Send a video to customer via WhatsApp.', config: { tool: 'send_whatsapp_media', recipient: '{{lead.phone}}', media_type: 'video', media_url: '', caption: '', send_mode: 'live' } },
   { type: 'action', title: 'Send Instagram DM', description: 'Send AI replies to Instagram DM users.', config: { tool: 'send_instagram_dm', recipient: '{{instagram.senderId}}', message_body: '{{flow.flowResponse}}' } },
   { type: 'action', title: 'Send Email', description: 'Send email via Gmail OAuth or SMTP.', config: { tool: 'send_email' } },
   { type: 'action', title: 'Create Draft Reply', description: 'Recommended Gmail action: AI creates a draft for approval.', config: { tool: 'create_gmail_draft_reply', gmail_message_id: '{{email.gmailMessageId}}', subject: 'Re: {{email.subject}}', body: '{{flow.flowResponse}}' } },
@@ -181,7 +184,9 @@ const visibleLibrary: LibraryBlock[] = [
   { type: 'action', title: 'Wait 1 Hour', description: 'Pause the flow for 1 hour before the next step.', config: { tool: 'wait_node', delay_minutes: 60 } },
   // ── Actions ───────────────────────────────────────────────────────────────
   { type: 'action', title: 'Send WhatsApp', description: 'Send WhatsApp message or approved template to the lead.', config: { tool: 'send_whatsapp_message', recipient: '{{lead.phone}}', message_body: '{{ai.response}}', message_mode: 'text', send_mode: 'live', language_code: 'en_US' } },
-  { type: 'action', title: 'Send WhatsApp Image/Video', description: 'Send a product image, video, PDF, or document to the customer via WhatsApp.', config: { tool: 'send_whatsapp_media', recipient: '{{lead.phone}}', media_type: 'image', media_url: '', caption: '{{ai.response}}', send_mode: 'live' } },
+  { type: 'action', title: 'Send Image', description: 'Send a JPG/PNG image to customer via WhatsApp. Use for product photos, flyers, brochure covers.', config: { tool: 'send_whatsapp_media', recipient: '{{lead.phone}}', media_type: 'image', media_url: '', caption: '', send_mode: 'live' } },
+  { type: 'action', title: 'Send PDF / Document', description: 'Send a PDF brochure, price list, invoice or any document to customer via WhatsApp.', config: { tool: 'send_whatsapp_media', recipient: '{{lead.phone}}', media_type: 'document', media_url: '', caption: 'Please find the document attached', filename: 'document.pdf', send_mode: 'live' } },
+  { type: 'action', title: 'Send Video', description: 'Send a product demo, explainer, or testimonial video to customer via WhatsApp.', config: { tool: 'send_whatsapp_media', recipient: '{{lead.phone}}', media_type: 'video', media_url: '', caption: '', send_mode: 'live' } },
   { type: 'action', title: 'Send WhatsApp Menu', description: 'Send an interactive list/menu message with up to 10 options for the customer to choose from.', config: { tool: 'send_whatsapp_list_message', recipient: '{{lead.phone}}', body_text: 'Please choose a service:', button_text: 'View Options', send_mode: 'live', sections: '[{"title":"Services","rows":[{"id":"opt_1","title":"Option 1"},{"id":"opt_2","title":"Option 2"}]}]' } },
   { type: 'action', title: 'WhatsApp Buttons (3)', description: 'Send up to 3 quick-reply buttons that customers can tap instantly.', config: { tool: 'send_whatsapp_buttons', recipient: '{{lead.phone}}', body_text: 'Which option suits you best?', buttons: '[{"id":"btn_0","title":"Option 1"},{"id":"btn_1","title":"Option 2"},{"id":"btn_2","title":"Option 3"}]', send_mode: 'live' } },
   { type: 'action', title: 'WhatsApp CTA Button', description: 'Send a call-to-action button that opens a URL or calls a phone number.', config: { tool: 'send_whatsapp_cta', recipient: '{{lead.phone}}', body_text: 'Click below to learn more:', buttons: '[{"type":"url","text":"Visit Website","url":"https://your-site.com"}]', send_mode: 'live' } },
@@ -3056,11 +3061,22 @@ function ActionBlockSettings({
       {tool === 'send_whatsapp_media' && (
         <div className="space-y-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-bold text-emerald-950">Send WhatsApp Media</p>
+            <p className="text-sm font-bold text-emerald-950">
+            {config.media_type === 'document' ? '📄 Send PDF / Document' : config.media_type === 'video' ? '🎥 Send Video' : config.media_type === 'audio' ? '🎵 Send Audio' : '🖼️ Send Image'}
+          </p>
             <span className="rounded-full bg-white px-2 py-1 text-[10px] font-bold uppercase text-emerald-700">{integrationStatusFor('meta')}</span>
           </div>
           <SelectField label="Media type" value={config.media_type || 'image'} options={['image', 'video', 'document', 'audio']} onChange={(value) => onChange('media_type', value)} />
-          <InputField label="Media URL (public HTTPS link)" value={config.media_url || ''} placeholder="https://yoursite.com/product.jpg" onChange={(value) => onChange('media_url', value)} />
+          <InputField
+            label="Media URL (public HTTPS link)"
+            value={config.media_url || ''}
+            placeholder={
+              config.media_type === 'document' ? 'https://yoursite.com/brochure.pdf' :
+              config.media_type === 'video' ? 'https://yoursite.com/demo.mp4' :
+              'https://yoursite.com/product.jpg'
+            }
+            onChange={(value) => onChange('media_url', value)}
+          />
           <InputField label="Caption (optional)" value={config.caption || ''} placeholder="{{ai.response}}" onChange={(value) => onChange('caption', value)} />
           {config.media_type === 'document' && (
             <InputField label="Filename for document" value={config.filename || ''} placeholder="brochure.pdf" onChange={(value) => onChange('filename', value)} />
