@@ -6,8 +6,9 @@ import {
   Clock, Loader2, MessageSquare, Plus, RefreshCw, Send, Users,
   X, XCircle, FileText, Calendar, Ban, ChevronLeft, ChevronRight,
   Globe, Smartphone, Trash2, Eye, Upload, Download, Filter,
+  Search,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { Button } from '@/components/button';
@@ -160,6 +161,13 @@ const COL = '36px minmax(150px,1fr) 88px 96px 68px 108px 44px 48px 52px 48px 48p
 const TickSent     = () => <svg width="16" height="11" viewBox="0 0 16 11" fill="none"><path d="M1 5.5L5.5 10L15 1" stroke="#9CA3AF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>;
 const TickDelivered= () => <svg width="20" height="11" viewBox="0 0 20 11" fill="none"><path d="M1 5.5L5.5 10L15 1" stroke="#9CA3AF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/><path d="M6 5.5L10.5 10L20 1" stroke="#9CA3AF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>;
 const TickRead     = () => <svg width="20" height="11" viewBox="0 0 20 11" fill="none"><path d="M1 5.5L5.5 10L15 1" stroke="#06B6D4" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/><path d="M6 5.5L10.5 10L20 1" stroke="#06B6D4" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+
+function ReceiptTicks({ status }: { status: string }) {
+  if (status === 'read') return <span className="inline-flex items-center gap-1 text-cyan-700"><TickRead /> Read</span>;
+  if (status === 'delivered') return <span className="inline-flex items-center gap-1 text-gray-600"><TickDelivered /> Delivered</span>;
+  if (status === 'sent') return <span className="inline-flex items-center gap-1 text-gray-600"><TickSent /> Sent</span>;
+  return null;
+}
 
 function exportToExcel(campaigns: Campaign[]) {
   const rows = campaigns.map((c, i) => [
@@ -555,7 +563,8 @@ function DetailDrawer({ name, onClose, onRefresh }: { name: string; onClose: () 
                       m.status === 'failed' ? 'bg-red-50 text-red-600' :
                       m.status === 'cancelled' ? 'bg-gray-100 text-gray-500' :
                       'bg-amber-50 text-amber-600'}`}>
-                      {m.status}
+                      <ReceiptTicks status={m.status} />
+                      {!['sent', 'delivered', 'read'].includes(m.status) && m.status}
                     </span>
                     {m.sent_at && <p className="text-[10px] text-gray-400 mt-0.5">{timeAgo(m.sent_at)}</p>}
                   </div>
@@ -1340,6 +1349,9 @@ export default function CampaignsPage() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [nameSearch, setNameSearch] = useState('');
+  const [templateFilter, setTemplateFilter] = useState('all');
+  const dateFromRef = useRef<HTMLInputElement>(null);
+  const dateToRef = useRef<HTMLInputElement>(null);
 
   // React Query — cached 30s, no refetch on nav away/back
   const { data: campaignData, isLoading: loading, refetch: load } = useCampaigns();
@@ -1354,6 +1366,7 @@ export default function CampaignsPage() {
       const q = nameSearch.toLowerCase();
       if (!c.name.toLowerCase().includes(q) && !(c.template_name || '').toLowerCase().includes(q)) return false;
     }
+    if (templateFilter !== 'all' && (c.template_name || '') !== templateFilter) return false;
     if (dateFrom && c.created_at) {
       const d = new Date(c.created_at.endsWith('Z') ? c.created_at : c.created_at + 'Z');
       if (d < new Date(dateFrom)) return false;
@@ -1368,6 +1381,7 @@ export default function CampaignsPage() {
   const tabCounts = Object.fromEntries(
     STATUS_TABS.slice(1).map(t => [t.key, campaigns.filter(c => c.status === t.key).length])
   );
+  const templateOptions = Array.from(new Set(campaigns.map(c => c.template_name).filter(Boolean))) as string[];
 
   return (
     <div className="space-y-5">
@@ -1390,34 +1404,56 @@ export default function CampaignsPage() {
       </div>
 
       {/* Filter bar */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <div className="relative flex-1 min-w-[180px] max-w-xs">
+      <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
+        <div className="flex items-center gap-2 flex-wrap">
+        <div className="relative flex-1 min-w-[220px] max-w-sm">
           <input
             value={nameSearch}
             onChange={e => setNameSearch(e.target.value)}
             placeholder="Search name or template…"
             className="w-full border border-gray-200 rounded-lg pl-8 pr-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white"
           />
-          <Filter className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
           {nameSearch && <button onClick={() => setNameSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"><X className="w-3 h-3" /></button>}
         </div>
+        <select value={templateFilter} onChange={e => setTemplateFilter(e.target.value)}
+          aria-label="Filter campaigns by template"
+          className="min-w-[160px] border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs text-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white">
+          <option value="all">All templates</option>
+          {templateOptions.map(template => <option key={template} value={template}>{template}</option>)}
+        </select>
         <div className="flex items-center gap-1.5 text-sm text-gray-500">
           <Filter className="w-3.5 h-3.5" /> Date:
         </div>
-        <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
-          className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white" />
+        <div className="relative">
+          <input ref={dateFromRef} type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
+            className="border border-gray-200 rounded-lg pl-2.5 pr-8 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white [&::-webkit-calendar-picker-indicator]:opacity-0" />
+          <button type="button" aria-label="Open start date picker"
+            onClick={() => { dateFromRef.current?.focus(); dateFromRef.current?.showPicker?.(); }}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-500">
+            <Calendar className="h-3.5 w-3.5" />
+          </button>
+        </div>
         <span className="text-xs text-gray-400">to</span>
-        <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
-          className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white" />
-        {(dateFrom || dateTo) && (
-          <button onClick={() => { setDateFrom(''); setDateTo(''); }}
+        <div className="relative">
+          <input ref={dateToRef} type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
+            className="border border-gray-200 rounded-lg pl-2.5 pr-8 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white [&::-webkit-calendar-picker-indicator]:opacity-0" />
+          <button type="button" aria-label="Open end date picker"
+            onClick={() => { dateToRef.current?.focus(); dateToRef.current?.showPicker?.(); }}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-500">
+            <Calendar className="h-3.5 w-3.5" />
+          </button>
+        </div>
+        {(nameSearch || templateFilter !== 'all' || dateFrom || dateTo) && (
+          <button onClick={() => { setNameSearch(''); setTemplateFilter('all'); setDateFrom(''); setDateTo(''); }}
             className="text-xs text-orange-500 hover:text-orange-700 font-medium flex items-center gap-1">
-            <X className="w-3 h-3" /> Clear
+            <X className="w-3 h-3" /> Clear filters
           </button>
         )}
         {filtered.length < campaigns.length && (
           <span className="text-xs text-gray-400">{filtered.length} of {campaigns.length} shown</span>
         )}
+        </div>
       </div>
 
       {/* Status tabs */}
