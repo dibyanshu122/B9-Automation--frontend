@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Bot, Check, CheckCheck, FileText, Loader2, MapPin, MessageCircle, MoreVertical, Play, Search, Send, Tag, Trash2, User, XCircle, Zap, Paperclip, Image as ImageIcon, Mic, Phone, ShoppingCart, Sticker } from 'lucide-react';
+import { ArrowLeft, Bot, Check, CheckCheck, FileText, Loader2, MapPin, MessageCircle, MoreVertical, Play, Search, Send, Tag, Trash2, User, XCircle, Zap, Paperclip, Image as ImageIcon, Mic, Phone, ShoppingCart, Sticker, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/button';
 import { useApi } from '@/hooks/useApi';
 import { useAuthStore } from '@/store/authStore';
@@ -313,6 +313,8 @@ function UnifiedInbox() {
   const [filter, setFilter] = useState<'all' | 'whatsapp' | 'instagram' | 'facebook'>('all');
   const [scoreFilter, setScoreFilter] = useState<'all' | 'hot' | 'warm' | 'cold'>('all');
   const [unreadOnly, setUnreadOnly] = useState(false);
+  const [filterPanelOpen, setFilterPanelOpen] = useState(false);
+  const filterPanelRef = useRef<HTMLDivElement>(null);
   const [selected, setSelected] = useState<Contact | null>(null);
   const [thread, setThread] = useState<any[]>([]);
   const [threadLoading, setThreadLoading] = useState(false);
@@ -433,11 +435,12 @@ function UnifiedInbox() {
       .catch(() => {});
   }, []); // eslint-disable-line
 
-  // Close quick reply / template dropdowns on outside click
+  // Close quick reply / template / filter dropdowns on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (qrRef.current && !qrRef.current.contains(e.target as Node)) setQrOpen(false);
       if (tplRef.current && !tplRef.current.contains(e.target as Node)) setTplOpen(false);
+      if (filterPanelRef.current && !filterPanelRef.current.contains(e.target as Node)) setFilterPanelOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -637,10 +640,90 @@ function UnifiedInbox() {
           <div className="px-4 py-3 bg-[#f0f2f5] flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <h1 className="font-bold text-gray-800 text-xl">Chats</h1>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 <button className="p-2 rounded-full hover:bg-gray-200 text-gray-500 transition">
                   <MessageCircle className="h-5 w-5" />
                 </button>
+                {/* Filter button with active-indicator dot */}
+                <div ref={filterPanelRef} className="relative">
+                  <button
+                    onClick={() => setFilterPanelOpen(o => !o)}
+                    className={`relative p-2 rounded-full transition ${filterPanelOpen ? 'bg-gray-200 text-gray-800' : 'hover:bg-gray-200 text-gray-500'}`}
+                    title="Filter chats"
+                  >
+                    <SlidersHorizontal className="h-5 w-5" />
+                    {/* Active dot — shows when any filter is on */}
+                    {(scoreFilter !== 'all' || unreadOnly) && (
+                      <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-green-500 border-2 border-[#f0f2f5]" />
+                    )}
+                  </button>
+
+                  {/* Dropdown panel */}
+                  {filterPanelOpen && (
+                    <div className="absolute right-0 top-10 z-50 w-56 rounded-2xl bg-white border border-gray-100 shadow-xl py-2 overflow-hidden">
+                      {/* Header */}
+                      <div className="px-4 py-2 flex items-center justify-between border-b border-gray-100">
+                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Filter Chats</span>
+                        {(scoreFilter !== 'all' || unreadOnly) && (
+                          <button
+                            onClick={() => { setScoreFilter('all'); setUnreadOnly(false); }}
+                            className="text-[10px] font-semibold text-red-500 hover:text-red-700"
+                          >
+                            Clear all
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Lead Score section */}
+                      <div className="px-4 pt-3 pb-2">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-2">Lead Score</p>
+                        <div className="space-y-1">
+                          {([
+                            { key: 'all',  label: 'All leads',  icon: '·', active: 'bg-gray-100 text-gray-800' },
+                            { key: 'hot',  label: '🔥 Hot',     icon: '', active: 'bg-red-50 text-red-700' },
+                            { key: 'warm', label: '☀️ Warm',    icon: '', active: 'bg-amber-50 text-amber-700' },
+                            { key: 'cold', label: '❄️ Cold',    icon: '', active: 'bg-sky-50 text-sky-700' },
+                          ] as const).map(opt => (
+                            <button
+                              key={opt.key}
+                              onClick={() => setScoreFilter(opt.key)}
+                              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition ${
+                                scoreFilter === opt.key
+                                  ? opt.active
+                                  : 'text-gray-600 hover:bg-gray-50'
+                              }`}
+                            >
+                              <span>{opt.label}</span>
+                              {scoreFilter === opt.key && (
+                                <span className="text-xs">✓</span>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Divider */}
+                      <div className="h-px bg-gray-100 mx-4" />
+
+                      {/* Unread toggle */}
+                      <div className="px-4 py-3">
+                        <button
+                          onClick={() => setUnreadOnly(v => !v)}
+                          className="w-full flex items-center justify-between"
+                        >
+                          <div>
+                            <p className="text-sm font-medium text-gray-800 text-left">Unread only</p>
+                            <p className="text-[11px] text-gray-400 text-left">Show only unread messages</p>
+                          </div>
+                          <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors shrink-0 ml-3 ${unreadOnly ? 'bg-green-500' : 'bg-gray-200'}`}>
+                            <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${unreadOnly ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <button className="p-2 rounded-full hover:bg-gray-200 text-gray-500 transition">
                   <MoreVertical className="h-5 w-5" />
                 </button>
@@ -673,30 +756,6 @@ function UnifiedInbox() {
                   {ch === 'all' ? 'All' : <span className="flex items-center gap-1.5"><ChannelIcon channel={ch} size={14} /><span className="hidden lg:inline">{CHANNEL_BADGE[ch]?.label}</span></span>}
                 </button>
               ))}
-            </div>
-            {/* Score filter + Unread toggle */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
-              {(['all', 'hot', 'warm', 'cold'] as const).map(s => (
-                <button key={s} onClick={() => setScoreFilter(s)}
-                  className={`shrink-0 rounded-full px-3 py-1 text-[12px] font-medium transition-all border ${
-                    scoreFilter === s
-                      ? s === 'hot' ? 'bg-red-100 border-red-200 text-red-700'
-                        : s === 'warm' ? 'bg-amber-100 border-amber-200 text-amber-700'
-                        : s === 'cold' ? 'bg-sky-100 border-sky-200 text-sky-700'
-                        : 'bg-green-100 border-green-200 text-green-800'
-                      : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
-                  }`}>
-                  {s === 'all' ? 'All leads' : s === 'hot' ? '🔥 Hot' : s === 'warm' ? '☀️ Warm' : '❄️ Cold'}
-                </button>
-              ))}
-              <button
-                onClick={() => setUnreadOnly(v => !v)}
-                className={`shrink-0 ml-auto rounded-full px-3 py-1 text-[12px] font-medium transition-all border ${
-                  unreadOnly ? 'bg-blue-100 border-blue-200 text-blue-700' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
-                }`}
-              >
-                {unreadOnly ? '● Unread' : 'Unread'}
-              </button>
             </div>
           </div>
 
