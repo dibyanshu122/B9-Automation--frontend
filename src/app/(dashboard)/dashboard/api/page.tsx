@@ -79,6 +79,77 @@ const METHOD_COLORS: Record<string, string> = {
   PATCH: 'bg-amber-100 text-amber-700', DELETE: 'bg-red-100 text-red-700',
 };
 
+function WebhookSigningCard() {
+  const { get, post } = useApi();
+  const [secret, setSecret] = useState('');
+  const [loaded, setLoaded] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const loadSecret = async () => {
+    setLoading(true);
+    try {
+      const r = await get('/api/auth/webhook-secret');
+      setSecret(r.data?.webhook_secret || '');
+      setLoaded(true);
+    } catch { setSecret(''); setLoaded(true); }
+    finally { setLoading(false); }
+  };
+
+  const regenerate = async () => {
+    if (!confirm('Regenerate webhook secret? Your existing integrations will break until updated.')) return;
+    setLoading(true);
+    try {
+      const r = await post('/api/auth/webhook-secret/regenerate', {});
+      setSecret(r.data?.webhook_secret || '');
+    } catch { /* silent */ }
+    finally { setLoading(false); }
+  };
+
+  const copy = () => {
+    navigator.clipboard.writeText(secret).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
+  };
+
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white p-5 space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="font-bold text-gray-900">Webhook Signing Secret</h2>
+          <p className="text-xs text-gray-400 mt-0.5">Use this to verify that webhook payloads come from B9 (HMAC-SHA256 signature)</p>
+        </div>
+        {!loaded && (
+          <button onClick={loadSecret} disabled={loading}
+            className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-100 transition disabled:opacity-50">
+            {loading ? 'Loading…' : 'Reveal Secret'}
+          </button>
+        )}
+      </div>
+      {loaded && (
+        <>
+          <div className="flex items-center gap-2 rounded-xl bg-gray-950 px-4 py-3">
+            <code className="flex-1 text-xs font-mono text-emerald-400 truncate">{secret || 'No secret set yet'}</code>
+            <button onClick={copy} className="text-xs font-semibold text-gray-400 hover:text-white transition shrink-0">
+              {copied ? '✓ Copied' : 'Copy'}
+            </button>
+          </div>
+          <button onClick={regenerate} disabled={loading}
+            className="text-xs font-semibold text-red-500 hover:text-red-700 transition disabled:opacity-40">
+            ↻ Regenerate secret
+          </button>
+          <div className="rounded-xl bg-gray-50 border border-gray-100 p-3 text-xs text-gray-600 space-y-1.5">
+            <p className="font-bold text-gray-700">Verify in your backend:</p>
+            <pre className="bg-gray-900 text-emerald-400 rounded-lg p-2.5 overflow-x-auto text-[11px]">{`import hmac, hashlib
+
+def verify_b9_webhook(payload_bytes, signature_header, secret):
+    expected = hmac.new(secret.encode(), payload_bytes, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(f"sha256={expected}", signature_header)`}</pre>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function ApiKeysPage() {
   const { get, post, delete: del } = useApi();
   const [tab, setTab] = useState<'keys' | 'docs' | 'logs'>('keys');
@@ -495,6 +566,11 @@ export default function ApiKeysPage() {
             </div>
           </Card>
         </div>
+      )}
+
+      {/* ── WEBHOOK SIGNING ── */}
+      {tab === 'keys' && (
+        <WebhookSigningCard />
       )}
 
       {/* ── LOGS TAB ── */}

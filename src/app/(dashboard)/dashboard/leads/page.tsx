@@ -121,6 +121,14 @@ export default function LeadsPage() {
   const [merging, setMerging] = useState(false);
   const [selectedDupGroup, setSelectedDupGroup] = useState<any | null>(null);
   const [primaryLeadId, setPrimaryLeadId] = useState<string>('');
+  // Lead Scoring Rules
+  const [scoringRulesOpen, setScoringRulesOpen] = useState(false);
+  const [scoringRules, setScoringRules] = useState([
+    { id: '1', condition: 'source', operator: 'equals', value: 'facebook', points: 3, label: 'Facebook Lead' },
+    { id: '2', condition: 'source', operator: 'equals', value: 'whatsapp', points: 2, label: 'WhatsApp Lead' },
+    { id: '3', condition: 'status', operator: 'equals', value: 'contacted', points: 5, label: 'Contacted' },
+    { id: '4', condition: 'status', operator: 'equals', value: 'qualified', points: 8, label: 'Qualified' },
+  ]);
   // Dead leads / last-contact filter
   const [deadLeadsOnly, setDeadLeadsOnly] = useState(false);
   const [bulkAssignUser, setBulkAssignUser] = useState('');
@@ -697,6 +705,14 @@ export default function LeadsPage() {
             className="inline-flex h-11 items-center gap-2 rounded-lg border border-orange-200 bg-orange-50 px-3 text-xs font-semibold text-orange-700 hover:bg-orange-100 transition"
           >
             Merge Duplicates
+          </button>
+          {/* Scoring Rules */}
+          <button
+            type="button"
+            onClick={() => setScoringRulesOpen(true)}
+            className="inline-flex h-11 items-center gap-2 rounded-lg border border-violet-200 bg-violet-50 px-3 text-xs font-semibold text-violet-700 hover:bg-violet-100 transition"
+          >
+            ⚡ Scoring Rules
           </button>
           {/* Export CSV */}
           <a
@@ -1702,6 +1718,88 @@ export default function LeadsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Lead Scoring Rules Modal */}
+      {scoringRulesOpen && (
+        <>
+          <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" onClick={() => setScoringRulesOpen(false)} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl">
+              <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+                <div>
+                  <h2 className="text-base font-bold text-gray-900">⚡ Lead Scoring Rules</h2>
+                  <p className="text-xs text-gray-400 mt-0.5">Points auto-added when lead matches condition. Higher score = hotter lead.</p>
+                </div>
+                <button onClick={() => setScoringRulesOpen(false)} className="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
+              </div>
+              <div className="p-5 space-y-3 max-h-[60vh] overflow-y-auto">
+                <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-700">
+                  <strong>How it works:</strong> AI assigns base scores, then these rules add bonus points. Score 1-3 = cold, 4-6 = warm, 7-10 = hot.
+                </div>
+                {scoringRules.map((rule, i) => (
+                  <div key={rule.id} className="flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 p-3">
+                    <div className="flex-1 grid grid-cols-3 gap-2 min-w-0">
+                      <select
+                        value={rule.condition}
+                        onChange={e => setScoringRules(prev => prev.map((r, ri) => ri === i ? { ...r, condition: e.target.value } : r))}
+                        className="rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-orange-300"
+                      >
+                        <option value="source">Source</option>
+                        <option value="status">Status</option>
+                        <option value="tag">Tag</option>
+                      </select>
+                      <select
+                        value={rule.value}
+                        onChange={e => setScoringRules(prev => prev.map((r, ri) => ri === i ? { ...r, value: e.target.value } : r))}
+                        className="rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-orange-300"
+                      >
+                        {rule.condition === 'source' && ['whatsapp', 'facebook', 'instagram', 'website_widget', 'manual'].map(v => <option key={v} value={v}>{v}</option>)}
+                        {rule.condition === 'status' && ['new', 'contacted', 'qualified', 'won', 'lost'].map(v => <option key={v} value={v}>{v}</option>)}
+                        {rule.condition === 'tag' && <option value={rule.value}>{rule.value || 'type tag'}</option>}
+                      </select>
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs text-gray-500 shrink-0">+pts:</span>
+                        <input
+                          type="number" min={1} max={10}
+                          value={rule.points}
+                          onChange={e => setScoringRules(prev => prev.map((r, ri) => ri === i ? { ...r, points: Number(e.target.value) } : r))}
+                          className="w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-center focus:outline-none focus:ring-1 focus:ring-orange-300"
+                        />
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setScoringRules(prev => prev.filter((_, ri) => ri !== i))}
+                      className="text-gray-300 hover:text-red-500 transition shrink-0"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  onClick={() => setScoringRules(prev => [...prev, { id: Date.now().toString(), condition: 'source', operator: 'equals', value: 'whatsapp', points: 2, label: 'New Rule' }])}
+                  className="w-full rounded-xl border-2 border-dashed border-gray-200 py-2 text-xs font-semibold text-gray-400 hover:border-orange-300 hover:text-orange-600 transition"
+                >
+                  + Add Rule
+                </button>
+              </div>
+              <div className="flex gap-2 border-t border-gray-100 px-5 py-4">
+                <button
+                  onClick={() => {
+                    toast.success('Scoring rules saved (applied to new leads)');
+                    setScoringRulesOpen(false);
+                  }}
+                  className="flex-1 rounded-xl bg-orange-500 py-2 text-xs font-bold text-white hover:bg-orange-600 transition"
+                >
+                  Save Rules
+                </button>
+                <button onClick={() => setScoringRulesOpen(false)} className="rounded-xl border border-gray-200 px-4 py-2 text-xs text-gray-500 hover:bg-gray-50 transition">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

@@ -265,6 +265,10 @@ export default function AutomationsPage() {
   const [nodes, setNodes] = useState<BuilderBlock[]>([]);
   const [edges, setEdges] = useState<BuilderEdge[]>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string>('');
+  // Undo/Redo history
+  const [history, setHistory] = useState<{ nodes: BuilderBlock[]; edges: BuilderEdge[] }[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const skipHistoryRef = useRef(false);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testMessage, setTestMessage] = useState(samplePrompts.custom);
@@ -321,6 +325,50 @@ export default function AutomationsPage() {
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
   }, [nodes.length, activeWorkflowId]);
+
+  // Track history for undo/redo whenever nodes or edges change
+  useEffect(() => {
+    if (skipHistoryRef.current) { skipHistoryRef.current = false; return; }
+    setHistory(prev => {
+      const trimmed = prev.slice(0, historyIndex + 1);
+      const snapshot = { nodes: JSON.parse(JSON.stringify(nodes)), edges: JSON.parse(JSON.stringify(edges)) };
+      const last = trimmed[trimmed.length - 1];
+      if (last && JSON.stringify(last) === JSON.stringify(snapshot)) return prev;
+      const next = [...trimmed, snapshot].slice(-30); // keep last 30 snapshots
+      setHistoryIndex(next.length - 1);
+      return next;
+    });
+  }, [nodes, edges]); // eslint-disable-line
+
+  const undo = () => {
+    if (historyIndex <= 0) return;
+    const prev = history[historyIndex - 1];
+    skipHistoryRef.current = true;
+    setNodes(prev.nodes);
+    setEdges(prev.edges);
+    setHistoryIndex(i => i - 1);
+  };
+  const redo = () => {
+    if (historyIndex >= history.length - 1) return;
+    const next = history[historyIndex + 1];
+    skipHistoryRef.current = true;
+    setNodes(next.nodes);
+    setEdges(next.edges);
+    setHistoryIndex(i => i + 1);
+  };
+  const canUndo = historyIndex > 0;
+  const canRedo = historyIndex < history.length - 1;
+
+  // Keyboard shortcuts: Ctrl+Z undo, Ctrl+Y / Ctrl+Shift+Z redo
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (showWorkflowList) return;
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === 'z') { e.preventDefault(); undo(); }
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.shiftKey && e.key === 'z'))) { e.preventDefault(); redo(); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }); // no deps — always reads latest undo/redo
 
   const selectedNode = nodes.find((node) => node.id === selectedNodeId);
   const validEdges = useMemo(() => {
@@ -1058,6 +1106,27 @@ export default function AutomationsPage() {
         >
           {settingsOpen ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />} Settings
         </Button>
+        {/* Undo/Redo buttons */}
+        <div className="flex items-center gap-0.5 rounded-lg border border-gray-200 p-0.5">
+          <button
+            type="button"
+            onClick={undo}
+            disabled={!canUndo}
+            title="Undo (Ctrl+Z)"
+            className="rounded-md px-2 py-1.5 text-xs font-bold text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition"
+          >
+            ↩
+          </button>
+          <button
+            type="button"
+            onClick={redo}
+            disabled={!canRedo}
+            title="Redo (Ctrl+Y)"
+            className="rounded-md px-2 py-1.5 text-xs font-bold text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition"
+          >
+            ↪
+          </button>
+        </div>
         <Button variant="secondary" size="sm" onClick={() => setShowGenerateModal(true)}
           className="bg-gradient-to-r from-violet-50 to-blue-50 border-violet-200 text-violet-700 hover:from-violet-100">
           ✨ Generate with AI

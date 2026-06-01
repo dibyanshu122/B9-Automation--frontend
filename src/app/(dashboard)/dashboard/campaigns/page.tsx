@@ -203,9 +203,23 @@ function CampaignTable({ campaigns, onDetail, onRefresh }: { campaigns: Campaign
 }
 
 function CampaignRow({ idx, c, onDetail, onRefresh }: { idx: number; c: Campaign; onDetail: (name: string) => void; onRefresh: () => void }) {
-  const { post } = useApi();
+  const { post, get } = useApi();
   const [menuOpen, setMenuOpen] = useState(false);
   const [acting, setActing] = useState<string | null>(null);
+  const [abModal, setAbModal] = useState(false);
+  const [abData, setAbData] = useState<any>(null);
+  const [abLoading, setAbLoading] = useState(false);
+
+  const openAbResults = async () => {
+    setMenuOpen(false);
+    setAbModal(true);
+    setAbLoading(true);
+    try {
+      const r = await get(`/api/campaigns/${encodeURIComponent(c.name)}/ab-results`);
+      setAbData(r.data);
+    } catch { setAbData(null); }
+    finally { setAbLoading(false); }
+  };
   const cfg = STATUS_CONFIG[c.status] || STATUS_CONFIG.completed;
 
   const doAction = async (action: string) => {
@@ -240,6 +254,7 @@ function CampaignRow({ idx, c, onDetail, onRefresh }: { idx: number; c: Campaign
   const read = c.read ?? 0;
 
   return (
+    <>
     <div className={`relative grid px-4 py-3 items-center text-sm transition border-t border-gray-100 hover:bg-slate-50/60 ${idx % 2 === 1 ? 'bg-gray-50/30' : 'bg-white'}`}
       style={{ gridTemplateColumns: COL }}>
       <div className="text-xs text-gray-400">{idx + 1}</div>
@@ -304,15 +319,88 @@ function CampaignRow({ idx, c, onDetail, onRefresh }: { idx: number; c: Campaign
               {c.status === 'paused' && <button onClick={() => doAction('resume')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-emerald-600 flex items-center gap-2">▶ Resume Campaign</button>}
               {(c.status === 'sending' || c.status === 'scheduled') && <button onClick={() => doAction('cancel')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-red-500 flex items-center gap-2"><Ban className="w-3.5 h-3.5" /> Cancel</button>}
               <button onClick={() => doAction('clone')} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-violet-600 flex items-center gap-2"><RefreshCw className="w-3.5 h-3.5" /> Clone as Draft</button>
+              <button onClick={openAbResults} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-indigo-600 flex items-center gap-2"><BarChart2 className="w-3.5 h-3.5" /> A/B Test Results</button>
             </div>
           </>
         )}
       </div>
     </div>
+
+    {/* A/B Results Modal — rendered as sibling via fragment */}
+
+    {abModal && (
+      <>
+        <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={() => setAbModal(false)} />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+              <h2 className="text-base font-bold text-gray-900">A/B Test Results — {c.name}</h2>
+              <button onClick={() => setAbModal(false)} className="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
+            </div>
+            <div className="p-5">
+              {abLoading && <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-gray-400" /></div>}
+              {!abLoading && (!abData?.ab_test || !abData?.variants?.length) && (
+                <div className="text-center py-8 text-gray-400">
+                  <BarChart2 className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                  <p className="text-sm">No A/B test data found for this campaign.</p>
+                  <p className="text-xs mt-1">Enable A/B testing when creating a campaign.</p>
+                </div>
+              )}
+              {!abLoading && abData?.ab_test && abData?.variants?.length > 0 && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    {abData.variants.map((v: any) => {
+                      const deliveryRate = v.total ? Math.round((v.delivered / v.total) * 100) : 0;
+                      const readRate = v.total ? Math.round((v.read / v.total) * 100) : 0;
+                      const isWinner = abData.variants.length === 2 &&
+                        v.read >= Math.max(...abData.variants.map((x: any) => x.read));
+                      return (
+                        <div key={v.variant_key}
+                          className={`rounded-xl border-2 p-4 ${isWinner ? 'border-emerald-300 bg-emerald-50' : 'border-gray-200 bg-gray-50'}`}>
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${v.variant_key === 'A' ? 'bg-violet-100 text-violet-700' : 'bg-orange-100 text-orange-700'}`}>
+                              Variant {v.variant_key}
+                            </span>
+                            {isWinner && <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded-full">🏆 Winner</span>}
+                          </div>
+                          <p className="text-xs text-gray-500 truncate mb-3">{v.template_name || '—'}</p>
+                          <div className="space-y-2">
+                            {[
+                              { label: 'Sent', value: v.total, color: 'bg-gray-400' },
+                              { label: 'Delivered', value: v.delivered, pct: deliveryRate, color: 'bg-blue-400' },
+                              { label: 'Read', value: v.read, pct: readRate, color: 'bg-emerald-400' },
+                            ].map(stat => (
+                              <div key={stat.label}>
+                                <div className="flex justify-between text-[11px] text-gray-500 mb-0.5">
+                                  <span>{stat.label}</span>
+                                  <span className="font-bold text-gray-800">{stat.value}{stat.pct !== undefined ? ` (${stat.pct}%)` : ''}</span>
+                                </div>
+                                <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                  <div className={`h-full ${stat.color} rounded-full transition-all`}
+                                    style={{ width: `${stat.pct ?? (v.total ? (stat.value / v.total) * 100 : 0)}%` }} />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p className="text-[11px] text-gray-400 text-center">
+                    Winner determined by read rate. Minimum 100 sends needed for statistical significance.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </>
+    )}
+    </>
   );
 }
 
-//  Status Bar (keep for detail drawer) 
+//  Status Bar (keep for detail drawer)
 
 function StatusBar({ sent, failed, queued, total }: { sent: number; failed: number; queued: number; total: number }) {
   void queued;
@@ -761,6 +849,13 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
         language_code: selected?.language || 'en_US',
         template_variables: vars.length ? vars : null,
         save_as_draft: saveAsDraft,
+        // A/B test
+        ...(abEnabled && selectedB ? {
+          ab_test: true,
+          ab_variant_a_template: selected?.name,
+          ab_variant_b_template: selectedB?.name,
+          ab_split: abSplit,
+        } : {}),
       };
       if (recipientMode === 'excel') {
         payload.phone_list = excelPhones;
@@ -778,12 +873,18 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
   };
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [dropdownBOpen, setDropdownBOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'setup' | 'send'>('setup');
   const inputCls = 'w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500';
+  // A/B test state
+  const [abEnabled, setAbEnabled] = useState(false);
+  const [selectedB, setSelectedB] = useState<any>(null);
+  const [abSplit, setAbSplit] = useState(50);
 
   const canProceed = selected && name.trim() &&
     !vars.some(v => !v.trim()) &&
-    (recipientMode === 'excel' ? excelPhones.length > 0 : true);
+    (recipientMode === 'excel' ? excelPhones.length > 0 : true) &&
+    (!abEnabled || selectedB);
 
   return (
     <AnimatePresence>
@@ -1062,9 +1163,82 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
             </div>
           )}
 
+          {/* A/B Test Toggle */}
+          {activeTab === 'setup' && selected && recipientMode === 'leads' && (
+            <div className="rounded-xl border border-dashed border-violet-200 bg-violet-50/40 p-3">
+              <div className="flex items-center justify-between mb-0">
+                <div>
+                  <p className="text-sm font-bold text-violet-900">A/B Testing</p>
+                  <p className="text-[11px] text-violet-600">Send two template variants, compare which performs better</p>
+                </div>
+                <button
+                  onClick={() => { setAbEnabled(v => !v); setSelectedB(null); }}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${abEnabled ? 'bg-violet-600' : 'bg-gray-200'}`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${abEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+              </div>
+
+              {abEnabled && (
+                <div className="mt-3 space-y-3">
+                  {/* Variant A label */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold bg-violet-600 text-white px-2 py-0.5 rounded-full">A</span>
+                    <span className="text-xs text-gray-600 font-medium">{selected?.name}</span>
+                    <span className="text-[10px] text-gray-400">(already selected above)</span>
+                  </div>
+
+                  {/* Variant B selector */}
+                  <div className="relative">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[10px] font-bold bg-orange-500 text-white px-2 py-0.5 rounded-full">B</span>
+                      <label className="text-xs font-semibold text-gray-700">Select Variant B template</label>
+                    </div>
+                    <button type="button" onClick={() => setDropdownBOpen(o => !o)}
+                      className={`w-full text-left border rounded-xl px-3 py-2.5 text-sm flex items-center justify-between bg-white transition ${dropdownBOpen ? 'border-violet-400 ring-2 ring-violet-200' : 'border-gray-200 hover:border-gray-400'}`}>
+                      {selectedB ? (
+                        <span className="font-semibold text-gray-800 truncate">{selectedB.name}</span>
+                      ) : (
+                        <span className="text-gray-400">Choose a different template for B…</span>
+                      )}
+                      <ChevronRight className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform ${dropdownBOpen ? 'rotate-90' : ''}`} />
+                    </button>
+                    {dropdownBOpen && (
+                      <div className="absolute left-0 right-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                        {templates.filter(t => t.name !== selected?.name).map(tpl => (
+                          <button key={tpl.name} onClick={() => { setSelectedB(tpl); setDropdownBOpen(false); }}
+                            className={`w-full text-left px-3 py-2.5 text-sm hover:bg-gray-50 border-b border-gray-50 last:border-0 ${selectedB?.name === tpl.name ? 'bg-violet-50' : ''}`}>
+                            <p className="font-semibold text-gray-800 truncate">{tpl.name}</p>
+                            <p className="text-xs text-gray-400 truncate">{tpl.components?.find((c: any) => c.type === 'BODY')?.text || ''}</p>
+                          </button>
+                        ))}
+                        {templates.filter(t => t.name !== selected?.name).length === 0 && (
+                          <p className="p-3 text-xs text-gray-400">No other approved templates available</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Split % */}
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700 mb-1 block">
+                      Split ratio — <span className="text-violet-700">A: {abSplit}%</span> · <span className="text-orange-600">B: {100 - abSplit}%</span>
+                    </label>
+                    <input type="range" min={10} max={90} step={5} value={abSplit}
+                      onChange={e => setAbSplit(Number(e.target.value))}
+                      className="w-full accent-violet-600" />
+                    <div className="flex justify-between text-[10px] text-gray-400 mt-0.5">
+                      <span>10%</span><span>50/50</span><span>90%</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* WhatsApp Preview — always visible in Tab 1 */}
           {activeTab === 'setup' && selected && (
-            <WaPreview template={selected} vars={vars} />
+            <WaPreview template={abEnabled && selectedB ? null : selected} vars={vars} />
           )}
 
           {/* TAB 2: Preview + Schedule */}

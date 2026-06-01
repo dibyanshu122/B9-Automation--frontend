@@ -3,6 +3,7 @@
 import { Navbar } from '@/components/navbar';
 import { Sidebar } from '@/components/sidebar';
 import { ErrorBoundary } from '@/components/error-boundary';
+import { CommandPalette } from '@/components/command-palette';
 import { useAuthStore } from '@/store/authStore';
 import { useUIStore } from '@/store/uiStore';
 import { useApi } from '@/hooks/useApi';
@@ -93,6 +94,7 @@ export default function DashboardLayout({
 
   return (
     <div ref={shellRef} className="b9-command-shell h-screen" onPointerMove={handlePointerMove}>
+      <CommandPalette />
       <Navbar />
       <div className="relative z-10 flex h-[calc(100vh-64px)] min-w-0 mt-16">
         <Sidebar />
