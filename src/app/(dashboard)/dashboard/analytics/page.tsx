@@ -115,15 +115,33 @@ export default function AnalyticsPage() {
             </p>
           </div>
           {/* Global date range selector — reloads ALL sections */}
-          <div className="flex items-center gap-1 rounded-lg border border-gray-200 p-0.5 bg-gray-50 self-start mt-1">
-            {[7, 14, 30, 90].map(d => (
-              <button key={d}
-                onClick={() => setGlobalDays(d)}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition ${globalDays === d ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
-                {d}d
-              </button>
-            ))}
-            {loading && <span className="w-3.5 h-3.5 border-2 border-orange-400 border-t-transparent rounded-full animate-spin ml-1" />}
+          <div className="flex flex-col items-end gap-2 self-start mt-1">
+            <div className="flex items-center gap-1 rounded-lg border border-gray-200 p-0.5 bg-gray-50">
+              {[7, 14, 30, 90].map(d => (
+                <button key={d}
+                  onClick={() => setGlobalDays(d)}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition ${globalDays === d ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+                  {d}d
+                </button>
+              ))}
+              {loading && <span className="w-3.5 h-3.5 border-2 border-orange-400 border-t-transparent rounded-full animate-spin ml-1" />}
+            </div>
+            {/* Custom date range */}
+            <div className="flex items-center gap-1.5 text-xs text-gray-500">
+              <span className="font-medium">Custom:</span>
+              <input
+                type="date"
+                className="border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white"
+                onChange={e => {
+                  if (e.target.value) {
+                    const from = new Date(e.target.value);
+                    const days = Math.max(1, Math.round((Date.now() - from.getTime()) / 86400000));
+                    setGlobalDays(days);
+                  }
+                }}
+              />
+              <span className="text-gray-400">to today</span>
+            </div>
           </div>
         </div>
       </div>

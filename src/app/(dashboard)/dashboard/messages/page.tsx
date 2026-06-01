@@ -72,6 +72,7 @@ interface Contact {
   last_time: string;
   unread: number;
   lead_score?: string; // hot | warm | cold
+  assigned_agent?: string | null; // agent name/email who has this convo open
 }
 
 /* 24-hour window helper */
@@ -336,6 +337,10 @@ function UnifiedInbox() {
   const [tplOpen, setTplOpen] = useState(false);
   const [tplSearch, setTplSearch] = useState('');
   const [sendingTemplate, setSendingTemplate] = useState(false);
+  // Team presence — track who's viewing this conversation
+  const [assignedAgent, setAssignedAgent] = useState<string | null>(null);
+  const [assigningToMe, setAssigningToMe] = useState(false);
+  const { user } = useAuthStore();
   const [templateDraft, setTemplateDraft] = useState<{ template: any; body: string; values: string[] } | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const chatBoxRef = useRef<HTMLDivElement>(null);
@@ -499,6 +504,29 @@ function UnifiedInbox() {
       .catch(() => { setLeadProfile(null); setLeadMemory([]); })
       .finally(() => setProfileLoading(false));
   }, [selected?.sender_id]); // eslint-disable-line
+
+  // Load lead assignment when contact selected
+  useEffect(() => {
+    if (!selected) { setAssignedAgent(null); return; }
+    get(`/api/leads?phone=${encodeURIComponent(selected.sender_id)}&limit=1`)
+      .then(r => {
+        const lead = (r.data?.leads || r.data || [])[0];
+        setAssignedAgent(lead?.assigned_to_name || lead?.assigned_to_email || null);
+      })
+      .catch(() => setAssignedAgent(null));
+  }, [selected?.sender_id]); // eslint-disable-line
+
+  const assignToMe = async () => {
+    if (!selected || !leadProfile?.id) return;
+    setAssigningToMe(true);
+    try {
+      const { getApiClient } = await import('@/hooks/useApi');
+      await getApiClient().patch(`/api/leads/${leadProfile.id}`, { assigned_to_user_id: user?.id });
+      setAssignedAgent(user?.name || user?.email || 'You');
+      toast.success('Conversation assigned to you');
+    } catch { toast.error('Failed to assign'); }
+    finally { setAssigningToMe(false); }
+  };
 
   const fetchThread = (s: typeof selected) => {
     if (!s) return;
@@ -750,9 +778,22 @@ function UnifiedInbox() {
                 <p className="text-[16px] font-medium text-gray-900 truncate">
                   {resolveContactName(selected.sender_id) || selected.sender_name}
                 </p>
-                <div className="flex items-center gap-1.5 mt-0.5 opacity-80">
+                <div className="flex items-center gap-1.5 mt-0.5 opacity-80 flex-wrap">
                   <ChannelIcon channel={selected.channel} size={12} />
                   <p className="text-[12px] text-gray-500 capitalize">{selected.channel}</p>
+                  {assignedAgent ? (
+                    <span className="text-[11px] bg-indigo-100 text-indigo-700 font-semibold px-1.5 py-0.5 rounded-full">
+                      👤 {assignedAgent}
+                    </span>
+                  ) : (
+                    <button
+                      onClick={e => { e.stopPropagation(); assignToMe(); }}
+                      disabled={assigningToMe || !leadProfile?.id}
+                      className="text-[11px] bg-gray-100 text-gray-500 hover:bg-indigo-100 hover:text-indigo-700 font-semibold px-1.5 py-0.5 rounded-full transition disabled:opacity-40"
+                    >
+                      {assigningToMe ? '…' : '+ Assign to me'}
+                    </button>
+                  )}
                 </div>
               </div>
               {/* Profile toggle */}

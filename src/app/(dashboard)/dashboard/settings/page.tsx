@@ -14,7 +14,7 @@ import { CheckCircle2, XCircle, Loader2, ExternalLink, KeyRound, Cpu, Zap, Credi
 export default function SettingsPage() {
   const { user, logout } = useAuthStore();
   const { quota } = useQuota();
-  const { get, post, delete: del } = useApi();
+  const { get, post, put, delete: del } = useApi();
   const isFreePlan = !user?.plan || user.plan === 'FREE';
   const PLAN_QUERY_LIMITS: Record<string, number> = {
     FREE: 30, STARTER: 500, GROWTH: 1200, PRO: 2500, BUSINESS: 7500,
@@ -49,6 +49,22 @@ export default function SettingsPage() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [changingPassword, setChangingPassword] = useState(false);
+  // 2FA state
+  const [twoFAEnabled, setTwoFAEnabled] = useState(false);
+  const [twoFASetup, setTwoFASetup] = useState<{ secret: string; qr_uri: string } | null>(null);
+  const [twoFACode, setTwoFACode] = useState('');
+  const [twoFALoading, setTwoFALoading] = useState(false);
+  const [twoFADisableCode, setTwoFADisableCode] = useState('');
+  const [showDisable2FA, setShowDisable2FA] = useState(false);
+  // Active sessions state
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [sessionsLoaded, setSessionsLoaded] = useState(false);
+  const [revokingSession, setRevokingSession] = useState('');
+  // Notification prefs state
+  const [notifPrefs, setNotifPrefs] = useState<Record<string, boolean>>({});
+  const [notifLoading, setNotifLoading] = useState(false);
+  const [notifSaving, setNotifSaving] = useState(false);
   const [whatsappStatus, setWhatsappStatus] = useState<any>(null);
 
   // AI / BYOK settings
@@ -90,6 +106,8 @@ export default function SettingsPage() {
   useEffect(() => {
     setName(user?.name || '');
   }, [user?.name]);
+
+  useEffect(() => { loadNotifPrefs(); }, []); // eslint-disable-line
 
   useEffect(() => {
     Promise.all([
@@ -171,6 +189,80 @@ export default function SettingsPage() {
     } finally {
       setChangingPassword(false);
     }
+  };
+
+  // ── 2FA functions ────────────────────────────────────────────────────────
+  const setup2FA = async () => {
+    setTwoFALoading(true);
+    try {
+      const r = await get('/api/auth/2fa/setup');
+      setTwoFASetup(r.data);
+      setTwoFAEnabled(r.data.already_enabled);
+    } catch { toast.error('Failed to start 2FA setup'); }
+    finally { setTwoFALoading(false); }
+  };
+  const verify2FA = async () => {
+    if (!twoFACode.trim()) return;
+    setTwoFALoading(true);
+    try {
+      await post('/api/auth/2fa/verify', { code: twoFACode.trim() });
+      toast.success('Two-factor authentication enabled!');
+      setTwoFAEnabled(true);
+      setTwoFASetup(null);
+      setTwoFACode('');
+    } catch (e: any) { toast.error(e.response?.data?.detail || 'Invalid code'); }
+    finally { setTwoFALoading(false); }
+  };
+  const disable2FA = async () => {
+    if (!twoFADisableCode.trim()) return;
+    setTwoFALoading(true);
+    try {
+      await post('/api/auth/2fa/disable', { code: twoFADisableCode.trim() });
+      toast.success('2FA disabled');
+      setTwoFAEnabled(false);
+      setShowDisable2FA(false);
+      setTwoFADisableCode('');
+    } catch (e: any) { toast.error(e.response?.data?.detail || 'Invalid code'); }
+    finally { setTwoFALoading(false); }
+  };
+
+  // ── Sessions functions ────────────────────────────────────────────────────
+  const loadSessions = async () => {
+    if (sessionsLoaded) return;
+    setSessionsLoading(true);
+    try {
+      const r = await get('/api/auth/sessions');
+      setSessions(r.data || []);
+      setSessionsLoaded(true);
+    } catch { /* silent */ }
+    finally { setSessionsLoading(false); }
+  };
+  const revokeSession = async (id: string) => {
+    setRevokingSession(id);
+    try {
+      await del(`/api/auth/sessions/${id}`);
+      setSessions(prev => prev.filter(s => s.id !== id));
+      toast.success('Session revoked');
+    } catch { toast.error('Failed to revoke session'); }
+    finally { setRevokingSession(''); }
+  };
+
+  // ── Notification Prefs functions ──────────────────────────────────────────
+  const loadNotifPrefs = async () => {
+    setNotifLoading(true);
+    try {
+      const r = await get('/api/auth/notification-preferences');
+      setNotifPrefs(r.data || {});
+    } catch { /* silent */ }
+    finally { setNotifLoading(false); }
+  };
+  const saveNotifPrefs = async () => {
+    setNotifSaving(true);
+    try {
+      await put('/api/auth/notification-preferences', notifPrefs);
+      toast.success('Notification preferences saved');
+    } catch { toast.error('Failed to save'); }
+    finally { setNotifSaving(false); }
   };
 
   const updateBusinessField = (field: keyof BusinessProfile, value: string) => {
@@ -769,6 +861,174 @@ export default function SettingsPage() {
             {changingPassword ? 'Updating...' : 'Update Password'}
           </Button>
         </div>
+      </Card>
+
+      {/* Two-Factor Authentication */}
+      <Card>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              <Shield className="h-5 w-5 text-emerald-600" /> Two-Factor Authentication
+            </h2>
+            <p className="text-sm text-gray-500 mt-0.5">Add an extra layer of security to your account</p>
+          </div>
+          <span className={`rounded-full px-3 py-1 text-xs font-bold ${twoFAEnabled ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
+            {twoFAEnabled ? '✓ Enabled' : 'Disabled'}
+          </span>
+        </div>
+        {!twoFAEnabled && !twoFASetup && (
+          <div className="space-y-3">
+            <p className="text-sm text-gray-600">Use Google Authenticator, Authy, or any TOTP app to generate login codes.</p>
+            <Button variant="secondary" onClick={setup2FA} loading={twoFALoading}>
+              Enable Two-Factor Auth →
+            </Button>
+          </div>
+        )}
+        {!twoFAEnabled && twoFASetup && (
+          <div className="space-y-4">
+            <div className="rounded-xl bg-gray-50 border border-gray-200 p-4 space-y-3">
+              <p className="text-sm font-semibold text-gray-900">Step 1 — Scan this QR code</p>
+              <p className="text-xs text-gray-500">Open Google Authenticator or Authy and scan the QR code below.</p>
+              {/* QR code as image using free API */}
+              <div className="flex justify-center">
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(twoFASetup.qr_uri)}`}
+                  alt="2FA QR Code"
+                  className="rounded-xl border border-gray-200 shadow-sm"
+                  width={180} height={180}
+                />
+              </div>
+              <p className="text-xs text-gray-400 text-center">Can't scan? Use manual key: <code className="bg-gray-100 px-1 rounded text-xs font-mono">{twoFASetup.secret}</code></p>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-900 mb-2">Step 2 — Enter the 6-digit code from your app</p>
+              <div className="flex gap-2">
+                <input
+                  value={twoFACode}
+                  onChange={e => setTwoFACode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="000000"
+                  maxLength={6}
+                  className="input-field text-center text-xl font-mono tracking-[0.5em] w-40"
+                />
+                <Button onClick={verify2FA} loading={twoFALoading} disabled={twoFACode.length !== 6}>
+                  Verify & Enable
+                </Button>
+                <Button variant="secondary" onClick={() => { setTwoFASetup(null); setTwoFACode(''); }}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+        {twoFAEnabled && !showDisable2FA && (
+          <div className="flex items-center gap-3">
+            <p className="text-sm text-emerald-700 flex-1">Your account is protected with two-factor authentication.</p>
+            <button onClick={() => setShowDisable2FA(true)} className="text-xs text-red-500 hover:text-red-700 font-semibold underline">
+              Disable 2FA
+            </button>
+          </div>
+        )}
+        {twoFAEnabled && showDisable2FA && (
+          <div className="space-y-3">
+            <p className="text-sm text-red-600 font-medium">Enter your current authenticator code to disable 2FA:</p>
+            <div className="flex gap-2">
+              <input
+                value={twoFADisableCode}
+                onChange={e => setTwoFADisableCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="000000"
+                maxLength={6}
+                className="input-field text-center text-xl font-mono tracking-[0.5em] w-40"
+              />
+              <Button variant="secondary" onClick={disable2FA} loading={twoFALoading} disabled={twoFADisableCode.length !== 6}>
+                Confirm Disable
+              </Button>
+              <Button variant="secondary" onClick={() => { setShowDisable2FA(false); setTwoFADisableCode(''); }}>Cancel</Button>
+            </div>
+          </div>
+        )}
+      </Card>
+
+      {/* Active Sessions */}
+      <Card>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">Active Sessions</h2>
+            <p className="text-sm text-gray-500 mt-0.5">Devices and browsers currently logged into your account</p>
+          </div>
+          {!sessionsLoaded && (
+            <Button variant="secondary" size="sm" onClick={loadSessions} loading={sessionsLoading}>
+              Load Sessions
+            </Button>
+          )}
+        </div>
+        {sessionsLoading && <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-12 rounded-lg bg-gray-100 animate-pulse" />)}</div>}
+        {sessionsLoaded && sessions.length === 0 && (
+          <p className="text-sm text-gray-400 text-center py-4">No active sessions found</p>
+        )}
+        {sessionsLoaded && sessions.length > 0 && (
+          <div className="divide-y divide-gray-100">
+            {sessions.map(s => (
+              <div key={s.id} className="flex items-center gap-3 py-3">
+                <div className="h-9 w-9 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                  <Activity className="h-4 w-4 text-gray-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {s.device_info}
+                    {s.is_current && <span className="ml-2 text-[10px] bg-emerald-100 text-emerald-700 font-bold px-1.5 py-0.5 rounded-full">Current</span>}
+                  </p>
+                  <p className="text-xs text-gray-400">{s.ip_address} · Last active {s.last_active ? new Date(s.last_active + 'Z').toLocaleString() : '—'}</p>
+                </div>
+                {!s.is_current && (
+                  <button
+                    onClick={() => revokeSession(s.id)}
+                    disabled={revokingSession === s.id}
+                    className="text-xs font-semibold text-red-500 hover:text-red-700 transition disabled:opacity-40"
+                  >
+                    {revokingSession === s.id ? '...' : 'Revoke'}
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      {/* Notification Preferences */}
+      <Card>
+        <h2 className="text-xl font-bold text-gray-900 mb-1">Notification Preferences</h2>
+        <p className="text-sm text-gray-500 mb-4">Choose which events trigger email and in-app notifications</p>
+        {notifLoading ? (
+          <div className="space-y-2">{[1,2,3,4].map(i => <div key={i} className="h-8 rounded bg-gray-100 animate-pulse" />)}</div>
+        ) : (
+          <div className="space-y-3">
+            {[
+              { key: 'new_lead', label: 'New lead captured', desc: 'When a lead comes from website widget, WhatsApp, or Facebook' },
+              { key: 'campaign_complete', label: 'Campaign completed', desc: 'When a broadcast campaign finishes sending' },
+              { key: 'payment_received', label: 'Payment received', desc: 'When a customer completes a payment via Razorpay' },
+              { key: 'automation_error', label: 'Automation errors', desc: 'When a workflow run fails or hits an error' },
+              { key: 'handover_requested', label: 'Handover requested', desc: 'When AI escalates a conversation for human review' },
+              { key: 'weekly_report', label: 'Weekly summary report', desc: 'Weekly stats digest every Monday morning' },
+              { key: 'marketing_updates', label: 'Product updates & tips', desc: 'New features, tips, and platform announcements' },
+            ].map(item => (
+              <div key={item.key} className="flex items-center justify-between gap-4 rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">{item.label}</p>
+                  <p className="text-xs text-gray-400">{item.desc}</p>
+                </div>
+                <button
+                  onClick={() => setNotifPrefs(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none shrink-0 ${notifPrefs[item.key] ? 'bg-emerald-500' : 'bg-gray-200'}`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${notifPrefs[item.key] ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+              </div>
+            ))}
+            <Button onClick={saveNotifPrefs} loading={notifSaving} className="mt-2">
+              Save Notification Preferences
+            </Button>
+          </div>
+        )}
       </Card>
 
       {/* Data & Privacy */}
