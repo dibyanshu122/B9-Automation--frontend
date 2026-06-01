@@ -6,7 +6,7 @@ import {
   Clock, Loader2, MessageSquare, Plus, RefreshCw, Send, Users,
   X, XCircle, FileText, Calendar, Ban, ChevronLeft, ChevronRight,
   Globe, Smartphone, Trash2, Eye, Upload, Download, Filter,
-  Search,
+  MoreVertical, Search,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -313,8 +313,10 @@ function CampaignRow({ idx, c, onDetail, onRefresh }: { idx: number; c: Campaign
       {/* More menu */}
       <div className="relative flex justify-center">
         <button onClick={e => { e.stopPropagation(); setMenuOpen(o => !o); }} disabled={!!acting}
+          aria-label="Open campaign actions"
+          title="More actions"
           className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition">
-          {acting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <span className="text-sm font-bold tracking-widest"></span>}
+          {acting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MoreVertical className="w-4 h-4" />}
         </button>
         {menuOpen && (
           <>

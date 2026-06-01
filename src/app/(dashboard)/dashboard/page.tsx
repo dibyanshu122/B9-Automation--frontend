@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 import {
-  CheckCircle2,
   CheckSquare,
   ChevronRight,
   FileText,
@@ -28,7 +27,7 @@ import { useQuota } from '@/hooks/useQuota';
 import { usePlanAccess } from '@/hooks/usePlanAccess';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { BusinessProfile } from '@/types';
-import { DEFAULT_INDUSTRY_PACK, IndustryPack } from '@/lib/industry-packs';
+import { IndustryPack } from '@/lib/industry-packs';
 
 interface OnboardingStatus {
   is_complete: boolean;
@@ -65,7 +64,6 @@ export default function DashboardPage() {
   const [apiLimits, setApiLimits] = useState<any>(null);
   const [metaStatus, setMetaStatus] = useState<any>(null);
   const [onboarding, setOnboarding] = useState<OnboardingStatus | null>(null);
-  const [selectedPack, setSelectedPack] = useState<IndustryPack>(DEFAULT_INDUSTRY_PACK);
   const [automationStats, setAutomationStats] = useState({
     leads_captured: 0,
     automations_run: 0,
@@ -101,7 +99,6 @@ export default function DashboardPage() {
   }>({});
   const [teamMe, setTeamMe] = useState<{ role?: string; is_owner?: boolean; assigned_only?: boolean; permissions?: string[] } | null>(null);
 
-  const activePack = onboarding?.industry_pack || selectedPack;
   const health = onboarding?.health;
   const readinessScore = readiness?.score ?? health?.score ?? 0;
   const readinessChecks = readiness?.checks || health?.checks || [];
@@ -160,7 +157,6 @@ export default function DashboardPage() {
       }
       if (onbRes.data) {
         setOnboarding(onbRes.data);
-        if (onbRes.data.industry_pack) setSelectedPack(onbRes.data.industry_pack);
       } else {
         setOnboarding({ is_complete: false });
       }
@@ -673,32 +669,6 @@ export default function DashboardPage() {
         </section>
       )}
 
-      <section className="grid gap-6">
-        <Card className="border-gray-200 shadow-sm" hoverable={false}>
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold text-gray-950">Next Best Actions</h2>
-                <HelpTip text="These are the shortest actions that move your AI assistant closer to production readiness." />
-              </div>
-              <p className="mt-1 text-sm text-gray-500">{activePack.document_hint}</p>
-            </div>
-            <Sparkles className="h-5 w-5 animate-pulse text-primary-600" />
-          </div>
-          <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-3">
-            {activePack.quick_actions.map((action) => (
-              <div key={action} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:shadow-md">
-                <div className="flex items-center justify-between">
-                  <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                  <span className="h-2 w-2 rounded-full bg-primary-200" />
-                </div>
-                <p className="mt-3 text-sm font-semibold text-gray-800">{action}</p>
-              </div>
-            ))}
-          </div>
-        </Card>
-
-      </section>
     </div>
   );
 }
