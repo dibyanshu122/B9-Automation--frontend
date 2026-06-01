@@ -1504,7 +1504,7 @@ export default function IntegrationsPage() {
             </p>
             <h1 className="text-3xl font-bold text-gray-950">Integrations</h1>
             <p className="mt-2 max-w-2xl text-gray-600">
-              Connect business tools in draft mode today. When live credentials are added, these same actions can send, sync, book, and notify automatically.
+              Connect WhatsApp, Facebook, Instagram, Gmail, Sheets, Razorpay and more. Add your credentials to start sending, syncing, and automating in real time.
             </p>
           </div>
           <Button variant="secondary" onClick={refresh}><RefreshCw className="h-4 w-4" />Refresh</Button>
