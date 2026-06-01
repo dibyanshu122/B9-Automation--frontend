@@ -1300,7 +1300,7 @@ export default function TemplatesPage() {
   const getBody = (components: any[]) => components?.find((c: any) => c.type === 'BODY')?.text || '';
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Page header */}
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
@@ -1319,38 +1319,34 @@ export default function TemplatesPage() {
         </div>
       </div>
 
-      <div className="rounded-xl border border-orange-200 bg-orange-50 p-4">
+      <div className="rounded-xl border border-orange-200 bg-orange-50 px-4 py-3">
         <p className="text-sm font-bold text-orange-950">Recommended path: AI draft -&gt; preview -&gt; submit to Meta</p>
         <p className="mt-1 text-xs text-orange-700">Advanced options like carousel, auth OTP, LTO, media headers, and library templates are still available in manual mode.</p>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">
-        <button onClick={() => setActiveTab('mine')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition ${activeTab === 'mine' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
-          My Templates {templates.length > 0 && <span className="ml-1.5 text-xs bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded-full">{templates.length}</span>}
-        </button>
-        <button onClick={() => setActiveTab('library')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition ${activeTab === 'library' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
-          Template Library <span className="ml-1.5 text-xs bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded-full">{TEMPLATE_LIBRARY.length}</span>
-        </button>
-      </div>
+      <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
+        {/* Tabs */}
+        <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">
+          <button onClick={() => setActiveTab('mine')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${activeTab === 'mine' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+            My Templates {templates.length > 0 && <span className="ml-1.5 text-xs bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded-full">{templates.length}</span>}
+          </button>
+          <button onClick={() => setActiveTab('library')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${activeTab === 'library' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+            Template Library <span className="ml-1.5 text-xs bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded-full">{TEMPLATE_LIBRARY.length}</span>
+          </button>
+        </div>
 
-      {/* Library tab */}
-      {activeTab === 'library' && <TemplateLibraryTab onUse={useLibraryTemplate} />}
-
-      {/* My Templates tab */}
-      {activeTab === 'mine' && (
-        <>
-          {/* Stats */}
-          {!loading && templates.length > 0 && (
+        {activeTab === 'mine' && !loading && templates.length > 0 && (
+          <div className="mt-3 flex flex-col gap-3 border-t border-gray-100 pt-3 xl:flex-row xl:items-center xl:justify-between">
+            {/* Stats */}
             <div className="flex gap-2 flex-wrap">
               {(['ALL', 'APPROVED', 'PENDING', 'REJECTED'] as const).map(s => {
                 const count = s === 'ALL' ? templates.length : templates.filter(t => t.status === s).length;
                 const isActive = statusFilter === s;
                 return (
                   <button key={s} onClick={() => setStatusFilter(s)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium transition ${
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium transition ${
                       isActive
                         ? s === 'APPROVED' ? 'bg-emerald-600 text-white border-emerald-600'
                           : s === 'PENDING' ? 'bg-amber-500 text-white border-amber-500'
@@ -1364,10 +1360,8 @@ export default function TemplatesPage() {
                 );
               })}
             </div>
-          )}
 
-          {/* Name search + Category filter */}
-          {!loading && templates.length > 0 && (
+            {/* Name search + Category filter */}
             <div className="flex items-center gap-2 flex-wrap">
               <div className="relative">
                 <input
@@ -1386,8 +1380,16 @@ export default function TemplatesPage() {
                 </button>
               ))}
             </div>
-          )}
+          </div>
+        )}
+      </div>
 
+      {/* Library tab */}
+      {activeTab === 'library' && <TemplateLibraryTab onUse={useLibraryTemplate} />}
+
+      {/* My Templates tab */}
+      {activeTab === 'mine' && (
+        <>
           {/* Error */}
           {error && (
             <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">

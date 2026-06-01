@@ -500,9 +500,11 @@ function DetailDrawer({ name, onClose, onRefresh }: { name: string; onClose: () 
           <>
             {/* Stats */}
             <div className="px-5 py-4 border-b border-gray-100">
-              <div className="grid grid-cols-4 gap-3 mb-3">
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 mb-3">
                 {[
                   { label: 'Sent', val: data.sent, color: 'text-emerald-600' },
+                  { label: 'Delivered', val: data.delivered ?? 0, color: 'text-blue-600' },
+                  { label: 'Read', val: data.read ?? 0, color: 'text-cyan-600' },
                   { label: 'Failed', val: data.failed, color: 'text-red-500' },
                   { label: 'Pending', val: data.queued, color: 'text-amber-500' },
                   { label: 'Total', val: data.total, color: 'text-gray-700' },
@@ -547,6 +549,8 @@ function DetailDrawer({ name, onClose, onRefresh }: { name: string; onClose: () 
                   </div>
                   <div className="flex-shrink-0 text-right">
                     <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      m.status === 'read' ? 'bg-cyan-50 text-cyan-700' :
+                      m.status === 'delivered' ? 'bg-blue-50 text-blue-700' :
                       m.status === 'sent' ? 'bg-emerald-50 text-emerald-700' :
                       m.status === 'failed' ? 'bg-red-50 text-red-600' :
                       m.status === 'cancelled' ? 'bg-gray-100 text-gray-500' :
