@@ -44,7 +44,7 @@ export default function PricingPage() {
     },
     {
       q: 'Do you offer refunds?',
-      a: "We offer a 7-day money-back guarantee if you're not satisfied with our service.",
+      a: 'All plans are prepaid and non-refundable. You can cancel anytime — your plan stays active until the end of the billing period, then reverts to Free. For billing issues, email support@b9automation.com.',
     },
   ];
 

@@ -113,7 +113,7 @@ export default function BillingClient({ initialPlan, initialInvoices }: BillingC
               const res = await get('/api/billing/current-plan');
               if (res.data?.plan && res.data.plan !== currentPlan?.plan) {
                 clearInterval(poll);
-                toast.success(`🎉 ${res.data.plan} plan activated! Welcome to the next level.`);
+                toast.success(`🎉 ${res.data.plan} plan activated! Unused credits from your old plan have been saved as top-up credits (valid 90 days).`);
                 setTimeout(() => window.location.reload(), 1500);
               }
             } catch { /* ignore */ }

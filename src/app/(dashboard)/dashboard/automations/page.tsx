@@ -25,6 +25,7 @@ import {
   Bot,
   CheckCircle2,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
   Copy,
   ExternalLink,
@@ -1054,95 +1055,80 @@ export default function AutomationsPage() {
   return (
     <div className="flex h-[calc(100vh-72px)] min-h-[720px] flex-col gap-3 overflow-hidden">
       {/* ── Top toolbar ── */}
-      <div className="flex shrink-0 items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-2.5 shadow-sm">
+      <div className="flex shrink-0 items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 shadow-sm overflow-x-auto">
+        {/* LEFT: back + name + plan badge */}
         {!showWorkflowList && (
-          <>
-            <button
-              type="button"
-              onClick={() => setShowWorkflowList(true)}
-              className="flex items-center gap-1 text-xs font-semibold text-gray-500 hover:text-gray-900 transition"
-            >
-              ← All Workflows
-            </button>
-            <div className="h-4 w-px bg-gray-200" />
-          </>
+          <button
+            type="button"
+            onClick={() => setShowWorkflowList(true)}
+            className="flex items-center gap-1 shrink-0 text-xs font-semibold text-gray-400 hover:text-gray-800 transition px-1"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" /> Workflows
+          </button>
         )}
-        <div className="flex items-center gap-2 text-primary-700">
-          <Workflow className="h-4 w-4" />
-          <span className="text-xs font-black uppercase tracking-widest text-gray-500">Automation</span>
-        </div>
-        <div className="h-4 w-px bg-gray-200" />
+        <div className="h-4 w-px bg-gray-200 shrink-0" />
         <input
           value={workflowName}
           onChange={(e) => setWorkflowName(e.target.value)}
-          className="w-40 min-w-0 rounded-lg border border-transparent bg-gray-50 px-3 py-1.5 text-sm font-semibold text-gray-900 focus:border-primary-300 focus:bg-white focus:outline-none truncate"
+          className="w-36 min-w-0 shrink-0 rounded-lg border border-transparent bg-gray-50 px-2.5 py-1.5 text-sm font-semibold text-gray-900 focus:border-primary-300 focus:bg-white focus:outline-none truncate"
         />
-        <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-primary-700">
-          {industryPack.label}
+        {/* Steps badge — show ∞ for GROWTH+ */}
+        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold ${
+          planAccess.limits.workflowSteps >= 9999
+            ? 'bg-emerald-50 text-emerald-700'
+            : nodes.length >= planAccess.limits.workflowSteps
+              ? 'bg-red-100 text-red-700'
+              : 'bg-gray-100 text-gray-500'
+        }`}>
+          {planAccess.limits.workflowSteps >= 9999
+            ? `${nodes.length} steps · ∞`
+            : `${nodes.length} / ${planAccess.limits.workflowSteps}`}
         </span>
-        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${nodes.length >= planAccess.limits.workflowSteps ? 'bg-red-100 text-red-700' : nodes.length >= planAccess.limits.workflowSteps * 0.8 ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'}`}>
-          {nodes.length} / {planAccess.limits.workflowSteps} steps · {planAccess.currentPlan}
-        </span>
-        <div className="h-4 w-px bg-gray-200" />
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => {
-            const opening = libraryCollapsed;
-            setLibraryCollapsed(!opening);
-            if (opening) setSettingsOpen(false);
-          }}
-        >
+
+        <div className="h-4 w-px bg-gray-200 shrink-0" />
+
+        {/* CENTER: action buttons */}
+        <Button variant="secondary" size="sm" className="shrink-0"
+          onClick={() => { const opening = libraryCollapsed; setLibraryCollapsed(!opening); if (opening) setSettingsOpen(false); }}>
           {libraryCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />} Library
         </Button>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => {
-            const opening = !settingsOpen;
-            setSettingsOpen(opening);
-            if (opening) setLibraryCollapsed(true);
-          }}
-        >
+        <Button variant="secondary" size="sm" className="shrink-0"
+          onClick={() => { const opening = !settingsOpen; setSettingsOpen(opening); if (opening) setLibraryCollapsed(true); }}>
           {settingsOpen ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />} Settings
         </Button>
-        {/* Undo/Redo buttons */}
-        <div className="flex items-center gap-0.5 rounded-lg border border-gray-200 p-0.5">
-          <button
-            type="button"
-            onClick={undo}
-            disabled={!canUndo}
-            title="Undo (Ctrl+Z)"
-            className="rounded-md px-2 py-1.5 text-xs font-bold text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition"
-          >
+
+        {/* Undo/Redo */}
+        <div className="flex items-center gap-0.5 rounded-lg border border-gray-200 bg-gray-50 shrink-0">
+          <button type="button" onClick={undo} disabled={!canUndo} title="Undo (Ctrl+Z)"
+            className="rounded-md px-2 py-1.5 text-gray-500 hover:bg-gray-100 disabled:opacity-25 disabled:cursor-not-allowed transition text-sm leading-none">
             ↩
           </button>
-          <button
-            type="button"
-            onClick={redo}
-            disabled={!canRedo}
-            title="Redo (Ctrl+Y)"
-            className="rounded-md px-2 py-1.5 text-xs font-bold text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition"
-          >
+          <button type="button" onClick={redo} disabled={!canRedo} title="Redo (Ctrl+Y)"
+            className="rounded-md px-2 py-1.5 text-gray-500 hover:bg-gray-100 disabled:opacity-25 disabled:cursor-not-allowed transition text-sm leading-none">
             ↪
           </button>
         </div>
-        <Button variant="secondary" size="sm" onClick={() => setShowGenerateModal(true)}
-          className="bg-gradient-to-r from-violet-50 to-blue-50 border-violet-200 text-violet-700 hover:from-violet-100">
-          ✨ Generate with AI
+
+        <Button variant="secondary" size="sm" className="shrink-0 bg-gradient-to-r from-violet-50 to-indigo-50 border-violet-200 text-violet-700 hover:from-violet-100"
+          onClick={() => setShowGenerateModal(true)}>
+          ✨ AI
         </Button>
-        <Button variant="secondary" size="sm" onClick={() => setShowTemplateGallery(true)}>
-          <Sparkles className="h-3.5 w-3.5" /> Templates
+
+        <Button variant="secondary" size="sm" className="shrink-0" onClick={() => setShowTemplateGallery(true)}>
+          <Sparkles className="h-3.5 w-3.5" />
+          <span className="hidden md:inline ml-1">Templates</span>
         </Button>
-        <Button variant="secondary" size="sm" onClick={() => setShowLaunchAssistant(true)}>
-          <Bot className="h-3.5 w-3.5" /> Launch Assistant
-        </Button>
-        <div className="relative" ref={overflowMenuRef}>
+
+        {/* More menu */}
+        <div className="relative shrink-0" ref={overflowMenuRef}>
           <Button variant="secondary" size="sm" onClick={() => setOverflowMenuOpen((p) => !p)}>
-            ••• More
+            ··· More
           </Button>
           {overflowMenuOpen && (
-            <div className="absolute right-0 top-full z-50 mt-1 w-44 rounded-xl border border-gray-100 bg-white py-1 shadow-lg" onClick={() => setOverflowMenuOpen(false)}>
+            <div className="absolute left-0 top-full z-50 mt-1 w-48 rounded-xl border border-gray-100 bg-white py-1.5 shadow-xl" onClick={() => setOverflowMenuOpen(false)}>
+              <button type="button" onClick={() => setShowLaunchAssistant(true)} className="flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50">
+                <Bot className="h-3.5 w-3.5 text-gray-400" /> Launch Assistant
+              </button>
               <button type="button" onClick={() => setShowAnalytics((p) => !p)} className="flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50">
                 <RefreshCw className="h-3.5 w-3.5 text-gray-400" /> Analytics
               </button>
@@ -1160,23 +1146,26 @@ export default function AutomationsPage() {
             </div>
           )}
         </div>
-        <div className="h-4 w-px bg-gray-200" />
-        {effectiveValidation.blockers.length > 0 && (
-          <span className="flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700">
-            <AlertTriangle className="h-3 w-3" />
-            {effectiveValidation.blockers.length} issue{effectiveValidation.blockers.length > 1 ? 's' : ''}
-          </span>
-        )}
-        {effectiveValidation.ready && (
-          <span className="flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700">
-            <CheckCircle2 className="h-3 w-3" /> Ready
-          </span>
-        )}
-        {lastAutosavedAt && (
-          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
-            Autosaved {new Date(lastAutosavedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-          </span>
-        )}
+
+        {/* RIGHT: status + actions */}
+        <div className="ml-auto flex items-center gap-2 shrink-0">
+          {effectiveValidation.blockers.length > 0 && (
+            <span className="flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-700">
+              <AlertTriangle className="h-3 w-3" />
+              {effectiveValidation.blockers.length} issue{effectiveValidation.blockers.length > 1 ? 's' : ''}
+            </span>
+          )}
+          {effectiveValidation.ready && !effectiveValidation.blockers.length && (
+            <span className="flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700">
+              <CheckCircle2 className="h-3 w-3" /> Ready
+            </span>
+          )}
+          {lastAutosavedAt && (
+            <span className="hidden sm:block rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-500">
+              Saved {new Date(lastAutosavedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          )}
+        </div>
         <Button
           variant={testing ? 'primary' : 'secondary'}
           size="sm"

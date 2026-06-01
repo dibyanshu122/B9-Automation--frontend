@@ -17,6 +17,9 @@ export const FEATURES = {
   integrationFacebook: 'integration.facebook',
   integrationWhatsapp: 'integration.whatsapp',
   integrationInstagram: 'integration.instagram',
+  integrationShopify: 'integration.shopify',
+  integrationIndiamart: 'integration.indiamart',
+  integrationRazorpay: 'integration.razorpay',
   automationCreate: 'automation.create',
   automationExecute: 'automation.execute',
   automationSteps: 'automation.steps',
@@ -39,7 +42,7 @@ export const FEATURE_RULES: Record<FeatureKey, { requiredPlan: PlanKey; message:
   'integration.google_sheets': { requiredPlan: 'STARTER', message: 'Google Sheets is available on Starter plan and above.', benefits: ['Send leads to sheets', 'Create rows from workflows', 'Keep owner records synced'] },
   'integration.gmail': { requiredPlan: 'GROWTH', message: 'Gmail is available on Growth plan and above.', benefits: ['Draft and send email follow-ups', 'Use lead variables', 'Automate replies'] },
   'integration.facebook': { requiredPlan: 'GROWTH', message: 'Facebook Lead Ads is available on Growth plan and above.', benefits: ['Capture ad leads', 'Trigger workflows', 'Route leads to follow-ups'] },
-  'integration.whatsapp': { requiredPlan: 'GROWTH', message: 'WhatsApp is available on Growth plan and above.', benefits: ['Connect WhatsApp Cloud API', 'Draft or send replies', 'Follow up hot leads'] },
+  'integration.whatsapp': { requiredPlan: 'STARTER', message: 'WhatsApp is available on Starter plan and above.', benefits: ['Connect WhatsApp Cloud API', 'Send and receive messages', 'Automate replies 24/7'] },
   'integration.instagram': { requiredPlan: 'GROWTH', message: 'Instagram DM is available on Growth plan and above.', benefits: ['Capture Instagram DMs', 'Trigger AI replies', 'Save DM users as leads'] },
   'automation.create': { requiredPlan: 'STARTER', message: 'Automation starts from Starter plan.', benefits: ['Build lead workflows', 'Run follow-up actions', 'Save owner time'] },
   'automation.execute': { requiredPlan: 'STARTER', message: 'Automation execution starts from Starter plan.', benefits: ['Run workflows', 'Create tasks and drafts', 'Track execution history'] },
@@ -49,14 +52,17 @@ export const FEATURE_RULES: Record<FeatureKey, { requiredPlan: PlanKey; message:
   'webhook.access': { requiredPlan: 'PRO', message: 'Webhooks are available on Pro plan.', benefits: ['Trigger workflows from tools', 'Connect forms and CRMs', 'Run event-based automations'] },
   white_label: { requiredPlan: 'BUSINESS', message: 'Full white-label is available on Business plan.', benefits: ['Remove B9 branding', 'Use custom domain', 'Own client-facing brand'] },
   premium_widget: { requiredPlan: 'PRO', message: 'Premium 3D widget is available on Pro plan.', benefits: ['Premium website launcher', 'More visual polish', 'Higher-converting widget UX'] },
+  'integration.shopify': { requiredPlan: 'GROWTH', message: 'Shopify integration is available on Growth plan and above.', benefits: ['Sync orders to CRM', 'WhatsApp order confirmations', 'Capture Shopify customers as leads'] },
+  'integration.indiamart': { requiredPlan: 'STARTER', message: 'IndiaMART integration is available on Starter plan and above.', benefits: ['Auto-import IndiaMART leads', 'WhatsApp follow-up instantly', 'Route to CRM pipeline'] },
+  'integration.razorpay': { requiredPlan: 'STARTER', message: 'Razorpay is available on Starter plan and above.', benefits: ['Send payment links via WhatsApp', 'Track payments in CRM', 'Auto invoice on payment'] },
 };
 
 export const PLAN_LIMITS_UI: Record<PlanKey, { workflowSteps: number; activeWorkflows: number; domains: number; widgets: number }> = {
-  FREE: { workflowSteps: 0, activeWorkflows: 0, domains: 0, widgets: 0 },
-  STARTER: { workflowSteps: 2, activeWorkflows: 1, domains: 1, widgets: 1 },
-  GROWTH: { workflowSteps: 5, activeWorkflows: 3, domains: 2, widgets: 2 },
-  PRO: { workflowSteps: 20, activeWorkflows: 5, domains: 5, widgets: 5 },
-  BUSINESS: { workflowSteps: 50, activeWorkflows: 15, domains: 15, widgets: 15 },
+  FREE:     { workflowSteps: 0,     activeWorkflows: 0,  domains: 0,  widgets: 0 },
+  STARTER:  { workflowSteps: 15,    activeWorkflows: 2,  domains: 1,  widgets: 1 },
+  GROWTH:   { workflowSteps: 9999,  activeWorkflows: 10, domains: 5,  widgets: 5 },
+  PRO:      { workflowSteps: 9999,  activeWorkflows: 25, domains: 10, widgets: 10 },
+  BUSINESS: { workflowSteps: 9999,  activeWorkflows: 100,domains: 50, widgets: 50 },
 };
 
 export function normalizePlan(plan?: string): PlanKey {
@@ -75,6 +81,10 @@ export function featureForProvider(provider: string): FeatureKey {
   if (value === 'facebook' || value === 'facebook_lead_ads') return FEATURES.integrationFacebook;
   if (value === 'meta' || value === 'whatsapp' || value === 'whatsapp_cloud_api') return FEATURES.integrationWhatsapp;
   if (value === 'instagram' || value === 'instagram_dm') return FEATURES.integrationInstagram;
+  if (value === 'shopify' || value === 'woocommerce') return FEATURES.integrationShopify;
+  if (value === 'indiamart') return FEATURES.integrationIndiamart;
+  if (value === 'razorpay') return FEATURES.integrationRazorpay;
   if (value === 'webhook') return FEATURES.webhookAccess;
-  return FEATURES.apiAccess;
+  // Default: automation feature (not api.access which wrongly requires PRO)
+  return FEATURES.automationCreate;
 }

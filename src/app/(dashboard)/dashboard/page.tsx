@@ -44,10 +44,10 @@ interface OnboardingStatus {
 // Plan limits lookup — used as fallback when quota API returns 0 or fails
 const PLAN_LIMITS_FALLBACK: Record<string, { queries: number; storage_mb: number; automations_day: number; leads_day: number }> = {
   FREE:     { queries: 30,    storage_mb: 50,     automations_day: 0,      leads_day: 0 },
-  STARTER:  { queries: 1000,  storage_mb: 2048,   automations_day: 500,    leads_day: 100 },
+  STARTER:  { queries: 1000,  storage_mb: 2048,   automations_day: 1000,   leads_day: 100 },
   GROWTH:   { queries: 5000,  storage_mb: 10240,  automations_day: 5000,   leads_day: 1000 },
   PRO:      { queries: 20000, storage_mb: 25600,  automations_day: 25000,  leads_day: 5000 },
-  BUSINESS: { queries: 50000, storage_mb: 102400, automations_day: 100000, leads_day: 999999 },
+  BUSINESS: { queries: 50000, storage_mb: 102400, automations_day: 999999, leads_day: 999999 },
 };
 
 export default function DashboardPage() {
