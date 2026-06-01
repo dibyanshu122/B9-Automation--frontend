@@ -50,14 +50,14 @@ export default function AboutPage() {
     {
       icon: LockKeyhole,
       title: 'Grounded by sources',
-      description: 'AI answers cite their sources. No hallucinations.',
+      description: 'AI answers can cite connected knowledge sources and hand over when human help is needed.',
     },
   ];
 
   const impactPoints = [
-    { metric: '1000+', label: 'Businesses Automated' },
-    { metric: '10M+', label: 'Messages Processed' },
-    { metric: '₹50Cr+', label: 'Revenue Influenced' },
+    { metric: '24/7', label: 'Automation Ready' },
+    { metric: 'Meta', label: 'Cloud API First' },
+    { metric: 'India', label: 'SMB Focused' },
   ];
 
   const missionItems = [

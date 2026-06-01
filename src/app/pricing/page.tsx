@@ -271,7 +271,7 @@ export default function PricingPage() {
                   ['Sources', ['PDF only', 'PDF, URL, YouTube', 'All core sources', 'All + web search', 'All + priority']],
                   ['Widgets/domains', ['No widget', '1 / 1 domain', '3 / 3 domains', '10 / 10 domains', 'Unlimited']],
                   ['Integrations', ['None', 'Sheets + WhatsApp', 'Gmail, FB, IG, WhatsApp, Sheets, Shopify', 'All integrations', 'All integrations']],
-                  ['Automation', ['None', '10 workflows / 15 steps / 1K runs/day', 'Unlimited workflows & steps / 5K runs/day', 'Unlimited / 25K runs/day', 'Unlimited / Unlimited']],
+                  ['Automation', ['None', '10 workflows / 15 steps / 1K runs/day', 'High-volume workflows & steps / 5K runs/day', 'High-volume / 25K runs/day', 'High-volume with fair usage']],
                   ['Campaigns', ['None', '100 recipients/send', '1,000 recipients/send', '5,000 recipients/send', '50,000 recipients/send']],
                   ['Branding', ['B9 watermark', 'B9 watermark', 'Watermark removed', 'Watermark removed', 'Full white-label']],
                   ['AI credits', ['30 lifetime', '1,000/month', '5,000/month', '20,000/month', '50,000/month']],

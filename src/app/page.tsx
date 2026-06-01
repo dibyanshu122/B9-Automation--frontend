@@ -25,11 +25,11 @@ const stagger = {
 // ─── Static Data ───────────────────────────────────────────────────────────────
 const faqs = [
   { q: 'What is B9 Automation?', a: 'B9 Automation is an AI-powered no-code platform that automates customer interactions across WhatsApp, email, chat, and more. Set up AI chatbots, lead capture, automation workflows, and customer support in minutes without writing code.' },
-  { q: 'Do I need coding knowledge to use B9?', a: 'No. B9 is a completely no-code platform. If you can describe what you want, our visual builder handles the rest. Thousands of non-technical users have deployed automations successfully.' },
-  { q: 'Which platforms does B9 integrate with?', a: 'WhatsApp (Official Meta Cloud API), Gmail, Google Sheets, Facebook Lead Ads, Instagram DM, Razorpay, and IndiaMART are live today. Webhook support lets you connect any external tool or API. More native integrations (Telegram, Slack, Calendly, Zoho) coming soon.' },
+  { q: 'Do I need coding knowledge to use B9?', a: 'No. Describe what you want and use the visual builder to review, edit, and activate your automation.' },
+  { q: 'Which platforms does B9 integrate with?', a: 'B9 supports WhatsApp (Official Meta Cloud API), Gmail, Google Sheets, Facebook Lead Ads, Instagram DM, Razorpay, IndiaMART, Shopify, and custom webhooks. Provider account setup and connection health checks are required before live use.' },
   { q: 'How does the AI learn my business?', a: 'Upload your documents, FAQs, product catalog, URLs, or YouTube links. Our AI reads and understands everything, then answers customer questions with citations pointing to the source.' },
   { q: 'Can I use B9 for multiple businesses?', a: 'Yes. Our Growth, Pro, and Business plans support multiple assistants and workspaces. Agencies can manage client accounts from one dashboard — each with separate WhatsApp connections, leads, and automations.' },
-  { q: 'Is my customer data safe?', a: 'Yes. All data is encrypted at rest and in transit (256-bit AES). We never train AI models on your data. WhatsApp tokens are stored encrypted using PBKDF2. We follow GDPR-ready practices: opt-out is durable, consent is logged, and SOC2/ISO 27001 are on our roadmap.' },
+  { q: 'Is my customer data safe?', a: 'We encrypt supported sensitive connection credentials at rest and use HTTPS in production. We never train AI models on your data. Opt-out records are durable, consent is logged, and SOC2/ISO 27001 remain on our roadmap.' },
   { q: 'Is there a free plan?', a: 'Yes! Our free plan includes 30 AI credits, 1 PDF assistant, and 50MB storage. No WhatsApp or automation on the free plan. Upgrade to Starter (Rs. 1,499/mo) for WhatsApp + automation. No hidden charges, cancel anytime.' },
   { q: 'Do you offer onboarding or support?', a: 'Yes. We provide video tutorials, documentation, live chat support, and free 30-minute onboarding calls for paid plans.' },
   { q: 'Can I build WhatsApp bot automation?', a: 'Yes. B9 uses the official Meta WhatsApp Cloud API. Build broadcast campaigns, automated reply sequences, lead qualification bots, catalog+payment flows, and AI-generated Meta templates. 24-hour window rules are enforced automatically — only approved templates go out after the window closes.' },
@@ -632,7 +632,7 @@ export default function HomePage() {
             <motion.div variants={fadeUp}><SectionLabel>🔗 Integrations</SectionLabel></motion.div>
             <motion.div variants={fadeUp}><PremiumH2 className="text-4xl lg:text-5xl mt-3">9 live integrations. All working today.</PremiumH2></motion.div>
             <motion.p variants={fadeUp} className="mt-5 text-zinc-500 text-lg font-light max-w-2xl mx-auto">
-              WhatsApp, Instagram, Facebook, Gmail, Google Sheets, Razorpay, IndiaMART, Shopify, and Webhooks — all live and production-ready.
+              Connect WhatsApp, Instagram, Facebook, Gmail, Google Sheets, Razorpay, IndiaMART, Shopify, and Webhooks. Each connection includes setup and health checks before live use.
             </motion.p>
             <motion.div variants={fadeUp} className="mt-5 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/[0.06] px-4 py-1.5">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />

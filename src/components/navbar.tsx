@@ -35,7 +35,6 @@ export const Navbar = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [aiCredits, setAiCredits] = useState<number | null>(null);
-  const [aiLimit, setAiLimit] = useState<number>(500);
   const notifRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
@@ -150,7 +149,6 @@ export const Navbar = () => {
           const used = d.queries_used ?? 0;
           const limit = d.queries_limit || planDefault; // API limit wins; fallback to plan default
           setAiCredits(Math.max(0, limit - used));
-          setAiLimit(limit);
         })
         .catch(() => {});
     };

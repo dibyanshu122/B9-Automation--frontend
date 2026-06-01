@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '@/components/button';
 import { Logo } from '@/components/logo';
 import { marketingNav, allFeatures } from '@/lib/marketing';
 import { useAuthStore } from '@/store/authStore';

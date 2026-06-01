@@ -2,14 +2,13 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  CheckCircle2, Clock, FileText, Image, MapPin, MessageSquare,
+  CheckCircle2, Clock, FileText, Image as ImageIcon, MapPin, MessageSquare,
   Plus, Search, Trash2, Video, X, XCircle, ChevronLeft, ChevronRight,
 } from 'lucide-react';
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { Button } from '@/components/button';
-import { Card } from '@/components/card';
 import { useApi } from '@/hooks/useApi';
 import { useAuthStore } from '@/store/authStore';
 
@@ -209,7 +208,7 @@ function WaPreview({ form }: { form: FormState }) {
               {card?.headerUrl
                 ? <img src={card.headerUrl} alt="" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display='none'; }} />
                 : <div className="text-gray-400 flex flex-col items-center gap-1">
-                    {card?.headerFormat === 'VIDEO' ? <Video className="w-8 h-8" /> : <Image className="w-8 h-8" />}
+                    {card?.headerFormat === 'VIDEO' ? <Video className="w-8 h-8" /> : <ImageIcon className="w-8 h-8" />}
                     <span className="text-xs">{card?.headerFormat || 'IMAGE'}</span>
                   </div>
               }
@@ -272,7 +271,7 @@ function WaPreview({ form }: { form: FormState }) {
                 <div className="h-28 bg-gray-100 flex items-center justify-center overflow-hidden">
                   {form.headerMediaUrl
                     ? <img src={form.headerMediaUrl} alt="" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display='none'; }} />
-                    : <Image className="w-8 h-8 text-gray-300" />}
+                    : <ImageIcon className="w-8 h-8 text-gray-300" />}
                 </div>
               )}
               {form.headerType === 'VIDEO' && (
@@ -1024,7 +1023,7 @@ function TemplatePreviewModal({ template, onClose }: { template: any; onClose: (
                   <div className="h-40 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
                     {headerComp.example?.header_url?.[0]
                       ? <img src={headerComp.example.header_url[0]} alt="" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display='none'; }} />
-                      : <div className="text-center text-gray-400"><Image className="w-10 h-10 mx-auto mb-1" /><p className="text-xs">Image Header</p></div>
+                      : <div className="text-center text-gray-400"><ImageIcon className="w-10 h-10 mx-auto mb-1" /><p className="text-xs">Image Header</p></div>
                     }
                   </div>
                 )}
@@ -1075,9 +1074,6 @@ function TemplatePreviewModal({ template, onClose }: { template: any; onClose: (
 // ─── Deactivate Button ───────────────────────────────────────────────────────
 
 function DeactivateButton({ template, onDone }: { template: any; onDone: () => void }) {
-  const { del } = useApi() as any;
-  const { deleteReq } = (useApi() as any);
-  const { get, post } = useApi();
   const [loading, setLoading] = useState(false);
 
   const handleDeactivate = async () => {

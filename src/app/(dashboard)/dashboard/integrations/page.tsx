@@ -48,11 +48,11 @@ const integrationHealthSteps = (item: IntegrationCatalogItem) => {
   const cfg = (item.config || {}) as Record<string, unknown>;
   if (item.provider === 'meta' || item.provider === 'whatsapp') {
     return [
-      { label: 'Token saved', ok: hasValue(cfg.access_token) || hasValue(cfg.encrypted_access_token) || item.connected },
+      { label: 'Token saved', ok: hasValue(cfg.access_token) || hasValue(cfg.encrypted_access_token) || hasValue(cfg.access_token_last4) },
       { label: 'WABA selected', ok: hasValue(cfg.business_account_id) || hasValue(cfg.waba_id) },
       { label: 'Phone verified', ok: hasValue(cfg.phone_number_id) || hasValue(cfg.display_phone_number) },
-      { label: 'Webhook ready', ok: item.connected || hasValue(cfg.webhook_url) || item.status === 'active' },
-      { label: 'Test passed', ok: item.connected || hasValue(cfg.last_test_at) || hasValue(cfg.last_test_message_id) },
+      { label: 'Webhook ready', ok: hasValue(cfg.webhook_url) || cfg.webhook_subscribed === true || Boolean((cfg.webhook_subscription as { ok?: boolean } | undefined)?.ok) },
+      { label: 'Test passed', ok: hasValue(cfg.last_test_at) || hasValue(cfg.last_test_message_id) },
     ];
   }
   if (item.provider === 'facebook' || item.provider === 'instagram') {
@@ -256,9 +256,6 @@ export default function IntegrationsPage() {
   const [gsShowFilePicker, setGsShowFilePicker] = useState(false);
   const [whatsappWebhookUrl, setWhatsappWebhookUrl] = useState('');
   const [whatsappConnected, setWhatsappConnected] = useState(false);
-  const [waBusinessProfile, setWaBusinessProfile] = useState<any>(null);
-  const [bpEditing, setBpEditing] = useState(false);
-  const [bpForm, setBpForm] = useState({ about: '', address: '', description: '', email: '', websites: '', vertical: '' });
   const [metaStatus, setMetaStatus] = useState<any>(null);
   const [metaStatusLoading, setMetaStatusLoading] = useState(false);
 

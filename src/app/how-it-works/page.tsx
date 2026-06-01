@@ -115,7 +115,7 @@ const SECTIONS = [
     icon: '🔌',
     title: 'Integrations',
     tagline: 'Connect all your business tools — 9 live integrations',
-    description: 'B9 connects to the tools Indian businesses actually use: WhatsApp, Instagram, Facebook, Gmail, Google Sheets, Razorpay, IndiaMART, Shopify, and Webhooks/REST API. Every integration is live today — no "Coming Soon".',
+    description: 'B9 connects to the tools Indian businesses actually use: WhatsApp, Instagram, Facebook, Gmail, Google Sheets, Razorpay, IndiaMART, Shopify, and Webhooks/REST API. Availability depends on your provider account and completed connection health checks.',
     useCases: [
       'Razorpay: customer pays via WhatsApp link → CRM updated to "won" → invoice sent automatically',
       'Google Sheets: every new lead auto-pushed to your sales team sheet in real time',

@@ -1,5 +1,4 @@
 import {
-  ArrowRight,
   BarChart3,
   Bot,
   Brain,
@@ -11,12 +10,9 @@ import {
   Globe,
   Globe2,
   LockKeyhole,
-  Mail,
   MessageCircle,
   Mic2,
   PlayCircle,
-  Search,
-  Share2,
   ShieldCheck,
   ShoppingBag,
   Sparkles,

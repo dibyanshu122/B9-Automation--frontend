@@ -37,7 +37,7 @@ export function TopUpModal({ isOpen, onClose }: TopUpModalProps) {
   const [autoThreshold] = useState(50);
   const [purchasing, setPurchasing] = useState('');
 
-  const purchase = async (packKey: string, packLabel: string, packPrice: number) => {
+  const purchase = async (packKey: string, packLabel: string) => {
     const key = packKey;
     if (!key) return;
     setPurchasing(key);
@@ -112,7 +112,7 @@ export function TopUpModal({ isOpen, onClose }: TopUpModalProps) {
                 key={pack.key}
                 type="button"
                 disabled={Boolean(purchasing)}
-                onClick={() => purchase(pack.key, pack.label, pack.price)}
+                onClick={() => purchase(pack.key, pack.label)}
                 className={`relative rounded-xl border p-4 text-left transition disabled:opacity-60 ${pack.popular ? 'border-primary-400 bg-primary-50 ring-1 ring-primary-300' : 'border-gray-200 bg-white hover:border-orange-200 hover:bg-orange-50'}`}
               >
                 {pack.popular && (
@@ -149,7 +149,7 @@ export function TopUpModal({ isOpen, onClose }: TopUpModalProps) {
                 key={pack.key}
                 type="button"
                 disabled={Boolean(purchasing)}
-                onClick={() => purchase(pack.key, pack.label, pack.price)}
+                onClick={() => purchase(pack.key, pack.label)}
                 className="rounded-xl border border-gray-200 bg-white p-4 text-left transition hover:border-gray-300 disabled:opacity-60"
               >
                 <p className="font-bold text-gray-950">{pack.label}</p>

@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { CheckCircle2, Circle, Plug, FileText, Workflow, MessageCircle, ArrowRight, Sparkles, Rocket } from 'lucide-react';
+import { CheckCircle2, Plug, FileText, Workflow, MessageCircle, ArrowRight, Sparkles, Rocket } from 'lucide-react';
 import { useApi } from '@/hooks/useApi';
 import { useAuthStore } from '@/store/authStore';
 
@@ -49,9 +48,8 @@ const STEPS = [
 export default function OnboardingPage() {
   const { get } = useApi();
   const { user } = useAuthStore();
-  const router = useRouter();
   const [readiness, setReadiness] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
 
   useEffect(() => {
     get('/api/automation/readiness')

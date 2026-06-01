@@ -180,7 +180,7 @@ export default function FeaturesPage() {
             </motion.h1>
 
             <motion.p variants={fadeUp} className="max-w-2xl text-lg font-light text-zinc-400">
-              B9 Automation is India's WhatsApp Agentic OS — AI that talks to customers, qualifies leads, sends catalogs, collects payments, and follows up. No "Coming Soon". No fake demos.
+              B9 Automation is India's WhatsApp Agentic OS — AI that talks to customers, qualifies leads, sends catalogs, collects payments, and follows up with review-first controls.
             </motion.p>
 
             <motion.div variants={fadeUp} className="flex gap-3">
@@ -343,7 +343,7 @@ export default function FeaturesPage() {
             </motion.h2>
             <div className="space-y-4">
               {[
-                ['Which features are live right now?', `All ${totalFeatures} features listed on this page are live and production-ready. We do not list "Coming Soon" features — everything you see is working today.`],
+                ['Which features are available?', `B9 includes ${totalFeatures} product capabilities. Live provider actions require the relevant account connection, health check, and plan access.`],
                 ['Does B9 work with official WhatsApp Business API?', 'Yes. B9 uses the official Meta Cloud API (not unofficial methods). You connect your own Meta WABA — your number, your data.'],
                 ['Can the AI autonomously handle customer conversations?', 'Yes. The Agentic WhatsApp AI classifies intent, calls tools (catalog, payment, knowledge base), and sends replies — no human needed for most queries.'],
                 ['How does AI Template Builder work?', 'Describe your campaign in plain English (e.g. "Diwali sale 20% off"). AI drafts a Meta-compliant WhatsApp template with variables, header, footer, and buttons — ready to submit for approval.'],

@@ -1330,7 +1330,6 @@ const STATUS_TABS = [
 ];
 
 export default function CampaignsPage() {
-  const { get } = useApi();
   const [tab, setTab] = useState('all');
   const [showNew, setShowNew] = useState(false);
   const [detailName, setDetailName] = useState<string | null>(null);

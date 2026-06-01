@@ -151,7 +151,7 @@ export const PLAN_LIMITS = {
     bestFor: 'Large teams, agencies, enterprise clients',
     watermark: 'Full white-label - your brand only',
     integrations: 'All integrations + White-label + Custom domain',
-    automation: 'Unlimited workflows, unlimited steps, unlimited runs/day',
+    automation: 'High-volume workflows, steps, and runs with fair usage',
     ai_engine: 'DeepSeek-V3 + DeepSeek-R1 Reasoner',
     ai_label: 'DeepSeek V3 + Reasoner',
     badge: 'Enterprise',
