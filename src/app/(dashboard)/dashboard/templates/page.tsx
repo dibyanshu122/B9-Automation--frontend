@@ -166,42 +166,42 @@ function newBtn(type: BtnType): BtnEntry { return { ...EMPTY_BTN, type }; }
 
 function TemplatePreviewShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-col items-center">
-      {/* Phone frame */}
-      <div className="relative w-[300px] rounded-[2.5rem] border-[6px] border-gray-800 bg-gray-800 shadow-2xl overflow-hidden">
+    <div className="flex flex-col items-center w-full">
+      {/* Phone frame — fits panel width */}
+      <div className="relative w-full max-w-[260px] rounded-[2rem] border-[5px] border-gray-800 bg-gray-800 shadow-xl overflow-hidden">
         {/* Status bar */}
-        <div className="bg-[#075e54] px-5 pt-3 pb-1 flex items-center justify-between">
-          <span className="text-white text-[10px] font-semibold">9:41</span>
-          <div className="absolute left-1/2 -translate-x-1/2 w-20 h-4 bg-gray-800 rounded-full top-0" />
+        <div className="bg-[#075e54] px-4 pt-2 pb-0 flex items-center justify-between">
+          <span className="text-white text-[9px] font-semibold">9:41</span>
+          <div className="absolute left-1/2 -translate-x-1/2 w-14 h-3 bg-gray-800 rounded-full top-0" />
           <div className="flex gap-1 items-center">
-            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M1.5 8.5a13 13 0 0121 0M5 12a10 10 0 0114 0M8.5 15.5a6 6 0 017 0M12 19h.01"/></svg>
-            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M23 7l-7 5 7 5V7z M1 5h15a1 1 0 011 1v12a1 1 0 01-1 1H1a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg>
+            <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0119 12.55M5 12.55a10.94 10.94 0 015.17-2.39M10.71 5.05A16 16 0 0122.56 9M1.42 9a15.91 15.91 0 014.7-2.88M8.53 16.11a6 6 0 016.95 0M12 20h.01"/></svg>
+            <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
           </div>
         </div>
-        {/* WhatsApp chat header */}
-        <div className="bg-[#075e54] px-3 pb-3 flex items-center gap-3">
-          <button className="text-white opacity-80">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
+        {/* WhatsApp chat header — no contact name */}
+        <div className="bg-[#075e54] px-2 pb-2 pt-1 flex items-center gap-2">
+          <button className="text-white/80 p-1">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
           </button>
-          <div className="w-9 h-9 rounded-full bg-gray-300 flex items-center justify-center text-gray-500 text-sm font-bold flex-shrink-0">A</div>
+          <div className="w-7 h-7 rounded-full bg-gray-300 flex items-center justify-center text-gray-500 text-xs font-bold flex-shrink-0">B</div>
           <div className="flex-1 min-w-0">
-            <p className="text-white text-sm font-semibold">Ananya</p>
-            <p className="text-[10px] text-green-200">Business Account</p>
+            <p className="text-white text-xs font-semibold leading-none">Business</p>
+            <p className="text-[9px] text-green-200 mt-0.5">template preview</p>
           </div>
-          <div className="flex gap-3 text-white opacity-80">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+          <div className="flex gap-2 text-white/80">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
           </div>
         </div>
-        {/* Chat area */}
-        <div className="bg-[#efeae2] min-h-[380px] p-3 pb-10 overflow-y-auto" style={{backgroundImage:"url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d0c8b0' fill-opacity='0.15'%3E%3Cpath d='M30 30m-28 0a28 28 0 1 1 56 0a28 28 0 1 1-56 0'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")"}}>
+        {/* Chat area — scrollable */}
+        <div className="bg-[#efeae2] p-2.5 pb-8 overflow-y-auto max-h-[420px]">
           {children}
         </div>
         {/* Input bar */}
-        <div className="bg-[#f0f0f0] px-2 py-2 flex items-center gap-2 border-t border-gray-200">
-          <div className="flex-1 bg-white rounded-full px-3 py-1.5 text-[11px] text-gray-400">Type Message Here...</div>
-          <div className="w-8 h-8 rounded-full bg-[#075e54] flex items-center justify-center flex-shrink-0">
-            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        <div className="bg-[#f0f0f0] px-2 py-1.5 flex items-center gap-1.5 border-t border-gray-300">
+          <div className="flex-1 bg-white rounded-full px-2.5 py-1 text-[9px] text-gray-400">Type Message Here...</div>
+          <div className="w-6 h-6 rounded-full bg-[#075e54] flex items-center justify-center flex-shrink-0">
+            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
           </div>
         </div>
       </div>
@@ -315,11 +315,11 @@ function WaPreview({ form }: { form: FormState }) {
                 </div>
               )}
               {form.headerType === 'IMAGE' && (
-                <div className="w-full bg-gray-100 overflow-hidden" style={{ aspectRatio: '16/9' }}>
+                <div className="w-full bg-gray-100 overflow-hidden">
                   {form.headerMediaUrl
-                    ? <img src={form.headerMediaUrl} alt="" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display='none'; }} />
-                    : <div className="w-full h-full flex items-center justify-center gap-2 text-gray-300">
-                        <ImageIcon className="w-8 h-8" /><span className="text-xs">Image header</span>
+                    ? <img src={form.headerMediaUrl} alt="" className="w-full h-auto block" onError={e => { (e.target as HTMLImageElement).style.display='none'; }} />
+                    : <div className="w-full py-6 flex items-center justify-center gap-2 text-gray-300">
+                        <ImageIcon className="w-6 h-6" /><span className="text-xs">Image header</span>
                       </div>}
                 </div>
               )}
@@ -1117,7 +1117,7 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
               </div>
 
               {/* RIGHT: Preview */}
-              <div className="hidden w-[22rem] flex-shrink-0 overflow-y-auto border-l border-gray-100 bg-slate-100 p-5 lg:block xl:w-[360px]">
+              <div className="hidden w-[300px] flex-shrink-0 overflow-y-auto border-l border-gray-200 bg-white p-4 lg:block">
                 <WaPreview form={form} />
               </div>
             </div>
