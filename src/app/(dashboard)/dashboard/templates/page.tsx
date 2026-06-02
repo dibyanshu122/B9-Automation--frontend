@@ -174,7 +174,7 @@ function WaPreview({ form }: { form: FormState }) {
     return (
       <div className="sticky top-4">
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Live Preview</p>
-        <div className="bg-[#e5ddd5] rounded-2xl p-4">
+        <div className="overflow-hidden rounded-2xl bg-[#e5ddd5] p-4">
           <div className="bg-white rounded-lg rounded-tl-none shadow-sm p-3 max-w-[260px]">
             <p className="text-xs text-gray-500 mb-1">🔐 <strong>Authentication Code</strong></p>
             <p className="text-sm text-gray-800">Your verification code is <strong>123456</strong></p>
@@ -203,10 +203,10 @@ function WaPreview({ form }: { form: FormState }) {
               <p className="text-sm text-gray-800">{body}</p>
             </div>
           )}
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden max-w-[260px]">
+          <div className="w-full max-w-[300px] overflow-hidden rounded-xl bg-white shadow-sm">
             <div className={`h-28 flex items-center justify-center ${card?.headerUrl ? '' : 'bg-gray-200'}`}>
               {card?.headerUrl
-                ? <img src={card.headerUrl} alt="" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display='none'; }} />
+                ? <img src={card.headerUrl} alt="" className="block h-full w-full max-w-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display='none'; }} />
                 : <div className="text-gray-400 flex flex-col items-center gap-1">
                     {card?.headerFormat === 'VIDEO' ? <Video className="w-8 h-8" /> : <ImageIcon className="w-8 h-8" />}
                     <span className="text-xs">{card?.headerFormat || 'IMAGE'}</span>
@@ -234,9 +234,9 @@ function WaPreview({ form }: { form: FormState }) {
     return (
       <div className="sticky top-4">
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Live Preview</p>
-        <div className="bg-[#e5ddd5] rounded-2xl p-4">
-          <div className="bg-white rounded-lg rounded-tl-none shadow-sm overflow-hidden max-w-[260px]">
-            {form.headerMediaUrl && <img src={form.headerMediaUrl} alt="" className="w-full h-28 object-cover" onError={() => {}} />}
+        <div className="overflow-hidden rounded-2xl bg-[#e5ddd5] p-4">
+          <div className="w-full max-w-[300px] overflow-hidden rounded-lg rounded-tl-none bg-white shadow-sm">
+            {form.headerMediaUrl && <img src={form.headerMediaUrl} alt="" className="block h-28 w-full max-w-full object-cover" onError={() => {}} />}
             {body && <p className="px-3 py-2 text-sm text-gray-800">{body}</p>}
             {form.ltoHasExpiration && (
               <div className="px-3 py-2 border-t border-dashed border-orange-200 bg-orange-50">
@@ -257,11 +257,11 @@ function WaPreview({ form }: { form: FormState }) {
   return (
     <div className="sticky top-4">
       <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Live Preview</p>
-      <div className="bg-[#e5ddd5] rounded-2xl p-4 min-h-[180px] flex items-start">
+      <div className="flex min-h-[220px] items-start overflow-hidden rounded-2xl bg-[#e5ddd5] p-4">
         {!hasContent ? (
           <p className="text-xs text-gray-400 m-auto text-center">Fill the form to see preview</p>
         ) : (
-          <div className="max-w-[260px] w-full">
+          <div className="w-full max-w-[320px]">
             <div className="bg-white rounded-lg rounded-tl-none shadow-sm overflow-hidden">
               {/* Header */}
               {form.headerType === 'TEXT' && form.headerText && (
@@ -270,7 +270,7 @@ function WaPreview({ form }: { form: FormState }) {
               {form.headerType === 'IMAGE' && (
                 <div className="h-28 bg-gray-100 flex items-center justify-center overflow-hidden">
                   {form.headerMediaUrl
-                    ? <img src={form.headerMediaUrl} alt="" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display='none'; }} />
+                    ? <img src={form.headerMediaUrl} alt="" className="block h-full w-full max-w-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display='none'; }} />
                     : <ImageIcon className="w-8 h-8 text-gray-300" />}
                 </div>
               )}
@@ -581,11 +581,11 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
       {isOpen && (
         <>
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm flex items-start justify-center overflow-y-auto py-8 px-4"
+            className="fixed inset-0 z-40 flex items-center justify-center overflow-hidden bg-black/50 px-3 py-3 backdrop-blur-sm sm:px-4 sm:py-4"
             onClick={onClose}>
           <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-            className="relative z-50 w-full max-w-4xl bg-white rounded-2xl shadow-2xl flex flex-col my-auto"
+            className="relative z-50 flex max-h-[calc(100dvh-1.5rem)] w-full max-w-6xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl sm:max-h-[calc(100dvh-2rem)]"
             onClick={e => e.stopPropagation()}>
 
             {/* Header */}
@@ -1024,7 +1024,7 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
               </div>
 
               {/* RIGHT: Preview */}
-              <div className="hidden lg:block w-80 flex-shrink-0 border-l border-gray-100 p-6 bg-gray-50 overflow-y-auto">
+              <div className="hidden w-[25rem] flex-shrink-0 overflow-y-auto border-l border-gray-100 bg-gray-50 p-6 lg:block xl:w-[28rem]">
                 <WaPreview form={form} />
               </div>
             </div>
