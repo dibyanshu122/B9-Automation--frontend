@@ -940,10 +940,16 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
                       )}
                       {(form.headerType === 'IMAGE' || form.headerType === 'VIDEO' || form.headerType === 'DOCUMENT') && (
                         <div className="space-y-3">
+                          {/* Meta supported formats info */}
+                          <div className="rounded-lg bg-blue-50 border border-blue-100 px-3 py-2 text-xs text-blue-700">
+                            {form.headerType === 'IMAGE' && <><strong>Image:</strong> JPG, PNG, WEBP — max 5MB — recommended 800×418px (landscape)</>}
+                            {form.headerType === 'VIDEO' && <><strong>Video:</strong> MP4, 3GPP — max 16MB — H.264 codec, AAC audio</>}
+                            {form.headerType === 'DOCUMENT' && <><strong>Document:</strong> PDF only — max 100MB</>}
+                          </div>
                           {/* Upload button */}
                           <label className={`flex items-center gap-3 border-2 border-dashed rounded-xl px-4 py-3 cursor-pointer transition ${uploading ? 'border-orange-300 bg-orange-50' : form.headerMediaHandle ? 'border-green-400 bg-green-50' : 'border-gray-200 hover:border-orange-400 hover:bg-orange-50/30'}`}>
                             <input type="file"
-                              accept={form.headerType === 'IMAGE' ? 'image/*' : form.headerType === 'VIDEO' ? 'video/*' : '*'}
+                              accept={form.headerType === 'IMAGE' ? 'image/jpeg,image/png,image/webp' : form.headerType === 'VIDEO' ? 'video/mp4,video/3gpp' : 'application/pdf'}
                               className="hidden"
                               onChange={e => { const f = e.target.files?.[0]; if (f) handleMediaUpload(f); e.target.value = ''; }}
                               disabled={uploading}
