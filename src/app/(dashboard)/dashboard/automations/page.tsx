@@ -2291,8 +2291,9 @@ function WorkflowListView({
                       }}
                       className="flex h-5 w-5 items-center justify-center rounded-md text-slate-600 opacity-0 transition hover:bg-red-500/20 hover:text-red-400 group-hover:opacity-100"
                       title="Delete workflow"
+                      aria-label="Delete workflow"
                     >
-                      ×
+                      <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 </div>
