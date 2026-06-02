@@ -164,30 +164,18 @@ function applyExamples(text: string, examples: string[]): string {
 }
 function newBtn(type: BtnType): BtnEntry { return { ...EMPTY_BTN, type }; }
 
-function PhonePreviewShell({ children }: { children: React.ReactNode }) {
+function TemplatePreviewShell({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      className="flex h-full min-h-0 flex-1 items-center justify-center overflow-hidden rounded-2xl p-3"
-      style={{ background: 'linear-gradient(145deg, #bfdbfe 0%, #dbeafe 45%, #c7d2fe 100%)' }}
-    >
-      <div className="aspect-[9/16] h-full max-h-[510px] max-w-full rounded-[2.8rem] border-[7px] border-slate-950 bg-slate-950 p-1 shadow-2xl">
-        <div className="flex h-full flex-col overflow-hidden rounded-[2.35rem] bg-white">
-          <div className="relative flex h-10 items-center justify-between bg-white px-5 text-[10px] font-bold text-slate-900">
-            <span>9:41</span>
-            <span className="absolute left-1/2 top-1.5 h-5 w-20 -translate-x-1/2 rounded-full bg-slate-950" />
-            <span className="text-[9px] tracking-wide">5G&nbsp;&nbsp;100%</span>
-          </div>
-          <div className="flex items-center justify-between border-b border-slate-100 bg-white px-3 py-2">
-            <div>
-              <p className="text-sm font-bold text-slate-900">WhatsApp Preview</p>
-              <p className="text-[10px] text-emerald-600">Business message</p>
-            </div>
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-sm text-slate-600">...</span>
-          </div>
-          <div className="flex min-h-0 flex-1 flex-col justify-end overflow-y-auto bg-[#efeae2] p-3">
-            {children}
-          </div>
+    <div className="flex h-full min-h-[360px] flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
+        <div>
+          <p className="text-sm font-bold text-slate-900">WhatsApp message preview</p>
+          <p className="text-[11px] text-emerald-600">Business template</p>
         </div>
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50 text-[10px] font-bold text-emerald-700">WA</span>
+      </div>
+      <div className="flex min-h-0 flex-1 flex-col justify-end overflow-y-auto bg-[#efeae2] p-4">
+        {children}
       </div>
     </div>
   );
@@ -203,7 +191,7 @@ function WaPreview({ form }: { form: FormState }) {
     return (
       <div className="flex h-full min-h-0 flex-col">
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Live Preview</p>
-        <PhonePreviewShell>
+        <TemplatePreviewShell>
           <div className="bg-white rounded-lg rounded-tl-none shadow-sm p-3 max-w-[260px]">
             <p className="text-xs text-gray-500 mb-1">🔐 <strong>Authentication Code</strong></p>
             <p className="text-sm text-gray-800">Your verification code is <strong>123456</strong></p>
@@ -216,7 +204,7 @@ function WaPreview({ form }: { form: FormState }) {
               {form.authOtpType === 'ONE_TAP' ? 'Autofill' : 'Copy Code'}
             </button>
           )}
-        </PhonePreviewShell>
+        </TemplatePreviewShell>
       </div>
     );
   }
@@ -226,7 +214,7 @@ function WaPreview({ form }: { form: FormState }) {
     return (
       <div className="flex h-full min-h-0 flex-col">
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Live Preview</p>
-        <PhonePreviewShell>
+        <TemplatePreviewShell>
           {body && (
             <div className="bg-white rounded-lg rounded-tl-none shadow-sm p-3 mb-2 max-w-[260px]">
               <p className="text-sm text-gray-800">{body}</p>
@@ -254,7 +242,7 @@ function WaPreview({ form }: { form: FormState }) {
               <button onClick={() => setCardIdx(i => Math.min(form.carouselCards.length-1, i+1))} disabled={cardIdx === form.carouselCards.length-1} className="p-1 rounded bg-white/60 disabled:opacity-30"><ChevronRight className="w-4 h-4" /></button>
             </div>
           )}
-        </PhonePreviewShell>
+        </TemplatePreviewShell>
       </div>
     );
   }
@@ -263,7 +251,7 @@ function WaPreview({ form }: { form: FormState }) {
     return (
       <div className="flex h-full min-h-0 flex-col">
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Live Preview</p>
-        <PhonePreviewShell>
+        <TemplatePreviewShell>
           <div className="w-full max-w-[300px] overflow-hidden rounded-lg rounded-tl-none bg-white shadow-sm">
             {form.headerMediaUrl && <img src={form.headerMediaUrl} alt="" className="block h-28 w-full max-w-full object-cover" onError={() => {}} />}
             {body && <p className="px-3 py-2 text-sm text-gray-800">{body}</p>}
@@ -276,7 +264,7 @@ function WaPreview({ form }: { form: FormState }) {
             <p className="text-right text-[10px] text-gray-400 px-3 pb-1">12:00 PM ✓✓</p>
           </div>
           <button className="mt-1 w-full max-w-[260px] bg-white rounded-lg py-2 text-sm font-semibold text-[#00a5f4] text-center shadow-sm">Copy Code</button>
-        </PhonePreviewShell>
+        </TemplatePreviewShell>
       </div>
     );
   }
@@ -286,7 +274,7 @@ function WaPreview({ form }: { form: FormState }) {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Live Preview</p>
-      <PhonePreviewShell>
+      <TemplatePreviewShell>
         {!hasContent ? (
           <p className="text-xs text-gray-400 m-auto text-center">Fill the form to see preview</p>
         ) : (
@@ -332,7 +320,7 @@ function WaPreview({ form }: { form: FormState }) {
             ))}
           </div>
         )}
-      </PhonePreviewShell>
+      </TemplatePreviewShell>
     </div>
   );
 }
@@ -610,11 +598,11 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
       {isOpen && (
         <>
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-start justify-center overflow-hidden bg-black/50 px-3 pb-3 pt-2 backdrop-blur-sm sm:px-4 sm:pb-4 sm:pt-3"
+            className="fixed inset-x-0 bottom-0 top-16 z-[100] flex items-start justify-center overflow-hidden bg-black/50 px-3 pb-3 pt-3 backdrop-blur-sm sm:px-4 sm:pb-4"
             onClick={onClose}>
           <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-            className="relative z-[110] flex max-h-[calc(100dvh-1.25rem)] w-full max-w-6xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl sm:max-h-[calc(100dvh-1.75rem)]"
+            className="relative z-[110] flex max-h-[calc(100dvh-5rem)] w-full max-w-6xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl sm:max-h-[calc(100dvh-5.25rem)]"
             onClick={e => e.stopPropagation()}>
 
             {/* Header */}
@@ -1053,7 +1041,7 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
               </div>
 
               {/* RIGHT: Preview */}
-              <div className="hidden w-[25rem] flex-shrink-0 overflow-hidden border-l border-gray-100 bg-gray-50 p-4 lg:block xl:w-[28rem]">
+              <div className="hidden w-[25rem] flex-shrink-0 overflow-y-auto border-l border-gray-100 bg-gray-50 p-4 lg:block xl:w-[28rem]">
                 <WaPreview form={form} />
               </div>
             </div>
