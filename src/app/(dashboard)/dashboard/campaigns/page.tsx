@@ -856,6 +856,7 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
   const handleSend = async (saveAsDraft = false) => {
     if (!name.trim()) { toast.error('Campaign name required'); return; }
     if (!selected) { toast.error('Select a template first'); return; }
+    if (abEnabled && selectedB && selectedB.name === selected.name) { toast.error('A/B test variants must use different templates'); return; }
     if (vars.some(v => !v.trim())) { toast.error('Fill all template variables'); return; }
     if (isLimitedTimeOffer && (!ltoExpiry || new Date(ltoExpiry).getTime() <= Date.now())) {
       toast.error('Select a future offer expiry time');

@@ -40,6 +40,7 @@ export default function SegmentsPage() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [filters, setFilters] = useState<Filter[]>([{ ...DEFAULT_FILTER }]);
+  const [matchMode, setMatchMode] = useState<'all' | 'any'>('all');
   const [saving, setSaving] = useState(false);
   const [previewing, setPreviewing] = useState(false);
   const [previewResult, setPreviewResult] = useState<{ count: number; sample: string[] } | null>(null);
@@ -60,11 +61,13 @@ export default function SegmentsPage() {
       setName(seg.name);
       setDescription(seg.description || '');
       setFilters(seg.filters?.length ? seg.filters : [{ ...DEFAULT_FILTER }]);
+      setMatchMode((seg as any).match_mode || 'all');
     } else {
       setEditingSegment(null);
       setName('');
       setDescription('');
       setFilters([{ ...DEFAULT_FILTER }]);
+      setMatchMode('all');
     }
     setPreviewResult(null);
     setShowBuilder(true);
@@ -93,7 +96,7 @@ export default function SegmentsPage() {
     if (filters.some(f => !f.value)) { toast.error('Fill all filter values'); return; }
     setSaving(true);
     try {
-      const body = { name: name.trim(), description: description.trim(), filters };
+      const body = { name: name.trim(), description: description.trim(), filters, match_mode: matchMode };
       if (editingSegment) {
         await patch(`/api/leads/segments/${editingSegment.id}`, body);
         toast.success('Segment updated');
@@ -234,7 +237,16 @@ export default function SegmentsPage() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-xs font-semibold text-gray-700">Filter Rules</label>
-                  <span className="text-[10px] text-gray-400">ALL rules must match</span>
+                  <div className="flex rounded-lg border border-gray-200 overflow-hidden text-[10px] font-semibold">
+                    <button type="button" onClick={() => setMatchMode('all')}
+                      className={`px-2.5 py-1 transition ${matchMode === 'all' ? 'bg-indigo-500 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>
+                      ALL match
+                    </button>
+                    <button type="button" onClick={() => setMatchMode('any')}
+                      className={`px-2.5 py-1 transition ${matchMode === 'any' ? 'bg-indigo-500 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>
+                      ANY match
+                    </button>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   {filters.map((f, i) => {

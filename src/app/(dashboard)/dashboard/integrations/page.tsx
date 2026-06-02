@@ -666,6 +666,7 @@ export default function IntegrationsPage() {
       const handler = (e: MessageEvent) => {
         if (e.origin !== window.location.origin) return;
         window.removeEventListener('message', handler);
+        clearTimeout(oauthTimeout);
         setGsOAuthLoading(false);
         if (e.data?.type === 'sheets_connected') {
           setGsOAuthConnected(true);
@@ -678,6 +679,12 @@ export default function IntegrationsPage() {
         }
       };
       window.addEventListener('message', handler);
+      const oauthTimeout = setTimeout(() => {
+        window.removeEventListener('message', handler);
+        setGsOAuthLoading(false);
+        if (popup && !popup.closed) popup.close();
+        toast.error('OAuth timed out. Please try again.');
+      }, 120000);
     } catch {
       setGsOAuthLoading(false);
       setSetupError('Could not start Google OAuth. Please check the Google connection setup.');

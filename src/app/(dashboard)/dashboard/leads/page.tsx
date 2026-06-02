@@ -736,7 +736,7 @@ export default function LeadsPage() {
           </button>
           {/* Export CSV */}
           <a
-            href={`${typeof window !== 'undefined' ? '' : ''}/api/leads/export?format=csv${statusFilter !== 'all' ? `&status=${statusFilter}` : ''}`}
+            href={`/api/leads/export?format=csv${statusFilter !== 'all' ? `&status=${statusFilter}` : ''}${labelFilter !== 'all' ? `&tag=${labelFilter}` : ''}`}
             download="leads.csv"
             className="inline-flex h-11 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-emerald-200 bg-emerald-50 px-3 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
           >

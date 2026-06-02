@@ -259,18 +259,21 @@ export default function ApiKeysPage() {
       {tab === 'keys' && (
         <div className="space-y-4">
           {newKeyValue && (
-            <Card className="p-5 border-green-200 bg-green-50">
+            <Card className="p-5 border-amber-300 bg-amber-50 ring-2 ring-amber-400/30">
               <div className="flex items-start gap-3">
-                <Shield className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                <Shield className="w-5 h-5 text-amber-700 flex-shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-green-800">API key created - copy it now</p>
-                  <p className="text-sm text-green-700 mt-0.5">This key will not be shown again.</p>
-                  <div className="mt-3 flex items-center gap-2 bg-white border border-green-200 rounded-lg px-3 py-2">
-                    <code className="text-sm font-mono text-gray-800 flex-1 break-all">{newKeyValue}</code>
+                  <p className="font-bold text-amber-900 text-base">⚠️ Copy your API key now — it will never be shown again</p>
+                  <p className="text-sm text-amber-800 mt-0.5">Once you close this banner, the full key is gone forever. Store it in a secure place.</p>
+                  <div className="mt-3 flex items-center gap-2 bg-white border border-amber-300 rounded-lg px-3 py-2.5">
+                    <code className="text-sm font-mono text-gray-800 flex-1 break-all select-all">{newKeyValue}</code>
                     <CopyButton text={newKeyValue} />
                   </div>
+                  <button onClick={() => setNewKeyValue(null)}
+                    className="mt-3 w-full rounded-lg bg-amber-700 py-2 text-sm font-semibold text-white hover:bg-amber-800 transition">
+                    I&apos;ve copied my key — close
+                  </button>
                 </div>
-                <button onClick={() => setNewKeyValue(null)} className="text-green-600 hover:text-green-800 p-1"><X className="w-4 h-4" /></button>
               </div>
             </Card>
           )}
