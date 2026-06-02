@@ -68,7 +68,12 @@ const NAV_PERMISSIONS: Record<string, string[]> = {
 
 function canSeeHref(access: TeamAccess | null, href?: string) {
   if (!href) return true;
-  if (!access) return true; // Show all items while loading — filter only after API responds
+  // While loading: only show items that require no special permission (safe default)
+  // Prevents briefly showing restricted sections to lower-privilege members
+  if (!access) {
+    const required = NAV_PERMISSIONS[href];
+    return !required?.length; // show unrestricted items only while loading
+  }
   const perms = new Set(access.permissions || []);
   if (access.is_owner || access.role === 'owner' || perms.has('*')) return true;
   const required = NAV_PERMISSIONS[href];

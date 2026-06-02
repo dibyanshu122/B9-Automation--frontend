@@ -186,11 +186,13 @@ export default function DashboardPage() {
   useEffect(() => {
     loadDashboard();
 
-    // Live SSE counter — updates every 30s without page refresh
+    // Live SSE counter — auth-cookie is sent automatically (no token in URL)
+    // Note: EventSource API doesn't support custom headers; cookie-based auth is the safe alternative
     const token = typeof window !== 'undefined' ? useAuthStore.getState().token : null;
     if (!token) return;
     const base = process.env.NEXT_PUBLIC_API_URL || '';
-    const es = new EventSource(`${base}/api/analytics/live?token=${token}`);
+    // Use withCredentials so the auth-token cookie is sent — avoids JWT exposure in URL/logs
+    const es = new EventSource(`${base}/api/analytics/live`, { withCredentials: true });
     es.onmessage = (e) => {
       try { setLiveStats(JSON.parse(e.data)); } catch { /* ignore */ }
     };
