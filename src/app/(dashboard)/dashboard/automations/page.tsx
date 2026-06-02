@@ -2202,17 +2202,41 @@ function WorkflowListView({
           ))}
         </div>
       ) : workflows.length === 0 ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
-          <p className="text-5xl">⚡</p>
-          <p className="text-lg font-semibold text-slate-300">No workflows yet</p>
-          <p className="text-sm text-slate-500">Create your first automation to get started</p>
-          <button
-            type="button"
-            onClick={onNew}
-            className="mt-2 rounded-xl border border-dashed border-white/20 px-6 py-3 text-sm font-semibold text-slate-400 hover:border-white/40 hover:text-white transition"
-          >
-            + Create Workflow
-          </button>
+        <div className="flex flex-1 flex-col items-center justify-center gap-6 text-center px-4">
+          <div>
+            <p className="text-5xl mb-3">⚡</p>
+            <p className="text-xl font-bold text-slate-200">Build your first automation</p>
+            <p className="text-sm text-slate-500 mt-1 max-w-md">Automations run automatically when a customer messages you — no manual work needed.</p>
+          </div>
+
+          {/* How it works — 3 steps */}
+          <div className="grid grid-cols-3 gap-3 max-w-lg text-left">
+            {[
+              { n:'1', icon:'⚡', title:'Choose a Trigger', desc:'When does it start? e.g. New WhatsApp message' },
+              { n:'2', icon:'🔀', title:'Add Actions', desc:'What should happen? Send reply, collect info, pay' },
+              { n:'3', icon:'✅', title:'Activate', desc:'Turn it on — runs 24/7 without you' },
+            ].map(s => (
+              <div key={s.n} className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary-600 text-[10px] font-black text-white">{s.n}</span>
+                  <span className="text-sm">{s.icon}</span>
+                </div>
+                <p className="text-xs font-bold text-slate-300">{s.title}</p>
+                <p className="text-[11px] text-slate-500 mt-0.5">{s.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex gap-3">
+            <button type="button" onClick={() => {/* trigger generate modal */onNew(); }}
+              className="rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-violet-700 transition">
+              ✨ Generate with AI
+            </button>
+            <button type="button" onClick={onNew}
+              className="rounded-xl border border-white/20 px-5 py-2.5 text-sm font-semibold text-slate-300 hover:border-white/40 hover:text-white transition">
+              Start from scratch
+            </button>
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -2320,6 +2344,7 @@ function WorkflowListView({
 
 type FlowNodeData = {
   block: BuilderBlock;
+  stepIndex: number;
   selected: boolean;
   active: boolean;
   completed: boolean;
@@ -2386,12 +2411,13 @@ function WorkflowCanvas({
 
   const flowNodes = useMemo<Node<FlowNodeData>[]>(
     () =>
-      nodes.map((node) => ({
+      nodes.map((node, index) => ({
         id: node.id,
         type: 'b9Block',
         position: { x: node.x, y: node.y },
         data: {
           block: node,
+          stepIndex: index + 1,
           selected: selectedNodeId === node.id,
           active: activeNodeIds?.has(node.id) ?? false,
           completed: completedNodeIds?.has(node.id) ?? false,
@@ -2456,8 +2482,11 @@ function WorkflowCanvas({
     <div className="b9-node-canvas relative h-full overflow-hidden rounded-2xl border border-white/10 shadow-2xl shadow-black/30">
       <div className="absolute inset-x-0 top-0 z-20 flex items-center justify-between gap-3 border-b border-white/10 bg-slate-950/90 px-4 py-3 backdrop-blur">
         <div>
-          <p className="text-sm font-bold text-slate-100">Workflow Canvas</p>
-          <p className="text-xs text-slate-400">Drag blocks here, connect nodes, pan with mouse, zoom with controls or Ctrl + wheel.</p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-bold text-slate-100">Workflow Canvas</p>
+            <span className="text-[10px] text-slate-500 font-mono hidden sm:inline">Trigger → Actions → End</span>
+          </div>
+          <p className="text-xs text-slate-500">Drag from library · Connect nodes · Left to Right flow</p>
         </div>
         <div className="flex items-center gap-2">
           <button type="button" onClick={() => zoomOut()} className="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-xs font-bold text-slate-200 hover:bg-white/20">
@@ -2667,7 +2696,7 @@ function isNodeConfigured(block: BuilderBlock): boolean {
 }
 
 function WorkflowNode({ data }: NodeProps<Node<FlowNodeData>>) {
-  const { block, selected, active, completed, failed, onSelect, onOpenAddMenu, onTestNode } = data;
+  const { block, stepIndex, selected, active, completed, failed, onSelect, onOpenAddMenu, onTestNode } = data;
   const Icon = blockIcons[block.type];
   const isCondition = block.type === 'condition';
   const meta = NODE_TYPE_META[block.type];
@@ -2697,6 +2726,12 @@ function WorkflowNode({ data }: NodeProps<Node<FlowNodeData>>) {
           : 'hover:ring-1 hover:ring-white/20'
         }`}
     >
+      {/* Step number badge */}
+      {!active && !completed && !failed && (
+        <span className="absolute left-2 top-2 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-slate-700 text-[9px] font-black text-slate-300 leading-none">
+          {stepIndex}
+        </span>
+      )}
       {/* Run status corner badge */}
       {active && <span className="absolute right-2 top-2 z-10 h-2.5 w-2.5 rounded-full bg-cyan-400 animate-ping" />}
       {completed && <span className="absolute right-2 top-2 z-10 text-[11px] font-black text-emerald-400 leading-none">✓</span>}
