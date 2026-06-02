@@ -166,15 +166,15 @@ function newBtn(type: BtnType): BtnEntry { return { ...EMPTY_BTN, type }; }
 
 function TemplatePreviewShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-full min-h-[360px] flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-      <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
+    <div className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 flex-shrink-0">
         <div>
           <p className="text-sm font-bold text-slate-900">WhatsApp message preview</p>
           <p className="text-[11px] text-emerald-600">Business template</p>
         </div>
         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50 text-[10px] font-bold text-emerald-700">WA</span>
       </div>
-      <div className="flex min-h-0 flex-1 flex-col justify-end overflow-y-auto bg-[#efeae2] p-4">
+      <div className="overflow-y-auto bg-[#efeae2] p-4 pb-8">
         {children}
       </div>
     </div>
@@ -272,55 +272,68 @@ function WaPreview({ form }: { form: FormState }) {
   // Standard preview
   const hasContent = form.headerText || form.headerMediaUrl || body || form.footerText || form.buttons.length > 0;
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="flex flex-col">
       <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Live Preview</p>
       <TemplatePreviewShell>
         {!hasContent ? (
-          <p className="text-xs text-gray-400 m-auto text-center">Fill the form to see preview</p>
+          <p className="text-xs text-gray-400 text-center py-8">Fill the form to see preview</p>
         ) : (
-          <div className="w-full max-w-[320px]">
-            <div className="bg-white rounded-lg rounded-tl-none shadow-sm overflow-hidden">
-              {/* Header */}
+          <div className="w-full max-w-[300px]">
+            {/* Message bubble */}
+            <div className="bg-white rounded-2xl rounded-tl-none shadow-sm overflow-hidden">
               {form.headerType === 'TEXT' && form.headerText && (
-                <div className="px-3 pt-3 pb-1"><p className="text-sm font-bold text-gray-900">{form.headerText}</p></div>
+                <div className="px-3 pt-3 pb-1">
+                  <p className="text-sm font-bold text-gray-900">{form.headerText}</p>
+                </div>
               )}
               {form.headerType === 'IMAGE' && (
-                <div className="h-28 bg-gray-100 flex items-center justify-center overflow-hidden">
+                <div className="w-full bg-gray-100 overflow-hidden" style={{ aspectRatio: '16/9' }}>
                   {form.headerMediaUrl
-                    ? <img src={form.headerMediaUrl} alt="" className="block h-full w-full max-w-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display='none'; }} />
-                    : <ImageIcon className="w-8 h-8 text-gray-300" />}
+                    ? <img src={form.headerMediaUrl} alt="" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display='none'; }} />
+                    : <div className="w-full h-full flex items-center justify-center gap-2 text-gray-300">
+                        <ImageIcon className="w-8 h-8" /><span className="text-xs">Image header</span>
+                      </div>}
                 </div>
               )}
               {form.headerType === 'VIDEO' && (
-                <div className="h-28 bg-gray-900 flex items-center justify-center">
-                  <Video className="w-8 h-8 text-white/60" />
-                  {form.headerMediaUrl && <span className="text-xs text-white/40 ml-2">Video</span>}
+                <div className="w-full bg-gray-900 flex items-center justify-center gap-2 py-8">
+                  <Video className="w-8 h-8 text-white/50" />
+                  <span className="text-xs text-white/40">Video header</span>
                 </div>
               )}
               {form.headerType === 'DOCUMENT' && (
-                <div className="px-3 py-2 bg-blue-50 border-b border-blue-100 flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-blue-500" />
-                  <span className="text-xs text-blue-700 font-medium truncate">{form.headerMediaUrl ? form.headerMediaUrl.split('/').pop() : 'Document.pdf'}</span>
+                <div className="px-3 py-2.5 bg-blue-50 border-b border-blue-100 flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-blue-500 flex-shrink-0" />
+                  <span className="text-xs text-blue-700 font-medium truncate">Document.pdf</span>
                 </div>
               )}
               {form.headerType === 'LOCATION' && (
-                <div className="h-24 bg-emerald-50 flex items-center justify-center gap-2 border-b border-emerald-100">
+                <div className="py-6 bg-emerald-50 flex items-center justify-center gap-2 border-b border-emerald-100">
                   <MapPin className="w-6 h-6 text-emerald-600" />
                   <span className="text-sm text-emerald-700 font-medium">Location</span>
                 </div>
               )}
-              {body && <div className="px-3 py-2"><p className="text-sm text-gray-800 whitespace-pre-wrap">{body}</p></div>}
-              {form.footerText && <div className="px-3 pb-2"><p className="text-xs text-gray-400">{form.footerText}</p></div>}
-              <p className="text-right text-[10px] text-gray-400 px-3 pb-1">12:00 PM ✓✓</p>
+              {body && (
+                <div className="px-3 py-2.5">
+                  <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">{body}</p>
+                </div>
+              )}
+              {form.footerText && (
+                <div className="px-3 pb-2">
+                  <p className="text-xs text-gray-400">{form.footerText}</p>
+                </div>
+              )}
+              <p className="text-right text-[10px] text-gray-400 px-3 pb-2">12:00 PM ✓✓</p>
             </div>
+            {/* Buttons below bubble */}
             {form.buttons.length > 0 && (
-              <div className="mt-1 w-full max-w-[320px] space-y-0.5">
+              <div className="mt-1 space-y-0.5">
                 {form.buttons.map((btn, i) => (
-                  <div key={i} className="bg-white rounded-lg py-2 px-3 text-sm font-semibold text-[#00a5f4] text-center shadow-sm border-t border-gray-100 flex items-center justify-center gap-1.5">
-                    {btn.type === 'URL' && <span className="text-[11px]">🔗</span>}
-                    {btn.type === 'PHONE_NUMBER' && <span className="text-[11px]">📞</span>}
-                    {btn.type === 'COPY_CODE' && <span className="text-[11px]">📋</span>}
-                    {btn.text || `Button ${i+1}`}
+                  <div key={i} className="bg-white rounded-xl py-2.5 text-sm font-semibold text-[#00a5f4] text-center shadow-sm flex items-center justify-center gap-1.5">
+                    {btn.type === 'URL' && <span>🔗</span>}
+                    {btn.type === 'PHONE_NUMBER' && <span>📞</span>}
+                    {btn.type === 'COPY_CODE' && <span>📋</span>}
+                    <span>{btn.text || `Button ${i + 1}`}</span>
                   </div>
                 ))}
               </div>
@@ -1070,7 +1083,7 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
               </div>
 
               {/* RIGHT: Preview */}
-              <div className="hidden w-[25rem] flex-shrink-0 overflow-y-auto border-l border-gray-100 bg-gray-50 p-4 lg:block xl:w-[28rem]">
+              <div className="hidden w-[22rem] flex-shrink-0 overflow-y-auto border-l border-gray-100 bg-gray-50 p-4 lg:block xl:w-[26rem]">
                 <WaPreview form={form} />
               </div>
             </div>
