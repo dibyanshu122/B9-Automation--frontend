@@ -313,11 +313,18 @@ function WaPreview({ form }: { form: FormState }) {
               {form.footerText && <div className="px-3 pb-2"><p className="text-xs text-gray-400">{form.footerText}</p></div>}
               <p className="text-right text-[10px] text-gray-400 px-3 pb-1">12:00 PM ✓✓</p>
             </div>
-            {form.buttons.map((btn, i) => (
-              <button key={i} className="mt-1 w-full bg-white rounded-lg py-2 text-sm font-semibold text-[#00a5f4] text-center shadow-sm">
-                {btn.text || `Button ${i+1}`}
-              </button>
-            ))}
+            {form.buttons.length > 0 && (
+              <div className="mt-1 w-full max-w-[320px] space-y-0.5">
+                {form.buttons.map((btn, i) => (
+                  <div key={i} className="bg-white rounded-lg py-2 px-3 text-sm font-semibold text-[#00a5f4] text-center shadow-sm border-t border-gray-100 flex items-center justify-center gap-1.5">
+                    {btn.type === 'URL' && <span className="text-[11px]">🔗</span>}
+                    {btn.type === 'PHONE_NUMBER' && <span className="text-[11px]">📞</span>}
+                    {btn.type === 'COPY_CODE' && <span className="text-[11px]">📋</span>}
+                    {btn.text || `Button ${i+1}`}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </TemplatePreviewShell>
@@ -457,7 +464,14 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
         toast.success('Media uploaded to Meta');
       }
     } catch {
-      toast.error('Upload failed. Check your WhatsApp connection and try again.');
+      const detail = (err as any)?.response?.data?.detail || '';
+      if (detail.includes('No WhatsApp connection') || detail.includes('credentials')) {
+        toast.error('WhatsApp not connected. Go to Integrations and connect your WhatsApp account first.');
+      } else if (detail) {
+        toast.error(detail);
+      } else {
+        toast.error('Upload failed. Please try again.');
+      }
     } finally {
       setUploading(false);
     }
@@ -994,46 +1008,65 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
 
                     {/* Buttons */}
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Buttons <span className="text-gray-400 font-normal">(optional, max 10 quick reply or 3 CTA)</span></label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">Buttons <span className="text-gray-400 font-normal">(optional)</span></label>
+                      <p className="text-xs text-gray-400 mb-3">Choose ONE type — Custom Reply OR Action buttons (cannot be mixed)</p>
+
+                      {/* Existing buttons list */}
                       {form.buttons.length > 0 && (
                         <div className="space-y-2 mb-3">
                           {form.buttons.map((btn, i) => (
-                            <div key={i} className="border border-gray-200 rounded-xl p-3 space-y-2">
+                            <div key={i} className="border border-gray-200 rounded-xl p-3 space-y-2 bg-gray-50">
                               <div className="flex items-center justify-between">
-                                <select value={btn.type} onChange={e => updBtn(i, { type: e.target.value as BtnType })}
-                                  className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white focus:outline-none">
-                                  {!hasCTA && <option value="QUICK_REPLY">Quick Reply</option>}
-                                  {!hasQR && <option value="URL">Visit Website</option>}
-                                  {!hasQR && <option value="PHONE_NUMBER">Call Phone</option>}
-                                  {!hasQR && <option value="COPY_CODE">Copy Code</option>}
-                                </select>
+                                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                  {btn.type === 'QUICK_REPLY' ? '💬 Custom Reply' : btn.type === 'URL' ? '🔗 Visit Website' : btn.type === 'PHONE_NUMBER' ? '📞 Call Phone' : '📋 Copy Code'}
+                                </span>
                                 <button onClick={() => delBtn(i)} className="p-1 text-gray-400 hover:text-red-500 transition"><Trash2 className="w-3.5 h-3.5" /></button>
                               </div>
-                              <input value={btn.text} onChange={e => updBtn(i, { text: e.target.value })}
+                              <input value={btn.text} onChange={e => updBtn(i, { text: e.target.value.slice(0, 25) })}
                                 placeholder="Button label (max 25 chars)" className={inputCls(errors[`btn_text_${i}`])} />
-                              {btn.type === 'URL' && <input value={btn.url} onChange={e => updBtn(i, { url: e.target.value })} placeholder="https://" className={inputCls(errors[`btn_url_${i}`])} />}
+                              {errors[`btn_text_${i}`] && <p className="text-xs text-red-500">{errors[`btn_text_${i}`]}</p>}
+                              {btn.type === 'URL' && <input value={btn.url} onChange={e => updBtn(i, { url: e.target.value })} placeholder="https://example.com" className={inputCls(errors[`btn_url_${i}`])} />}
                               {btn.type === 'PHONE_NUMBER' && <input value={btn.phone} onChange={e => updBtn(i, { phone: e.target.value })} placeholder="+91 98765 43210" className={inputCls(errors[`btn_ph_${i}`])} />}
-                              {btn.type === 'COPY_CODE' && <input value={btn.codeExample} onChange={e => updBtn(i, { codeExample: e.target.value })} placeholder="Sample code (e.g. DIWALI20)" className={inputCls()} />}
+                              {btn.type === 'COPY_CODE' && <input value={btn.codeExample} onChange={e => updBtn(i, { codeExample: e.target.value })} placeholder="Sample promo code (e.g. DIWALI20)" className={inputCls()} />}
                             </div>
                           ))}
                         </div>
                       )}
-                      <div className="flex gap-1.5 flex-wrap">
-                        {!hasCTA && form.buttons.length < 10 && (
-                          <button onClick={() => addBtn('QUICK_REPLY')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition">
-                            <Plus className="w-3.5 h-3.5" /> Quick Reply
-                          </button>
-                        )}
-                        {!hasQR && form.buttons.length < 3 && (
-                          <>
-                            <button onClick={() => addBtn('URL')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition"><Plus className="w-3.5 h-3.5" /> Visit Website</button>
-                            <button onClick={() => addBtn('PHONE_NUMBER')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition"><Plus className="w-3.5 h-3.5" /> Call Phone</button>
-                            <button onClick={() => addBtn('COPY_CODE')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition"><Plus className="w-3.5 h-3.5" /> Copy Code</button>
-                          </>
-                        )}
-                      </div>
-                      {(hasQR || hasCTA) && (
-                        <p className="text-xs text-amber-600 mt-1.5">⚠️ Quick Reply and CTA buttons cannot be mixed (Meta rule)</p>
+
+                      {/* Add buttons — two mutually exclusive groups */}
+                      {form.buttons.length === 0 && (
+                        <div className="rounded-xl border border-gray-200 overflow-hidden">
+                          <div className="p-3 bg-blue-50 border-b border-gray-200">
+                            <p className="text-xs font-semibold text-blue-800 mb-1">💬 Custom Reply buttons</p>
+                            <p className="text-[11px] text-blue-600 mb-2">Customer taps a pre-set reply (up to 10). Good for: Yes/No, feedback, menu choices.</p>
+                            <button onClick={() => addBtn('QUICK_REPLY')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-blue-200 bg-white text-xs font-semibold text-blue-700 hover:bg-blue-50 transition">
+                              <Plus className="w-3.5 h-3.5" /> Add Custom Reply
+                            </button>
+                          </div>
+                          <div className="p-3 bg-orange-50">
+                            <p className="text-xs font-semibold text-orange-800 mb-1">⚡ Action buttons (CTA)</p>
+                            <p className="text-[11px] text-orange-600 mb-2">Opens a URL, calls a number, or copies a code (max 3). Good for: Shop Now, Call Us, Get Discount.</p>
+                            <div className="flex gap-1.5 flex-wrap">
+                              <button onClick={() => addBtn('URL')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-orange-200 bg-white text-xs font-semibold text-orange-700 hover:bg-orange-50 transition"><Plus className="w-3.5 h-3.5" /> Visit Website</button>
+                              <button onClick={() => addBtn('PHONE_NUMBER')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-orange-200 bg-white text-xs font-semibold text-orange-700 hover:bg-orange-50 transition"><Plus className="w-3.5 h-3.5" /> Call Phone</button>
+                              <button onClick={() => addBtn('COPY_CODE')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-orange-200 bg-white text-xs font-semibold text-orange-700 hover:bg-orange-50 transition"><Plus className="w-3.5 h-3.5" /> Copy Code</button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* More buttons once type is chosen */}
+                      {hasQR && !hasCTA && form.buttons.length < 10 && (
+                        <button onClick={() => addBtn('QUICK_REPLY')} className="mt-2 flex items-center gap-1 px-3 py-1.5 rounded-lg border border-blue-200 bg-blue-50 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition">
+                          <Plus className="w-3.5 h-3.5" /> Add another Custom Reply ({form.buttons.length}/10)
+                        </button>
+                      )}
+                      {hasCTA && !hasQR && form.buttons.length < 3 && (
+                        <div className="mt-2 flex gap-1.5 flex-wrap">
+                          <button onClick={() => addBtn('URL')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-orange-200 bg-orange-50 text-xs font-semibold text-orange-700 hover:bg-orange-100 transition"><Plus className="w-3.5 h-3.5" /> Visit Website</button>
+                          <button onClick={() => addBtn('PHONE_NUMBER')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-orange-200 bg-orange-50 text-xs font-semibold text-orange-700 hover:bg-orange-100 transition"><Plus className="w-3.5 h-3.5" /> Call Phone</button>
+                          <button onClick={() => addBtn('COPY_CODE')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-orange-200 bg-orange-50 text-xs font-semibold text-orange-700 hover:bg-orange-100 transition"><Plus className="w-3.5 h-3.5" /> Copy Code</button>
+                        </div>
                       )}
                     </div>
                   </div>
