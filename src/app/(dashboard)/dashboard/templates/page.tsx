@@ -3,9 +3,9 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   CheckCircle2, Clock, FileText, Image as ImageIcon, MapPin, MessageSquare,
-  Plus, Search, Trash2, Video, X, XCircle, ChevronLeft, ChevronRight,
+  Plus, Search, Trash2, Video, X, XCircle, ChevronLeft, ChevronRight, MoreVertical,
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import toast from 'react-hot-toast';
 
 import { Button } from '@/components/button';
@@ -463,8 +463,8 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
         setField('headerMediaHandle', res.data.handle);
         toast.success('Media uploaded to Meta');
       }
-    } catch {
-      const detail = (err as any)?.response?.data?.detail || '';
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail || '';
       if (detail.includes('No WhatsApp connection') || detail.includes('credentials')) {
         toast.error('WhatsApp not connected. Go to Integrations and connect your WhatsApp account first.');
       } else if (detail) {
@@ -1009,9 +1009,8 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
                     {/* Buttons */}
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-1">Buttons <span className="text-gray-400 font-normal">(optional)</span></label>
-                      <p className="text-xs text-gray-400 mb-3">Choose ONE type — Custom Reply OR Action buttons (cannot be mixed)</p>
 
-                      {/* Existing buttons list */}
+                      {/* Existing buttons */}
                       {form.buttons.length > 0 && (
                         <div className="space-y-2 mb-3">
                           {form.buttons.map((btn, i) => (
@@ -1033,41 +1032,44 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
                         </div>
                       )}
 
-                      {/* Add buttons — two mutually exclusive groups */}
-                      {form.buttons.length === 0 && (
-                        <div className="rounded-xl border border-gray-200 overflow-hidden">
-                          <div className="p-3 bg-blue-50 border-b border-gray-200">
-                            <p className="text-xs font-semibold text-blue-800 mb-1">💬 Custom Reply buttons</p>
-                            <p className="text-[11px] text-blue-600 mb-2">Customer taps a pre-set reply (up to 10). Good for: Yes/No, feedback, menu choices.</p>
-                            <button onClick={() => addBtn('QUICK_REPLY')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-blue-200 bg-white text-xs font-semibold text-blue-700 hover:bg-blue-50 transition">
-                              <Plus className="w-3.5 h-3.5" /> Add Custom Reply
-                            </button>
+                      {/* Both groups always visible — locked when other type chosen */}
+                      <div className="rounded-xl border border-gray-200 overflow-hidden">
+
+                        {/* Group 1 — Custom Reply */}
+                        <div className={`p-3 border-b border-gray-200 transition-opacity ${hasCTA ? 'opacity-40 bg-gray-50' : 'bg-blue-50'}`}>
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="text-xs font-semibold text-blue-900">💬 Custom Reply buttons</p>
+                            {hasCTA && <span className="text-[10px] text-gray-400 bg-gray-200 rounded px-1.5 py-0.5">Locked — CTA type chosen</span>}
                           </div>
-                          <div className="p-3 bg-orange-50">
-                            <p className="text-xs font-semibold text-orange-800 mb-1">⚡ Action buttons (CTA)</p>
-                            <p className="text-[11px] text-orange-600 mb-2">Opens a URL, calls a number, or copies a code (max 3). Good for: Shop Now, Call Us, Get Discount.</p>
+                          <p className="text-[11px] text-blue-700 mb-2">Customer taps a preset reply (e.g. "Yes", "More Info"). Max 10.</p>
+                          {!hasCTA && form.buttons.length < 10 && (
+                            <button onClick={() => addBtn('QUICK_REPLY')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-blue-200 bg-white text-xs font-semibold text-blue-700 hover:bg-blue-50 transition">
+                              <Plus className="w-3.5 h-3.5" /> Add Custom Reply {hasQR && `(${form.buttons.filter(b => b.type === 'QUICK_REPLY').length}/10)`}
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Group 2 — CTA */}
+                        <div className={`p-3 transition-opacity ${hasQR ? 'opacity-40 bg-gray-50' : 'bg-orange-50'}`}>
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="text-xs font-semibold text-orange-900">⚡ Action buttons (CTA)</p>
+                            {hasQR && <span className="text-[10px] text-gray-400 bg-gray-200 rounded px-1.5 py-0.5">Locked — Custom Reply type chosen</span>}
+                          </div>
+                          <p className="text-[11px] text-orange-700 mb-2">Opens a website, calls a number, or copies a code. Max 3.</p>
+                          {!hasQR && form.buttons.length < 3 && (
                             <div className="flex gap-1.5 flex-wrap">
                               <button onClick={() => addBtn('URL')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-orange-200 bg-white text-xs font-semibold text-orange-700 hover:bg-orange-50 transition"><Plus className="w-3.5 h-3.5" /> Visit Website</button>
                               <button onClick={() => addBtn('PHONE_NUMBER')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-orange-200 bg-white text-xs font-semibold text-orange-700 hover:bg-orange-50 transition"><Plus className="w-3.5 h-3.5" /> Call Phone</button>
                               <button onClick={() => addBtn('COPY_CODE')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-orange-200 bg-white text-xs font-semibold text-orange-700 hover:bg-orange-50 transition"><Plus className="w-3.5 h-3.5" /> Copy Code</button>
                             </div>
-                          </div>
+                          )}
                         </div>
-                      )}
 
-                      {/* More buttons once type is chosen */}
-                      {hasQR && !hasCTA && form.buttons.length < 10 && (
-                        <button onClick={() => addBtn('QUICK_REPLY')} className="mt-2 flex items-center gap-1 px-3 py-1.5 rounded-lg border border-blue-200 bg-blue-50 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition">
-                          <Plus className="w-3.5 h-3.5" /> Add another Custom Reply ({form.buttons.length}/10)
-                        </button>
-                      )}
-                      {hasCTA && !hasQR && form.buttons.length < 3 && (
-                        <div className="mt-2 flex gap-1.5 flex-wrap">
-                          <button onClick={() => addBtn('URL')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-orange-200 bg-orange-50 text-xs font-semibold text-orange-700 hover:bg-orange-100 transition"><Plus className="w-3.5 h-3.5" /> Visit Website</button>
-                          <button onClick={() => addBtn('PHONE_NUMBER')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-orange-200 bg-orange-50 text-xs font-semibold text-orange-700 hover:bg-orange-100 transition"><Plus className="w-3.5 h-3.5" /> Call Phone</button>
-                          <button onClick={() => addBtn('COPY_CODE')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-orange-200 bg-orange-50 text-xs font-semibold text-orange-700 hover:bg-orange-100 transition"><Plus className="w-3.5 h-3.5" /> Copy Code</button>
+                        {/* Meta rule note */}
+                        <div className="px-3 py-2 bg-gray-50 border-t border-gray-100">
+                          <p className="text-[10px] text-gray-400">Meta rule: Custom Reply and Action buttons cannot be used together in the same template.</p>
                         </div>
-                      )}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -1197,7 +1199,93 @@ function TemplatePreviewModal({ template, onClose }: { template: any; onClose: (
 
 // ─── Deactivate Button ───────────────────────────────────────────────────────
 
-function DeactivateButton({ template, onDone }: { template: any; onDone: () => void }) {
+function TemplateRow({ t, idx, onPreview, onEdit, onDuplicate, onDelete, onRowEnter, onRowLeave, onRejection }: {
+  t: any; idx: number;
+  onPreview: () => void; onEdit: () => void; onDuplicate: () => void; onDelete: () => void;
+  onRowEnter: (e: React.MouseEvent, t: any) => void; onRowLeave: () => void; onRejection: () => void;
+}) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [menuOpen]);
+
+  const getBody = (components: any[]) => components?.find((c: any) => c.type === 'BODY')?.text || '';
+
+  return (
+    <div className={`grid grid-cols-12 gap-2 px-4 py-3 items-center hover:bg-gray-50 transition cursor-default ${idx !== 0 ? 'border-t border-gray-100' : ''}`}>
+      <div className="col-span-1">
+        <span className="text-xs text-gray-400 font-medium">{idx + 1}</span>
+      </div>
+      <div className="col-span-3 min-w-0">
+        <p className="text-sm font-semibold text-gray-900 truncate">{t.name}</p>
+      </div>
+      <div className="col-span-2">
+        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold border ${STATUS_STYLES[t.status] || 'bg-gray-100 text-gray-500 border-gray-200'}`}>
+          {STATUS_ICONS[t.status]}{t.status}
+        </span>
+        {t.status === 'REJECTED' && (
+          <button onClick={onRejection}
+            className="mt-1 flex items-center gap-1 text-[9px] font-bold text-red-600 bg-red-50 border border-red-200 rounded-full px-2 py-0.5 hover:bg-red-100 transition">
+            ⚠️ Why rejected?
+          </button>
+        )}
+      </div>
+      <div className="col-span-2">
+        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${CAT_STYLE[t.category] || 'bg-gray-100 text-gray-600'}`}>{t.category}</span>
+      </div>
+      <div className="col-span-1">
+        <span className="text-xs text-gray-400">{t.language}</span>
+      </div>
+      <div className="col-span-2 min-w-0">
+        <p
+          className="text-xs text-gray-400 truncate cursor-pointer hover:text-gray-700 transition"
+          title={getBody(t.components)}
+          onClick={onPreview}
+          onMouseEnter={e => onRowEnter(e, t)}
+          onMouseLeave={onRowLeave}
+        >
+          {getBody(t.components) || '—'}
+        </p>
+      </div>
+      {/* 3-dot menu */}
+      <div className="col-span-1 flex justify-end" ref={menuRef}>
+        <button
+          onClick={() => setMenuOpen(v => !v)}
+          className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition"
+        >
+          <MoreVertical className="w-4 h-4" />
+        </button>
+        {menuOpen && (
+          <div className="absolute z-50 mt-8 w-44 rounded-xl border border-gray-200 bg-white shadow-lg overflow-hidden">
+            <button onClick={() => { setMenuOpen(false); onPreview(); }}
+              className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+              👁️ Preview
+            </button>
+            <button onClick={() => { setMenuOpen(false); onEdit(); }}
+              className={`flex w-full items-center gap-2.5 px-4 py-2.5 text-sm transition ${t.status === 'REJECTED' ? 'text-red-600 hover:bg-red-50' : 'text-blue-600 hover:bg-blue-50'}`}>
+              ✏️ {t.status === 'REJECTED' ? 'Fix & Resubmit' : 'Edit'}
+            </button>
+            <button onClick={() => { setMenuOpen(false); onDuplicate(); }}
+              className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-violet-600 hover:bg-violet-50 transition">
+              📋 Duplicate
+            </button>
+            <div className="border-t border-gray-100" />
+            <DeactivateButton template={t} onDone={() => { setMenuOpen(false); onDelete(); }} asMenuItem />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DeactivateButton({ template, onDone, asMenuItem = false }: { template: any; onDone: () => void; asMenuItem?: boolean }) {
   const [loading, setLoading] = useState(false);
 
   const handleDeactivate = async () => {
@@ -1229,6 +1317,15 @@ function DeactivateButton({ template, onDone }: { template: any; onDone: () => v
       setLoading(false);
     }
   };
+
+  if (asMenuItem) {
+    return (
+      <button onClick={handleDeactivate} disabled={loading}
+        className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition disabled:opacity-40">
+        🗑️ {loading ? 'Deleting…' : 'Delete'}
+      </button>
+    );
+  }
 
   return (
     <button onClick={handleDeactivate} disabled={loading}
@@ -1541,71 +1638,26 @@ export default function TemplatesPage() {
               <div className="grid grid-cols-12 gap-2 px-4 py-3 text-white text-xs font-semibold uppercase tracking-wide rounded-t-2xl"
                 style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e1b4b 100%)' }}>
                 <div className="col-span-1">Sr</div>
-                <div className="col-span-2">Name</div>
+                <div className="col-span-3">Name</div>
                 <div className="col-span-2">Status</div>
                 <div className="col-span-2">Category</div>
                 <div className="col-span-1">Lang</div>
                 <div className="col-span-2">Body Preview</div>
-                <div className="col-span-2">Actions</div>
+                <div className="col-span-1 text-right">Actions</div>
               </div>
               {filtered.map((t, idx) => (
-                <div key={t.id || t.name}
-                  className={`grid grid-cols-12 gap-2 px-4 py-3 items-center hover:bg-gray-50 transition cursor-default ${idx !== 0 ? 'border-t border-gray-100' : ''}`}>
-
-                  {/* Sr. No. */}
-                  <div className="col-span-1">
-                    <span className="text-xs text-gray-400 font-medium">{idx + 1}</span>
-                  </div>
-                  <div className="col-span-2 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 truncate">{t.name}</p>
-                  </div>
-                  <div className="col-span-2">
-                    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold border ${STATUS_STYLES[t.status] || 'bg-gray-100 text-gray-500 border-gray-200'}`}>
-                      {STATUS_ICONS[t.status]}{t.status}
-                    </span>
-                    {t.status === 'REJECTED' && (
-                      <button
-                        onClick={() => setRejectionModal(t)}
-                        className="mt-1 flex items-center gap-1 text-[9px] font-bold text-red-600 bg-red-50 border border-red-200 rounded-full px-2 py-0.5 hover:bg-red-100 transition">
-                        ⚠️ Why rejected?
-                      </button>
-                    )}
-                  </div>
-                  <div className="col-span-2">
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${CAT_STYLE[t.category] || 'bg-gray-100 text-gray-600'}`}>{t.category}</span>
-                  </div>
-                  <div className="col-span-1">
-                    <span className="text-xs text-gray-400">{t.language}</span>
-                  </div>
-                  <div className="col-span-2 min-w-0">
-                    <p className="text-xs text-gray-400 truncate">{getBody(t.components) || '—'}</p>
-                  </div>
-                  <div className="col-span-2 flex justify-end gap-1">
-                    <button
-                      onClick={() => setPreviewTpl(t)}
-                      onMouseEnter={e => onRowEnter(e, t)}
-                      onMouseLeave={onRowLeave}
-                      className="text-xs font-semibold text-gray-500 border border-gray-200 rounded-lg px-2 py-1 hover:bg-gray-100 hover:text-gray-800 transition whitespace-nowrap">
-                      Preview
-                    </button>
-                    {t.status === 'REJECTED' ? (
-                      <button onClick={() => editTemplate(t)}
-                        className="text-xs font-semibold text-red-600 border border-red-200 rounded-lg px-2 py-1 hover:bg-red-50 transition whitespace-nowrap">
-                        Fix &amp; Resubmit
-                      </button>
-                    ) : (
-                      <button onClick={() => editTemplate(t)}
-                        className="text-xs font-semibold text-blue-600 border border-blue-200 rounded-lg px-2 py-1 hover:bg-blue-50 transition whitespace-nowrap">
-                        Edit
-                      </button>
-                    )}
-                    <button onClick={() => duplicateTemplate(t)}
-                      className="text-xs font-semibold text-violet-600 border border-violet-200 rounded-lg px-2 py-1 hover:bg-violet-50 transition whitespace-nowrap">
-                      Duplicate
-                    </button>
-                    <DeactivateButton template={t} onDone={loadTemplates} />
-                  </div>
-                </div>
+                <TemplateRow
+                  key={t.id || t.name}
+                  t={t}
+                  idx={idx}
+                  onPreview={() => setPreviewTpl(t)}
+                  onEdit={() => editTemplate(t)}
+                  onDuplicate={() => duplicateTemplate(t)}
+                  onDelete={loadTemplates}
+                  onRowEnter={onRowEnter}
+                  onRowLeave={onRowLeave}
+                  onRejection={() => setRejectionModal(t)}
+                />
               ))}
             </div>
           )}
