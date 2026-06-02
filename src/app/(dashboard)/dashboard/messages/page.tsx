@@ -82,6 +82,18 @@ function getWindowStatus(lastTime: string, channel: string): { open: boolean; ho
   return { open: hoursAgo < windowHours, hoursAgo, windowHours };
 }
 
+function getSlaStatus(contact: any): { label: string; color: string; urgent: boolean } | null {
+  // Only show SLA timer if contact has unread messages (customer waiting for reply)
+  if (!contact.unread || contact.unread <= 0) return null;
+  const lastTime = contact.last_time;
+  if (!lastTime) return null;
+  const minsAgo = (Date.now() - new Date(lastTime.endsWith('Z') ? lastTime : lastTime + 'Z').getTime()) / 60000;
+  if (minsAgo < 30) return null; // Under 30 min — no SLA warning
+  if (minsAgo < 60) return { label: `${Math.round(minsAgo)}m waiting`, color: 'text-amber-600 bg-amber-50', urgent: false };
+  if (minsAgo < 240) return { label: `${Math.round(minsAgo / 60)}h waiting`, color: 'text-orange-600 bg-orange-50', urgent: false };
+  return { label: `${Math.round(minsAgo / 60)}h ⚠️`, color: 'text-red-600 bg-red-50', urgent: true };
+}
+
 function templateVarCount(body: string): number {
   const vars = new Set((body.match(/\{\{(\d+)\}\}/g) || []).map((m) => m.replace(/\D/g, '')));
   return vars.size;
@@ -843,6 +855,12 @@ function UnifiedInbox() {
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-[14px] text-gray-500 truncate">{c.last_text}</p>
                       <div className="flex items-center gap-1 shrink-0">
+                        {/* SLA timer — shows when customer has been waiting */}
+                        {(() => { const sla = getSlaStatus(c); return sla ? (
+                          <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold whitespace-nowrap ${sla.color}`} title="Customer waiting time">
+                            {sla.label}
+                          </span>
+                        ) : null; })()}
                         {c.unread > 0 && (
                           <span className="flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-green-500 px-1.5 text-[10px] font-bold text-white">
                             {c.unread > 99 ? '99+' : c.unread}
