@@ -166,16 +166,44 @@ function newBtn(type: BtnType): BtnEntry { return { ...EMPTY_BTN, type }; }
 
 function TemplatePreviewShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-      <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 flex-shrink-0">
-        <div>
-          <p className="text-sm font-bold text-slate-900">WhatsApp message preview</p>
-          <p className="text-[11px] text-emerald-600">Business template</p>
+    <div className="flex flex-col items-center">
+      {/* Phone frame */}
+      <div className="relative w-[300px] rounded-[2.5rem] border-[6px] border-gray-800 bg-gray-800 shadow-2xl overflow-hidden">
+        {/* Status bar */}
+        <div className="bg-[#075e54] px-5 pt-3 pb-1 flex items-center justify-between">
+          <span className="text-white text-[10px] font-semibold">9:41</span>
+          <div className="absolute left-1/2 -translate-x-1/2 w-20 h-4 bg-gray-800 rounded-full top-0" />
+          <div className="flex gap-1 items-center">
+            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M1.5 8.5a13 13 0 0121 0M5 12a10 10 0 0114 0M8.5 15.5a6 6 0 017 0M12 19h.01"/></svg>
+            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M23 7l-7 5 7 5V7z M1 5h15a1 1 0 011 1v12a1 1 0 01-1 1H1a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg>
+          </div>
         </div>
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50 text-[10px] font-bold text-emerald-700">WA</span>
-      </div>
-      <div className="overflow-y-auto bg-[#efeae2] p-4 pb-8">
-        {children}
+        {/* WhatsApp chat header */}
+        <div className="bg-[#075e54] px-3 pb-3 flex items-center gap-3">
+          <button className="text-white opacity-80">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <div className="w-9 h-9 rounded-full bg-gray-300 flex items-center justify-center text-gray-500 text-sm font-bold flex-shrink-0">A</div>
+          <div className="flex-1 min-w-0">
+            <p className="text-white text-sm font-semibold">Ananya</p>
+            <p className="text-[10px] text-green-200">Business Account</p>
+          </div>
+          <div className="flex gap-3 text-white opacity-80">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+          </div>
+        </div>
+        {/* Chat area */}
+        <div className="bg-[#efeae2] min-h-[380px] p-3 pb-10 overflow-y-auto" style={{backgroundImage:"url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d0c8b0' fill-opacity='0.15'%3E%3Cpath d='M30 30m-28 0a28 28 0 1 1 56 0a28 28 0 1 1-56 0'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")"}}>
+          {children}
+        </div>
+        {/* Input bar */}
+        <div className="bg-[#f0f0f0] px-2 py-2 flex items-center gap-2 border-t border-gray-200">
+          <div className="flex-1 bg-white rounded-full px-3 py-1.5 text-[11px] text-gray-400">Type Message Here...</div>
+          <div className="w-8 h-8 rounded-full bg-[#075e54] flex items-center justify-center flex-shrink-0">
+            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -273,7 +301,7 @@ function WaPreview({ form }: { form: FormState }) {
   const hasContent = form.headerText || form.headerMediaUrl || body || form.footerText || form.buttons.length > 0;
   return (
     <div className="flex flex-col">
-      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Live Preview</p>
+      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Live Preview</p>
       <TemplatePreviewShell>
         {!hasContent ? (
           <p className="text-xs text-gray-400 text-center py-8">Fill the form to see preview</p>
@@ -1089,7 +1117,7 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
               </div>
 
               {/* RIGHT: Preview */}
-              <div className="hidden w-[22rem] flex-shrink-0 overflow-y-auto border-l border-gray-100 bg-gray-50 p-4 lg:block xl:w-[26rem]">
+              <div className="hidden w-[22rem] flex-shrink-0 overflow-y-auto border-l border-gray-100 bg-slate-100 p-5 lg:block xl:w-[360px]">
                 <WaPreview form={form} />
               </div>
             </div>
