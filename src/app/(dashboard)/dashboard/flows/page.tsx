@@ -7,6 +7,7 @@ import {
   Copy, Layers, Loader2, Plus, Save, Trash2, X,
   Type, AlignLeft, Circle, CheckSquare, Calendar, ToggleLeft,
   Smartphone, Eye, ArrowRight, Settings2, GitBranch, Sparkles, Wand2,
+  Image as ImageIcon,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/button';
@@ -31,7 +32,8 @@ type ComponentType =
   | 'TextHeading' | 'TextBody' | 'TextCaption'
   | 'TextInput' | 'TextArea' | 'Dropdown'
   | 'RadioButtonsGroup' | 'CheckboxGroup'
-  | 'DatePicker' | 'OptIn' | 'Footer' | 'Condition';
+  | 'DatePicker' | 'OptIn' | 'Footer' | 'Condition'
+  | 'Image';
 
 interface FlowComponent {
   _id: string; // internal UI id
@@ -54,6 +56,11 @@ interface FlowComponent {
   buttonLabel?: string;   // Footer button text
   nextScreen?: string;    // screen to navigate to
   isComplete?: boolean;   // complete action (last screen)
+  // Image
+  src?: string;
+  alt?: string;
+  width?: number;
+  height?: number;
 }
 
 interface FlowScreen {
@@ -87,6 +94,7 @@ const COMPONENT_PALETTE: { type: ComponentType; label: string; icon: React.React
   { type: 'OptIn',             label: 'Opt-In',        icon: <ToggleLeft className="w-4 h-4" />,   group: 'Input' },
   { type: 'Footer',            label: 'Button/Footer', icon: <ArrowRight className="w-4 h-4" />,   group: 'Navigation' },
   { type: 'Condition',         label: 'If / Condition',icon: <GitBranch className="w-4 h-4" />,   group: 'Logic' },
+  { type: 'Image',             label: 'Image',         icon: <ImageIcon className="w-4 h-4" />,   group: 'Media' },
 ];
 
 const uid = () => Math.random().toString(36).slice(2, 9);
@@ -104,6 +112,7 @@ const defaultComponent = (type: ComponentType): FlowComponent => {
     case 'CheckboxGroup':     return { ...base, name: 'field_' + uid(), label: 'Select all that apply', required: true, options: [{ id: '1', title: 'Option 1' }, { id: '2', title: 'Option 2' }] };
     case 'DatePicker':        return { ...base, name: 'field_' + uid(), label: 'Select date', required: true };
     case 'OptIn':             return { ...base, name: 'opt_' + uid(), text: 'I agree to the terms' };
+    case 'Image':             return { ...base, src: '', alt: '', width: 300, height: 150 };
     case 'Footer':            return { ...base, buttonLabel: 'Continue', isComplete: false };
     case 'Condition':         return { ...base, conditionField: '', conditionValue: '', trueScreen: '', falseScreen: '' };
     default:                  return base;
@@ -339,6 +348,7 @@ function buildFlowJson(screens: FlowScreen[]): object {
         case 'CheckboxGroup': return { type: 'CheckboxGroup', name: c.name, label: c.label, required: c.required ?? true, 'data-source': (c.options || []).map(o => ({ id: o.id, title: o.title })), ...(c['min_selected_items'] ? { min_selected_items: c['min_selected_items'] } : {}), ...(c['max_selected_items'] ? { max_selected_items: c['max_selected_items'] } : {}) };
         case 'DatePicker':  return { type: 'DatePicker', name: c.name, label: c.label, required: c.required ?? true };
         case 'OptIn':       return { type: 'OptIn', name: c.name, label: c.text || 'I agree', required: true };
+        case 'Image':       return { type: 'Image', src: c.src || '', 'scale-type': 'cover', 'aspect-ratio': c.width && c.height ? (c.width / c.height) : 2 };
         default:            return { type: c.type };
       }
     };
@@ -488,6 +498,11 @@ function PreviewComponent({ c }: { c: FlowComponent }) {
       <div className="mt-1 rounded border border-dashed border-amber-300 bg-amber-50 px-2 py-1 text-[9px] text-amber-700">
         <span className="font-bold">IF</span> {c.conditionField || '?'} = {c.conditionValue || '?'}<br/>
           {c.trueScreen || '?'} &nbsp;   {c.falseScreen || '?'}
+      </div>
+    );
+    case 'Image':       return (
+      <div className="mt-1 rounded overflow-hidden bg-gray-100 flex items-center justify-center" style={{ height: 60 }}>
+        {c.src ? <img src={c.src} alt={c.alt || ''} className="w-full h-full object-cover" /> : <ImageIcon className="w-6 h-6 text-gray-400" />}
       </div>
     );
     default: return null;

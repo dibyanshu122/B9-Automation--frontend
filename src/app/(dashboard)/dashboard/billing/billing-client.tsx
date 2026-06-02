@@ -298,17 +298,17 @@ export default function BillingClient({ initialPlan, initialInvoices }: BillingC
             </div>
 
             <div className="mt-6 grid grid-cols-2 gap-4">
-              <PlanStat label="Storage" value={`${currentPlan.quotas?.storage_mb} MB`} />
-              <PlanStat label="Queries/Month" value={currentPlan.quotas?.queries} />
+              <PlanStat label="AI Queries/Month" value={currentPlan.quotas?.queries} />
+              <PlanStat label="Automation Runs/Day" value={currentPlan.quotas?.automation_executions_per_day || currentPlan.quotas?.automation_runs || '—'} />
+              <PlanStat label="Storage" value={`${currentPlan.quotas?.storage_mb ? Math.round(currentPlan.quotas.storage_mb / 1024) + ' GB' : '—'}`} />
               <PlanStat label="Assistants" value={currentPlan.quotas?.assistants} />
+              <PlanStat label="Team Members" value={currentPlan.quotas?.team_members || currentPlan.quotas?.agents || '—'} />
+              <PlanStat label="Leads/Day" value={currentPlan.quotas?.leads_per_day || '—'} />
               <PlanStat
                 label="Widget Domains"
-                value={
-                  currentPlan.quotas?.widget_domains > 1000
-                    ? 'High limit'
-                    : currentPlan.quotas?.widget_domains
-                }
+                value={currentPlan.quotas?.widget_domains > 1000 ? 'Unlimited' : currentPlan.quotas?.widget_domains}
               />
+              <PlanStat label="WhatsApp Numbers" value={currentPlan.quotas?.whatsapp_connections || 1} />
             </div>
           </Card>
         </div>

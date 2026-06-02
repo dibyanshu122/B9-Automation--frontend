@@ -445,7 +445,7 @@ function IcebreakerPanel() {
   }, []); // eslint-disable-line
 
   const addIcebreaker = () => {
-    if (icebreakers.length >= 5) { toast.error('Max 5 icebreakers allowed'); return; }
+    if (icebreakers.length >= 4) { toast.error('Max 4 icebreakers allowed (Meta limit)'); return; }
     setIcebreakers(prev => [...prev, { header: '', text: '' }]);
   };
 
@@ -466,7 +466,7 @@ function IcebreakerPanel() {
     <div className="space-y-5">
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
         <p className="font-semibold mb-1">💡 What are Icebreakers?</p>
-        <p>Icebreakers are clickable conversation starters shown when a customer opens your WhatsApp Business profile for the first time. They make it easy for customers to start a chat by tapping a pre-set question. Maximum 5 icebreakers allowed by Meta.</p>
+        <p>Icebreakers are clickable conversation starters shown when a customer opens your WhatsApp Business profile for the first time. They make it easy for customers to start a chat by tapping a pre-set question. Maximum 4 icebreakers allowed by Meta.</p>
       </div>
       <div className="space-y-3">
         {icebreakers.map((ib, i) => (
@@ -484,7 +484,7 @@ function IcebreakerPanel() {
         ))}
       </div>
       <div className="flex gap-3">
-        {icebreakers.length < 5 && (
+        {icebreakers.length < 4 && (
           <Button variant="secondary" onClick={addIcebreaker} className="flex items-center gap-2">
             <Plus className="w-4 h-4" /> Add Icebreaker
           </Button>
