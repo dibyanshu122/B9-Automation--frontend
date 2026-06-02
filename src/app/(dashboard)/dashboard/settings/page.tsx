@@ -1167,6 +1167,9 @@ export default function SettingsPage() {
 
       {/* Custom Lead Fields */}
       <CustomLeadFieldsSection />
+
+      {/* CSAT Survey */}
+      <CsatSettingsSection />
     </div>
   );
 }
@@ -1251,6 +1254,58 @@ function CustomLeadFieldsSection() {
           {saving ? 'Saving…' : 'Save Custom Fields'}
         </Button>
       )}
+    </section>
+  );
+}
+
+function CsatSettingsSection() {
+  const { get, put } = useApi();
+  const [settings, setSettings] = useState({ enabled: false, delay_minutes: 30, question: 'How was your experience? Reply 1-5 ⭐' });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    get('/api/csat/settings').then(r => { if (r.data) setSettings(r.data); }).catch(() => {});
+  }, []); // eslint-disable-line
+
+  const save = async () => {
+    setSaving(true);
+    try { await put('/api/csat/settings', settings); alert('CSAT settings saved'); }
+    catch { alert('Save failed'); }
+    finally { setSaving(false); }
+  };
+
+  return (
+    <section className="mt-8">
+      <h2 className="text-xl font-bold text-gray-900 mb-1">CSAT Survey</h2>
+      <p className="text-sm text-gray-500 mb-4">Automatically ask customers to rate their experience after a conversation ends.</p>
+      <div className="rounded-xl border border-gray-200 bg-white p-5 space-y-4">
+        <label className="flex items-center justify-between cursor-pointer">
+          <div>
+            <p className="font-semibold text-gray-800">Enable CSAT surveys</p>
+            <p className="text-xs text-gray-400">Sends a WhatsApp message asking for a 1-5 star rating</p>
+          </div>
+          <button type="button" onClick={() => setSettings(s => ({ ...s, enabled: !s.enabled }))}
+            className={`relative h-6 w-11 rounded-full transition-colors ${settings.enabled ? 'bg-orange-500' : 'bg-gray-300'}`}>
+            <span className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-transform ${settings.enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+          </button>
+        </label>
+        {settings.enabled && (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Survey question</label>
+              <input value={settings.question} onChange={e => setSettings(s => ({ ...s, question: e.target.value }))}
+                className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Send after (minutes of inactivity)</label>
+              <input type="number" min={5} max={1440} value={settings.delay_minutes}
+                onChange={e => setSettings(s => ({ ...s, delay_minutes: parseInt(e.target.value) || 30 }))}
+                className="w-32 rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+            </div>
+          </>
+        )}
+        <Button onClick={save} disabled={saving}>{saving ? 'Saving…' : 'Save Settings'}</Button>
+      </div>
     </section>
   );
 }
