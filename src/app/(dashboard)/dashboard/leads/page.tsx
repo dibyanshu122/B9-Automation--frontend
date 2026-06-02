@@ -38,13 +38,27 @@ interface LeadLabelOption {
   color?: string;
 }
 
-const stages = [
-  { key: 'new', label: 'New' },
-  { key: 'contacted', label: 'Contacted' },
-  { key: 'qualified', label: 'Qualified' },
-  { key: 'won', label: 'Won' },
-  { key: 'lost', label: 'Lost' },
+const DEFAULT_STAGES = [
+  { key: 'new', label: 'New', color: '#3b82f6' },
+  { key: 'contacted', label: 'Contacted', color: '#8b5cf6' },
+  { key: 'qualified', label: 'Qualified', color: '#f59e0b' },
+  { key: 'won', label: 'Won', color: '#10b981' },
+  { key: 'lost', label: 'Lost', color: '#ef4444' },
 ];
+
+// Dynamic stage config based on color
+function buildStageConfig(stageList: {key:string;label:string;color:string}[]) {
+  const cfg: Record<string, {border:string;header:string;dot:string;count:string}> = {};
+  stageList.forEach(s => {
+    cfg[s.key] = {
+      border: `border-gray-200`,
+      header: `text-white`,
+      dot: `bg-white/60`,
+      count: `bg-white/20 text-white`,
+    };
+  });
+  return cfg;
+}
 
 const stageConfig: Record<string, { border: string; header: string; dot: string; count: string }> = {
   new:       { border: 'border-blue-200',    header: 'bg-blue-50 text-blue-700',      dot: 'bg-blue-400',    count: 'bg-blue-100 text-blue-700' },
@@ -65,6 +79,11 @@ export default function LeadsPage() {
   const api = getApiClient();
   const { invalidateLeads } = useInvalidate();
   const [leads, setLeads] = useState<Lead[]>([]);
+  // Custom pipeline stages — loaded from API, fallback to defaults
+  const [stages, setStages] = useState(DEFAULT_STAGES);
+  const [showEditStages, setShowEditStages] = useState(false);
+  const [editingStages, setEditingStages] = useState(DEFAULT_STAGES);
+  const [savingStages, setSavingStages] = useState(false);
   const [inbox, setInbox] = useState<InboxItem[]>([]);
   const [handoverQueue, setHandoverQueue] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -327,6 +346,10 @@ export default function LeadsPage() {
 
   useEffect(() => {
     refresh();
+    // Load custom pipeline stages
+    get('/api/leads/pipeline-stages')
+      .then(r => { if (r.data?.stages?.length) setStages(r.data.stages); })
+      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -643,6 +666,15 @@ export default function LeadsPage() {
               >
                 <Kanban className="h-4 w-4" />
               </button>
+              {viewMode === 'kanban' && (
+                <button
+                  onClick={() => { setEditingStages([...stages]); setShowEditStages(true); }}
+                  title="Edit pipeline stages"
+                  className="rounded-md px-2 py-1 text-[10px] font-semibold text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition border border-gray-200"
+                >
+                  ⚙️ Edit Stages
+                </button>
+              )}
             </div>
           )}
           <div className="grid grid-cols-3 gap-2 rounded-lg border border-orange-100 bg-white p-2">
@@ -1859,6 +1891,70 @@ export default function LeadsPage() {
           </div>
         </>
       )}
+
+      {/* Edit Pipeline Stages Modal */}
+      {showEditStages && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+          onClick={() => setShowEditStages(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col"
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <div>
+                <h2 className="font-bold text-gray-900">Edit Pipeline Stages</h2>
+                <p className="text-xs text-gray-400 mt-0.5">Drag to reorder · Min 2, max 10 stages</p>
+              </div>
+              <button onClick={() => setShowEditStages(false)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><X className="w-4 h-4" /></button>
+            </div>
+            <div className="p-5 overflow-y-auto flex-1 space-y-2">
+              {editingStages.map((stage, i) => (
+                <div key={i} className="flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
+                  <span className="w-4 h-4 rounded-full shrink-0" style={{ background: stage.color }} />
+                  <input
+                    value={stage.label}
+                    onChange={e => setEditingStages(prev => prev.map((s, idx) => idx === i ? { ...s, label: e.target.value } : s))}
+                    className="flex-1 bg-transparent text-sm font-medium text-gray-800 focus:outline-none"
+                    placeholder="Stage name"
+                  />
+                  <input type="color" value={stage.color}
+                    onChange={e => setEditingStages(prev => prev.map((s, idx) => idx === i ? { ...s, color: e.target.value } : s))}
+                    className="w-6 h-6 rounded cursor-pointer border-0" title="Pick colour" />
+                  {editingStages.length > 2 && (
+                    <button onClick={() => setEditingStages(prev => prev.filter((_, idx) => idx !== i))}
+                      className="text-gray-300 hover:text-red-500 transition"><X className="w-3.5 h-3.5" /></button>
+                  )}
+                </div>
+              ))}
+              {editingStages.length < 10 && (
+                <button
+                  onClick={() => setEditingStages(prev => [...prev, { key: `stage_${Date.now()}`, label: 'New Stage', color: '#6366f1' }])}
+                  className="w-full rounded-xl border-2 border-dashed border-gray-200 py-2 text-xs font-semibold text-gray-400 hover:border-orange-300 hover:text-orange-500 transition">
+                  + Add Stage
+                </button>
+              )}
+            </div>
+            <div className="px-5 py-4 border-t border-gray-100 flex gap-3">
+              <button onClick={() => setShowEditStages(false)} className="flex-1 rounded-xl border border-gray-200 py-2 text-sm text-gray-500 hover:bg-gray-50">Cancel</button>
+              <button
+                disabled={savingStages}
+                onClick={async () => {
+                  if (editingStages.some(s => !s.label.trim())) { return; }
+                  setSavingStages(true);
+                  try {
+                    const { useApi: _useApi } = await import('@/hooks/useApi');
+                    await post('/api/leads/pipeline-stages', { stages: editingStages });
+                    setStages(editingStages);
+                    setShowEditStages(false);
+                    toast.success('Pipeline stages saved');
+                  } catch { toast.error('Could not save stages'); }
+                  finally { setSavingStages(false); }
+                }}
+                className="flex-1 rounded-xl bg-orange-500 py-2 text-sm font-bold text-white hover:bg-orange-600 transition disabled:opacity-50">
+                {savingStages ? 'Saving…' : 'Save Stages'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1924,7 +2020,7 @@ function LeadCard({
           className="rounded-lg border border-gray-200 px-2 py-1.5 text-sm"
           disabled={busyAction === `status-${lead.id}`}
         >
-          {stages.map((stage) => <option key={stage.key} value={stage.key}>{stage.label}</option>)}
+          {DEFAULT_STAGES.map((stage) => <option key={stage.key} value={stage.key}>{stage.label}</option>)}
         </select>
         <select
           value={lead.tag || ''}
