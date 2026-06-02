@@ -167,11 +167,11 @@ function newBtn(type: BtnType): BtnEntry { return { ...EMPTY_BTN, type }; }
 function PhonePreviewShell({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className="flex min-h-[520px] items-center justify-center overflow-hidden rounded-2xl p-4"
+      className="flex h-full min-h-0 flex-1 items-center justify-center overflow-hidden rounded-2xl p-3"
       style={{ background: 'linear-gradient(145deg, #bfdbfe 0%, #dbeafe 45%, #c7d2fe 100%)' }}
     >
-      <div className="w-full max-w-[310px] rounded-[2.6rem] border-[7px] border-slate-950 bg-slate-950 p-1 shadow-2xl">
-        <div className="overflow-hidden rounded-[2.15rem] bg-white">
+      <div className="aspect-[9/16] h-full max-h-[510px] max-w-full rounded-[2.8rem] border-[7px] border-slate-950 bg-slate-950 p-1 shadow-2xl">
+        <div className="flex h-full flex-col overflow-hidden rounded-[2.35rem] bg-white">
           <div className="relative flex h-10 items-center justify-between bg-white px-5 text-[10px] font-bold text-slate-900">
             <span>9:41</span>
             <span className="absolute left-1/2 top-1.5 h-5 w-20 -translate-x-1/2 rounded-full bg-slate-950" />
@@ -184,7 +184,7 @@ function PhonePreviewShell({ children }: { children: React.ReactNode }) {
             </div>
             <span className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-sm text-slate-600">...</span>
           </div>
-          <div className="min-h-[410px] overflow-hidden bg-[#efeae2] p-3">
+          <div className="flex min-h-0 flex-1 flex-col justify-end overflow-y-auto bg-[#efeae2] p-3">
             {children}
           </div>
         </div>
@@ -201,7 +201,7 @@ function WaPreview({ form }: { form: FormState }) {
 
   if (form.templateType === 'authentication') {
     return (
-      <div className="sticky top-4">
+      <div className="flex h-full min-h-0 flex-col">
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Live Preview</p>
         <PhonePreviewShell>
           <div className="bg-white rounded-lg rounded-tl-none shadow-sm p-3 max-w-[260px]">
@@ -224,7 +224,7 @@ function WaPreview({ form }: { form: FormState }) {
   if (form.templateType === 'carousel') {
     const card = form.carouselCards[cardIdx];
     return (
-      <div className="sticky top-4">
+      <div className="flex h-full min-h-0 flex-col">
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Live Preview</p>
         <PhonePreviewShell>
           {body && (
@@ -261,7 +261,7 @@ function WaPreview({ form }: { form: FormState }) {
 
   if (form.templateType === 'lto') {
     return (
-      <div className="sticky top-4">
+      <div className="flex h-full min-h-0 flex-col">
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Live Preview</p>
         <PhonePreviewShell>
           <div className="w-full max-w-[300px] overflow-hidden rounded-lg rounded-tl-none bg-white shadow-sm">
@@ -284,7 +284,7 @@ function WaPreview({ form }: { form: FormState }) {
   // Standard preview
   const hasContent = form.headerText || form.headerMediaUrl || body || form.footerText || form.buttons.length > 0;
   return (
-    <div className="sticky top-4">
+    <div className="flex h-full min-h-0 flex-col">
       <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Live Preview</p>
       <PhonePreviewShell>
         {!hasContent ? (
@@ -610,11 +610,11 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
       {isOpen && (
         <>
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 flex items-start justify-center overflow-hidden bg-black/50 px-3 pb-3 pt-2 backdrop-blur-sm sm:px-4 sm:pb-4 sm:pt-3"
+            className="fixed inset-0 z-[100] flex items-start justify-center overflow-hidden bg-black/50 px-3 pb-3 pt-2 backdrop-blur-sm sm:px-4 sm:pb-4 sm:pt-3"
             onClick={onClose}>
           <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-            className="relative z-50 flex max-h-[calc(100dvh-1.25rem)] w-full max-w-6xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl sm:max-h-[calc(100dvh-1.75rem)]"
+            className="relative z-[110] flex max-h-[calc(100dvh-1.25rem)] w-full max-w-6xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl sm:max-h-[calc(100dvh-1.75rem)]"
             onClick={e => e.stopPropagation()}>
 
             {/* Header */}
@@ -676,13 +676,13 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
                 </div>
 
                 {/* Category + Language */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_13rem]">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Category <span className="text-red-500">*</span></label>
-                    <div className="flex gap-1.5 flex-wrap">
+                    <div className="flex flex-wrap gap-1">
                       {(['MARKETING', 'UTILITY', 'AUTHENTICATION'] as const).map(cat => (
                         <button key={cat} onClick={() => setField('category', cat)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${form.category === cat ? CAT_ACTIVE[cat] : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                          className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition ${form.category === cat ? CAT_ACTIVE[cat] : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
                           {cat === 'MARKETING' ? '📣' : cat === 'UTILITY' ? '🔧' : '🔐'} {cat.charAt(0) + cat.slice(1).toLowerCase()}
                         </button>
                       ))}
@@ -1053,7 +1053,7 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
               </div>
 
               {/* RIGHT: Preview */}
-              <div className="hidden w-[25rem] flex-shrink-0 overflow-y-auto border-l border-gray-100 bg-gray-50 p-6 lg:block xl:w-[28rem]">
+              <div className="hidden w-[25rem] flex-shrink-0 overflow-hidden border-l border-gray-100 bg-gray-50 p-4 lg:block xl:w-[28rem]">
                 <WaPreview form={form} />
               </div>
             </div>
