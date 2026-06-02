@@ -6,11 +6,11 @@ import { ErrorBoundary } from '@/components/error-boundary';
 import { CommandPalette } from '@/components/command-palette';
 import { useAuthStore } from '@/store/authStore';
 import { useUIStore } from '@/store/uiStore';
-import { useApi } from '@/hooks/useApi';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef } from 'react';
+import { getDashboardBootstrap } from '@/lib/dashboard-bootstrap';
 
 export default function DashboardLayout({
   children,
@@ -25,7 +25,6 @@ export default function DashboardLayout({
   const mainRef = useRef<HTMLElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
   const pointerFrameRef = useRef<number | null>(null);
-  const { get } = useApi();
 
   const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
     if (reduceMotion) return;
@@ -64,9 +63,9 @@ export default function DashboardLayout({
     // Only check onboarding ONCE when the user first loads the dashboard, not on every route change
     const skipped = typeof window !== 'undefined' && localStorage.getItem('onboarding_skipped') === 'true';
     if (skipped) return;
-    get('/api/automation/onboarding/status')
+    getDashboardBootstrap()
       .then((response) => {
-        if (!response.data?.is_complete) {
+        if (!response.onboarding?.is_complete) {
           router.replace('/onboarding');
         }
       })

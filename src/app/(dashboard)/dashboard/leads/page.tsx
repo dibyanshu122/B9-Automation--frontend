@@ -75,7 +75,7 @@ const scoreStyles = {
 };
 
 export default function LeadsPage() {
-  const { get, post } = useApi();
+  const { get, post, put } = useApi();
   const api = getApiClient();
   const { invalidateLeads } = useInvalidate();
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -1959,8 +1959,7 @@ export default function LeadsPage() {
                   if (editingStages.some(s => !s.label.trim())) { return; }
                   setSavingStages(true);
                   try {
-                    const { useApi: _useApi } = await import('@/hooks/useApi');
-                    await post('/api/leads/pipeline-stages', { stages: editingStages });
+                    await put('/api/leads/pipeline-stages', { stages: editingStages });
                     setStages(editingStages);
                     setShowEditStages(false);
                     toast.success('Pipeline stages saved');

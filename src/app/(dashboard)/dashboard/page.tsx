@@ -30,6 +30,7 @@ import { usePlanAccess } from '@/hooks/usePlanAccess';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { BusinessProfile } from '@/types';
 import { IndustryPack } from '@/lib/industry-packs';
+import { getDashboardBootstrap } from '@/lib/dashboard-bootstrap';
 
 interface OnboardingStatus {
   is_complete: boolean;
@@ -134,18 +135,9 @@ export default function DashboardPage() {
     // Fetch live plan limits from backend (replaces hardcoded PLAN_LIMITS_FALLBACK)
     silentGet('/api/billing/limits').then(r => { if (r?.data?.limits) setApiLimits(r.data.limits); });
 
-    Promise.allSettled([
-      silentGet('/api/analytics/dashboard'),
-      silentGet('/api/automation/onboarding/status'),
-      silentGet('/api/automation/readiness'),
-      silentGet('/api/team/me'),
-    ]).then(([statsResult, onbResult, readResult, teamResult]) => {
-      const statsRes = statsResult.status === 'fulfilled' ? statsResult.value : { data: null };
-      const onbRes   = onbResult.status === 'fulfilled'   ? onbResult.value   : { data: null };
-      const readRes  = readResult.status === 'fulfilled'  ? readResult.value  : { data: null };
-      const teamRes  = teamResult.status === 'fulfilled'  ? teamResult.value  : { data: null };
-      if (statsRes.data) {
-        const d = statsRes.data;
+    getDashboardBootstrap().then((bootstrap) => {
+      if (bootstrap.stats) {
+        const d = bootstrap.stats;
         setAutomationStats({
           leads_captured: d.leads_captured || 0,
           automations_run: d.automations_run || 0,
@@ -167,20 +159,20 @@ export default function DashboardPage() {
         // Don't block the page — just mark for retry
         setStatsError(true);
       }
-      if (onbRes.data) {
-        setOnboarding(onbRes.data);
+      if (bootstrap.onboarding) {
+        setOnboarding(bootstrap.onboarding as OnboardingStatus);
       } else {
         setOnboarding({ is_complete: false });
       }
-      if (readRes.data) setReadiness(readRes.data);
-      if (teamRes.data) setTeamMe(teamRes.data);
+      if (bootstrap.readiness) setReadiness(bootstrap.readiness);
+      if (bootstrap.team) setTeamMe(bootstrap.team);
       // Fetch Meta Status if WhatsApp is connected
-      if (statsRes.data?.whatsapp_connection_status?.send_enabled) {
+      if (bootstrap.stats?.whatsapp_connection_status?.send_enabled) {
         silentGet('/api/integrations/whatsapp/meta-status').then(r => {
           if (r?.data?.connected) setMetaStatus(r.data);
         });
       }
-    });
+    }).catch(() => setStatsError(true));
   };
 
   useEffect(() => {
@@ -221,7 +213,7 @@ export default function DashboardPage() {
             <div>
               <p className="text-sm font-bold text-white">
                 {readiness === null
-                  ? 'Checking setup status…'
+                  ? 'Checking setup status...'
                   : readinessScore === 0
                   ? 'Setup not started yet'
                   : `Setup ${readinessScore}% complete${readinessChecks.filter((c: any) => !c.done).length > 0 ? ` — ${readinessChecks.filter((c: any) => !c.done).length} steps remaining` : ''}`
@@ -250,21 +242,21 @@ export default function DashboardPage() {
           </button>
           <div className="flex items-center gap-2 mb-4">
             <Rocket className="h-5 w-5 text-orange-500" />
-            <h2 className="text-base font-bold text-gray-900">WhatsApp bot 5 minute mein ready karo</h2>
+            <h2 className="text-base font-bold text-gray-900">Launch your WhatsApp automation in minutes</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[
-              { step: '1', icon: '🔗', title: 'Connect WhatsApp', desc: 'Connect your Meta account to get started', href: '/dashboard/integrations', cta: 'Connect →' },
-              { step: '2', icon: '⚡', title: 'Build Automation', desc: 'Generate a flow in 2 minutes with AI', href: '/dashboard/automations', cta: 'Build Flow →' },
-              { step: '3', icon: '✅', title: 'Test It', desc: 'Send a test message to your number', href: '/dashboard/messages', cta: 'Test Now →' },
+              { step: '1', title: 'Connect WhatsApp', desc: 'Connect your Meta account to get started', href: '/dashboard/integrations', cta: 'Connect' },
+              { step: '2', title: 'Build Automation', desc: 'Generate a flow in 2 minutes with AI', href: '/dashboard/automations', cta: 'Build Flow' },
+              { step: '3', title: 'Test It', desc: 'Send a test message to your number', href: '/dashboard/messages', cta: 'Test Now' },
             ].map(s => (
               <Link key={s.step} href={s.href}
                 className="flex items-start gap-3 rounded-xl bg-white border border-orange-100 p-3.5 hover:border-orange-300 hover:shadow-sm transition group">
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-orange-500 text-[11px] font-black text-white">{s.step}</span>
                 <div className="min-w-0">
-                  <p className="text-sm font-bold text-gray-900">{s.icon} {s.title}</p>
+                  <p className="text-sm font-bold text-gray-900">{s.title}</p>
                   <p className="text-xs text-gray-500 mt-0.5">{s.desc}</p>
-                  <p className="text-xs font-semibold text-orange-600 mt-1.5 group-hover:underline">{s.cta} →</p>
+                  <p className="text-xs font-semibold text-orange-600 mt-1.5 group-hover:underline">{s.cta} &rarr;</p>
                 </div>
               </Link>
             ))}

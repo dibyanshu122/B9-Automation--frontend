@@ -138,7 +138,7 @@ export const workflowSteps = [
   {
     icon: Globe,
     title: 'Connect WhatsApp',
-    description: 'Link your WhatsApp Business number via official Meta Cloud API OAuth. Takes 2 minutes.',
+    description: 'Link your WhatsApp Business number through the official Meta Cloud API connection flow.',
   },
   {
     icon: UploadCloud,
@@ -162,7 +162,7 @@ export const trustPoints = [
   {
     icon: ShieldCheck,
     title: 'Official Meta API',
-    description: 'WhatsApp via Meta Cloud API only. No unofficial workarounds, no ban risk.',
+    description: 'WhatsApp via Meta Cloud API only, with opt-out and messaging-window safeguards.',
   },
   {
     icon: LockKeyhole,

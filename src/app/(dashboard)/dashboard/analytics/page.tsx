@@ -68,7 +68,8 @@ export default function AnalyticsPage() {
       }
     };
 
-    fetchAnalytics();
+    const timer = window.setTimeout(fetchAnalytics, 250);
+    return () => window.clearTimeout(timer);
   }, [globalDays]); // eslint-disable-line
 
   // Sync loading state with React Query
@@ -88,9 +89,12 @@ export default function AnalyticsPage() {
 
   // Fetch WhatsApp quality score from Meta
   useEffect(() => {
-    get('/api/analytics/whatsapp-quality')
-      .then(r => { if (r.data?.score) setWaQuality(r.data); })
-      .catch(() => {});
+    const timer = window.setTimeout(() => {
+      get('/api/analytics/whatsapp-quality')
+        .then(r => { if (r.data?.score) setWaQuality(r.data); })
+        .catch(() => {});
+    }, 500);
+    return () => window.clearTimeout(timer);
   }, []); // eslint-disable-line
 
   // While loading, show header skeleton so H1 "Analytics" is always visible
@@ -105,7 +109,7 @@ export default function AnalyticsPage() {
               </div>
               <p className="text-sm font-bold text-amber-900">Analytics requires Growth plan</p>
             </div>
-            <a href="/dashboard/billing" className="shrink-0 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-amber-600 transition">Upgrade →</a>
+            <a href="/dashboard/billing" className="shrink-0 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-amber-600 transition">Upgrade &rarr;</a>
           </div>
         )}
         <div className="relative overflow-hidden rounded-xl border border-orange-100 bg-white p-6 shadow-sm">
@@ -132,7 +136,7 @@ export default function AnalyticsPage() {
     { label: 'Hours Saved', value: `${dashboard?.hours_saved || 0}h`, icon: Clock, color: 'text-violet-600 bg-violet-50' },
     { label: 'Revenue Potential', value: `Rs ${Number(dashboard?.estimated_revenue_potential || 0).toLocaleString('en-IN')}`, icon: IndianRupee, color: 'text-amber-700 bg-amber-50' },
     { label: 'Automations Run', value: dashboard?.automations_run || 0, icon: Zap, color: 'text-primary-600 bg-orange-50' },
-    { label: 'Bot Accuracy', value: `${dashboard?.bot_accuracy_score || 0}%`, icon: Bot, color: 'text-green-700 bg-green-50' },
+    { label: 'Bot Accuracy', value: dashboard?.bot_accuracy_score == null ? 'No data' : `${dashboard.bot_accuracy_score}%`, icon: Bot, color: 'text-green-700 bg-green-50' },
   ];
 
   const leadScoreData = Object.entries(impact?.lead_score_breakdown || {}).map(([name, value]) => ({ name, value }));

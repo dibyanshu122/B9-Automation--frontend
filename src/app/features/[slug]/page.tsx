@@ -35,7 +35,7 @@ const featuresData: Record<string, FeatureData> = {
     icon: Bot,
     color: 'emerald',
     steps: [
-      { title: 'Connect Meta', desc: 'Link your WhatsApp Business number via official Meta Cloud API OAuth. Takes 2 minutes.' },
+      { title: 'Connect Meta', desc: 'Link your WhatsApp Business number through the official Meta Cloud API connection flow.' },
       { title: 'Customer messages', desc: 'B9 AI receives the message, understands intent (buy/question/complaint/opt-out) using DeepSeek AI.' },
       { title: 'AI takes action', desc: 'Searches knowledge → sends catalog → creates payment link → books follow-up — all in one turn.' },
     ],

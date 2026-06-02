@@ -606,7 +606,7 @@ export default function SettingsPage() {
             <p className="text-sm font-bold text-emerald-800 mb-1">Free plan - 30 lifetime AI replies included</p>
             <p className="text-xs text-emerald-700">
               Add your own Groq API key below to use your own provider quota for AI replies.
-              Takes 2 minutes. Groq&apos;s free tier handles 500+ customer conversations/day.
+              Usage and provider limits remain visible in your Groq account.
             </p>
           </div>
         ) : (
@@ -1260,7 +1260,7 @@ function CustomLeadFieldsSection() {
 
 function CsatSettingsSection() {
   const { get, put } = useApi();
-  const [settings, setSettings] = useState({ enabled: false, delay_minutes: 30, question: 'How was your experience? Reply 1-5 ⭐' });
+  const [settings, setSettings] = useState({ enabled: false, delay_minutes: 30, question: 'How was your experience? Reply with a rating from 1 to 5.', template_name: '' });
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -1301,6 +1301,12 @@ function CsatSettingsSection() {
               <input type="number" min={5} max={1440} value={settings.delay_minutes}
                 onChange={e => setSettings(s => ({ ...s, delay_minutes: parseInt(e.target.value) || 30 }))}
                 className="w-32 rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Approved template fallback <span className="font-normal text-gray-400">(optional)</span></label>
+              <input value={settings.template_name || ''} onChange={e => setSettings(s => ({ ...s, template_name: e.target.value }))}
+                placeholder="Required when the 24-hour window is closed"
+                className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
             </div>
           </>
         )}

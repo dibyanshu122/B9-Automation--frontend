@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { API_BASE_URL, SIDEBAR_GROUPS } from '@/lib/constants';
+import { SIDEBAR_GROUPS } from '@/lib/constants';
 import { useUIStore } from '@/store/uiStore';
 import { useAuthStore } from '@/store/authStore';
 import { useRouter } from 'next/navigation';
@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import { Button } from './button';
+import { getDashboardBootstrap } from '@/lib/dashboard-bootstrap';
 
 const ICONS = {
   Bell, LayoutDashboard, Brain, FileText, MessageCircle, Code, Code2, BarChart3,
@@ -87,7 +88,7 @@ function useUnreadCount() {
     const run = () => {
       const token = useAuthStore.getState().token;
       const base = process.env.NEXT_PUBLIC_API_URL || '';
-      fetch(`${base}/api/automation/inbox`, {
+      fetch(`${base}/api/automation/inbox?limit=20`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       })
         .then(r => r.json())
@@ -95,14 +96,17 @@ function useUnreadCount() {
           const items: any[] = data?.items || [];
           const cutoff = Date.now() - 86400000;
           setCount(Math.min(items.filter(
-            (i: any) => i.direction === 'inbound' && new Date(i.created_at + 'Z').getTime() > cutoff
+            (i: any) => i.direction === 'inbound' && Date.parse(i.created_at) > cutoff
           ).length, 99));
         })
         .catch(() => {});
     };
-    run();
+    const initial = setTimeout(run, 1500);
     const t = setInterval(run, 30000);
-    return () => clearInterval(t);
+    return () => {
+      clearTimeout(initial);
+      clearInterval(t);
+    };
   }, []);
   return count;
 }
@@ -141,10 +145,8 @@ export const Sidebar = () => {
   useEffect(() => {
     const token = useAuthStore.getState().token;
     if (!token) return;
-    fetch(`${API_BASE_URL}/api/team/me`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((response) => (response.ok ? response.json() : null))
+    getDashboardBootstrap()
+      .then((data) => data.team || null)
       .then((data) => {
         if (data) setTeamAccess(data);
       })

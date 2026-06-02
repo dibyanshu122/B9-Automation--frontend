@@ -1486,10 +1486,10 @@ function UnifiedInbox() {
               <div className="h-32 w-32 bg-white rounded-full flex items-center justify-center mb-8 shadow-sm">
                 <MessageCircle className="h-16 w-16 text-green-500" />
               </div>
-              <h2 className="text-2xl font-light text-gray-800 mb-3"> Whatsapp Messages</h2>
+              <h2 className="text-2xl font-light text-gray-800 mb-3">WhatsApp Messages</h2>
               <p className="text-[14px] text-gray-500 leading-relaxed">
-                Send and receive messages without keeping your phone online.<br/>
-                Use WhatsApp on up to 4 linked devices and 1 phone at the same time.
+                Send and receive customer messages through your connected WhatsApp Business account.<br/>
+                Delivery, read status, templates, and the 24-hour reply window are tracked here.
               </p>
               <div className="mt-8 pt-8 border-t border-gray-300 w-full flex items-center justify-center gap-2 text-[13px] text-gray-400">
                 <Zap className="h-4 w-4" /> End-to-end encrypted
