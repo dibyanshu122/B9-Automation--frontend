@@ -66,7 +66,7 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
   },
   {
     id: 'knowledge',
-    name: 'AI & Knowledge',
+    name: 'AI Studio',
     icon: 'Brain',
     children: [
       { name: 'AI Assistants', href: '/dashboard/assistants', icon: 'Bot' },

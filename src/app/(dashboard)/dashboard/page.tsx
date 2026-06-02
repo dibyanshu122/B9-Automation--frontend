@@ -16,6 +16,8 @@ import {
   Target,
   Users,
   Workflow,
+  X,
+  Rocket,
 } from 'lucide-react';
 import { Button } from '@/components/button';
 import { Card } from '@/components/card';
@@ -87,6 +89,9 @@ export default function DashboardPage() {
   const [statsError, setStatsError] = useState(false);
   const [pushDismissed, setPushDismissed] = useState(() =>
     typeof window !== 'undefined' && localStorage.getItem('push_banner_dismissed') === 'true'
+  );
+  const [getStartedDismissed, setGetStartedDismissed] = useState(() =>
+    typeof window !== 'undefined' && localStorage.getItem('get_started_dismissed') === 'true'
   );
   const searchParams = useSearchParams();
   const [showWelcome, setShowWelcome] = useState(() => {
@@ -217,6 +222,39 @@ export default function DashboardPage() {
           >
             Continue Setup <ChevronRight className="h-3.5 w-3.5" />
           </Link>
+        </div>
+      )}
+
+      {/* Get Started card — shown to new users with no data, dismissable */}
+      {hasNoBusinessData && !getStartedDismissed && (
+        <div className="relative rounded-2xl border border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50 p-5">
+          <button
+            onClick={() => { setGetStartedDismissed(true); if(typeof window!=='undefined') localStorage.setItem('get_started_dismissed','true'); }}
+            className="absolute right-3 top-3 rounded-lg p-1.5 text-gray-400 hover:bg-orange-100 hover:text-gray-600 transition"
+          >
+            <X className="h-4 w-4" />
+          </button>
+          <div className="flex items-center gap-2 mb-4">
+            <Rocket className="h-5 w-5 text-orange-500" />
+            <h2 className="text-base font-bold text-gray-900">WhatsApp bot 5 minute mein ready karo</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {[
+              { step: '1', icon: '🔗', title: 'WhatsApp Connect karo', desc: 'Meta account se connect karo', href: '/dashboard/integrations', cta: 'Connect' },
+              { step: '2', icon: '⚡', title: 'Automation banao', desc: 'AI se 2 minute mein flow generate karo', href: '/dashboard/automations', cta: 'Build Flow' },
+              { step: '3', icon: '✅', title: 'Test karo', desc: 'Apne number pe test message bhejo', href: '/dashboard/messages', cta: 'Test Now' },
+            ].map(s => (
+              <Link key={s.step} href={s.href}
+                className="flex items-start gap-3 rounded-xl bg-white border border-orange-100 p-3.5 hover:border-orange-300 hover:shadow-sm transition group">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-orange-500 text-[11px] font-black text-white">{s.step}</span>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-gray-900">{s.icon} {s.title}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{s.desc}</p>
+                  <p className="text-xs font-semibold text-orange-600 mt-1.5 group-hover:underline">{s.cta} →</p>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
       )}
 

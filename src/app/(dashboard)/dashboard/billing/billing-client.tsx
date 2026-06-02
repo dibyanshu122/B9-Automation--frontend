@@ -161,6 +161,12 @@ export default function BillingClient({ initialPlan, initialInvoices }: BillingC
 
   return (
     <div className="space-y-8">
+      {/* Page header */}
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">Billing & Plans</h1>
+        <p className="mt-1 text-sm text-gray-500">Manage your subscription, view invoices and upgrade your plan.</p>
+      </div>
+
       {/* Renewal reminder banner */}
       {currentPlan?.plan !== 'FREE' && isExpiringSoon && (
         <div className="flex items-center justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
