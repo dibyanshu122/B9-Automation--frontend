@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Bot, Check, CheckCheck, FileText, Loader2, MapPin, MessageCircle, MoreVertical, Play, Search, Send, Tag, Trash2, User, XCircle, Zap, Paperclip, Image as ImageIcon, Mic, Phone, ShoppingCart, Sticker, SlidersHorizontal } from 'lucide-react';
+import { ArrowLeft, Bot, Check, CheckCheck, FileText, Loader2, MapPin, MessageCircle, MoreVertical, Play, Search, Send, Tag, Trash2, User, XCircle, Zap, Paperclip, Image as ImageIcon, Phone, ShoppingCart, Sticker, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/button';
 import { useApi } from '@/hooks/useApi';
 import { useAuthStore } from '@/store/authStore';
@@ -348,6 +348,14 @@ function UnifiedInbox() {
   const chatBoxRef = useRef<HTMLDivElement>(null);
   const qrRef = useRef<HTMLDivElement>(null);
   const tplRef = useRef<HTMLDivElement>(null);
+  // Emoji picker
+  const [emojiOpen, setEmojiOpen] = useState(false);
+  const emojiRef = useRef<HTMLDivElement>(null);
+  // Media attach dialog
+  const [mediaOpen, setMediaOpen] = useState(false);
+  const [mediaUrl, setMediaUrl] = useState('');
+  const [mediaType, setMediaType] = useState<'image'|'document'|'video'>('image');
+  const [sendingMedia, setSendingMedia] = useState(false);
 
   // Fetch leads once to map phone → name
   useEffect(() => {
@@ -435,12 +443,13 @@ function UnifiedInbox() {
       .catch(() => {});
   }, []); // eslint-disable-line
 
-  // Close quick reply / template / filter dropdowns on outside click
+  // Close quick reply / template / filter / emoji dropdowns on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (qrRef.current && !qrRef.current.contains(e.target as Node)) setQrOpen(false);
       if (tplRef.current && !tplRef.current.contains(e.target as Node)) setTplOpen(false);
       if (filterPanelRef.current && !filterPanelRef.current.contains(e.target as Node)) setFilterPanelOpen(false);
+      if (emojiRef.current && !emojiRef.current.contains(e.target as Node)) setEmojiOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -525,6 +534,24 @@ function UnifiedInbox() {
       })
       .catch(() => setAssignedAgent(null));
   }, [selected?.sender_id]); // eslint-disable-line
+
+  const sendMedia = async () => {
+    if (!selected || !mediaUrl.trim()) return;
+    setSendingMedia(true);
+    try {
+      await post('/api/automation/outbound-messages', {
+        recipient: selected.sender_id,
+        channel: selected.channel,
+        message_type: mediaType,
+        payload: { [mediaType]: { link: mediaUrl.trim() } },
+      });
+      setMediaOpen(false);
+      setMediaUrl('');
+      setMediaType('image');
+      toast.success(`${mediaType === 'image' ? 'Image' : mediaType === 'document' ? 'Document' : 'Video'} sent`);
+    } catch { toast.error('Failed to send media — check the URL is public HTTPS'); }
+    finally { setSendingMedia(false); }
+  };
 
   const assignToMe = async () => {
     if (!selected || !leadProfile?.id) return;
@@ -1119,9 +1146,76 @@ function UnifiedInbox() {
                       </div>
                     )}
                   </div>
-                  <button onClick={() => toast('Attachment feature coming soon!')} className="p-2.5 rounded-full text-gray-500 hover:bg-gray-200 transition">
+                  {/* Emoji picker */}
+                  <div ref={emojiRef} className="relative">
+                    <button
+                      onClick={() => setEmojiOpen(o => !o)}
+                      className={`p-2.5 rounded-full transition ${emojiOpen ? 'bg-gray-200 text-gray-800' : 'text-gray-500 hover:bg-gray-200'}`}
+                      title="Emoji"
+                    >
+                      <span className="text-xl leading-none">😊</span>
+                    </button>
+                    {emojiOpen && (
+                      <div className="absolute bottom-12 left-0 z-30 bg-white border border-gray-200 rounded-2xl shadow-xl p-3 w-72">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-2">Emojis</p>
+                        <div className="grid grid-cols-8 gap-1">
+                          {['😊','😂','🙏','👍','❤️','🎉','🔥','✅','😍','🤝','💯','👏','😄','🙌','💪','⭐','🥳','😎','🤩','💰','📲','📢','🎯','✨','👋','😅','🤔','💬','📍','🚀','🛒','📦','💳','📝','🗓️','⏰'].map(e => (
+                            <button
+                              key={e}
+                              onClick={() => { setReply(r => r + e); setEmojiOpen(false); }}
+                              className="text-xl rounded-lg p-1 hover:bg-gray-100 transition leading-none"
+                            >
+                              {e}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  {/* Attach media */}
+                  <button
+                    onClick={() => setMediaOpen(true)}
+                    className="p-2.5 rounded-full text-gray-500 hover:bg-gray-200 transition"
+                    title="Send image, document or video"
+                  >
                     <Paperclip className="h-6 w-6" />
                   </button>
+                  {/* Media URL dialog */}
+                  {mediaOpen && (
+                    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center bg-black/40 p-4" onClick={() => setMediaOpen(false)}>
+                      <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl p-5" onClick={e => e.stopPropagation()}>
+                        <p className="text-base font-bold text-gray-900 mb-1">Send Media</p>
+                        <p className="text-xs text-gray-400 mb-4">Paste a public HTTPS URL — image, PDF, or video</p>
+                        <div className="flex gap-2 mb-3">
+                          {(['image','document','video'] as const).map(t => (
+                            <button key={t} onClick={() => setMediaType(t)}
+                              className={`flex-1 rounded-xl border py-1.5 text-xs font-semibold capitalize transition ${mediaType===t ? 'border-green-400 bg-green-50 text-green-700' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}>
+                              {t==='image'?'🖼️ Image':t==='document'?'📄 Document':'🎥 Video'}
+                            </button>
+                          ))}
+                        </div>
+                        <input
+                          type="url"
+                          value={mediaUrl}
+                          onChange={e => setMediaUrl(e.target.value)}
+                          placeholder={mediaType==='image'?'https://example.com/photo.jpg':mediaType==='document'?'https://example.com/brochure.pdf':'https://example.com/demo.mp4'}
+                          className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 mb-4"
+                          autoFocus
+                        />
+                        <div className="flex gap-2">
+                          <button onClick={() => { setMediaOpen(false); setMediaUrl(''); }}
+                            className="flex-1 rounded-xl border border-gray-200 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50">
+                            Cancel
+                          </button>
+                          <button onClick={sendMedia} disabled={!mediaUrl.trim() || sendingMedia}
+                            className="flex-1 rounded-xl bg-green-600 py-2 text-sm font-bold text-white hover:bg-green-700 disabled:opacity-40 transition flex items-center justify-center gap-2">
+                            {sendingMedia ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                            Send
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Input */}
@@ -1152,15 +1246,18 @@ function UnifiedInbox() {
                   );
                 })()}
 
-                {/* Send/Mic */}
+                {/* Send */}
                 <div className="pb-1 pl-1">
-                  <button onClick={() => reply.trim() ? sendReply() : toast('Voice messaging coming soon!')} disabled={sending || sendingTemplate || (!reply.trim() && !getWindowStatus(selected.last_time, selected.channel).open && selected.channel === 'whatsapp')}
+                  <button
+                    onClick={sendReply}
+                    disabled={sending || sendingTemplate || !reply.trim()}
+                    aria-label="Send message"
                     className={`flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full transition-colors ${
-                      reply.trim() 
-                        ? 'bg-green-600 text-white hover:bg-green-700 shadow-md' 
-                        : 'text-gray-500 hover:bg-gray-200'
+                      reply.trim()
+                        ? 'bg-green-600 text-white hover:bg-green-700 shadow-md'
+                        : 'text-gray-300 cursor-not-allowed'
                     }`}>
-                    {sending || sendingTemplate ? <Loader2 className="h-5 w-5 animate-spin" /> : reply.trim() ? <Send className="h-5 w-5 ml-1" /> : <Mic className="h-6 w-6" />}
+                    {sending || sendingTemplate ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5 ml-0.5" />}
                   </button>
                 </div>
               </div>
