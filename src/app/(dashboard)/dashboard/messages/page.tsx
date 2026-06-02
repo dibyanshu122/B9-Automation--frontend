@@ -476,12 +476,9 @@ function UnifiedInbox() {
     setAgentStatus(null);
     if (!selected) return;
     try {
-      const token = typeof window !== 'undefined'
-        ? (document.cookie.match(/(?:^|;\s*)auth-token=([^;]*)/) || [])[1] || ''
-        : '';
-      if (!token) return;
       const base = process.env.NEXT_PUBLIC_API_URL || '';
-      const sse = new EventSource(`${base}/api/analytics/stream/agentic?token=${encodeURIComponent(token)}&lead_id=${selected.sender_id}`);
+      // Use withCredentials so auth-token cookie is sent — avoids JWT in URL/logs
+      const sse = new EventSource(`${base}/api/analytics/stream/agentic?lead_id=${selected.sender_id}`, { withCredentials: true });
       sse.onmessage = (e) => {
         try {
           const d = JSON.parse(e.data);
