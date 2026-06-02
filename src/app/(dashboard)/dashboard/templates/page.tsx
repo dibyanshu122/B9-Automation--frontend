@@ -166,43 +166,9 @@ function newBtn(type: BtnType): BtnEntry { return { ...EMPTY_BTN, type }; }
 
 function TemplatePreviewShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-col items-center w-full">
-      <div className="w-full rounded-[2.5rem] border-[7px] border-[#b8d4e8] bg-[#b8d4e8] shadow-xl overflow-hidden">
-        {/* Notch + status bar */}
-        <div className="relative bg-[#128C7E] flex items-center justify-between px-5 pt-3 pb-1">
-          <span className="text-white text-[10px] font-semibold">9:41</span>
-          <div className="absolute inset-x-0 top-0 flex justify-center">
-            <div className="w-24 h-5 bg-[#b8d4e8] rounded-b-2xl" />
-          </div>
-          <div className="flex gap-1.5 items-center">
-            <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M1.5 8.5a13 13 0 0121 0M5 12a10 10 0 0114 0M8.5 15.5a6 6 0 017 0M12 19h.01"/></svg>
-            <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
-          </div>
-        </div>
-        {/* WhatsApp header */}
-        <div className="bg-[#128C7E] px-3 pb-3 pt-1 flex items-center gap-2.5">
-          <button className="text-white/80"><svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg></button>
-          <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 text-sm font-bold shrink-0">B</div>
-          <div className="flex-1 min-w-0">
-            <p className="text-white text-sm font-semibold leading-tight">Business</p>
-            <p className="text-[10px] text-emerald-200">template preview</p>
-          </div>
-          <div className="flex gap-3 text-white/80">
-            <svg className="w-4.5 h-4.5 w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
-            <svg className="w-[18px] h-[18px]" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
-          </div>
-        </div>
-        {/* Chat area */}
-        <div className="bg-[#efeae2] px-3 pt-3 pb-3 overflow-y-auto max-h-[460px] min-h-[200px]">
-          {children}
-        </div>
-        {/* Bottom input bar */}
-        <div className="bg-[#f0f0f0] px-3 py-2 flex items-center gap-2">
-          <div className="flex-1 bg-white rounded-full px-3 py-1.5 text-[11px] text-gray-400">Type Message Here...</div>
-          <div className="w-8 h-8 rounded-full bg-[#128C7E] flex items-center justify-center shrink-0">
-            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-          </div>
-        </div>
+    <div className="w-full rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+      <div className="bg-[#efeae2] px-3 pt-4 pb-6 overflow-y-auto max-h-[520px] min-h-[160px]">
+        {children}
       </div>
     </div>
   );
