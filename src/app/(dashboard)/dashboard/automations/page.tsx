@@ -89,10 +89,10 @@ interface WorkflowValidationResult {
   trigger_paths?: Array<{ node_id: string; trigger_type: string; reachable_nodes: string[]; has_outgoing: boolean }>;
 }
 
-const FLOW_CENTER_Y = 340;   // main pipeline Y
-const BRANCH_OFFSET_Y = 300; // vertical gap per leaf slot (increased for no-overlap)
+const FLOW_CENTER_Y = 280;   // main pipeline Y
+const BRANCH_OFFSET_Y = 220; // vertical gap per leaf slot — tighter like n8n
 const FLOW_START_X = 80;
-const FLOW_GAP_X = 380;      // horizontal gap between columns
+const FLOW_GAP_X = 300;      // horizontal gap — node is 220px + 80px gap = clean
 const AUTOSAVE_KEY = 'brainai:automation-builder:v1';
 
 const blockStyles = {
@@ -1861,6 +1861,7 @@ export default function AutomationsPage() {
                     setActiveWorkflowId('');
                     setShowWorkflowList(false);
                     setShowGenerateModal(false);
+                    // Fit view after small delay so React Flow renders first
                     toast.success('Flow generated! Review and Save.');
                   } catch (err: any) {
                     toast.error(err.response?.data?.detail || 'Generation failed. Try a more detailed description');
@@ -2751,9 +2752,18 @@ function WorkflowNode({ data }: NodeProps<Node<FlowNodeData>>) {
           </div>
         </div>
 
-        {/* Title + desc */}
-        <p className="relative z-10 mt-2.5 text-[13px] font-bold leading-tight text-slate-100">{block.title}</p>
-        <p className="relative z-10 mt-1 line-clamp-1 text-[11px] leading-4 text-slate-400">{block.description}</p>
+        {/* Title + tool hint */}
+        <p className="relative z-10 mt-2.5 text-[14px] font-bold leading-tight text-white tracking-tight">
+          {block.title || (block.config?.tool || block.config?.trigger_type || 'Node').replace(/_/g,' ').replace(/\b\w/g,(c:string)=>c.toUpperCase())}
+        </p>
+        {block.config?.tool && (
+          <p className="relative z-10 mt-0.5 text-[10px] leading-4 text-slate-500 font-mono truncate">
+            {block.config.tool}
+          </p>
+        )}
+        {!block.config?.tool && block.description && (
+          <p className="relative z-10 mt-0.5 line-clamp-1 text-[10px] leading-4 text-slate-500">{block.description}</p>
+        )}
 
         {/* AI output vars pill row */}
         {outputVars.length > 0 && (
