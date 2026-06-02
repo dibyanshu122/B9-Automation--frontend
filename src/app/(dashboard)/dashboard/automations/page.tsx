@@ -191,6 +191,7 @@ const visibleLibrary: LibraryBlock[] = [
   { type: 'action', title: 'WhatsApp Buttons (3)', description: 'Send up to 3 quick-reply buttons that customers can tap instantly.', config: { tool: 'send_whatsapp_buttons', recipient: '{{lead.phone}}', body_text: 'Which option suits you best?', buttons: '[{"id":"btn_0","title":"Option 1"},{"id":"btn_1","title":"Option 2"},{"id":"btn_2","title":"Option 3"}]', send_mode: 'live' } },
   { type: 'action', title: 'WhatsApp CTA Button', description: 'Send a call-to-action button that opens a URL or calls a phone number.', config: { tool: 'send_whatsapp_cta', recipient: '{{lead.phone}}', body_text: 'Click below to learn more:', buttons: '[{"type":"url","text":"Visit Website","url":"https://your-site.com"}]', send_mode: 'live' } },
   { type: 'action', title: 'WhatsApp Form (Flow)', description: 'Open an interactive Meta WhatsApp Flow for surveys, booking forms, and lead capture inside chat.', config: { tool: 'send_whatsapp_meta_flow', recipient: '{{lead.phone}}', flow_id: '', cta_text: 'Fill Form', body_text: 'Please fill in your details below:', send_mode: 'live' } },
+  { type: 'action', title: 'Send Contact Card', description: 'Share a contact (vCard) — name, phone, email, company — directly in WhatsApp chat.', config: { tool: 'send_contact_card', recipient: '{{lead.phone}}', contact_name: 'John Doe', contact_phone: '+91 XXXXX XXXXX', contact_email: '', contact_org: '', send_mode: 'live' } },
   { type: 'action', title: 'Send Location', description: 'Send your business location pin to the customer via WhatsApp with name and address.', config: { tool: 'send_whatsapp_location', recipient: '{{lead.phone}}', latitude: '28.6139', longitude: '77.2090', name: 'Our Office', address: '123 Business Park, New Delhi', send_mode: 'live' } },
   { type: 'action', title: 'Send Single Product', description: 'Send a single product card from your Meta catalog with a Buy Now button.', config: { tool: 'send_whatsapp_single_product', recipient: '{{lead.phone}}', catalog_id: '', product_retailer_id: '', body_text: 'Check out this product:', send_mode: 'live' } },
   { type: 'action', title: 'Get Inbound Media URL', description: 'When a customer sends an image/video/document, fetch its download URL for processing.', config: { tool: 'get_whatsapp_media_url', media_id: '{{message.media_id}}' } },
@@ -3307,6 +3308,19 @@ function ActionBlockSettings({
       )}
 
       {/* ── Send Location ────────────────────────────────────────────────── */}
+      {tool === 'send_contact_card' && (
+        <div className="space-y-3 rounded-xl border border-cyan-200 bg-cyan-50 p-3">
+          <p className="text-sm font-bold text-cyan-900">Send Contact Card (vCard) 👤</p>
+          <p className="text-xs text-cyan-700">Share a contact directly in WhatsApp — customer can save it with one tap.</p>
+          <InputField label="Send to" value={config.recipient || '{{lead.phone}}'} placeholder="{{lead.phone}}" onChange={(v) => onChange('recipient', v)} />
+          <InputField label="Contact name *" value={config.contact_name || ''} placeholder="e.g. Rahul Sharma or {{lead.name}}" onChange={(v) => onChange('contact_name', v)} />
+          <InputField label="Contact phone" value={config.contact_phone || ''} placeholder="e.g. +91 XXXXX XXXXX" onChange={(v) => onChange('contact_phone', v)} />
+          <InputField label="Contact email" value={config.contact_email || ''} placeholder="e.g. rahul@company.com" onChange={(v) => onChange('contact_email', v)} />
+          <InputField label="Company / Org" value={config.contact_org || ''} placeholder="e.g. B9 Automation" onChange={(v) => onChange('contact_org', v)} />
+          <SelectField label="Send mode" value={config.send_mode || 'draft'} options={['draft', 'live']} onChange={(v) => onChange('send_mode', v)} />
+        </div>
+      )}
+
       {tool === 'send_whatsapp_location' && (
         <div className="space-y-3 rounded-xl border border-teal-200 bg-teal-50 p-3">
           <div className="flex items-center justify-between">
