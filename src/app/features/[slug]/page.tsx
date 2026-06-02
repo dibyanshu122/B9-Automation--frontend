@@ -416,11 +416,15 @@ export default function FeaturePage({ params }: { params: Promise<{ slug: string
 
   if (!feature) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center flex-col gap-4">
-        <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-zinc-400">Feature page coming soon</h1>
-        <p className="text-zinc-400">This feature is being documented. Check back shortly.</p>
-        <Link href="/features" className="text-[#00F2FE]/80 hover:text-[#00F2FE] underline">
-          ← All Features
+      <div className="min-h-screen bg-black text-white flex items-center justify-center flex-col gap-6 px-4 text-center">
+        <div className="pointer-events-none fixed inset-0 overflow-hidden">
+          <div className="absolute -top-32 -left-32 w-[500px] h-[400px] rounded-full bg-[#00F2FE]/[0.03] blur-[140px]" />
+        </div>
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#00F2FE]">404</p>
+        <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-zinc-400">Feature not found</h1>
+        <p className="max-w-sm text-zinc-400">This feature page does not exist. Browse all available features below.</p>
+        <Link href="/features" className="mt-2 inline-flex items-center gap-2 rounded-xl border border-[#00F2FE]/30 bg-[#00F2FE]/10 px-5 py-2.5 text-sm font-semibold text-[#00F2FE] hover:bg-[#00F2FE]/20 transition">
+          ← View All Features
         </Link>
       </div>
     );

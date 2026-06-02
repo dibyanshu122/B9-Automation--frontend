@@ -1090,14 +1090,26 @@ export default function FlowsPage() {
       {notConnected && (
         <div className="flex flex-col items-center gap-3 rounded-xl border-2 border-dashed border-gray-200 py-14 text-center">
           <AlertCircle className="w-10 h-10 text-amber-400" />
-          <p className="font-semibold text-gray-700">Connect WhatsApp</p>
-          <p className="max-w-md text-sm text-gray-400">{flowError || 'Connect your WhatsApp account in Integrations first.'}</p>
+          <p className="font-semibold text-gray-700">Connect WhatsApp First</p>
+          <p className="max-w-md text-sm text-gray-400">WhatsApp Flows require an active WhatsApp connection. Connect your Meta account in Integrations to get started.</p>
           <button onClick={load} className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
             Retry
           </button>
           <a href="/dashboard/integrations" className="mt-1 text-sm font-semibold text-orange-600 hover:underline">
-            Go to Integrations 
+            Go to Integrations →
           </a>
+        </div>
+      )}
+
+      {/* API error (not a connection issue — e.g. 500, timeout) */}
+      {!notConnected && !loading && flowError && flows.length === 0 && (
+        <div className="flex flex-col items-center gap-3 rounded-xl border-2 border-dashed border-red-200 bg-red-50 py-14 text-center">
+          <AlertCircle className="w-10 h-10 text-red-400" />
+          <p className="font-semibold text-gray-700">Failed to load flows</p>
+          <p className="max-w-md text-sm text-gray-500">{flowError}</p>
+          <button onClick={load} className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+            Retry
+          </button>
         </div>
       )}
 

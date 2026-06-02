@@ -218,7 +218,12 @@ export default function DashboardPage() {
             </div>
             <div>
               <p className="text-sm font-bold text-white">
-                Setup {readinessScore}% complete — {readinessChecks.filter((c: any) => !c.done).length} steps remaining
+                {readiness === null
+                  ? 'Checking setup status…'
+                  : readinessScore === 0
+                  ? 'Setup not started yet'
+                  : `Setup ${readinessScore}% complete${readinessChecks.filter((c: any) => !c.done).length > 0 ? ` — ${readinessChecks.filter((c: any) => !c.done).length} steps remaining` : ''}`
+                }
               </p>
               <p className="text-xs text-gray-400">Complete setup to start receiving automated leads and messages</p>
             </div>

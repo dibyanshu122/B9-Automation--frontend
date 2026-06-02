@@ -1502,7 +1502,9 @@ export default function AutomationsPage() {
                           className="input-field mt-2"
                           placeholder="Rows to process"
                         />
-                        <p className="mt-2">Manual run for all rows is supported. New row watch is a placeholder for polling/webhooks.</p>
+                        <p className="mt-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-700">
+                          This trigger processes all rows from your connected Google Sheet. Real-time new-row detection requires a Google Sheets webhook — use the <strong>Manual Run</strong> button to process rows on demand.
+                        </p>
                       </div>
                     )}
                     {selectedNode.config.trigger_type === 'new_gmail_email' && (
