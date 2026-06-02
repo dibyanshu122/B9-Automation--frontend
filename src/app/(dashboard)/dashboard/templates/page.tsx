@@ -980,35 +980,47 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
 
                     {/* Body */}
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-1">
-                        Body <span className="text-red-500">*</span>
-                        {detectVarCount(form.bodyText) > 0 && (
-                          <span className="ml-2 text-[10px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-bold">
-                            {detectVarCount(form.bodyText)} variable{detectVarCount(form.bodyText) > 1 ? 's' : ''}
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-sm font-semibold text-gray-700">
+                          Body <span className="text-red-500">*</span>
+                        </label>
+                        {/* Static / Dynamic badge */}
+                        {detectVarCount(form.bodyText) > 0 ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2.5 py-0.5 text-[11px] font-bold text-violet-700">
+                            ⚡ Dynamic — {detectVarCount(form.bodyText)} variable{detectVarCount(form.bodyText) > 1 ? 's' : ''}
                           </span>
-                        )}
-                      </label>
+                        ) : form.bodyText.trim() ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-[11px] font-bold text-gray-500">
+                            📌 Static — same text for everyone
+                          </span>
+                        ) : null}
+                      </div>
                       <textarea value={form.bodyText} onChange={e => setBody(e.target.value.slice(0, 1024))}
                         rows={4} placeholder="Hi {{1}}, your order #{{2}} is confirmed! 🎉"
                         className={`${inputCls(errors.body)} resize-none`} />
-                      <p className="text-xs text-gray-400 mt-1">{form.bodyText.length}/1024 — Use <code className="bg-gray-100 px-1 rounded">{'{{1}}'}</code> for variables</p>
+                      <div className="flex items-start justify-between mt-1 gap-2">
+                        <p className="text-xs text-gray-400">{form.bodyText.length}/1024 — Use <code className="bg-gray-100 px-1 rounded">{'{{1}}'}</code> for dynamic variables</p>
+                        {detectVarCount(form.bodyText) === 0 && (
+                          <p className="text-[10px] text-gray-400 text-right">Add <code className="bg-gray-100 px-0.5 rounded">{'{{1}}'}</code> to make it dynamic (e.g. customer name)</p>
+                        )}
+                      </div>
                       {errors.body && <p className="text-xs text-red-500 mt-0.5">{errors.body}</p>}
                     </div>
 
                     {/* Variable examples */}
                     {form.examples.length > 0 && (
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                          Variable Examples <span className="text-red-500">*</span>
-                          <span className="ml-1 text-xs text-gray-400 font-normal">Required by Meta for approval</span>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">
+                          Variable Sample Values <span className="text-red-500">*</span>
                         </label>
+                        <p className="text-xs text-gray-400 mb-2">These are sample values for Meta approval only — not sent to customers. Actual values are filled at send time (e.g. customer name, order number).</p>
                         <div className="space-y-2">
                           {form.examples.map((val, idx) => (
                             <div key={idx} className="flex items-center gap-2">
                               <span className="text-xs font-mono bg-orange-50 text-orange-700 border border-orange-200 px-2 py-1 rounded w-14 text-center flex-shrink-0">{`{{${idx+1}}}`}</span>
                               <input value={val}
                                 onChange={e => setField('examples', form.examples.map((x, i) => i === idx ? e.target.value : x))}
-                                placeholder={`Example for {{${idx+1}}}`}
+                                placeholder={['Rahul Sharma', 'ORD-12345', '₹999', 'Delhi', '25 Dec'][idx] || `Sample value ${idx+1}`}
                                 className={inputCls(errors[`ex_${idx}`])} />
                             </div>
                           ))}

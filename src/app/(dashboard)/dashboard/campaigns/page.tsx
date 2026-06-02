@@ -969,7 +969,10 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
               </label>
               <input value={singlePhone} onChange={e => setSinglePhone(e.target.value)}
                 placeholder="+91 XXXXX XXXXX" className={inputCls} />
-              <p className="text-xs text-gray-400 mt-1">Send to a single number directly  great for testing before bulk send</p>
+              <p className="text-xs text-gray-400 mt-1">Send directly to one number — great for testing before bulk send</p>
+              {selected && vars.length > 0 && (
+                <p className="text-xs text-violet-600 mt-1">⚡ Dynamic template — fill variable values above before sending</p>
+              )}
             </div>
           )}
 
@@ -1173,23 +1176,46 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
             </div>
           </div>
 
-          {/* Template variable inputs */}
+          {/* Template variable inputs — dynamic template */}
           {vars.length > 0 && (
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">
-                Fill Template Variables <span className="text-red-500">*</span>
-              </label>
-              <p className="text-xs text-gray-400">
-                Use <code className="bg-gray-100 px-1 rounded">{'{{lead.name}}'}</code> for personalization per lead.
+            <div className="rounded-xl border border-violet-200 bg-violet-50/40 p-3 space-y-2">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="rounded-full bg-violet-100 px-2.5 py-0.5 text-[11px] font-bold text-violet-700">⚡ Dynamic Template</span>
+                <span className="text-xs text-violet-700">{vars.length} variable{vars.length > 1 ? 's' : ''} — personalized per lead</span>
+              </div>
+              <p className="text-xs text-gray-500">
+                Type a fixed value (same for all) or use a lead field:
               </p>
+              {/* Smart lead field suggestions */}
+              <div className="flex flex-wrap gap-1 mb-2">
+                {['{{lead.name}}','{{lead.phone}}','{{lead.email}}','{{lead.message}}'].map(tag => (
+                  <button key={tag} type="button"
+                    onClick={() => {
+                      const emptyIdx = vars.findIndex(v => !v.trim());
+                      if (emptyIdx >= 0) setVars(vars.map((x, j) => j === emptyIdx ? tag : x));
+                    }}
+                    className="rounded-md bg-violet-100 px-2 py-0.5 text-[10px] font-mono font-semibold text-violet-700 hover:bg-violet-200 transition">
+                    {tag}
+                  </button>
+                ))}
+              </div>
               {vars.map((v, i) => (
                 <div key={i} className="flex items-center gap-2">
-                  <span className="text-xs font-mono bg-orange-50 text-orange-700 border border-orange-200 px-2 py-1.5 rounded-lg w-14 text-center flex-shrink-0">{`{{${i+1}}}`}</span>
+                  <span className="text-xs font-mono bg-white border border-violet-200 text-violet-700 px-2 py-1.5 rounded-lg w-14 text-center flex-shrink-0">{`{{${i+1}}}`}</span>
                   <input value={v} onChange={e => setVars(vars.map((x, j) => j === i ? e.target.value : x))}
-                    placeholder={i === 0 ? '{{lead.name}} or "Hello!"' : `Value for {{${i+1}}}`}
+                    placeholder={i === 0 ? '{{lead.name}} — customer name' : i === 1 ? '{{lead.phone}} or fixed value' : `Value for {{${i+1}}}`}
                     className={inputCls} />
                 </div>
               ))}
+              <p className="text-[11px] text-gray-400 mt-1">Lead fields are replaced per-customer when bulk sending. Fixed text is same for everyone.</p>
+            </div>
+          )}
+
+          {/* Static template indicator */}
+          {vars.length === 0 && selected && (
+            <div className="flex items-center gap-2 rounded-lg bg-gray-50 border border-gray-200 px-3 py-2">
+              <span className="text-[11px] font-bold text-gray-500">📌 Static Template</span>
+              <span className="text-xs text-gray-400">Same message sent to all recipients. No variables.</span>
             </div>
           )}
 
