@@ -72,7 +72,9 @@ interface Contact {
   last_time: string;
   unread: number;
   lead_score?: string; // hot | warm | cold
-  assigned_agent?: string | null; // agent name/email who has this convo open
+  assigned_agent?: string | null;
+  assigned_to_user_id?: string | null;
+  assigned_to_name?: string | null;
 }
 
 /* 24-hour window helper */
@@ -323,6 +325,9 @@ function UnifiedInbox() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'whatsapp' | 'instagram' | 'facebook'>('all');
+  const [inboxView, setInboxView] = useState<'all' | 'mine' | 'unassigned'>('all');
+  const [teamMembers, setTeamMembers] = useState<{user_id:string;name:string;is_self:boolean}[]>([]);
+  const [assignMenuPhone, setAssignMenuPhone] = useState<string | null>(null);
   const [scoreFilter, setScoreFilter] = useState<'all' | 'hot' | 'warm' | 'cold'>('all');
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [filterPanelOpen, setFilterPanelOpen] = useState(false);
@@ -390,7 +395,7 @@ function UnifiedInbox() {
   };
 
   const loadInbox = (retryCount = 0) => {
-    get('/api/automation/inbox')
+    get(`/api/automation/inbox?view=${inboxView}`)
       .then(res => {
         const items: any[] = res.data?.items || [];
         const map = new Map<string, Contact>();
@@ -405,6 +410,8 @@ function UnifiedInbox() {
               last_time: item.created_at,
               unread: 1,
               lead_score: item.lead_score || 'cold',
+              assigned_to_user_id: item.assigned_to_user_id || null,
+              assigned_to_name: item.assigned_to_name || null,
             });
           } else {
             const c = map.get(key)!;
@@ -443,6 +450,13 @@ function UnifiedInbox() {
     loadInbox();
     const interval = setInterval(loadInbox, 10000);
     return () => clearInterval(interval);
+  }, [inboxView]); // eslint-disable-line
+
+  // Load team members for assignment
+  useEffect(() => {
+    get('/api/automation/inbox/team-members')
+      .then(r => { if (r.data?.members) setTeamMembers(r.data.members); })
+      .catch(() => {});
   }, []); // eslint-disable-line
 
   // Load saved quick replies once
@@ -790,7 +804,7 @@ function UnifiedInbox() {
                 </button>
               )}
             </div>
-            {/* Filter tabs */}
+            {/* Channel filter tabs */}
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
               {(['all', 'whatsapp', 'instagram', 'facebook'] as const).map(ch => (
                 <button key={ch} onClick={() => setFilter(ch)}
@@ -803,6 +817,17 @@ function UnifiedInbox() {
                 </button>
               ))}
             </div>
+            {/* Team inbox view tabs — only if team members exist */}
+            {teamMembers.length > 1 && (
+              <div className="flex rounded-lg border border-gray-200 overflow-hidden text-[11px] font-semibold mt-1">
+                {(['all', 'mine', 'unassigned'] as const).map(v => (
+                  <button key={v} onClick={() => setInboxView(v)}
+                    className={`flex-1 py-1.5 transition ${inboxView === v ? 'bg-gray-900 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>
+                    {v === 'all' ? 'All Chats' : v === 'mine' ? 'My Chats' : 'Unassigned'}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Contact rows */}
@@ -874,6 +899,38 @@ function UnifiedInbox() {
                       </div>
                     </div>
                   </div>
+                  {/* Assignment badge + assign button (team inbox) */}
+                  {teamMembers.length > 1 && (
+                    <div className="mt-1 flex items-center justify-between">
+                      <span className="text-[10px] text-gray-400">
+                        {(c as any).assigned_to_name ? `👤 ${(c as any).assigned_to_name}` : '— Unassigned'}
+                      </span>
+                      <div className="relative">
+                        <button
+                          onClick={e => { e.stopPropagation(); setAssignMenuPhone(assignMenuPhone === c.sender_id ? null : c.sender_id); }}
+                          className="text-[10px] text-blue-600 hover:underline"
+                        >
+                          Assign
+                        </button>
+                        {assignMenuPhone === c.sender_id && (
+                          <div className="absolute right-0 top-5 z-50 w-44 rounded-xl border border-gray-200 bg-white shadow-lg overflow-hidden">
+                            <button
+                              onClick={async e => { e.stopPropagation(); await post('/api/automation/inbox/assign', { phone: c.sender_id, assign_to: null }); setAssignMenuPhone(null); loadInbox(); }}
+                              className="flex w-full items-center px-3 py-2 text-xs text-gray-500 hover:bg-gray-50">
+                              Unassign
+                            </button>
+                            {teamMembers.map(m => (
+                              <button key={m.user_id}
+                                onClick={async e => { e.stopPropagation(); await post('/api/automation/inbox/assign', { phone: c.sender_id, assign_to: m.user_id }); setAssignMenuPhone(null); loadInbox(); }}
+                                className="flex w-full items-center px-3 py-2 text-xs text-gray-800 hover:bg-blue-50">
+                                {m.is_self ? `🙋 ${m.name} (me)` : `👤 ${m.name}`}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </button>
               );
             })}
