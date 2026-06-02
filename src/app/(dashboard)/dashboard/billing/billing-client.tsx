@@ -360,7 +360,7 @@ export default function BillingClient({ initialPlan, initialInvoices }: BillingC
             const isAnnual = billingCycle === 'yearly';
             const displayPrice = isAnnual && plan.annual_price ? plan.annual_price : plan.price;
             const annualMonthlyEquivalent = plan.annual_price ? Math.round(plan.annual_price / 12) : null;
-            const annualSaving = plan.annual_price ? (plan.price * 12) - plan.annual_price : 0;
+            const annualSaving = (plan.annual_price && plan.price) ? Math.max(0, (plan.price * 12) - plan.annual_price) : 0;
             const isCurrent = plan.type === currentPlan?.plan;
             const badge = (plan as any).badge as string | null | undefined;
 
@@ -492,7 +492,7 @@ export default function BillingClient({ initialPlan, initialInvoices }: BillingC
                         {(invoice as any).billing_cycle === 'annual' ? 'Annual' : 'Monthly'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 font-bold">Rs {invoice.amount}</td>
+                    <td className="px-4 py-3 font-bold">Rs {Number(invoice.amount).toLocaleString('en-IN')}</td>
                     <td className="px-4 py-3">
                       <span className={`rounded-full px-3 py-1 text-xs font-medium ${invoice.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
                         {invoice.status}

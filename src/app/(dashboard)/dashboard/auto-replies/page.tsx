@@ -142,7 +142,7 @@ function RuleForm({ ruleType, existing, onClose, onSaved }: {
       .catch(() => {});
   }, []); // eslint-disable-line
   const [workingHours, setWorkingHours] = useState<any>(existing?.working_hours && Object.keys(existing.working_hours).length > 0 ? existing.working_hours : DEFAULT_HOURS);
-  const timezone = existing?.timezone || 'Asia/Kolkata';
+  const [timezone, setTimezone] = useState(existing?.timezone || 'Asia/Kolkata');
   const [alertEmail, setAlertEmail] = useState(
     ruleType === 'auto_assign'
       ? ((existing as any)?.assign_label || '')
@@ -378,6 +378,18 @@ function RuleForm({ ruleType, existing, onClose, onSaved }: {
             {ruleType === 'out_of_office' && (
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Working Hours</label>
+                <div className="mb-3">
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Timezone</label>
+                  <select value={timezone} onChange={e => setTimezone(e.target.value)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500">
+                    <option value="Asia/Kolkata">India (IST) — Asia/Kolkata</option>
+                    <option value="Asia/Dubai">Dubai (GST) — Asia/Dubai</option>
+                    <option value="Asia/Singapore">Singapore (SGT) — Asia/Singapore</option>
+                    <option value="America/New_York">New York (EST) — America/New_York</option>
+                    <option value="America/Los_Angeles">Los Angeles (PST) — America/Los_Angeles</option>
+                    <option value="Europe/London">London (GMT) — Europe/London</option>
+                    <option value="UTC">UTC</option>
+                  </select>
+                </div>
                 <div className="space-y-2">
                   {DAYS.map(day => (
                     <div key={day} className="flex items-center gap-3">

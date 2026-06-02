@@ -195,7 +195,18 @@ export default function AssistantsPage() {
                 </Link>
                 <Button variant="ghost" title="Edit assistant" onClick={() => {
                   setEditingAssistant(assistant);
-      setNewAssistant({ ...BLANK_FORM, name: assistant.name, description: assistant.description || '', language: assistant.language || 'english', lead_capture_enabled: (assistant as any).lead_capture_enabled ?? true });
+      setNewAssistant({
+        ...BLANK_FORM,
+        name: assistant.name,
+        description: assistant.description || '',
+        language: assistant.language || 'english',
+        lead_capture_enabled: (assistant as any).lead_capture_enabled ?? true,
+        role: (assistant as any).role || BLANK_FORM.role,
+        tone: (assistant as any).tone || BLANK_FORM.tone,
+        handover_policy: (assistant as any).handover_policy || BLANK_FORM.handover_policy,
+        restricted_topics: (assistant as any).restricted_topics || BLANK_FORM.restricted_topics,
+        compliance_mode: (assistant as any).compliance_mode ?? BLANK_FORM.compliance_mode,
+      });
                 }}>
                   <Edit2 className="h-4 w-4" />
                 </Button>

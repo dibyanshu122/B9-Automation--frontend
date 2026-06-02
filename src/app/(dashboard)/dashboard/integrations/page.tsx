@@ -1121,7 +1121,9 @@ export default function IntegrationsPage() {
 
   const saveInstagramConnection = async () => {
     if (!instagramSelectedAccount) { setSetupError('Select a linked Instagram account first.'); return; }
-    const [pageId, instagramAccountId] = instagramSelectedAccount.split('|');
+    const parts = instagramSelectedAccount.split('|');
+    const [pageId, instagramAccountId] = parts;
+    if (!pageId || !instagramAccountId) { setSetupError('Invalid account selection. Please reload and try again.'); return; }
     setLoading('instagram:save');
     setSetupError('');
     try {

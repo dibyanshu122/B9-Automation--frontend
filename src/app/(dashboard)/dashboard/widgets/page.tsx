@@ -263,7 +263,7 @@ export default function WidgetsPage() {
       const apiBase = process.env.NEXT_PUBLIC_API_URL || '';
       const res = await fetch(`${apiBase}/api/widgets/${selectedAssistantId}/message`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Origin: 'https://dashboard.brainai.in' },
+        headers: { 'Content-Type': 'application/json', Origin: typeof window !== 'undefined' ? window.location.origin : '' },
         body: JSON.stringify({ message: userMsg, session_id: previewSessionId || undefined }),
       });
       const data = await res.json();
