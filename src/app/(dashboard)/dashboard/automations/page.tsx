@@ -1283,6 +1283,7 @@ export default function AutomationsPage() {
             }
           }}
           onRefresh={() => refresh()}
+          onGenerate={() => setShowGenerateModal(true)}
         />
       )}
 
@@ -2086,6 +2087,7 @@ function WorkflowListView({
   onToggleStatus,
   onClone,
   onRefresh,
+  onGenerate,
 }: {
   workflows: AutomationWorkflow[];
   loading?: boolean;
@@ -2095,6 +2097,7 @@ function WorkflowListView({
   onToggleStatus?: (id: string, currentStatus: string) => void;
   onClone?: (id: string) => void;
   onRefresh?: () => void;
+  onGenerate?: () => void;
 }) {
   const [wfSearch, setWfSearch] = useState('');
   const [wfStatus, setWfStatus] = useState<'all' | 'active' | 'draft'>('all');
@@ -2228,7 +2231,7 @@ function WorkflowListView({
           </div>
 
           <div className="flex gap-3">
-            <button type="button" onClick={() => {/* trigger generate modal */onNew(); }}
+            <button type="button" onClick={() => onGenerate ? onGenerate() : onNew()}
               className="rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-violet-700 transition">
               ✨ Generate with AI
             </button>
@@ -2314,7 +2317,7 @@ function WorkflowListView({
                           onDelete(wf.id);
                         }
                       }}
-                      className="flex h-5 w-5 items-center justify-center rounded-md text-slate-600 opacity-0 transition hover:bg-red-500/20 hover:text-red-400 group-hover:opacity-100"
+                      className="flex h-5 w-5 items-center justify-center rounded-md text-slate-700 transition hover:bg-red-500/20 hover:text-red-400 opacity-40 group-hover:opacity-100"
                       title="Delete workflow"
                       aria-label="Delete workflow"
                     >
@@ -2840,8 +2843,8 @@ function WorkflowNode({ data }: NodeProps<Node<FlowNodeData>>) {
           )}
           {block.type !== 'trigger' && (
             <button type="button" onClick={(e) => { e.stopPropagation(); onTestNode(block.id); }}
-              className="w-full rounded-lg border border-white/10 bg-white/5 py-1 text-[10px] font-bold text-slate-400 hover:bg-white/10 hover:text-slate-200">
-              <Play className="inline h-3 w-3 mr-1" />Test Node
+              className="w-full rounded-lg border border-sky-400/20 bg-sky-400/10 py-1 text-[10px] font-bold text-sky-300 hover:bg-sky-400/20 hover:text-sky-200 transition">
+              <Play className="inline h-3 w-3 mr-1" />▶ Test This Step
             </button>
           )}
         </div>
