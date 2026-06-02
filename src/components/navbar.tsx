@@ -124,9 +124,15 @@ export const Navbar = () => {
     const fetchUnread = () => {
       get('/api/automation/notifications')
         .then((res) => {
-          setUnreadCount(res.data?.unread_count || 0);
-          // Store up to 50 — dropdown is scrollable so user can see all
-          setNotifications(res.data?.events || []);
+          const events: any[] = res.data?.events || [];
+          setNotifications(events);
+          // Count only events NEWER than last time user opened bell
+          const lastSeen = parseInt(localStorage.getItem(`notif_last_seen_${user.id}`) || '0');
+          const newCount = events.filter(e => {
+            const t = e.created_at ? new Date(e.created_at + 'Z').getTime() : 0;
+            return t > lastSeen;
+          }).length;
+          setUnreadCount(newCount);
         })
         .catch(() => {});
     };
@@ -181,10 +187,13 @@ export const Navbar = () => {
 
   const openNotifications = () => {
     setShowNotifDropdown(true);
+    // Save "last seen" timestamp — future notifications after this won't be unread
+    if (user?.id && typeof window !== 'undefined') {
+      localStorage.setItem(`notif_last_seen_${user.id}`, Date.now().toString());
+    }
     setUnreadCount(0);
     get('/api/automation/notifications')
       .then((res) => {
-        // Load all notifications — dropdown is scrollable
         setNotifications(res.data?.events || []);
       })
       .catch(() => {});

@@ -90,6 +90,13 @@ export default function DashboardPage() {
   const [pushDismissed, setPushDismissed] = useState(() =>
     typeof window !== 'undefined' && localStorage.getItem('push_banner_dismissed') === 'true'
   );
+  const [hotLeadDismissed, setHotLeadDismissed] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const ts = localStorage.getItem('hot_lead_banner_dismissed_at');
+    if (!ts) return false;
+    // Auto-show again after 8 hours so user sees new hot leads
+    return Date.now() - parseInt(ts) < 8 * 3600 * 1000;
+  });
   const [getStartedDismissed, setGetStartedDismissed] = useState(() =>
     typeof window !== 'undefined' && localStorage.getItem('get_started_dismissed') === 'true'
   );
@@ -332,31 +339,30 @@ export default function DashboardPage() {
       )}
 
       {/* 🔥 Hot Lead Alert Banner */}
-      {automationStats.hot_leads > 0 && (() => {
-        const dismissed = typeof window !== 'undefined' && sessionStorage.getItem(`hot_lead_banner_${automationStats.hot_leads}`) === 'true';
-        if (dismissed) return null;
-        return (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-gradient-to-r from-red-50 to-orange-50 px-4 py-3 text-sm text-red-800 shadow-sm">
-            <div className="flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse shrink-0" />
-              <span className="font-bold">🔥 {automationStats.hot_leads} hot lead{automationStats.hot_leads > 1 ? 's' : ''} need attention!</span>
-              <span className="hidden sm:inline text-red-600 text-xs">Follow up now while they're still warm.</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Link href="/dashboard/leads?score=hot" className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-700 transition">
-                View Hot Leads →
-              </Link>
-              <button
-                type="button"
-                onClick={() => { if (typeof window !== 'undefined') sessionStorage.setItem(`hot_lead_banner_${automationStats.hot_leads}`, 'true'); }}
-                className="text-xs text-red-400 hover:text-red-600 font-semibold"
-              >
-                Dismiss
-              </button>
-            </div>
+      {automationStats.hot_leads > 0 && !hotLeadDismissed && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-gradient-to-r from-red-50 to-orange-50 px-4 py-3 text-sm text-red-800 shadow-sm">
+          <div className="flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse shrink-0" />
+            <span className="font-bold">🔥 {automationStats.hot_leads} hot lead{automationStats.hot_leads > 1 ? 's' : ''} need attention!</span>
+            <span className="hidden sm:inline text-red-600 text-xs">Follow up now while they're still warm.</span>
           </div>
-        );
-      })()}
+          <div className="flex items-center gap-2">
+            <Link href="/dashboard/leads?score=hot" className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-700 transition">
+              View Hot Leads →
+            </Link>
+            <button
+              type="button"
+              onClick={() => {
+                setHotLeadDismissed(true);
+                if (typeof window !== 'undefined') localStorage.setItem('hot_lead_banner_dismissed_at', Date.now().toString());
+              }}
+              className="text-xs text-red-400 hover:text-red-600 font-semibold"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Low AI credit warning banner. */}
       {(() => {
