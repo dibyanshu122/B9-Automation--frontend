@@ -38,14 +38,16 @@ export default function BillingClient({ initialPlan, initialInvoices }: BillingC
   const [showBillingForm, setShowBillingForm] = useState(false);
   const [pendingPlan, setPendingPlan] = useState<string | null>(null);
   const [billingDetails, setBillingDetails] = useState({ name: '', email: '', phone: '' });
+  const [usageData, setUsageData] = useState<any>(null);
   const { get, post } = useApi();
   const { user } = useAuth();
 
   const fetchBillingData = useCallback(async () => {
     try {
-      const [planResult, invoicesResult] = await Promise.allSettled([
+      const [planResult, invoicesResult, usageResult] = await Promise.allSettled([
         get('/api/billing/current-plan'),
         get('/api/billing/invoices'),
+        get('/api/quota/status'),
       ]);
       if (planResult.status === 'fulfilled') {
         setCurrentPlan(planResult.value.data);
@@ -55,6 +57,9 @@ export default function BillingClient({ initialPlan, initialInvoices }: BillingC
       if (invoicesResult.status === 'fulfilled') {
         setInvoices(invoicesResult.value.data);
       }
+      if (usageResult.status === 'fulfilled') {
+        setUsageData(usageResult.value.data);
+      }
     } finally {
       setLoading(false);
     }
@@ -63,6 +68,17 @@ export default function BillingClient({ initialPlan, initialInvoices }: BillingC
   useEffect(() => {
     if (!initialPlan) fetchBillingData();
   }, [fetchBillingData, initialPlan]);
+
+  // ESC key closes modals
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      if (showBillingForm) setShowBillingForm(false);
+      if (showCancelConfirm) setShowCancelConfirm(false);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [showBillingForm, showCancelConfirm]);
 
   const handleUpgrade = (plan: string) => {
     setBillingDetails({
@@ -192,22 +208,47 @@ export default function BillingClient({ initialPlan, initialInvoices }: BillingC
 
       {/* Expired banner */}
       {currentPlan?.plan !== 'FREE' && isExpired && (
-        <div className="flex items-center justify-between gap-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+        <div className="flex items-center justify-between gap-4 rounded-xl border border-red-300 bg-red-50 px-4 py-3 ring-2 ring-red-200">
           <div className="flex items-center gap-3">
-            <span className="h-2.5 w-2.5 rounded-full bg-red-500 shrink-0" />
+            <span className="h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse shrink-0" />
             <div>
-              <p className="text-sm font-bold text-red-900">Your plan has expired</p>
-              <p className="text-xs text-red-700">Features are restricted. Upgrade to restore full access.</p>
+              <p className="text-sm font-bold text-red-900">⚠️ Plan expired — some features are paused</p>
+              <p className="text-xs text-red-700 mt-0.5">Automations, campaigns and AI replies are paused. Renew to restore access.</p>
             </div>
           </div>
           <button
             onClick={() => document.getElementById('plan-cards')?.scrollIntoView({behavior:'smooth'})}
             className="shrink-0 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-700 transition"
           >
-            Upgrade Now →
+            Renew Now →
           </button>
         </div>
       )}
+
+      {/* Low credit warning */}
+      {usageData && currentPlan?.plan !== 'FREE' && !isExpired && (() => {
+        const remaining = (usageData.queries_limit || 0) - (usageData.queries_used || 0);
+        const limit = usageData.queries_limit || 1;
+        const pct = Math.max(0, remaining / limit * 100);
+        if (pct > 15) return null;
+        return (
+          <div className="flex items-center justify-between gap-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3">
+            <div className="flex items-center gap-3">
+              <span className="h-2.5 w-2.5 rounded-full bg-amber-500 animate-pulse shrink-0" />
+              <div>
+                <p className="text-sm font-bold text-amber-900">{remaining <= 0 ? '🚨 AI credits exhausted' : `⚠️ Low AI credits — ${remaining.toLocaleString('en-IN')} remaining`}</p>
+                <p className="text-xs text-amber-700 mt-0.5">{remaining <= 0 ? 'AI replies paused. Buy a top-up to resume.' : 'Buy a top-up to avoid interruption.'}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => document.getElementById('topup-section')?.scrollIntoView({behavior:'smooth'})}
+              className="shrink-0 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-amber-700 transition"
+            >
+              Buy Top-up →
+            </button>
+          </div>
+        );
+      })()}
 
       {currentPlan && (
         <div>

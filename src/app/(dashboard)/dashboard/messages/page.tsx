@@ -845,11 +845,18 @@ function UnifiedInbox() {
                     </div>
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-[14px] text-gray-500 truncate">{c.last_text}</p>
-                      {!win.open && (
-                        <span className="shrink-0 rounded-full bg-red-50 border border-red-200 px-1.5 py-0.5 text-[10px] font-semibold text-red-500 whitespace-nowrap" title="24-hour window closed — only approved templates can be sent">
-                          Template only
-                        </span>
-                      )}
+                      <div className="flex items-center gap-1 shrink-0">
+                        {c.unread > 0 && (
+                          <span className="flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-green-500 px-1.5 text-[10px] font-bold text-white">
+                            {c.unread > 99 ? '99+' : c.unread}
+                          </span>
+                        )}
+                        {!win.open && (
+                          <span className="rounded-full bg-red-50 border border-red-200 px-1.5 py-0.5 text-[10px] font-semibold text-red-500 whitespace-nowrap" title="24-hour window closed — only approved templates can be sent">
+                            Template only
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </button>
@@ -1250,7 +1257,7 @@ function UnifiedInbox() {
                 <div className="pb-1 pl-1">
                   <button
                     onClick={sendReply}
-                    disabled={sending || sendingTemplate || !reply.trim()}
+                    disabled={sending || sendingTemplate || !reply.trim() || (!getWindowStatus(selected?.last_time || '', selected?.channel || '').open && selected?.channel === 'whatsapp')}
                     aria-label="Send message"
                     className={`flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full transition-colors ${
                       reply.trim()

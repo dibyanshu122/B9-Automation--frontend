@@ -1432,6 +1432,18 @@ export default function LeadsPage() {
             <p className="mb-1 font-semibold text-gray-950">Message</p>
             <p>{selectedLead.message || selectedLead.requirement || 'No message captured'}</p>
           </div>
+          {/* UTM Tracking */}
+          {(selectedLead.utm_source || selectedLead.utm_campaign || selectedLead.utm_medium) && (
+            <div className="mt-3 rounded-lg border border-indigo-100 bg-indigo-50 p-3">
+              <p className="mb-1.5 text-xs font-bold text-indigo-800">📊 UTM Tracking</p>
+              <div className="flex flex-wrap gap-2">
+                {selectedLead.utm_source && <span className="rounded bg-white border border-indigo-200 px-2 py-0.5 text-[11px] text-indigo-700"><span className="font-semibold">Source:</span> {selectedLead.utm_source}</span>}
+                {selectedLead.utm_medium && <span className="rounded bg-white border border-indigo-200 px-2 py-0.5 text-[11px] text-indigo-700"><span className="font-semibold">Medium:</span> {selectedLead.utm_medium}</span>}
+                {selectedLead.utm_campaign && <span className="rounded bg-white border border-indigo-200 px-2 py-0.5 text-[11px] text-indigo-700"><span className="font-semibold">Campaign:</span> {selectedLead.utm_campaign}</span>}
+                {selectedLead.utm_content && <span className="rounded bg-white border border-indigo-200 px-2 py-0.5 text-[11px] text-indigo-700"><span className="font-semibold">Content:</span> {selectedLead.utm_content}</span>}
+              </div>
+            </div>
+          )}
           <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50 p-4">
             <div className="mb-3 flex items-center justify-between">
               <p className="flex items-center gap-2 text-sm font-bold text-blue-950">

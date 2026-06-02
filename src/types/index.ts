@@ -143,6 +143,11 @@ export interface Lead {
   timeline?: string;
   created_at: string;
   updated_at?: string;
+  // UTM tracking
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  utm_content?: string;
 }
 
 export interface GeneratedContent {

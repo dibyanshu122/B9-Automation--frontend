@@ -1604,7 +1604,7 @@ export default function IntegrationsPage() {
               </div>
               <Button variant={item.connected ? 'secondary' : 'primary'} className="mt-4 w-full"
                 loading={loading === `${item.provider}:connect`} onClick={() => openSetup(item)}>
-                <Plug className="h-4 w-4" />{!available ? 'Upgrade' : item.connected ? 'Update Setup' : 'Setup'}
+                <Plug className="h-4 w-4" />{!available ? 'Upgrade to Connect' : item.connected ? 'Reconnect / Update' : 'Connect'}
               </Button>
             </Card>
           );
