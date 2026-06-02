@@ -26,6 +26,7 @@ export default function AnalyticsPage() {
   const [globalDays, setGlobalDays] = useState(30);
   const [waDays, setWaDays] = useState(30);
   const [waLoading, setWaLoading] = useState(false);
+  const [waQuality, setWaQuality] = useState<{score: string; rating: string; display_phone: string} | null>(null);
   const [loading, setLoading] = useState(true);
   const [campaignRevenue, setCampaignRevenue] = useState<any>(null);
   const [botDeflection, setBotDeflection] = useState<any>(null);
@@ -84,6 +85,13 @@ export default function AnalyticsPage() {
       .catch(() => {})
       .finally(() => setWaLoading(false));
   }, [waDays]); // eslint-disable-line
+
+  // Fetch WhatsApp quality score from Meta
+  useEffect(() => {
+    get('/api/analytics/whatsapp-quality')
+      .then(r => { if (r.data?.score) setWaQuality(r.data); })
+      .catch(() => {});
+  }, []); // eslint-disable-line
 
   // While loading, show header skeleton so H1 "Analytics" is always visible
   if (loading) {
@@ -403,6 +411,27 @@ export default function AnalyticsPage() {
             ))}
           </div>
         </div>
+
+        {/* Quality Score badge */}
+        {waQuality && (
+          <div className={`mb-4 flex items-center gap-3 rounded-xl border px-4 py-3 ${
+            waQuality.rating === 'GREEN' ? 'border-emerald-200 bg-emerald-50' :
+            waQuality.rating === 'YELLOW' ? 'border-amber-200 bg-amber-50' :
+            'border-red-200 bg-red-50'
+          }`}>
+            <span className="text-xl">{waQuality.rating === 'GREEN' ? '🟢' : waQuality.rating === 'YELLOW' ? '🟡' : '🔴'}</span>
+            <div>
+              <p className={`text-sm font-bold ${waQuality.rating === 'GREEN' ? 'text-emerald-800' : waQuality.rating === 'YELLOW' ? 'text-amber-800' : 'text-red-800'}`}>
+                WhatsApp Quality: {waQuality.rating === 'GREEN' ? 'High' : waQuality.rating === 'YELLOW' ? 'Medium' : 'Low'} — Score {waQuality.score}
+              </p>
+              <p className={`text-xs mt-0.5 ${waQuality.rating === 'GREEN' ? 'text-emerald-700' : waQuality.rating === 'YELLOW' ? 'text-amber-700' : 'text-red-700'}`}>
+                {waQuality.rating === 'GREEN' ? 'Your account has a good quality rating. Keep it up!' :
+                 waQuality.rating === 'YELLOW' ? 'Quality is medium. Reduce spam complaints to improve.' :
+                 '⚠️ Low quality — risk of messaging limits. Review opt-outs and template quality.'}
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* KPI row */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 mb-6">
