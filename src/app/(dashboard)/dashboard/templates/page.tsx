@@ -497,7 +497,9 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
   const updBtn = (i: number, p: Partial<BtnEntry>) => setField('buttons', form.buttons.map((b, idx) => idx === i ? { ...b, ...p } : b));
   const delBtn = (i: number) => setField('buttons', form.buttons.filter((_, idx) => idx !== i));
   const hasQR = form.buttons.some(b => b.type === 'QUICK_REPLY');
-  const hasCTA = form.buttons.some(b => b.type !== 'QUICK_REPLY');
+  const hasCopyCode = form.buttons.some(b => b.type === 'COPY_CODE');
+  const hasCTA = form.buttons.some(b => b.type === 'URL' || b.type === 'PHONE_NUMBER');
+  const btnCount = form.buttons.length; // max 3 total for templates
 
   // Carousel card helpers
   const addCard = () => { if (form.carouselCards.length < 10) setField('carouselCards', [...form.carouselCards, { ...EMPTY_CARD }]); };
@@ -1032,44 +1034,36 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
                         </div>
                       )}
 
-                      {/* Both groups always visible — locked when other type chosen */}
-                      <div className="rounded-xl border border-gray-200 overflow-hidden">
-
-                        {/* Group 1 — Custom Reply */}
-                        <div className={`p-3 border-b border-gray-200 transition-opacity ${hasCTA ? 'opacity-40 bg-gray-50' : 'bg-blue-50'}`}>
-                          <div className="flex items-center justify-between mb-1">
-                            <p className="text-xs font-semibold text-blue-900">💬 Custom Reply buttons</p>
-                            {hasCTA && <span className="text-[10px] text-gray-400 bg-gray-200 rounded px-1.5 py-0.5">Locked — CTA type chosen</span>}
-                          </div>
-                          <p className="text-[11px] text-blue-700 mb-2">Customer taps a preset reply (e.g. "Yes", "More Info"). Max 10.</p>
-                          {!hasCTA && form.buttons.length < 10 && (
-                            <button onClick={() => addBtn('QUICK_REPLY')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-blue-200 bg-white text-xs font-semibold text-blue-700 hover:bg-blue-50 transition">
-                              <Plus className="w-3.5 h-3.5" /> Add Custom Reply {hasQR && `(${form.buttons.filter(b => b.type === 'QUICK_REPLY').length}/10)`}
+                      {/* Add buttons — max 3 total */}
+                      {btnCount < 3 && !hasCopyCode && (
+                        <div className="flex gap-1.5 flex-wrap">
+                          <button onClick={() => addBtn('QUICK_REPLY')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-blue-200 bg-blue-50 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition">
+                            <Plus className="w-3.5 h-3.5" /> Custom Reply
+                          </button>
+                          <button onClick={() => addBtn('URL')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-orange-200 bg-orange-50 text-xs font-semibold text-orange-700 hover:bg-orange-100 transition">
+                            <Plus className="w-3.5 h-3.5" /> Visit Website
+                          </button>
+                          <button onClick={() => addBtn('PHONE_NUMBER')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-orange-200 bg-orange-50 text-xs font-semibold text-orange-700 hover:bg-orange-100 transition">
+                            <Plus className="w-3.5 h-3.5" /> Call Phone
+                          </button>
+                          {!hasQR && !hasCTA && (
+                            <button onClick={() => addBtn('COPY_CODE')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 bg-gray-50 text-xs font-semibold text-gray-600 hover:bg-gray-100 transition">
+                              <Plus className="w-3.5 h-3.5" /> Copy Code
                             </button>
                           )}
                         </div>
-
-                        {/* Group 2 — CTA */}
-                        <div className={`p-3 transition-opacity ${hasQR ? 'opacity-40 bg-gray-50' : 'bg-orange-50'}`}>
-                          <div className="flex items-center justify-between mb-1">
-                            <p className="text-xs font-semibold text-orange-900">⚡ Action buttons (CTA)</p>
-                            {hasQR && <span className="text-[10px] text-gray-400 bg-gray-200 rounded px-1.5 py-0.5">Locked — Custom Reply type chosen</span>}
-                          </div>
-                          <p className="text-[11px] text-orange-700 mb-2">Opens a website, calls a number, or copies a code. Max 3.</p>
-                          {!hasQR && form.buttons.length < 3 && (
-                            <div className="flex gap-1.5 flex-wrap">
-                              <button onClick={() => addBtn('URL')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-orange-200 bg-white text-xs font-semibold text-orange-700 hover:bg-orange-50 transition"><Plus className="w-3.5 h-3.5" /> Visit Website</button>
-                              <button onClick={() => addBtn('PHONE_NUMBER')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-orange-200 bg-white text-xs font-semibold text-orange-700 hover:bg-orange-50 transition"><Plus className="w-3.5 h-3.5" /> Call Phone</button>
-                              <button onClick={() => addBtn('COPY_CODE')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-orange-200 bg-white text-xs font-semibold text-orange-700 hover:bg-orange-50 transition"><Plus className="w-3.5 h-3.5" /> Copy Code</button>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Meta rule note */}
-                        <div className="px-3 py-2 bg-gray-50 border-t border-gray-100">
-                          <p className="text-[10px] text-gray-400">Meta rule: Custom Reply and Action buttons cannot be used together in the same template.</p>
-                        </div>
-                      </div>
+                      )}
+                      {btnCount < 3 && hasCopyCode && (
+                        <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                          ⚠️ Copy Code cannot be combined with other buttons. Delete it to add other button types.
+                        </p>
+                      )}
+                      {btnCount >= 3 && (
+                        <p className="text-xs text-gray-400 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+                          Maximum 3 buttons reached. Delete a button to add a different one.
+                        </p>
+                      )}
+                      <p className="text-[11px] text-gray-400 mt-2">Max 3 buttons total. Custom Reply + Visit Website + Call Phone can all be used together.</p>
                     </div>
                   </div>
                 )}
