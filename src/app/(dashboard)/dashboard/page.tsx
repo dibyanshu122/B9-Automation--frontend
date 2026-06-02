@@ -247,9 +247,9 @@ export default function DashboardPage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[
-              { step: '1', icon: '🔗', title: 'WhatsApp Connect karo', desc: 'Meta account se connect karo', href: '/dashboard/integrations', cta: 'Connect' },
-              { step: '2', icon: '⚡', title: 'Automation banao', desc: 'AI se 2 minute mein flow generate karo', href: '/dashboard/automations', cta: 'Build Flow' },
-              { step: '3', icon: '✅', title: 'Test karo', desc: 'Apne number pe test message bhejo', href: '/dashboard/messages', cta: 'Test Now' },
+              { step: '1', icon: '🔗', title: 'Connect WhatsApp', desc: 'Connect your Meta account to get started', href: '/dashboard/integrations', cta: 'Connect →' },
+              { step: '2', icon: '⚡', title: 'Build Automation', desc: 'Generate a flow in 2 minutes with AI', href: '/dashboard/automations', cta: 'Build Flow →' },
+              { step: '3', icon: '✅', title: 'Test It', desc: 'Send a test message to your number', href: '/dashboard/messages', cta: 'Test Now →' },
             ].map(s => (
               <Link key={s.step} href={s.href}
                 className="flex items-start gap-3 rounded-xl bg-white border border-orange-100 p-3.5 hover:border-orange-300 hover:shadow-sm transition group">
