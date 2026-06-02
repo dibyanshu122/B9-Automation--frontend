@@ -465,9 +465,11 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
       const formData = new FormData();
       formData.append('file', file);
       const res = await post('/api/automation/whatsapp/upload-media', formData);
-      if (res.data?.handle) {
-        setField('headerMediaHandle', res.data.handle);
-        toast.success('Media uploaded to Meta');
+      if (res.data?.url) {
+        // Use public URL as header_url (Meta accepts public URLs for template headers)
+        setField('headerMediaUrl', res.data.url);
+        setField('headerMediaHandle', '');
+        toast.success('Image uploaded successfully');
       }
     } catch (err: any) {
       const detail = err?.response?.data?.detail || '';
@@ -949,11 +951,14 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
                             />
                             {uploading ? (
                               <><span className="w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin flex-shrink-0" />
-                              <span className="text-sm text-orange-600">Uploading to Meta…</span></>
-                            ) : form.headerMediaHandle ? (
+                              <span className="text-sm text-orange-600">Uploading…</span></>
+                            ) : form.headerMediaUrl && !form.headerMediaUrl.startsWith('blob:') ? (
                               <><span className="text-lg">✅</span>
-                              <div><p className="text-sm font-semibold text-green-700">Uploaded to Meta</p>
-                              <p className="text-xs text-green-600">Handle ready for approval</p></div></>
+                              <div><p className="text-sm font-semibold text-green-700">Uploaded successfully</p>
+                              <p className="text-xs text-green-600">Ready for Meta approval</p></div></>
+                            ) : form.headerMediaUrl ? (
+                              <><span className="text-lg">🔄</span>
+                              <div><p className="text-sm font-semibold text-orange-600">Preview loaded — uploading…</p></div></>
                             ) : (
                               <><span className="text-lg">{form.headerType === 'IMAGE' ? '🖼️' : form.headerType === 'VIDEO' ? '🎬' : '📄'}</span>
                               <div><p className="text-sm font-semibold text-gray-700">Click to upload {form.headerType.toLowerCase()}</p>
