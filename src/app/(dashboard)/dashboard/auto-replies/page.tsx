@@ -129,7 +129,11 @@ function RuleForm({ ruleType, existing, onClose, onSaved }: {
   const [name, setName] = useState(existing?.name || '');
   const [keywords, setKeywords] = useState((existing?.trigger_keywords || []).join(', '));
   const [matchExact, setMatchExact] = useState(existing?.match_exact || false);
+  const [useAiReply, setUseAiReply] = useState((existing as any)?.metadata?.use_ai_reply || false);
   const [responseText, setResponseText] = useState(existing?.response_text || '');
+  // Single-rule types don't need a user-visible name — auto-set it
+  const SINGLE_TYPES = ['welcome', 'out_of_office', 'opt_out'];
+  const isSingleType = SINGLE_TYPES.includes(ruleType);
   const [templateName, setTemplateName] = useState(existing?.template_name || '');
   const [approvedTemplates, setApprovedTemplates] = useState<{name:string;language:string}[]>([]);
   useEffect(() => {
@@ -153,14 +157,17 @@ function RuleForm({ ruleType, existing, onClose, onSaved }: {
   const [mediaInputMode, setMediaInputMode] = useState<'url' | 'file'>('url');
 
   const save = async () => {
-    if (!name.trim()) { toast.error('Name required'); return; }
+    const autoName = ruleType === 'welcome' ? 'Welcome Message' : ruleType === 'out_of_office' ? 'Out of Office' : ruleType === 'opt_out' ? 'Opt Out' : '';
+    const finalName = isSingleType ? autoName : name.trim();
+    if (!finalName) { toast.error('Name required'); return; }
     setSaving(true);
     const payload: any = {
-      rule_type: ruleType, name: name.trim(), is_active: true,
+      rule_type: ruleType, name: finalName, is_active: true,
       trigger_keywords: keywords.split(',').map(k => k.trim()).filter(Boolean),
       match_exact: matchExact,
-      response_text: responseText.trim() || null,
-      template_name: templateName.trim() || null,
+      use_ai_reply: useAiReply,
+      response_text: (!useAiReply && responseText.trim()) ? responseText.trim() : null,
+      template_name: (!useAiReply && templateName.trim()) ? templateName.trim() : null,
       working_hours: ruleType === 'out_of_office' ? workingHours : {},
       timezone,
       // keyword_alert uses alert_email; auto_assign uses assign_label (same UI field, different key)
@@ -196,10 +203,12 @@ function RuleForm({ ruleType, existing, onClose, onSaved }: {
             <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><X className="w-4 h-4" /></button>
           </div>
           <div className="p-5 space-y-4 overflow-y-auto flex-1 min-h-0">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Rule Name *</label>
-              <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Price Inquiry Reply" className={inputCls} />
-            </div>
+            {!isSingleType && (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Rule Name *</label>
+                <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Price Inquiry Reply" className={inputCls} />
+              </div>
+            )}
 
             {['keyword_reply', 'keyword_alert', 'opt_out', 'auto_assign'].includes(ruleType) && (
               <div>
@@ -210,15 +219,26 @@ function RuleForm({ ruleType, existing, onClose, onSaved }: {
                   placeholder={ruleType === 'opt_out' ? 'STOP, UNSUBSCRIBE, OPT OUT' : 'price, cost, rate, fees'}
                   className={inputCls} />
                 {ruleType === 'keyword_reply' && (
-                  <label className="flex items-center gap-2 mt-2 text-sm text-gray-600 cursor-pointer">
-                    <input type="checkbox" checked={matchExact} onChange={e => setMatchExact(e.target.checked)} className="rounded" />
-                    Exact match only (not partial)
-                  </label>
+                  <>
+                    <label className="flex items-center gap-2 mt-2 text-sm text-gray-600 cursor-pointer">
+                      <input type="checkbox" checked={matchExact} onChange={e => setMatchExact(e.target.checked)} className="rounded" />
+                      Exact match only (not partial)
+                    </label>
+                    <div className="mt-3 rounded-xl border border-purple-200 bg-purple-50 p-3">
+                      <label className="flex items-start gap-2.5 cursor-pointer">
+                        <input type="checkbox" checked={useAiReply} onChange={e => setUseAiReply(e.target.checked)} className="rounded mt-0.5" />
+                        <div>
+                          <p className="text-sm font-semibold text-purple-800">Let AI reply instead of fixed text</p>
+                          <p className="text-xs text-purple-600 mt-0.5">When keyword matches, AI agent will generate a personalized reply using your knowledge base. The fixed reply below will be ignored.</p>
+                        </div>
+                      </label>
+                    </div>
+                  </>
                 )}
               </div>
             )}
 
-            {ruleType !== 'keyword_alert' && ruleType !== 'auto_assign' && ruleType !== 'icebreaker' && (
+            {ruleType !== 'keyword_alert' && ruleType !== 'auto_assign' && ruleType !== 'icebreaker' && !useAiReply && (
               <div className="space-y-3">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Response Message</label>
@@ -570,7 +590,7 @@ export default function AutoRepliesPage() {
 
   const tabRules = rules.filter(r => r.rule_type === activeTab);
   const tab = TABS.find(t => t.key === activeTab)!;
-  const isSingleRule = ['welcome', 'out_of_office'].includes(activeTab);
+  const isSingleRule = ['welcome', 'out_of_office', 'opt_out'].includes(activeTab);
 
   return (
     <div className="space-y-6">
