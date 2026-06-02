@@ -717,6 +717,7 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
   const [selected, setSelected] = useState<any>(null);
   const [vars, setVars] = useState<string[]>([]);
   const [scheduled, setScheduled] = useState('');
+  const [ltoExpiry, setLtoExpiry] = useState('');
   const [previewing, setPreviewing] = useState(false);
   const [preview, setPreview] = useState<PreviewResult | null>(null);
   const [sending, setSending] = useState(false);
@@ -744,6 +745,7 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
 
   const onSelect = (tpl: any) => {
     setSelected(tpl);
+    setLtoExpiry('');
     const bodyText = tpl.components?.find((c: any) => c.type === 'BODY')?.text || '';
     const count = new Set((bodyText.match(/\{\{(\d+)\}\}/g) || []).map((m: string) => m.replace(/\D/g, ''))).size;
     setVars(Array(count).fill(''));
@@ -827,6 +829,10 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
     if (!singlePhone.trim()) { toast.error('Phone number required'); return; }
     if (!selected) { toast.error('Select a template first'); return; }
     if (vars.some(v => !v.trim())) { toast.error('Fill all template variables'); return; }
+    if (isLimitedTimeOffer && (!ltoExpiry || new Date(ltoExpiry).getTime() <= Date.now())) {
+      toast.error('Select a future offer expiry time');
+      return;
+    }
     if (recipientMode === 'leads' && filter === 'tag' && !customTag) { toast.error('Select a lead label first'); return; }
     setSending(true);
     try {
@@ -838,6 +844,7 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
         template_name: selected.name,
         language_code: selected.language || 'en_US',
         template_variables: vars.length ? vars : null,
+        lto_expiration_time_ms: isLimitedTimeOffer ? new Date(ltoExpiry).getTime() : null,
         direct_phone: singlePhone.replace(/\s/g, ''),
       });
       toast.success(`Template sent to ${singlePhone}`);
@@ -850,6 +857,10 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
     if (!name.trim()) { toast.error('Campaign name required'); return; }
     if (!selected) { toast.error('Select a template first'); return; }
     if (vars.some(v => !v.trim())) { toast.error('Fill all template variables'); return; }
+    if (isLimitedTimeOffer && (!ltoExpiry || new Date(ltoExpiry).getTime() <= Date.now())) {
+      toast.error('Select a future offer expiry time');
+      return;
+    }
     if (recipientMode === 'excel' && !excelPhones.length) { toast.error('Upload a file with valid phone numbers'); return; }
     if (!saveAsDraft) {
       const count = recipientMode === 'excel' ? excelPhones.length : preview?.total_recipients;
@@ -863,6 +874,7 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
         msg_type: 'template', template_name: selected?.name || null,
         language_code: selected?.language || 'en_US',
         template_variables: vars.length ? vars : null,
+        lto_expiration_time_ms: isLimitedTimeOffer ? new Date(ltoExpiry).getTime() : null,
         save_as_draft: saveAsDraft,
         // A/B test
         ...(abEnabled && selectedB ? {
@@ -895,10 +907,12 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
   const [abEnabled, setAbEnabled] = useState(false);
   const [selectedB, setSelectedB] = useState<any>(null);
   const [abSplit, setAbSplit] = useState(50);
+  const isLimitedTimeOffer = Boolean(selected?.components?.some((component: any) => component.type === 'LIMITED_TIME_OFFER'));
 
   const canProceed = selected && name.trim() &&
     !vars.some(v => !v.trim()) &&
     (recipientMode === 'excel' ? excelPhones.length > 0 : true) &&
+    (!isLimitedTimeOffer || (ltoExpiry && new Date(ltoExpiry).getTime() > Date.now())) &&
     (!abEnabled || selectedB);
 
   return (
@@ -1175,6 +1189,17 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
                     className={inputCls} />
                 </div>
               ))}
+            </div>
+          )}
+
+          {isLimitedTimeOffer && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
+              <label className="mb-1 block text-sm font-semibold text-amber-900">
+                Offer expiry date and time <span className="text-red-500">*</span>
+              </label>
+              <input type="datetime-local" value={ltoExpiry} onChange={e => setLtoExpiry(e.target.value)}
+                className="w-full rounded-xl border border-amber-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+              <p className="mt-1 text-xs text-amber-700">WhatsApp uses this timestamp for the live countdown. Choose a future time for each send.</p>
             </div>
           )}
 

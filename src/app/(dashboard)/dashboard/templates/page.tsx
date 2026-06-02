@@ -131,7 +131,7 @@ const TEMPLATE_LIBRARY = [
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface BtnEntry { type: BtnType; text: string; url: string; phone: string; codeExample: string }
-interface CarouselCard { headerFormat: 'IMAGE' | 'VIDEO'; headerUrl: string; body: string; buttons: BtnEntry[] }
+interface CarouselCard { headerFormat: 'IMAGE' | 'VIDEO'; headerUrl: string; headerHandle: string; body: string; buttons: BtnEntry[] }
 interface FormState {
   name: string; category: string; language: string; templateType: TemplateType;
   headerType: HeaderType; headerText: string; headerMediaUrl: string; headerMediaHandle: string;
@@ -143,7 +143,7 @@ interface FormState {
   authAndroidPkg: string; authSigHash: string;
 }
 const EMPTY_BTN: BtnEntry = { type: 'QUICK_REPLY', text: '', url: '', phone: '', codeExample: '' };
-const EMPTY_CARD: CarouselCard = { headerFormat: 'IMAGE', headerUrl: '', body: '', buttons: [] };
+const EMPTY_CARD: CarouselCard = { headerFormat: 'IMAGE', headerUrl: '', headerHandle: '', body: '', buttons: [] };
 const EMPTY_FORM: FormState = {
   name: '', category: 'MARKETING', language: 'en_US', templateType: 'standard',
   headerType: 'NONE', headerText: '', headerMediaUrl: '', headerMediaHandle: '',
@@ -422,6 +422,7 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [cardUploading, setCardUploading] = useState<Record<number, boolean>>({});
   const [editorMode, setEditorMode] = useState<'beginner' | 'advanced'>('beginner');
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -439,7 +440,7 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
         toast.success('Media uploaded to Meta');
       }
     } catch {
-      toast.error('Upload failed — you can still enter a sample URL below');
+      toast.error('Upload failed. Check your WhatsApp connection and try again.');
     } finally {
       setUploading(false);
     }
@@ -471,6 +472,24 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
   const addCard = () => { if (form.carouselCards.length < 10) setField('carouselCards', [...form.carouselCards, { ...EMPTY_CARD }]); };
   const delCard = (i: number) => { if (form.carouselCards.length > 2) setField('carouselCards', form.carouselCards.filter((_, idx) => idx !== i)); };
   const updCard = (i: number, p: Partial<CarouselCard>) => setField('carouselCards', form.carouselCards.map((c, idx) => idx === i ? { ...c, ...p } : c));
+  const handleCardMediaUpload = async (cardIndex: number, file: File) => {
+    setCardUploading(current => ({ ...current, [cardIndex]: true }));
+    updCard(cardIndex, { headerUrl: URL.createObjectURL(file), headerHandle: '' });
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await post('/api/automation/whatsapp/upload-media', formData);
+      if (res.data?.handle) {
+        updCard(cardIndex, { headerHandle: res.data.handle });
+        toast.success(`Card ${cardIndex + 1} media uploaded to Meta`);
+      }
+    } catch {
+      updCard(cardIndex, { headerUrl: '', headerHandle: '' });
+      toast.error(`Card ${cardIndex + 1} upload failed. Try again.`);
+    } finally {
+      setCardUploading(current => ({ ...current, [cardIndex]: false }));
+    }
+  };
   const addCardBtn = (ci: number, type: BtnType) => {
     const card = form.carouselCards[ci];
     if (card.buttons.length < 2) updCard(ci, { buttons: [...card.buttons, newBtn(type)] });
@@ -496,9 +515,17 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
     if (form.templateType === 'carousel') {
       if (form.carouselCards.length < 2) e.cards = 'Minimum 2 cards required';
       form.carouselCards.forEach((c, ci) => {
-        if (!c.headerUrl.trim()) e[`card_img_${ci}`] = 'Image URL required';
+        if (!c.headerHandle.trim() && !c.headerUrl.trim()) e[`card_img_${ci}`] = 'Upload media for this card';
         if (!c.body.trim()) e[`card_body_${ci}`] = 'Card body required';
       });
+    }
+    if (
+      (form.templateType === 'standard' || form.templateType === 'lto') &&
+      ['IMAGE', 'VIDEO', 'DOCUMENT'].includes(form.headerType) &&
+      !form.headerMediaHandle.trim() &&
+      !form.headerMediaUrl.trim()
+    ) {
+      e.header_media = 'Upload media for this header';
     }
     if (form.templateType === 'lto' && !form.ltoPromoExample.trim()) e.lto_code = 'Sample promo code required';
     form.buttons.forEach((b, i) => {
@@ -529,7 +556,7 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
         footer_text: form.footerText,
         buttons: form.buttons.map(b => ({ type: b.type, text: b.text, url: b.url, phone_number: b.phone, example: b.codeExample || undefined })),
         carousel_cards: form.carouselCards.map(c => ({
-          header_format: c.headerFormat, header_url: c.headerUrl,
+          header_format: c.headerFormat, header_url: c.headerUrl, header_handle: c.headerHandle,
           body: c.body, buttons: c.buttons.map(b => ({ type: b.type, text: b.text, url: b.url, phone_number: b.phone })),
         })),
         lto_text: form.ltoText, lto_has_expiration: form.ltoHasExpiration, lto_promo_code_example: form.ltoPromoExample,
@@ -717,9 +744,33 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
                                 </button>
                               ))}
                             </div>
-                            <input value={card.headerUrl} onChange={e => updCard(ci, { headerUrl: e.target.value })}
-                              placeholder={`${card.headerFormat === 'VIDEO' ? 'Video' : 'Image'} URL (sample for Meta approval)`}
-                              className={inputCls(errors[`card_img_${ci}`])} />
+                            <label className={`flex cursor-pointer items-center gap-3 rounded-xl border-2 border-dashed px-4 py-3 transition ${
+                              cardUploading[ci] ? 'border-orange-300 bg-orange-50' :
+                              card.headerHandle ? 'border-green-400 bg-green-50' :
+                              'border-gray-200 hover:border-orange-400 hover:bg-orange-50/30'
+                            }`}>
+                              <input type="file"
+                                accept={card.headerFormat === 'VIDEO' ? 'video/mp4,video/3gpp' : 'image/jpeg,image/png,image/webp'}
+                                className="hidden"
+                                disabled={!!cardUploading[ci]}
+                                onChange={e => {
+                                  const file = e.target.files?.[0];
+                                  if (file) handleCardMediaUpload(ci, file);
+                                  e.target.value = '';
+                                }} />
+                              {cardUploading[ci] ? (
+                                <><span className="h-4 w-4 flex-shrink-0 animate-spin rounded-full border-2 border-orange-500 border-t-transparent" />
+                                <span className="text-sm text-orange-600">Uploading to Meta...</span></>
+                              ) : card.headerHandle ? (
+                                <><CheckCircle2 className="h-5 w-5 text-green-600" />
+                                <div><p className="text-sm font-semibold text-green-700">Uploaded to Meta</p>
+                                <p className="text-xs text-green-600">Click to replace card media</p></div></>
+                              ) : (
+                                <><ImageIcon className="h-5 w-5 text-gray-400" />
+                                <div><p className="text-sm font-semibold text-gray-700">Upload {card.headerFormat.toLowerCase()}</p>
+                                <p className="text-xs text-gray-400">Required for Meta approval</p></div></>
+                              )}
+                            </label>
                             {errors[`card_img_${ci}`] && <p className="text-xs text-red-500">{errors[`card_img_${ci}`]}</p>}
                             <textarea value={card.body} onChange={e => updCard(ci, { body: e.target.value.slice(0, 160) })}
                               rows={2} placeholder="Card body text" className={`${inputCls(errors[`card_body_${ci}`])} resize-none`} />
@@ -752,9 +803,35 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
                   <div className="space-y-4 p-4 bg-amber-50 rounded-xl border border-amber-200">
                     <p className="text-sm font-semibold text-amber-800">⏰ Limited Time Offer Template</p>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Header Image URL <span className="text-gray-400">(optional)</span></label>
-                      <input value={form.headerMediaUrl} onChange={e => setField('headerMediaUrl', e.target.value)}
-                        placeholder="https://example.com/offer-banner.jpg" className={inputCls()} />
+                      <label className="mb-1 block text-sm font-medium text-gray-700">Offer banner <span className="text-gray-400">(optional)</span></label>
+                      <label className={`flex cursor-pointer items-center gap-3 rounded-xl border-2 border-dashed px-4 py-3 transition ${
+                        uploading ? 'border-orange-300 bg-orange-50' :
+                        form.headerMediaHandle ? 'border-green-400 bg-green-50' :
+                        'border-gray-200 bg-white hover:border-orange-400 hover:bg-orange-50/30'
+                      }`}>
+                        <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden"
+                          disabled={uploading}
+                          onChange={e => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setField('headerType', 'IMAGE');
+                              handleMediaUpload(file);
+                            }
+                            e.target.value = '';
+                          }} />
+                        {uploading ? (
+                          <><span className="h-4 w-4 flex-shrink-0 animate-spin rounded-full border-2 border-orange-500 border-t-transparent" />
+                          <span className="text-sm text-orange-600">Uploading to Meta...</span></>
+                        ) : form.headerMediaHandle ? (
+                          <><CheckCircle2 className="h-5 w-5 text-green-600" />
+                          <div><p className="text-sm font-semibold text-green-700">Banner uploaded to Meta</p>
+                          <p className="text-xs text-green-600">Click to replace the image</p></div></>
+                        ) : (
+                          <><ImageIcon className="h-5 w-5 text-gray-400" />
+                          <div><p className="text-sm font-semibold text-gray-700">Upload offer banner</p>
+                          <p className="text-xs text-gray-400">JPEG, PNG, or WebP</p></div></>
+                        )}
+                      </label>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Body <span className="text-red-500">*</span></label>
@@ -786,6 +863,11 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
                       <input type="checkbox" checked={form.ltoHasExpiration} onChange={e => setField('ltoHasExpiration', e.target.checked)} className="rounded" />
                       Show expiration countdown in message
                     </label>
+                    {form.ltoHasExpiration && (
+                      <p className="rounded-lg border border-amber-200 bg-white px-3 py-2 text-xs text-amber-800">
+                        The exact expiry date and time is selected when this approved template is sent in a campaign. This keeps the same template reusable for future offers.
+                      </p>
+                    )}
                   </div>
                 )}
 
@@ -830,19 +912,11 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
                             ) : (
                               <><span className="text-lg">{form.headerType === 'IMAGE' ? '🖼️' : form.headerType === 'VIDEO' ? '🎬' : '📄'}</span>
                               <div><p className="text-sm font-semibold text-gray-700">Click to upload {form.headerType.toLowerCase()}</p>
-                              <p className="text-xs text-gray-400">Or enter URL below</p></div></>
+                              <p className="text-xs text-gray-400">Required for Meta approval</p></div></>
                             )}
                           </label>
-                          {/* URL fallback */}
-                          <div>
-                            <p className="text-xs text-gray-500 mb-1 font-medium">Or paste a sample URL</p>
-                            <input value={form.headerMediaHandle ? '' : form.headerMediaUrl}
-                              onChange={e => { setField('headerMediaUrl', e.target.value); setField('headerMediaHandle', ''); }}
-                              placeholder={`https://example.com/sample.${form.headerType === 'IMAGE' ? 'jpg' : form.headerType === 'VIDEO' ? 'mp4' : 'pdf'}`}
-                              disabled={!!form.headerMediaHandle}
-                              className={`${inputCls()} disabled:bg-gray-50 disabled:text-gray-400`} />
-                          </div>
-                          <p className="text-xs text-gray-400">Actual media is sent at message time, not stored in the template</p>
+                          {errors.header_media && <p className="text-xs text-red-500">{errors.header_media}</p>}
+                          <p className="text-xs text-gray-400">The uploaded sample is used for Meta approval. Actual media can be selected when sending the message.</p>
                         </div>
                       )}
                       {form.headerType === 'LOCATION' && (
@@ -1554,7 +1628,7 @@ export default function TemplatesPage() {
                   {[
                     'Use the correct variable format — {{1}} with digits only',
                     'Guaranteed returns ya misleading claims mat write',
-                    'A sample URL is required for image or video headers',
+                    'Upload sample media for image or video headers',
                     'Keep button text within 25 characters',
                     'Choose the correct category — MARKETING vs UTILITY',
                   ].map((tip, i) => (
