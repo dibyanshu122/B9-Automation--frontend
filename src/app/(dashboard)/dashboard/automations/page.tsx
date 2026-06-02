@@ -1448,6 +1448,21 @@ export default function AutomationsPage() {
                     {selectedNode.config.trigger_type === 'schedule' && (
                       <ScheduleTriggerPanel workflowId={activeWorkflowId} nodeConfig={selectedNode.config} onConfigChange={updateSelectedConfig} />
                     )}
+                    {selectedNode.config.trigger_type === 'payment_success' && (
+                      <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800 space-y-1.5">
+                        <p className="font-bold">💳 Payment Success Trigger</p>
+                        <p>Fires when a Razorpay payment is confirmed — both plan upgrades and customer payment links.</p>
+                        <p className="font-semibold mt-1">Available variables in this automation:</p>
+                        <div className="font-mono bg-white border border-emerald-200 rounded p-2 space-y-0.5 text-[10px]">
+                          <p>{'{{payment.payment_id}}'} — Razorpay payment ID</p>
+                          <p>{'{{payment.amount_inr}}'} — Amount in ₹</p>
+                          <p>{'{{payment.lead_id}}'} — Lead who paid</p>
+                          <p>{'{{payment.description}}'} — Payment description</p>
+                          <p>{'{{lead.phone}}'} — Customer phone</p>
+                          <p>{'{{lead.name}}'} — Customer name</p>
+                        </div>
+                      </div>
+                    )}
                     {selectedNode.config.trigger_type === 'new_facebook_lead' && (() => {
                       const fbStatus = integrationStatusFor('facebook');
                       const isConnected = fbStatus === 'active' || fbStatus === 'connected';
