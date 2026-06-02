@@ -1464,6 +1464,25 @@ export default function LeadsPage() {
             <p className="mb-1 font-semibold text-gray-950">Message</p>
             <p>{selectedLead.message || selectedLead.requirement || 'No message captured'}</p>
           </div>
+          {/* Custom Fields */}
+          {stages && (() => {
+            const customVals = (selectedLead as any).lead_metadata?.custom_fields || {};
+            const hasCustom = Object.keys(customVals).length > 0;
+            if (!hasCustom) return null;
+            return (
+              <div className="mt-3 rounded-lg border border-purple-100 bg-purple-50 p-3">
+                <p className="mb-1.5 text-xs font-bold text-purple-800">🔧 Custom Fields</p>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {Object.entries(customVals).map(([k, v]) => (
+                    <span key={k} className="rounded bg-white border border-purple-200 px-2 py-0.5 text-[11px] text-purple-700">
+                      <span className="font-semibold">{k.replace(/_/g, ' ')}:</span> {String(v)}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
           {/* UTM Tracking */}
           {(selectedLead.utm_source || selectedLead.utm_campaign || selectedLead.utm_medium) && (
             <div className="mt-3 rounded-lg border border-indigo-100 bg-indigo-50 p-3">

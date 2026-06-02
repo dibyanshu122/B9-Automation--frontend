@@ -1164,6 +1164,93 @@ export default function SettingsPage() {
           </div>
         </div>
       )}
+
+      {/* Custom Lead Fields */}
+      <CustomLeadFieldsSection />
     </div>
+  );
+}
+
+function CustomLeadFieldsSection() {
+  const { get, put } = useApi();
+  const [fields, setFields] = useState<{key:string;label:string;type:string;options?:string}[]>([]);
+  const [saving, setSaving] = useState(false);
+  const TYPES = ['text', 'number', 'date', 'select', 'checkbox'];
+
+  useEffect(() => {
+    get('/api/leads/custom-fields').then(r => { if (r.data?.fields) setFields(r.data.fields); }).catch(() => {});
+  }, []); // eslint-disable-line
+
+  const addField = () => {
+    if (fields.length >= 20) return;
+    const key = `custom_${Date.now()}`;
+    setFields(prev => [...prev, { key, label: '', type: 'text' }]);
+  };
+  const updateField = (i: number, patch: object) => setFields(prev => prev.map((f, idx) => idx === i ? { ...f, ...patch } : f));
+  const removeField = (i: number) => setFields(prev => prev.filter((_, idx) => idx !== i));
+
+  const save = async () => {
+    for (const f of fields) {
+      if (!f.label.trim()) { alert('All fields need a label'); return; }
+    }
+    setSaving(true);
+    try {
+      await put('/api/leads/custom-fields', { fields });
+      alert('Custom fields saved');
+    } catch (e: any) {
+      alert(e?.response?.data?.detail || 'Save failed');
+    } finally { setSaving(false); }
+  };
+
+  return (
+    <section className="mt-8">
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900">Custom Lead Fields</h2>
+          <p className="text-sm text-gray-500 mt-0.5">Add extra fields to every lead — shown in the lead detail panel.</p>
+        </div>
+        <Button onClick={addField} disabled={fields.length >= 20} className="flex items-center gap-1.5 text-sm">
+          + Add Field
+        </Button>
+      </div>
+      {fields.length === 0 && (
+        <div className="rounded-xl border-2 border-dashed border-gray-200 py-10 text-center text-sm text-gray-400">
+          No custom fields yet. Click "+ Add Field" to create one.
+        </div>
+      )}
+      <div className="space-y-2">
+        {fields.map((f, i) => (
+          <div key={f.key} className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+            <input
+              value={f.label}
+              onChange={e => updateField(i, { label: e.target.value })}
+              placeholder="Field label (e.g. Budget)"
+              className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+            <select
+              value={f.type}
+              onChange={e => updateField(i, { type: e.target.value })}
+              className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm focus:outline-none"
+            >
+              {TYPES.map(t => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
+            </select>
+            {f.type === 'select' && (
+              <input
+                value={f.options || ''}
+                onChange={e => updateField(i, { options: e.target.value })}
+                placeholder="Options (comma-separated)"
+                className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+              />
+            )}
+            <button onClick={() => removeField(i)} className="text-gray-300 hover:text-red-500 transition text-lg leading-none">×</button>
+          </div>
+        ))}
+      </div>
+      {fields.length > 0 && (
+        <Button onClick={save} disabled={saving} className="mt-4">
+          {saving ? 'Saving…' : 'Save Custom Fields'}
+        </Button>
+      )}
+    </section>
   );
 }
