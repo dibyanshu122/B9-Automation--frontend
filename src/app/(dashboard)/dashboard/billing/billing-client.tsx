@@ -81,7 +81,7 @@ export default function BillingClient({ initialPlan, initialInvoices }: BillingC
       return;
     }
     if (!/^\+?[\d\s\-()]{8,15}$/.test(billingDetails.phone)) {
-      toast.error('Enter a valid mobile number (e.g. +91 9876543210)');
+      toast.error('Enter a valid mobile number (e.g. +91 XXXXXXXXXX)');
       return;
     }
     setShowBillingForm(false);
@@ -549,7 +549,7 @@ export default function BillingClient({ initialPlan, initialInvoices }: BillingC
                   type="tel"
                   value={billingDetails.phone}
                   onChange={e => setBillingDetails(p => ({ ...p, phone: e.target.value }))}
-                  placeholder="+91 98765 43210"
+                  placeholder="+91 XXXXX XXXXX"
                   className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
                 />
               </div>

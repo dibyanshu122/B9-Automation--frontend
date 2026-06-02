@@ -42,11 +42,11 @@ const SCOPE_GROUPS = [...new Set(ALL_SCOPES.map(s => s.group))];
 const V1_ENDPOINTS = [
   { method: 'GET',   path: '/api/v1/',                      scope: 'none',              desc: 'API info + endpoint list',             body: null },
   { method: 'GET',   path: '/api/v1/leads',                 scope: 'leads:read',        desc: 'List leads (status, tag, phone filters)', body: null, params: '?status=hot&limit=20' },
-  { method: 'POST',  path: '/api/v1/leads',                 scope: 'leads:write',       desc: 'Create a new lead',                    body: { name: 'Rahul Sharma', phone: '919876543210', email: 'rahul@example.com', source: 'shopify' } },
+  { method: 'POST',  path: '/api/v1/leads',                 scope: 'leads:write',       desc: 'Create a new lead',                    body: { name: 'Rahul Sharma', phone: '91XXXXXXXXXX', email: 'rahul@example.com', source: 'shopify' } },
   { method: 'GET',   path: '/api/v1/leads/{id}',            scope: 'leads:read',        desc: 'Get lead by ID',                       body: null },
   { method: 'PATCH', path: '/api/v1/leads/{id}',            scope: 'leads:write',       desc: 'Update lead status/tag/score',         body: { status: 'hot', tag: 'interested', score: 8 } },
-  { method: 'POST',  path: '/api/v1/whatsapp/send-template',scope: 'messages:send',     desc: 'Send approved template (any time)',    body: { phone: '919876543210', template_name: 'order_confirmed', language_code: 'en_US', variables: ['Rahul', 'ORD-123'] } },
-  { method: 'POST',  path: '/api/v1/whatsapp/send-text',    scope: 'messages:send',     desc: 'Send plain text (24h window only)',    body: { phone: '919876543210', message: 'Hi! Your order is ready.' } },
+  { method: 'POST',  path: '/api/v1/whatsapp/send-template',scope: 'messages:send',     desc: 'Send approved template (any time)',    body: { phone: '91XXXXXXXXXX', template_name: 'order_confirmed', language_code: 'en_US', variables: ['Rahul', 'ORD-123'] } },
+  { method: 'POST',  path: '/api/v1/whatsapp/send-text',    scope: 'messages:send',     desc: 'Send plain text (24h window only)',    body: { phone: '91XXXXXXXXXX', message: 'Hi! Your order is ready.' } },
   { method: 'GET',   path: '/api/v1/whatsapp/status',       scope: 'integrations:read', desc: 'WhatsApp connection health',           body: null },
   { method: 'GET',   path: '/api/v1/messages',              scope: 'messages:read',     desc: 'List outbound messages',               body: null, params: '?status=sent&limit=20' },
   { method: 'GET',   path: '/api/v1/templates',             scope: 'templates:read',    desc: 'List APPROVED WhatsApp templates',     body: null },
@@ -55,7 +55,7 @@ const V1_ENDPOINTS = [
   { method: 'GET',   path: '/api/v1/automations',           scope: 'automations:read',  desc: 'List workflows',                       body: null },
   { method: 'POST',  path: '/api/v1/automations/{id}/run',  scope: 'automations:run',   desc: 'Trigger a workflow',                   body: { context: { lead_id: 'lead_abc123', message: 'interested in product' } } },
   { method: 'GET',   path: '/api/v1/payments',              scope: 'payments:read',     desc: 'List customer payment records',        body: null },
-  { method: 'POST',  path: '/api/v1/payments/link',         scope: 'payments:write',    desc: 'Create Razorpay payment link',         body: { phone: '919876543210', amount: 49900, description: 'Coaching fee - June batch', lead_id: 'lead_abc123' } },
+  { method: 'POST',  path: '/api/v1/payments/link',         scope: 'payments:write',    desc: 'Create Razorpay payment link',         body: { phone: '91XXXXXXXXXX', amount: 49900, description: 'Coaching fee - June batch', lead_id: 'lead_abc123' } },
   { method: 'GET',   path: '/api/v1/analytics',             scope: 'analytics:read',    desc: '30-day usage summary',                 body: null },
 ];
 

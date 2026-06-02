@@ -967,7 +967,7 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
                 <span className="ml-2 text-xs text-gray-400 font-normal"> for testing templates</span>
               </label>
               <input value={singlePhone} onChange={e => setSinglePhone(e.target.value)}
-                placeholder="+91 98765 43210" className={inputCls} />
+                placeholder="+91 XXXXX XXXXX" className={inputCls} />
               <p className="text-xs text-gray-400 mt-1">Send to a single number directly  great for testing before bulk send</p>
             </div>
           )}

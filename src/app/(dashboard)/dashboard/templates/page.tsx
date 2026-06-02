@@ -1044,7 +1044,7 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
                                 placeholder="Button label (max 25 chars)" className={inputCls(errors[`btn_text_${i}`])} />
                               {errors[`btn_text_${i}`] && <p className="text-xs text-red-500">{errors[`btn_text_${i}`]}</p>}
                               {btn.type === 'URL' && <input value={btn.url} onChange={e => updBtn(i, { url: e.target.value })} placeholder="https://example.com" className={inputCls(errors[`btn_url_${i}`])} />}
-                              {btn.type === 'PHONE_NUMBER' && <input value={btn.phone} onChange={e => updBtn(i, { phone: e.target.value })} placeholder="+91 98765 43210" className={inputCls(errors[`btn_ph_${i}`])} />}
+                              {btn.type === 'PHONE_NUMBER' && <input value={btn.phone} onChange={e => updBtn(i, { phone: e.target.value })} placeholder="+91 XXXXX XXXXX" className={inputCls(errors[`btn_ph_${i}`])} />}
                               {btn.type === 'COPY_CODE' && <input value={btn.codeExample} onChange={e => updBtn(i, { codeExample: e.target.value })} placeholder="Sample promo code (e.g. DIWALI20)" className={inputCls()} />}
                             </div>
                           ))}

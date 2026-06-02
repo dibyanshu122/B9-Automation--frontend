@@ -579,7 +579,7 @@ export default function LeadsPage() {
     const phone = paymentLinkTarget.phone?.trim();
     const sendWhatsApp = !!phone;
     if (sendWhatsApp && !/^\+[1-9]\d{7,14}$/.test(phone!)) {
-      toast.error('Phone number must be in E.164 format (e.g. +919876543210)');
+      toast.error('Phone number must be in E.164 format (e.g. +91XXXXXXXXXX)');
       return;
     }
     setCreatingLink(true);

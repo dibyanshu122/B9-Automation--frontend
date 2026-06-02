@@ -130,7 +130,7 @@ export default function ImportsPage() {
   };
 
   const downloadTemplate = () => {
-    const csv = 'phone,name,email,message,tag,source\n+919876543210,Rahul Sharma,rahul@example.com,Interested in demo,hot,webinar\n+918765432109,Priya Singh,,Follow up needed,warm,trade-show';
+    const csv = 'phone,name,email,message,tag,source\n+91XXXXXXXXXX,Rahul Sharma,rahul@example.com,Interested in demo,hot,webinar\n+91XXXXXXXXXX,Priya Singh,,Follow up needed,warm,trade-show';
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -230,8 +230,8 @@ export default function ImportsPage() {
             <h2 className="mb-4 text-lg font-bold text-gray-900">CSV Format</h2>
             <div className="rounded-xl bg-gray-950 p-4 font-mono text-xs text-emerald-400 overflow-x-auto mb-4">
               <p>phone,name,email,message,tag</p>
-              <p>+919876543210,Rahul Sharma,r@ex.com,Demo req,hot</p>
-              <p>+918765432109,Priya Singh,,,warm</p>
+              <p>+91XXXXXXXXXX,Rahul Sharma,r@ex.com,Demo req,hot</p>
+              <p>+91XXXXXXXXXX,Priya Singh,,,warm</p>
             </div>
             <ul className="space-y-2 text-sm text-gray-600">
               <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" /><strong>phone</strong> — required, with country code (+91...)</li>

@@ -227,7 +227,7 @@ export default function OnboardingPage() {
                 <input value={form.website_url} onChange={(e) => setForm({ ...form, website_url: e.target.value })} className="input-field" placeholder="https://yourbusiness.com" />
               </Field>
               <Field icon={MessageCircle} label="WhatsApp number">
-                <input value={form.whatsapp_number} onChange={(e) => setForm({ ...form, whatsapp_number: e.target.value })} className="input-field" placeholder="+91 9876543210" />
+                <input value={form.whatsapp_number} onChange={(e) => setForm({ ...form, whatsapp_number: e.target.value })} className="input-field" placeholder="+91 XXXXXXXXXX" />
               </Field>
             </div>
 

@@ -221,13 +221,13 @@ const visibleLibrary: LibraryBlock[] = [
 ];
 
 const samplePrompts: Record<string, string> = {
-  real_estate: 'My name is Amit. I am looking for a 3BHK, my budget is 65 lakh, and I want a Saturday site visit. Phone 9876543210.',
-  coaching: 'I want a Class 12 Physics demo. My name is Rahul and my phone is 9876543210.',
-  gym: 'I want to book a gym trial class. Please share the weight loss plan and fees. Phone 9876543210.',
-  salon: 'What is the price for a hair spa and can I get an appointment on Sunday? Phone 9876543210.',
-  healthcare: 'I want to meet a doctor. I have had stomach pain since yesterday. Phone 9876543210.',
-  it_agency: 'I want a CRM software demo. My budget is 5000 dollars. Phone 9876543210.',
-  custom: 'I want pricing and a demo. My phone is 9876543210.',
+  real_estate: 'My name is Amit. I am looking for a 3BHK, my budget is 65 lakh, and I want a Saturday site visit. Phone XXXXXXXXXX.',
+  coaching: 'I want a Class 12 Physics demo. My name is Rahul and my phone is XXXXXXXXXX.',
+  gym: 'I want to book a gym trial class. Please share the weight loss plan and fees. Phone XXXXXXXXXX.',
+  salon: 'What is the price for a hair spa and can I get an appointment on Sunday? Phone XXXXXXXXXX.',
+  healthcare: 'I want to meet a doctor. I have had stomach pain since yesterday. Phone XXXXXXXXXX.',
+  it_agency: 'I want a CRM software demo. My budget is 5000 dollars. Phone XXXXXXXXXX.',
+  custom: 'I want pricing and a demo. My phone is XXXXXXXXXX.',
 };
 
 const providerOptions = {
@@ -279,7 +279,7 @@ export default function AutomationsPage() {
   const [testing, setTesting] = useState(false);
   const [testMessage, setTestMessage] = useState(samplePrompts.custom);
   const [testLeadName, setTestLeadName] = useState('Rahul Sharma');
-  const [testLeadPhone, setTestLeadPhone] = useState('9876543210');
+  const [testLeadPhone, setTestLeadPhone] = useState('XXXXXXXXXX');
   const [testLeadEmail, setTestLeadEmail] = useState('');
   const [testLeadStatus, setTestLeadStatus] = useState('new');
   const [nodeOutputs, setNodeOutputs] = useState<Record<string, any>>({});
@@ -1652,7 +1652,7 @@ export default function AutomationsPage() {
                   </div>
                   <div>
                     <p className="text-[10px] text-gray-400 mb-0.5">Lead Phone</p>
-                    <input value={testLeadPhone} onChange={e => setTestLeadPhone(e.target.value)} placeholder="9876543210" className="input-field text-xs py-1.5" />
+                    <input value={testLeadPhone} onChange={e => setTestLeadPhone(e.target.value)} placeholder="XXXXXXXXXX" className="input-field text-xs py-1.5" />
                   </div>
                   <div>
                     <p className="text-[10px] text-gray-400 mb-0.5">Lead Email</p>
@@ -3259,7 +3259,7 @@ function ActionBlockSettings({
                     {btns.length > 1 && <button onClick={() => { const n=btns.filter((_,j)=>j!==i); onChange('buttons',JSON.stringify(n)); }} className="text-red-400 text-xs px-1">✕</button>}
                   </div>
                   {b.type === 'url' && <input value={b.url||''} onChange={e => { const n=[...btns]; n[i]={...n[i],url:e.target.value}; onChange('buttons',JSON.stringify(n)); }} className="input-field text-xs" placeholder="https://your-site.com" />}
-                  {b.type === 'phone_number' && <input value={b.phone_number||''} onChange={e => { const n=[...btns]; n[i]={...n[i],phone_number:e.target.value}; onChange('buttons',JSON.stringify(n)); }} className="input-field text-xs" placeholder="+91 98765 43210" />}
+                  {b.type === 'phone_number' && <input value={b.phone_number||''} onChange={e => { const n=[...btns]; n[i]={...n[i],phone_number:e.target.value}; onChange('buttons',JSON.stringify(n)); }} className="input-field text-xs" placeholder="+91 XXXXX XXXXX" />}
                 </div>
               ))}
               {btns.length < 2 && <button onClick={() => { const n=[...btns,{type:'url',text:'Click Here',url:'https://'}]; onChange('buttons',JSON.stringify(n)); }} className="text-xs text-blue-600 font-semibold">+ Add button</button>}
@@ -3756,7 +3756,7 @@ const OUTPUT_TYPES = [
 
 function AiBlockSettings({ config, onChange }: { config: Record<string, any>; onChange: (key: string, value: string) => void }) {
   const { post } = useApi();
-  const [testMessage, setTestMessage] = useState('My name is Rahul. I want a Class 12 Physics demo. Phone 9876543210.');
+  const [testMessage, setTestMessage] = useState('My name is Rahul. I want a Class 12 Physics demo. Phone XXXXXXXXXX.');
   const [testResult, setTestResult] = useState<{ extracted: Record<string, string>; confidence: number; variables: string[]; ai_response?: string; error?: string } | null>(null);
   const [testLoading, setTestLoading] = useState(false);
   const [testError, setTestError] = useState('');
@@ -4265,7 +4265,7 @@ function WebhookUrlPanel({ workflowId }: { workflowId: string }) {
 
   const verifyUrl = url ? `${url}/verify` : '';
   const curlExample = url
-    ? `curl -X POST "${url}" -H "Content-Type: application/json" -d "{\"name\":\"Test Lead\",\"phone\":\"919876543210\",\"email\":\"lead@example.com\",\"message\":\"Webhook test lead\"}"`
+    ? `curl -X POST "${url}" -H "Content-Type: application/json" -d "{\"name\":\"Test Lead\",\"phone\":\"91XXXXXXXXXX\",\"email\":\"lead@example.com\",\"message\":\"Webhook test lead\"}"`
     : '';
 
   const copyText = (text: string, kind: 'url' | 'curl') => {

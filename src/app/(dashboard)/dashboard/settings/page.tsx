@@ -483,7 +483,7 @@ export default function SettingsPage() {
               value={businessProfile.whatsapp_number || ''}
               onChange={(e) => updateBusinessField('whatsapp_number', e.target.value)}
               className="input-field"
-              placeholder="+919999999999"
+              placeholder="+91XXXXXXXXXX"
             />
           </div>
           <div>

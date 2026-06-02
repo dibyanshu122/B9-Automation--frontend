@@ -164,7 +164,7 @@ const actionTemplates = [
     payload: {
       sheet_name: 'Website Leads',
       operation: 'append_row',
-      row: { name: 'Rahul', phone: '9876543210', interest: 'Class 12 Physics' },
+      row: { name: 'Rahul', phone: 'XXXXXXXXXX', interest: 'Class 12 Physics' },
     },
   },
 ];
@@ -172,7 +172,7 @@ const actionTemplates = [
 const setupFields: Record<string, Array<{ key: string; label: string; placeholder: string; help?: string; secret?: boolean }>> = {
   indiamart: [
     { key: 'crm_key', label: 'IndiaMART CRM key', placeholder: 'CRM key from IndiaMART Lead Manager', secret: true },
-    { key: 'mobile', label: 'Registered mobile number', placeholder: '9876543210' },
+    { key: 'mobile', label: 'Registered mobile number', placeholder: 'XXXXXXXXXX' },
   ],
   slack: [
     { key: 'webhook_url', label: 'Slack incoming webhook URL', placeholder: 'https://hooks.slack.com/services/...', secret: true },
@@ -2318,7 +2318,7 @@ export default function IntegrationsPage() {
                       <label className="block text-sm font-semibold text-gray-700">
                         Test Phone Number
                         <div className="flex gap-2 mt-1">
-                          <input value={configForm.test_to || ''} onChange={(e) => setConfigForm({...configForm, test_to: e.target.value})} className="input-field flex-1" placeholder="919876543210 (with country code)" />
+                          <input value={configForm.test_to || ''} onChange={(e) => setConfigForm({...configForm, test_to: e.target.value})} className="input-field flex-1" placeholder="91XXXXXXXXXX (with country code)" />
                           <button type="button"
                             disabled={!whatsappConnected || !configForm.test_to}
                             onClick={testWhatsAppConnection}

@@ -32,7 +32,7 @@ const ENDPOINTS = [
         method: 'GET', path: '/api/leads?limit=50',
         desc: 'List leads (cursor pagination supported)',
         body: null,
-        response: `[{"id": "...", "name": "Rahul Sharma", "phone": "+919876543210", "score_label": "hot", "status": "new", "created_at": "2026-05-30T10:00:00"}]`,
+        response: `[{"id": "...", "name": "Rahul Sharma", "phone": "+91XXXXXXXXXX", "score_label": "hot", "status": "new", "created_at": "2026-05-30T10:00:00"}]`,
       },
       {
         method: 'GET', path: '/api/leads?cursor=2026-05-30T10:00:00&limit=50',
@@ -85,7 +85,7 @@ const ENDPOINTS = [
       {
         method: 'POST', path: '/api/automation/outbound-messages',
         desc: 'Send a single WhatsApp message',
-        body: `{"recipient": "+919876543210", "message": "Hello Rahul!", "channel": "whatsapp"}`,
+        body: `{"recipient": "+91XXXXXXXXXX", "message": "Hello Rahul!", "channel": "whatsapp"}`,
         response: `{"status": "sent", "message_id": "wamid..."}`,
       },
     ],

@@ -872,7 +872,7 @@ export default function HomePage() {
             <div>
               <h4 className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-600 mb-5">Support</h4>
               <ul className="space-y-3 text-sm text-zinc-700 mb-6">
-                {[{ label: 'Help Center', href: 'mailto:hello@b9automation.com' }, { label: 'Book a Demo', href: '/signup?demo=1' }, { label: 'Community', href: 'https://wa.me/919999999999' }, { label: 'Status Page', href: 'https://b9automation.com' }, { label: 'Roadmap', href: '/blog' }].map(({ label, href }) => (
+                {[{ label: 'Help Center', href: 'mailto:hello@b9automation.com' }, { label: 'Book a Demo', href: '/signup?demo=1' }, { label: 'Community', href: 'https://wa.me/910000000000' }, { label: 'Status Page', href: 'https://b9automation.com' }, { label: 'Roadmap', href: '/blog' }].map(({ label, href }) => (
                   <li key={label}><a href={href} className="hover:text-zinc-300 transition-colors duration-300">{label}</a></li>
                 ))}
               </ul>

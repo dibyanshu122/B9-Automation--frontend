@@ -452,7 +452,7 @@ export const Navbar = () => {
                       { key: 'target_audience', label: 'Target Audience', placeholder: 'Who are your customers?' },
                       { key: 'primary_goal', label: 'Primary Goal', placeholder: 'e.g. Generate leads, Book appointments' },
                       { key: 'website_url', label: 'Website', placeholder: 'https://yourbusiness.com' },
-                      { key: 'whatsapp_number', label: 'WhatsApp Number', placeholder: '+91 98765 43210' },
+                      { key: 'whatsapp_number', label: 'WhatsApp Number', placeholder: '+91 XXXXX XXXXX' },
                       { key: 'instagram_handle', label: 'Instagram Handle', placeholder: '@yourbusiness' },
                     ].map(f => (
                       <div key={f.key}>
