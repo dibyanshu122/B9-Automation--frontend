@@ -20,70 +20,82 @@ export type SidebarGroup = {
 };
 
 export const SIDEBAR_GROUPS: SidebarGroup[] = [
+  // ── Home ──────────────────────────────────────────────────────
   { id: 'dashboard', name: 'Dashboard', icon: 'LayoutDashboard', href: '/dashboard' },
-  { id: 'assistants', name: 'AI Assistants', icon: 'Brain', href: '/dashboard/assistants' },
+
+  // ── Daily Use ─────────────────────────────────────────────────
   {
-    id: 'sales',
+    id: 'inbox',
+    name: 'Inbox',
+    icon: 'MessageSquare',
+    children: [
+      { name: 'Messages', href: '/dashboard/messages', icon: 'Send' },
+      { name: 'Auto Replies', href: '/dashboard/auto-replies', icon: 'Bot' },
+      { name: 'Handover Queue', href: '/dashboard/handover', icon: 'UserCog' },
+      { name: 'Opted Out', href: '/dashboard/opted-out', icon: 'UserX' },
+      { name: 'Notifications', href: '/dashboard/notifications', icon: 'Bell' },
+    ],
+  },
+  {
+    id: 'crm',
     name: 'Leads & CRM',
     icon: 'Target',
     children: [
       { name: 'Leads', href: '/dashboard/leads', icon: 'Users' },
       { name: 'Campaigns', href: '/dashboard/campaigns', icon: 'Megaphone' },
-      { name: 'Product Catalog', href: '/dashboard/catalog', icon: 'ShoppingCart' },
-      { name: 'QR Codes', href: '/dashboard/qr-codes', icon: 'QrCode' },
-      { name: 'Import Contacts', href: '/dashboard/imports', icon: 'Upload' },
-    ],
-  },
-  {
-    id: 'support',
-    name: 'Inbox',
-    icon: 'MessageSquare',
-    children: [
-      { name: 'Messages', href: '/dashboard/messages', icon: 'Send' },
-      { name: 'Handover Queue', href: '/dashboard/handover', icon: 'UserCog' },
-      { name: 'Auto Replies', href: '/dashboard/auto-replies', icon: 'Bot' },
-      { name: 'Opted Out', href: '/dashboard/opted-out', icon: 'UserX' },
+      { name: 'Segments', href: '/dashboard/segments', icon: 'Filter' },
       { name: 'Tasks', href: '/dashboard/tasks', icon: 'CheckSquare' },
+      { name: 'Product Catalog', href: '/dashboard/catalog', icon: 'ShoppingCart' },
+      { name: 'Import Contacts', href: '/dashboard/imports', icon: 'Upload' },
+      { name: 'QR Codes', href: '/dashboard/qr-codes', icon: 'QrCode' },
     ],
   },
+
+  // ── Build ─────────────────────────────────────────────────────
   {
     id: 'automate',
-    name: 'Automate',
+    name: 'Automations',
     icon: 'Zap',
     children: [
       { name: 'Automations', href: '/dashboard/automations', icon: 'Workflow' },
-      { name: 'WhatsApp Flows', href: '/dashboard/flows', icon: 'Layers' },
       { name: 'WA Templates', href: '/dashboard/templates', icon: 'Layout' },
+      { name: 'WhatsApp Flows', href: '/dashboard/flows', icon: 'Layers' },
       { name: 'A/B Testing', href: '/dashboard/ab-testing', icon: 'FlaskConical' },
       { name: 'Automation Logs', href: '/dashboard/logs', icon: 'ScrollText' },
     ],
   },
   {
     id: 'knowledge',
-    name: 'Knowledge Base',
-    icon: 'Briefcase',
+    name: 'AI & Knowledge',
+    icon: 'Brain',
     children: [
+      { name: 'AI Assistants', href: '/dashboard/assistants', icon: 'Bot' },
       { name: 'Documents', href: '/dashboard/documents', icon: 'FileText' },
-      { name: 'Chat', href: '/dashboard/chat', icon: 'MessageCircle' },
       { name: 'Widgets', href: '/dashboard/widgets', icon: 'Code' },
-      { name: 'Analytics', href: '/dashboard/analytics', icon: 'BarChart3' },
-      { name: 'Notifications', href: '/dashboard/notifications', icon: 'Bell' },
+      { name: 'Test Chat', href: '/dashboard/chat', icon: 'MessageCircle' },
     ],
   },
+
+  // ── Data ──────────────────────────────────────────────────────
+  { id: 'analytics', name: 'Analytics', icon: 'BarChart3', href: '/dashboard/analytics' },
+
+  // ── Connect ───────────────────────────────────────────────────
+  { id: 'integrations', name: 'Integrations', icon: 'Plug', href: '/dashboard/integrations' },
+
+  // ── Admin ─────────────────────────────────────────────────────
   {
-    id: 'workspace',
-    name: 'Workspace',
-    icon: 'Building2',
+    id: 'settings',
+    name: 'Settings',
+    icon: 'Settings',
     children: [
       { name: 'Team', href: '/dashboard/team', icon: 'UserCog' },
-      { name: 'Integrations', href: '/dashboard/integrations', icon: 'Plug' },
-      { name: 'API Keys', href: '/dashboard/api', icon: 'Key' },
-      { name: 'Segments', href: '/dashboard/segments', icon: 'Filter' },
-      { name: 'API Docs', href: '/developers', icon: 'Code2' },
       { name: 'Billing', href: '/dashboard/billing', icon: 'CreditCard' },
-      { name: 'Settings', href: '/dashboard/settings', icon: 'Settings' },
+      { name: 'API Keys', href: '/dashboard/api', icon: 'Key' },
+      { name: 'Settings', href: '/dashboard/settings', icon: 'SlidersHorizontal' },
     ],
   },
+
+  // ── Bottom ────────────────────────────────────────────────────
   { id: 'launch', name: 'Go Live Checklist', icon: 'Rocket', href: '/dashboard/launch', position: 'bottom' },
 ];
 
