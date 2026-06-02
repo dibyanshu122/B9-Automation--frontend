@@ -1129,7 +1129,9 @@ export default function AutomationsPage() {
             ··· More
           </Button>
           {overflowMenuOpen && (
-            <div className="absolute right-0 top-full z-50 mt-1 w-52 rounded-xl border border-gray-200 bg-white py-1.5 shadow-2xl" onClick={() => setOverflowMenuOpen(false)}>
+            <div className="fixed z-[9999] mt-1 w-52 rounded-xl border border-gray-200 bg-white py-1.5 shadow-2xl"
+              style={{ top: overflowMenuRef.current ? overflowMenuRef.current.getBoundingClientRect().bottom + 4 : 0, right: overflowMenuRef.current ? window.innerWidth - overflowMenuRef.current.getBoundingClientRect().right : 0 }}
+              onClick={() => setOverflowMenuOpen(false)}>
               <button type="button" onClick={() => setShowLaunchAssistant(true)} className="flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50">
                 <Bot className="h-3.5 w-3.5 text-gray-400" /> Launch Assistant
               </button>
