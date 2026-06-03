@@ -96,6 +96,13 @@ export default function LeadsPage() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [leadIntelligence, setLeadIntelligence] = useState<any | null>(null);
   const [leadIntelLoading, setLeadIntelLoading] = useState(false);
+  const [sequenceModal, setSequenceModal] = useState<Lead | null>(null);
+  const [sequenceSteps, setSequenceSteps] = useState([
+    { delay_days: 1, message: 'Hi {{name}}, just following up on your enquiry. Can I help with anything?' },
+    { delay_days: 3, message: 'Hi {{name}}, wanted to check if you had any questions. Happy to help!' },
+    { delay_days: 7, message: 'Hi {{name}}, last follow-up from my side. Let me know if you want to connect.' },
+  ]);
+  const [savingSequence, setSavingSequence] = useState(false);
   const [paymentLinkTarget, setPaymentLinkTarget] = useState<{ phone: string; name: string } | null>(null);
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentDesc, setPaymentDesc] = useState('');
@@ -415,6 +422,23 @@ export default function LeadsPage() {
     return totals;
   }, [leads, allDeals]);
 
+  // Revenue forecasting metrics
+  const dealAnalytics = useMemo(() => {
+    if (!allDeals.length) return null;
+    const won = allDeals.filter((d: any) => d.stage === 'won');
+    const lost = allDeals.filter((d: any) => d.stage === 'lost');
+    const open = allDeals.filter((d: any) => !['won','lost'].includes(d.stage));
+    const totalPipeline = open.reduce((s: number, d: any) => s + (d.value || 0), 0);
+    const wonRevenue = won.reduce((s: number, d: any) => s + (d.value || 0), 0);
+    const winRate = (won.length + lost.length) > 0 ? Math.round((won.length / (won.length + lost.length)) * 100) : 0;
+    const avgDeal = allDeals.length > 0 ? Math.round(allDeals.reduce((s: number, d: any) => s + (d.value || 0), 0) / allDeals.length) : 0;
+    const now = new Date();
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const closingThisMonth = open.filter((d: any) => d.close_date && new Date(d.close_date) <= endOfMonth);
+    const forecast = closingThisMonth.reduce((s: number, d: any) => s + ((d.value || 0) * ((d.probability || 50) / 100)), 0);
+    return { totalPipeline, wonRevenue, winRate, avgDeal, openDeals: open.length, forecast: Math.round(forecast), closingThisMonth: closingThisMonth.length };
+  }, [allDeals]);
+
   const updateLeadInList = (updatedLead: Lead) => {
     setLeads((current) => current.map((lead) => (lead.id === updatedLead.id ? updatedLead : lead)));
   };
@@ -550,6 +574,35 @@ export default function LeadsPage() {
       toast.error(error.response?.data?.detail || 'Failed to create follow-up');
     } finally {
       setBusyAction('');
+    }
+  };
+
+  const launchSequence = async () => {
+    if (!sequenceModal) return;
+    const valid = sequenceSteps.every(s => s.message.trim() && s.delay_days > 0);
+    if (!valid) { toast.error('All steps need a message and delay'); return; }
+    setSavingSequence(true);
+    try {
+      // Create a business task for each step as a scheduled follow-up
+      await Promise.all(sequenceSteps.map((step, i) => {
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + step.delay_days);
+        const msg = step.message.replace('{{name}}', sequenceModal.name || sequenceModal.phone || 'there');
+        return api.post('/api/tasks', {
+          title: `Follow-up #${i + 1}: ${sequenceModal.name || sequenceModal.phone}`,
+          description: msg,
+          lead_id: sequenceModal.id,
+          due_at: dueDate.toISOString(),
+          priority: 'medium',
+          task_metadata: { sequence_step: i + 1, sequence_message: msg, auto_send: true },
+        });
+      }));
+      toast.success(`${sequenceSteps.length}-step follow-up sequence scheduled!`);
+      setSequenceModal(null);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.detail || 'Failed to schedule sequence');
+    } finally {
+      setSavingSequence(false);
     }
   };
 
@@ -1019,6 +1072,25 @@ export default function LeadsPage() {
         viewMode === 'kanban' ? (
           /* ── KANBAN BOARD ─────────────────────────────────────────────── */
           <section>
+            {/* Revenue Forecasting Strip */}
+            {dealAnalytics && (
+              <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+                {[
+                  { label: 'Pipeline', value: `₹${dealAnalytics.totalPipeline.toLocaleString('en-IN')}`, color: 'text-blue-700', bg: 'bg-blue-50 border-blue-100' },
+                  { label: 'Won Revenue', value: `₹${dealAnalytics.wonRevenue.toLocaleString('en-IN')}`, color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-100' },
+                  { label: 'Win Rate', value: `${dealAnalytics.winRate}%`, color: 'text-violet-700', bg: 'bg-violet-50 border-violet-100' },
+                  { label: 'Avg Deal', value: `₹${dealAnalytics.avgDeal.toLocaleString('en-IN')}`, color: 'text-amber-700', bg: 'bg-amber-50 border-amber-100' },
+                  { label: 'Open Deals', value: dealAnalytics.openDeals, color: 'text-gray-700', bg: 'bg-gray-50 border-gray-100' },
+                  { label: 'Closing Month', value: dealAnalytics.closingThisMonth, color: 'text-orange-700', bg: 'bg-orange-50 border-orange-100' },
+                  { label: '🎯 Forecast', value: `₹${dealAnalytics.forecast.toLocaleString('en-IN')}`, color: 'text-indigo-700', bg: 'bg-indigo-50 border-indigo-200' },
+                ].map(m => (
+                  <div key={m.label} className={`rounded-xl border px-3 py-2 ${m.bg}`}>
+                    <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">{m.label}</p>
+                    <p className={`text-sm font-bold mt-0.5 ${m.color}`}>{m.value}</p>
+                  </div>
+                ))}
+              </div>
+            )}
             <div className="overflow-x-auto pb-4 -mx-1 px-1">
               <div className="flex gap-4" style={{ minWidth: `${stages.length * 300}px` }}>
                 {stages.map((stage) => {
@@ -1215,6 +1287,7 @@ export default function LeadsPage() {
                     members={teamMembers}
                     busyAction={busyAction}
                     onFollowUp={sendFollowUp}
+                    onSequence={(l) => setSequenceModal(l)}
                     onTask={createTask}
                     onHistory={openChatHistory}
                     onQualify={qualifyLead}
@@ -1592,6 +1665,40 @@ export default function LeadsPage() {
               </div>
             </div>
           )}
+          {/* Contact Enrichment Strip */}
+          {selectedLead && (
+            <div className="mt-4 rounded-xl border border-violet-100 bg-violet-50 px-4 py-3">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-bold text-violet-900 flex items-center gap-1.5">
+                  <GitMerge className="h-4 w-4 text-violet-500" />
+                  Contact Profile
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
+                {[
+                  { label: 'Source', value: selectedLead.source || 'Unknown' },
+                  { label: 'UTM Campaign', value: (selectedLead as any).utm_campaign || '—' },
+                  { label: 'UTM Source', value: (selectedLead as any).utm_source || '—' },
+                  { label: 'UTM Medium', value: (selectedLead as any).utm_medium || '—' },
+                  { label: 'Budget', value: (selectedLead as any).budget || '—' },
+                  { label: 'Timeline', value: (selectedLead as any).timeline || '—' },
+                  { label: 'Lead Score', value: `${selectedLead.lead_score ?? 0}/10` },
+                  { label: 'Status', value: selectedLead.status || 'new' },
+                ].map(f => (
+                  <div key={f.label} className="rounded-lg bg-white px-2 py-1.5">
+                    <p className="text-[10px] font-semibold text-gray-400 uppercase">{f.label}</p>
+                    <p className="mt-0.5 font-semibold text-gray-800 truncate">{f.value}</p>
+                  </div>
+                ))}
+              </div>
+              {(selectedLead as any).requirement && (
+                <div className="mt-2 rounded-lg bg-white px-3 py-2 text-xs text-gray-700">
+                  <span className="font-semibold text-violet-700">Requirement: </span>{(selectedLead as any).requirement}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50 p-4">
             <div className="mb-3 flex items-center justify-between">
               <p className="flex items-center gap-2 text-sm font-bold text-blue-950">
@@ -2102,6 +2209,58 @@ export default function LeadsPage() {
           </div>
         </div>
       )}
+
+      {/* Follow-up Sequence Modal */}
+      {sequenceModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setSequenceModal(null)}>
+          <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+              <div>
+                <p className="text-base font-bold text-gray-900">🔁 Follow-up Sequence</p>
+                <p className="text-xs text-gray-500 mt-0.5">For: {sequenceModal.name || sequenceModal.phone}</p>
+              </div>
+              <button onClick={() => setSequenceModal(null)} className="text-gray-400 hover:text-gray-600"><X className="h-5 w-5" /></button>
+            </div>
+            <div className="p-5 space-y-3 max-h-80 overflow-y-auto">
+              {sequenceSteps.map((step, i) => (
+                <div key={i} className="rounded-xl border border-gray-200 bg-gray-50 p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-indigo-700">Step {i + 1}</span>
+                    {sequenceSteps.length > 1 && (
+                      <button onClick={() => setSequenceSteps(prev => prev.filter((_, idx) => idx !== i))} className="text-[10px] text-red-400 hover:text-red-600">Remove</button>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500 shrink-0">Send after</span>
+                    <input type="number" min={1} max={365} value={step.delay_days}
+                      onChange={e => setSequenceSteps(prev => prev.map((s, idx) => idx === i ? { ...s, delay_days: parseInt(e.target.value) || 1 } : s))}
+                      className="w-16 rounded-lg border border-gray-200 px-2 py-1 text-sm text-center" />
+                    <span className="text-xs text-gray-500">day{step.delay_days !== 1 ? 's' : ''}</span>
+                  </div>
+                  <textarea value={step.message} rows={2}
+                    onChange={e => setSequenceSteps(prev => prev.map((s, idx) => idx === i ? { ...s, message: e.target.value } : s))}
+                    className="w-full resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-300"
+                    placeholder="Message (use {{name}} for lead name)" />
+                </div>
+              ))}
+              {sequenceSteps.length < 7 && (
+                <button onClick={() => setSequenceSteps(prev => [...prev, { delay_days: (prev[prev.length - 1]?.delay_days || 0) + 3, message: '' }])}
+                  className="w-full rounded-xl border-2 border-dashed border-gray-200 py-2 text-sm text-gray-400 hover:border-indigo-300 hover:text-indigo-600 transition">
+                  + Add Step
+                </button>
+              )}
+            </div>
+            <div className="flex gap-2 border-t border-gray-100 px-5 py-4">
+              <button onClick={() => setSequenceModal(null)} className="flex-1 rounded-xl border border-gray-200 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50">Cancel</button>
+              <button onClick={launchSequence} disabled={savingSequence}
+                className="flex-1 rounded-xl bg-indigo-600 py-2 text-sm font-bold text-white hover:bg-indigo-700 disabled:opacity-40 flex items-center justify-center gap-2">
+                {savingSequence ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                Schedule {sequenceSteps.length} Steps
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -2112,6 +2271,7 @@ function LeadCard({
   members,
   busyAction,
   onFollowUp,
+  onSequence,
   onTask,
   onHistory,
   onQualify,
@@ -2125,6 +2285,7 @@ function LeadCard({
   members: TeamMemberOption[];
   busyAction: string;
   onFollowUp: (lead: Lead) => void;
+  onSequence: (lead: Lead) => void;
   onTask: (lead: Lead) => void;
   onHistory: (lead: Lead) => void;
   onQualify: (lead: Lead) => void;
@@ -2196,6 +2357,9 @@ function LeadCard({
         <Button variant="primary" size="sm" onClick={() => onFollowUp(lead)} loading={busyAction === `follow-${lead.id}`}>
           <Send className="h-4 w-4" />
           Follow-up
+        </Button>
+        <Button variant="secondary" size="sm" onClick={() => onSequence(lead)} title="Schedule multi-step follow-up sequence">
+          🔁 Sequence
         </Button>
         <Button variant="secondary" size="sm" onClick={() => onQualify(lead)} loading={busyAction === `qualify-${lead.id}`}>
           <Star className="h-4 w-4" />

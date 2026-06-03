@@ -1201,7 +1201,7 @@ function CustomLeadFieldsSection() {
   }, []); // eslint-disable-line
 
   const addField = () => {
-    if (fields.length >= 20) return;
+    if (fields.length >= 100) { alert('Maximum 100 custom fields allowed'); return; }
     const key = `custom_${Date.now()}`;
     setFields(prev => [...prev, { key, label: '', type: 'text' }]);
   };
@@ -1210,14 +1210,14 @@ function CustomLeadFieldsSection() {
 
   const save = async () => {
     for (const f of fields) {
-      if (!f.label.trim()) { alert('All fields need a label'); return; }
+      if (!f.label.trim()) { toast.error('All fields need a label'); return; }
     }
     setSaving(true);
     try {
       await put('/api/leads/custom-fields', { fields });
-      alert('Custom fields saved');
+      toast.success('Custom fields saved');
     } catch (e: any) {
-      alert(e?.response?.data?.detail || 'Save failed');
+      toast.error(e?.response?.data?.detail || 'Save failed');
     } finally { setSaving(false); }
   };
 
@@ -1228,7 +1228,7 @@ function CustomLeadFieldsSection() {
           <h2 className="text-xl font-bold text-gray-900">Custom Lead Fields</h2>
           <p className="text-sm text-gray-500 mt-0.5">Add extra fields to every lead — shown in the lead detail panel.</p>
         </div>
-        <Button onClick={addField} disabled={fields.length >= 20} className="flex items-center gap-1.5 text-sm">
+        <Button onClick={addField} disabled={fields.length >= 100} className="flex items-center gap-1.5 text-sm">
           + Add Field
         </Button>
       </div>
