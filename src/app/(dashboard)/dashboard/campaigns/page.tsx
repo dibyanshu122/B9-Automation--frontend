@@ -892,9 +892,18 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
         payload.recipient_filter = recipientFilter;
       }
       const r = await post('/api/campaigns/send', payload);
-      if (saveAsDraft) toast.success('Draft saved');
-      else if (r.data.scheduled_at) toast.success(`Campaign scheduled for ${r.data.recipient_count} recipients`);
-      else toast.success(`Campaign started  sending to ${r.data.recipient_count} recipients`);
+      if (saveAsDraft) {
+        toast.success('Draft saved');
+      } else if (r.data.scheduled_at) {
+        toast.success(`Campaign scheduled for ${r.data.recipient_count} recipients`);
+      } else {
+        toast((t) => (
+          <div className="flex items-center gap-3">
+            <span>✅ Campaign started — sending to {r.data.recipient_count} recipients</span>
+            <a href="/dashboard/analytics" className="text-xs font-bold text-blue-600 underline whitespace-nowrap" onClick={() => toast.dismiss(t.id)}>View analytics →</a>
+          </div>
+        ), { duration: 6000 });
+      }
       onClose(); onSent();
     } catch (e: any) { toast.error(e.response?.data?.detail || 'Failed'); }
     finally { setSending(false); }

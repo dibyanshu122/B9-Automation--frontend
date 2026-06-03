@@ -582,10 +582,15 @@ export default function AutoRepliesPage() {
   useEffect(() => { if (activeTab === 'quick_replies') loadQrs(); }, [activeTab]); // eslint-disable-line
 
   const toggle = async (rule: Rule) => {
+    // Optimistic update with rollback
+    const prev = rules;
+    setRules(r => r.map(x => x.id === rule.id ? { ...x, is_active: !x.is_active } : x));
     try {
       await post(`/api/auto-replies/rules/${rule.id}/toggle`, {});
-      setRules(prev => prev.map(r => r.id === rule.id ? {...r, is_active: !r.is_active} : r));
-    } catch { toast.error('Toggle failed'); }
+    } catch {
+      setRules(prev); // rollback to previous state
+      toast.error('Toggle failed — changes reverted');
+    }
   };
 
   const deleteRule = async (id: string) => {
@@ -825,7 +830,7 @@ export default function AutoRepliesPage() {
         ) : (
           <div className="space-y-3">
             {tabRules.map(rule => (
-              <div key={rule.id} className="bg-white border border-gray-200 rounded-2xl p-4 hover:shadow-sm transition">
+              <div key={rule.id} className={`bg-white border rounded-2xl p-4 hover:shadow-sm transition ${rule.is_active ? 'border-gray-200' : 'border-gray-100 opacity-50 grayscale-[30%]'}`}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">

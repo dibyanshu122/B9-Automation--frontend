@@ -63,6 +63,7 @@ export default function SettingsPage() {
   const [revokingSession, setRevokingSession] = useState('');
   // Notification prefs state
   const [notifPrefs, setNotifPrefs] = useState<Record<string, boolean>>({});
+  const [notifDirty, setNotifDirty] = useState(false);
   const [notifLoading, setNotifLoading] = useState(false);
   const [notifSaving, setNotifSaving] = useState(false);
   const [whatsappStatus, setWhatsappStatus] = useState<any>(null);
@@ -265,6 +266,7 @@ export default function SettingsPage() {
     try {
       await put('/api/auth/notification-preferences', notifPrefs);
       toast.success('Notification preferences saved');
+      setNotifDirty(false);
     } catch { toast.error('Failed to save'); }
     finally { setNotifSaving(false); }
   };
@@ -1021,7 +1023,7 @@ export default function SettingsPage() {
                   <p className="text-xs text-gray-400">{item.desc}</p>
                 </div>
                 <button
-                  onClick={() => setNotifPrefs(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
+                  onClick={() => { setNotifPrefs(prev => ({ ...prev, [item.key]: !prev[item.key] })); setNotifDirty(true); }}
                   role="switch"
                   aria-checked={!!notifPrefs[item.key]}
                   aria-label={item.label}
@@ -1031,9 +1033,14 @@ export default function SettingsPage() {
                 </button>
               </div>
             ))}
-            <Button onClick={saveNotifPrefs} loading={notifSaving} className="mt-2">
-              Save Notification Preferences
-            </Button>
+            <div className="mt-2 flex items-center gap-3">
+              <Button onClick={saveNotifPrefs} loading={notifSaving}>
+                Save Notification Preferences
+              </Button>
+              {notifDirty && !notifSaving && (
+                <span className="text-xs text-amber-600 animate-pulse">● Unsaved changes</span>
+              )}
+            </div>
           </div>
         )}
       </Card>

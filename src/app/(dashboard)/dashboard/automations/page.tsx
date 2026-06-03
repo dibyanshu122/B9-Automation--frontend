@@ -1268,12 +1268,15 @@ export default function AutomationsPage() {
           }}
           onToggleStatus={async (id, currentStatus) => {
             const newStatus = currentStatus === 'active' ? 'draft' : 'active';
+            const prevWorkflows = workflows;
+            // Optimistic update immediately
+            setWorkflows(prev => prev.map(w => w.id === id ? { ...w, status: newStatus } : w));
             try {
               await put(`/api/automation/workflows/${id}`, { status: newStatus });
-              setWorkflows((prev) => prev.map((w) => w.id === id ? { ...w, status: newStatus } : w));
-              toast.success(newStatus === 'active' ? 'Workflow activated' : 'Workflow paused');
+              toast.success(newStatus === 'active' ? '▶ Workflow activated' : '⏸ Workflow paused');
             } catch {
-              toast.error('Failed to update workflow status');
+              setWorkflows(prevWorkflows); // rollback
+              toast.error('Failed to update workflow — changes reverted');
             }
           }}
           onClone={async (id) => {

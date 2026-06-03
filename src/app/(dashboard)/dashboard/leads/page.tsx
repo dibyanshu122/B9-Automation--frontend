@@ -1085,7 +1085,10 @@ export default function LeadsPage() {
           <section className="space-y-4">
             <Card className="border-orange-100 shadow-sm" hoverable={false}>
               <div className="hidden grid-cols-[24px_1.1fr_1fr_1fr_0.8fr_0.6fr_0.9fr_90px] gap-3 rounded-xl px-3 py-3 mb-1 text-xs font-bold uppercase tracking-wide text-white md:grid" style={{background:'linear-gradient(135deg,#1e293b 0%,#0f172a 50%,#1e1b4b 100%)'}}>
-                <input type="checkbox" className="rounded" checked={selectedLeadIds.size === filteredLeads.length && filteredLeads.length > 0} onChange={(e) => setSelectedLeadIds(e.target.checked ? new Set(filteredLeads.map(l => l.id)) : new Set())} />
+                <input type="checkbox" className="rounded"
+                  ref={el => { if (el) el.indeterminate = selectedLeadIds.size > 0 && selectedLeadIds.size < filteredLeads.length; }}
+                  checked={selectedLeadIds.size === filteredLeads.length && filteredLeads.length > 0}
+                  onChange={(e) => setSelectedLeadIds(e.target.checked ? new Set(filteredLeads.map(l => l.id)) : new Set())} />
                 <span>Name</span><span>Phone</span><span>Email</span><span>Tags</span><span>Status</span><span>Created</span><span>Action</span>
               </div>
               <div className="divide-y divide-gray-100">
