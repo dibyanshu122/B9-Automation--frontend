@@ -844,38 +844,57 @@ export default function SettingsPage() {
 
       {/* Security */}
       <Card>
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Security</h2>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Change Password
-            </label>
-            <input
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              placeholder="Current password"
-              className="input-field mb-2"
-            />
-            <input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="New password (min 8 characters)"
-              className="input-field mb-2"
-            />
-            <input
-              type="password"
-              value={confirmNewPassword}
-              onChange={(e) => setConfirmNewPassword(e.target.value)}
-              placeholder="Confirm new password"
-              className="input-field"
-            />
+        <h2 className="text-xl font-bold text-gray-900 mb-1">Security</h2>
+
+        {/* Google user — show Set Password section */}
+        {(user as any)?.auth_provider === 'google' && !(user as any)?.has_password ? (
+          <div className="space-y-4">
+            <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 flex items-start gap-3">
+              <span className="text-xl">🔵</span>
+              <div>
+                <p className="text-sm font-semibold text-blue-900">You signed in with Google</p>
+                <p className="text-xs text-blue-700 mt-0.5">Set a password to also log in with your email and password.</p>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Set a Password</label>
+              <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)}
+                placeholder="New password (min 8 characters)" className="input-field mb-2" />
+              <input type="password" value={confirmNewPassword} onChange={e => setConfirmNewPassword(e.target.value)}
+                placeholder="Confirm new password" className="input-field" />
+            </div>
+            <Button variant="primary" loading={changingPassword} onClick={async () => {
+              if (!newPassword || newPassword.length < 8) { toast.error('Password must be at least 8 characters'); return; }
+              if (newPassword !== confirmNewPassword) { toast.error('Passwords do not match'); return; }
+              setChangingPassword(true);
+              try {
+                await post('/api/auth/set-password', { new_password: newPassword, confirm_password: confirmNewPassword });
+                toast.success('Password set! You can now log in with email and password too.');
+                setNewPassword(''); setConfirmNewPassword('');
+              } catch (err: any) {
+                toast.error(err?.response?.data?.detail || 'Failed to set password');
+              } finally { setChangingPassword(false); }
+            }}>
+              {changingPassword ? 'Setting...' : 'Set Password'}
+            </Button>
           </div>
-          <Button variant="primary" onClick={changePassword} loading={changingPassword}>
-            {changingPassword ? 'Updating...' : 'Update Password'}
-          </Button>
-        </div>
+        ) : (
+          /* Normal email user — change password flow */
+          <div className="space-y-4 mt-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Change Password</label>
+              <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder="Current password" className="input-field mb-2" />
+              <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="New password (min 8 characters)" className="input-field mb-2" />
+              <input type="password" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)}
+                placeholder="Confirm new password" className="input-field" />
+            </div>
+            <Button variant="primary" onClick={changePassword} loading={changingPassword}>
+              {changingPassword ? 'Updating...' : 'Update Password'}
+            </Button>
+          </div>
+        )}
       </Card>
 
       {/* Two-Factor Authentication */}
