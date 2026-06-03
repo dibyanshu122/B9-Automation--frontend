@@ -85,6 +85,19 @@ export default function DocumentsPage() {
       let response;
       
       if ((uploadMode === 'pdf' || uploadMode === 'flow_pdf') && uploadData.file) {
+        // Client-side file size check (backend also enforces 50MB)
+        const MAX_MB = 50;
+        if (uploadData.file.size > MAX_MB * 1024 * 1024) {
+          toast.error(`File too large — maximum ${MAX_MB}MB allowed`);
+          setLoading(false);
+          return;
+        }
+        const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
+        if (!allowedTypes.includes(uploadData.file.type)) {
+          toast.error('Only PDF, Word (.docx), or text files are supported');
+          setLoading(false);
+          return;
+        }
         const formData = new FormData();
         formData.append('file', uploadData.file);
         formData.append('purpose', uploadMode === 'flow_pdf' ? 'conversation_flow' : 'knowledge');
@@ -96,8 +109,9 @@ export default function DocumentsPage() {
             headers: { 'Content-Type': 'multipart/form-data' },
             onUploadProgress: (progressEvent) => {
               if (!progressEvent.total) return;
-              const percent = Math.round((progressEvent.loaded / progressEvent.total) * 70);
-              setUploadProgress(Math.max(10, Math.min(percent, 75)));
+              // Upload = 0→85%, processing = 85→100% (set after response)
+              const percent = Math.round((progressEvent.loaded / progressEvent.total) * 85);
+              setUploadProgress(Math.max(5, Math.min(percent, 85)));
             },
           }
         );
@@ -114,6 +128,13 @@ export default function DocumentsPage() {
           setUploadStage(`Scraped ${response.data.pages_scraped} pages`);
         }
       } else if (uploadMode === 'youtube') {
+        // Validate YouTube URL before sending
+        const isYT = /^https?:\/\/(www\.)?(youtube\.com\/(watch\?v=|shorts\/)|youtu\.be\/)/.test(uploadData.url);
+        if (!isYT) {
+          toast.error('Please enter a valid YouTube URL (e.g. https://youtube.com/watch?v=...)');
+          setLoading(false);
+          return;
+        }
         setUploadStage('Reading YouTube transcript');
         setUploadProgress(45);
         response = await post(

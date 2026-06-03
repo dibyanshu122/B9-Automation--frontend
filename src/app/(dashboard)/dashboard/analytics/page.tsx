@@ -40,16 +40,21 @@ export default function AnalyticsPage() {
     const fetchAnalytics = async () => {
       setLoading(true);
       try {
+        const safe = (p: Promise<any>) => p.catch(e => {
+          const status = e?.response?.status;
+          if (status === 402 || status === 403) return { data: null, _plan_locked: true };
+          return { data: null };
+        });
         const [trendsRes, impactRes, funnelRes, templatesRes, waRes, businessRes, campaignRevRes, deflectionRes, teamRes] = await Promise.all([
-          get(`/api/analytics/usage-trends?days=${globalDays}`).catch(() => ({ data: null })),
-          get(`/api/analytics/business-impact?days=${globalDays}`).catch(() => ({ data: null })),
-          get(`/api/analytics/funnel?days=${globalDays}`).catch(() => ({ data: null })),
-          get(`/api/analytics/template-performance?days=${globalDays}`).catch(() => ({ data: null })),
-          get(`/api/analytics/whatsapp?days=${globalDays}`).catch(() => ({ data: null })),
-          get(`/api/analytics/business-metrics?days=${globalDays}`).catch(() => ({ data: null })),
-          get(`/api/analytics/campaign-revenue?days=${globalDays}`).catch(() => ({ data: null })),
-          get(`/api/analytics/bot-deflection?days=${globalDays}`).catch(() => ({ data: null })),
-          get(`/api/analytics/team-performance?days=${globalDays}`).catch(() => ({ data: null })),
+          safe(get(`/api/analytics/usage-trends?days=${globalDays}`)),
+          safe(get(`/api/analytics/business-impact?days=${globalDays}`)),
+          safe(get(`/api/analytics/funnel?days=${globalDays}`)),
+          safe(get(`/api/analytics/template-performance?days=${globalDays}`)),
+          safe(get(`/api/analytics/whatsapp?days=${globalDays}`)),
+          safe(get(`/api/analytics/business-metrics?days=${globalDays}`)),
+          safe(get(`/api/analytics/campaign-revenue?days=${globalDays}`)),
+          safe(get(`/api/analytics/bot-deflection?days=${globalDays}`)),
+          safe(get(`/api/analytics/team-performance?days=${globalDays}`)),
         ]);
         setTrends(trendsRes.data);
         setImpact(impactRes.data);
@@ -61,8 +66,11 @@ export default function AnalyticsPage() {
         setCampaignRevenue(campaignRevRes.data);
         setBotDeflection(deflectionRes.data);
         setTeamPerf(teamRes.data);
+        // Show one toast if any section failed due to plan gate
+        const anyLocked = [trendsRes, impactRes, funnelRes, campaignRevRes, deflectionRes, teamRes].some((r: any) => r?._plan_locked);
+        if (anyLocked) toast('Some analytics require GROWTH plan — upgrade to unlock', { icon: '🔒' });
       } catch {
-        toast.error('Failed to load analytics');
+        toast.error('Failed to load analytics — check your connection');
       } finally {
         setLoading(false);
       }
@@ -652,14 +660,31 @@ export default function AnalyticsPage() {
       {/* ── Export Button ── */}
       <section className="flex flex-wrap gap-3 pt-2">
         {(['dashboard', 'leads', 'campaigns'] as const).map(type => (
-          <a
+          <button
             key={type}
-            href={`${process.env.NEXT_PUBLIC_API_URL || ''}/api/analytics/export?type=${type}&days=${globalDays}`}
-            download={`${type}_${globalDays}d.csv`}
+            onClick={async () => {
+              try {
+                const token = useAuthStore.getState().token;
+                const base = process.env.NEXT_PUBLIC_API_URL || '';
+                const res = await fetch(`${base}/api/analytics/export?type=${type}&days=${globalDays}`, {
+                  headers: token ? { Authorization: `Bearer ${token}` } : {},
+                });
+                if (!res.ok) throw new Error(`Export failed (${res.status})`);
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${type}_${globalDays}d.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+              } catch (err: any) {
+                alert(err.message || 'Export failed');
+              }
+            }}
             className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 transition"
           >
             ↓ Export {type} CSV
-          </a>
+          </button>
         ))}
       </section>
     </div>
