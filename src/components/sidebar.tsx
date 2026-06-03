@@ -178,7 +178,7 @@ export const Sidebar = () => {
   const item = (active: boolean, mini = false) => clsx(
     'flex w-full items-center rounded-lg transition-all duration-150 text-sm font-medium',
     mini
-      ? 'h-11 justify-center items-center px-0 py-0 gap-0'   // collapsed: centered icon
+      ? 'h-12 justify-center items-center px-0 py-0 gap-0'   // collapsed: h-12 = natural gap between icons
       : 'gap-3 px-3 py-3',                                    // expanded: py-3 + gap-3
     active
       ? mini
@@ -232,7 +232,7 @@ export const Sidebar = () => {
         )}
       >
         <nav className={clsx(
-          'flex-1 overflow-y-auto overflow-x-hidden py-3',
+          'flex-1 overflow-y-auto overflow-x-hidden py-4',
           expanded ? 'px-3' : 'px-1.5'   // px-3 expanded (premium), px-1.5 collapsed (centered)
         )}>
           {mainGroups.map((group) => {
@@ -244,7 +244,7 @@ export const Sidebar = () => {
 
             if (hasKids) {
               return (
-                <div key={group.id} className="mb-2">
+                <div key={group.id} className="mb-3">
                   <button
                     title={!expanded ? group.name : undefined}
                     onClick={() => {
@@ -294,7 +294,7 @@ export const Sidebar = () => {
             }
 
             return (
-              <div key={group.id} className="mb-1">
+              <div key={group.id} className="mb-2">
                 <Link href={group.href || '#'}
                   title={!expanded ? group.name : undefined}
                   className={item(singleActive, !expanded)}
