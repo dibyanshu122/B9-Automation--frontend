@@ -399,8 +399,17 @@ function UnifiedInbox() {
       .then(res => {
         const items: any[] = res.data?.items || [];
         const map = new Map<string, Contact>();
+        // Load last-read timestamps from localStorage per contact
+        const getLastRead = (channel: string, senderId: string): string => {
+          return localStorage.getItem(`msg_read_${channel}_${senderId}`) || '';
+        };
+
         items.forEach(item => {
           const key = `${item.channel}::${item.sender_id}`;
+          const lastRead = getLastRead(item.channel, item.sender_id);
+          // Only count as unread if message arrived AFTER user last opened this contact
+          const isUnread = !lastRead || item.created_at > lastRead;
+
           if (!map.has(key)) {
             map.set(key, {
               sender_id: item.sender_id,
@@ -408,7 +417,7 @@ function UnifiedInbox() {
               channel: item.channel,
               last_text: item.text || `[${item.message_type}]`,
               last_time: item.created_at,
-              unread: 1,
+              unread: isUnread ? 1 : 0,
               lead_score: item.lead_score || 'cold',
               assigned_to_user_id: item.assigned_to_user_id || null,
               assigned_to_name: item.assigned_to_name || null,
@@ -419,7 +428,7 @@ function UnifiedInbox() {
               c.last_text = item.text || `[${item.message_type}]`;
               c.last_time = item.created_at;
             }
-            c.unread++;
+            if (isUnread) c.unread++;
             // Keep hottest score
             if (item.lead_score === 'hot') c.lead_score = 'hot';
             else if (item.lead_score === 'warm' && c.lead_score !== 'hot') c.lead_score = 'warm';
@@ -846,10 +855,14 @@ function UnifiedInbox() {
             ) : filtered.map(c => {
               const badge = CHANNEL_BADGE[c.channel] || { emoji: '', label: c.channel, color: '' };
               const isSelected = selected?.sender_id === c.sender_id && selected?.channel === c.channel;
-              const win = getWindowStatus(c.last_time, c.channel);
               return (
                 <button key={`${c.channel}::${c.sender_id}`}
-                  onClick={() => setSelected(c)}
+                  onClick={() => {
+                    // Mark as read — save timestamp so unread count clears
+                    localStorage.setItem(`msg_read_${c.channel}_${c.sender_id}`, c.last_time || new Date().toISOString());
+                    setContacts(prev => prev.map(x => x.sender_id === c.sender_id && x.channel === c.channel ? { ...x, unread: 0 } : x));
+                    setSelected(c);
+                  }}
                   className={`w-full flex items-center gap-3 px-3 py-3 text-left transition-all border-b border-gray-100 last:border-0 ${
                     isSelected ? 'bg-[#f0f2f5]' : 'bg-white hover:bg-[#f5f6f6]'
                   }`}>
@@ -879,24 +892,12 @@ function UnifiedInbox() {
                     </div>
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-[14px] text-gray-500 truncate">{c.last_text}</p>
-                      <div className="flex items-center gap-1 shrink-0">
-                        {/* SLA timer — shows when customer has been waiting */}
-                        {(() => { const sla = getSlaStatus(c); return sla ? (
-                          <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold whitespace-nowrap ${sla.color}`} title="Customer waiting time">
-                            {sla.label}
-                          </span>
-                        ) : null; })()}
-                        {c.unread > 0 && (
-                          <span className="flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-green-500 px-1.5 text-[10px] font-bold text-white">
-                            {c.unread > 99 ? '99+' : c.unread}
-                          </span>
-                        )}
-                        {!win.open && (
-                          <span className="rounded-full bg-red-50 border border-red-200 px-1.5 py-0.5 text-[10px] font-semibold text-red-500 whitespace-nowrap" title="24-hour window closed — only approved templates can be sent">
-                            Template only
-                          </span>
-                        )}
-                      </div>
+                      {/* Only show unread count — clears when chat is opened */}
+                      {c.unread > 0 && (
+                        <span className="flex shrink-0 h-[18px] min-w-[18px] items-center justify-center rounded-full bg-green-500 px-1.5 text-[10px] font-bold text-white">
+                          {c.unread > 99 ? '99+' : c.unread}
+                        </span>
+                      )}
                     </div>
                   </div>
                   {/* Assignment badge + assign button (team inbox) */}
