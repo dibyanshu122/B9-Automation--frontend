@@ -85,6 +85,13 @@ export default function AssistantsPage() {
   const handleDeleteAssistant = async () => {
     if (!deleteTarget) return;
     try {
+      // Check if any widgets use this assistant before deleting
+      const widgetsRes = await get(`/api/automation/assistants/${deleteTarget.id}/widgets`).catch(() => ({ data: [] }));
+      const widgetCount = Array.isArray(widgetsRes?.data) ? widgetsRes.data.length : 0;
+      if (widgetCount > 0) {
+        const proceed = confirm(`⚠️ ${widgetCount} widget${widgetCount > 1 ? 's' : ''} use "${deleteTarget.name}".\n\nDeleting this assistant will break those widgets.\n\nProceed anyway?`);
+        if (!proceed) return;
+      }
       await deleteReq(`/api/assistants/${deleteTarget.id}`);
       setAssistants(assistants.filter(a => a.id !== deleteTarget.id));
       setDeleteTarget(null);

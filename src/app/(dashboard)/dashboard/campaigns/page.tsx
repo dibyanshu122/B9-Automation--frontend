@@ -857,7 +857,16 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
   const handleSend = async (saveAsDraft = false) => {
     if (!name.trim()) { toast.error('Campaign name required'); return; }
     if (!selected) { toast.error('Select a template first'); return; }
+    // Pre-flight: verify template is still APPROVED (Meta may have paused it)
+    if (!saveAsDraft && selected.status && selected.status !== 'APPROVED') {
+      toast.error(`Template "${selected.name}" is ${selected.status} — only APPROVED templates can be sent`);
+      return;
+    }
     if (abEnabled && selectedB && selectedB.name === selected.name) { toast.error('A/B test variants must use different templates'); return; }
+    if (abEnabled && selectedB && selectedB.status && selectedB.status !== 'APPROVED') {
+      toast.error(`Variant B template "${selectedB.name}" is ${selectedB.status} — must be APPROVED`);
+      return;
+    }
     if (vars.some(v => !v.trim())) { toast.error('Fill all template variables'); return; }
     if (isLimitedTimeOffer && (!ltoExpiry || new Date(ltoExpiry).getTime() <= Date.now())) {
       toast.error('Select a future offer expiry time');

@@ -914,7 +914,7 @@ export default function LeadsPage() {
               <button
                 disabled={bulkLoading === 'delete'}
                 onClick={async () => {
-                  if (!confirm(`Delete ${selectedLeadIds.size} leads?`)) return;
+                  if (!confirm(`Delete ${selectedLeadIds.size} lead${selectedLeadIds.size > 1 ? 's' : ''}?\n\n⚠️ This will also remove:\n• All notes and timeline history\n• Associated deals and tags\n• Any automation run references\n\nThis cannot be undone.`)) return;
                   setBulkLoading('delete');
                   try {
                     await api.post('/api/leads/bulk-delete', { lead_ids: [...selectedLeadIds] });

@@ -220,12 +220,16 @@ function RuleForm({ ruleType, existing, onClose, onSaved }: {
                 <input value={keywords} onChange={e => setKeywords(e.target.value)}
                   placeholder={ruleType === 'opt_out' ? 'STOP, UNSUBSCRIBE, OPT OUT' : 'price, cost, rate, fees'}
                   className={inputCls} />
+                {/* Exact match available for keyword_reply AND opt_out (STOP vs STOPPED compliance) */}
+                {(ruleType === 'keyword_reply' || ruleType === 'opt_out') && (
+                  <label className="flex items-center gap-2 mt-2 text-sm text-gray-600 cursor-pointer">
+                    <input type="checkbox" checked={matchExact} onChange={e => setMatchExact(e.target.checked)} className="rounded" />
+                    Exact match only — "STOP" won't match "STOPPED"
+                    {ruleType === 'opt_out' && <span className="text-[10px] text-amber-600 font-semibold ml-1">Recommended for compliance</span>}
+                  </label>
+                )}
                 {ruleType === 'keyword_reply' && (
                   <>
-                    <label className="flex items-center gap-2 mt-2 text-sm text-gray-600 cursor-pointer">
-                      <input type="checkbox" checked={matchExact} onChange={e => setMatchExact(e.target.checked)} className="rounded" />
-                      Exact match only (not partial)
-                    </label>
                     <div className={`mt-3 rounded-xl border p-3 ${(quota && quota.queries_limit - quota.queries_used <= 0) ? 'border-red-200 bg-red-50' : 'border-purple-200 bg-purple-50'}`}>
                       <label className="flex items-start gap-2.5 cursor-pointer">
                         <input type="checkbox" checked={useAiReply}
@@ -361,13 +365,20 @@ function RuleForm({ ruleType, existing, onClose, onSaved }: {
 
                 {/* Automation skip toggle — welcome only */}
                 {ruleType === 'welcome' && (
-                  <div className="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-xl p-3">
-                    <input type="checkbox" id="skipAuto" checked={skipAutomation} onChange={e => setSkipAutomation(e.target.checked)}
-                      className="rounded mt-0.5" />
-                    <label htmlFor="skipAuto" className="text-sm text-blue-800 cursor-pointer">
-                      <span className="font-semibold">Skip lead automation for new contacts</span>
-                      <p className="text-xs text-blue-600 mt-0.5">When this welcome fires, the "New WhatsApp Lead" automation workflow won't also run — prevents duplicate messages for new contacts only. AI agentic replies are handled separately.</p>
-                    </label>
+                  <div className="space-y-2">
+                    <div className="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-xl p-3">
+                      <input type="checkbox" id="skipAuto" checked={skipAutomation} onChange={e => setSkipAutomation(e.target.checked)}
+                        className="rounded mt-0.5" />
+                      <label htmlFor="skipAuto" className="text-sm text-blue-800 cursor-pointer">
+                        <span className="font-semibold">Skip "New WhatsApp Lead" automation for new contacts</span>
+                        <p className="text-xs text-blue-600 mt-0.5">Prevents duplicate messages — welcome fires first, automation is skipped. Agentic AI replies are handled by the compliance engine (won't duplicate).</p>
+                      </label>
+                    </div>
+                    {!skipAutomation && (
+                      <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                        ⚠️ Welcome message AND "New WhatsApp Lead" automation will both fire for new contacts. Enable "Skip automation" above to prevent duplicate messages.
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -700,6 +711,14 @@ export default function AutoRepliesPage() {
               </div>
             );
           })()}
+
+          {/* Opt-out priority notice — fires before keyword_reply */}
+          {activeTab === 'opt_out' && tabRules.filter(r => r.rule_type === 'keyword_reply' && r.is_active).length > 0 && (
+            <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2 text-xs text-red-800">
+              <ShieldAlert className="w-4 h-4 shrink-0 text-red-600" />
+              <span><strong>Priority:</strong> Opt-out always fires FIRST — if a message matches both opt-out AND keyword reply keywords, opt-out wins. The contact will be blocked and no keyword reply will send.</span>
+            </div>
+          )}
 
           {/* Active welcome + skip notice */}
           {activeTab === 'welcome' && tabRules.some(r => r.is_active && r.skip_automation_on_welcome !== false) && (
