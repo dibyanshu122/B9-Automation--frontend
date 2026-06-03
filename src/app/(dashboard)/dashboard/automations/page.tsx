@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { DragEvent } from 'react';
 import toast from 'react-hot-toast';
 import {
@@ -3138,25 +3138,58 @@ function ActionBlockSettings({
             <span className="rounded-full bg-white px-2 py-1 text-[10px] font-bold uppercase text-emerald-700">{integrationStatusFor('meta')}</span>
           </div>
           <SelectField label="Media type" value={config.media_type || 'image'} options={['image', 'video', 'document', 'audio']} onChange={(value) => onChange('media_type', value)} />
-          <InputField
-            label="Media URL (public HTTPS link)"
-            value={config.media_url || ''}
-            placeholder={
-              config.media_type === 'document' ? 'https://yoursite.com/brochure.pdf' :
-              config.media_type === 'video' ? 'https://yoursite.com/demo.mp4' :
-              'https://yoursite.com/product.jpg'
-            }
-            onChange={(value) => onChange('media_url', value)}
-          />
+          {/* File upload for media */}
+          {(() => {
+            const [uploading, setUploading] = React.useState(false);
+            const accept = config.media_type === 'document' ? 'application/pdf' : config.media_type === 'video' ? 'video/mp4,video/3gpp' : config.media_type === 'audio' ? 'audio/mpeg,audio/ogg,audio/wav' : 'image/jpeg,image/png,image/webp';
+            const uploadMedia = async (file: File) => {
+              setUploading(true);
+              try {
+                const fd = new FormData();
+                fd.append('file', file);
+                const token = useAuthStore.getState().token;
+                const base = process.env.NEXT_PUBLIC_API_URL || '';
+                const res = await fetch(`${base}/api/automation/upload-media-public`, {
+                  method: 'POST',
+                  headers: token ? { Authorization: `Bearer ${token}` } : {},
+                  body: fd,
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Upload failed');
+                onChange('media_url', data.public_url);
+                if (config.media_type === 'document' && file.name && !config.filename) onChange('filename', file.name);
+              } catch (err: any) {
+                alert(err.message || 'Upload failed');
+              } finally {
+                setUploading(false);
+              }
+            };
+            return (
+              <div>
+                <label className="mb-1 block text-[11px] font-semibold text-gray-500 uppercase tracking-wide">
+                  {config.media_type === 'document' ? 'PDF / Document' : config.media_type === 'video' ? 'Video File' : config.media_type === 'audio' ? 'Audio File' : 'Image File'}
+                </label>
+                {config.media_url ? (
+                  <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-white px-3 py-2">
+                    <span className="text-base">{config.media_type === 'document' ? '📄' : config.media_type === 'video' ? '🎥' : config.media_type === 'audio' ? '🎵' : '🖼️'}</span>
+                    <span className="flex-1 truncate text-xs text-gray-600">{config.media_url.split('/').pop()}</span>
+                    <button type="button" onClick={() => onChange('media_url', '')} className="text-red-400 hover:text-red-600 text-xs">✕ Remove</button>
+                  </div>
+                ) : (
+                  <label className={`flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-emerald-200 bg-white px-3 py-3 text-xs text-gray-500 hover:border-emerald-400 hover:bg-emerald-50 transition ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                    {uploading ? <><span className="animate-spin">⏳</span> Uploading...</> : <><span>📤</span> Click to upload {config.media_type === 'document' ? 'PDF' : config.media_type === 'video' ? 'video' : config.media_type === 'audio' ? 'audio' : 'image'}</>}
+                    <input type="file" className="hidden" accept={accept} onChange={e => { const f = e.target.files?.[0]; if (f) uploadMedia(f); e.target.value = ''; }} />
+                  </label>
+                )}
+              </div>
+            );
+          })()}
           <InputField label="Caption (optional)" value={config.caption || ''} placeholder="{{ai.response}}" onChange={(value) => onChange('caption', value)} />
           {config.media_type === 'document' && (
             <InputField label="Filename for document" value={config.filename || ''} placeholder="brochure.pdf" onChange={(value) => onChange('filename', value)} />
           )}
           <InputField label="Send to" value={config.recipient || '{{lead.phone}}'} placeholder="{{lead.phone}}" onChange={(value) => onChange('recipient', value)} />
           <SelectField label="Send mode" value={config.send_mode || 'draft'} options={['draft', 'live']} onChange={(value) => onChange('send_mode', value)} />
-          <div className="rounded-lg bg-amber-50 border border-amber-100 p-2 text-xs text-amber-700">
-            ⚠️ URL must be a publicly accessible HTTPS link. Limits: image 5 MB · video 16 MB · document 100 MB.
-          </div>
         </div>
       )}
 

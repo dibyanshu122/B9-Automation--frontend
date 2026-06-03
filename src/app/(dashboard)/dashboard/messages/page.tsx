@@ -374,6 +374,8 @@ function UnifiedInbox() {
   const [mediaUrl, setMediaUrl] = useState('');
   const [mediaType, setMediaType] = useState<'image'|'document'|'video'>('image');
   const [sendingMedia, setSendingMedia] = useState(false);
+  const [mediaUploading, setMediaUploading] = useState(false);
+  const mediaFileRef = useRef<HTMLInputElement>(null);
 
   // Fetch leads once to map phone → name
   useEffect(() => {
@@ -1266,28 +1268,60 @@ function UnifiedInbox() {
                   >
                     <Paperclip className="h-6 w-6" />
                   </button>
-                  {/* Media URL dialog */}
+                  {/* Media upload dialog */}
                   {mediaOpen && (
-                    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center bg-black/40 p-4" onClick={() => setMediaOpen(false)}>
+                    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center bg-black/40 p-4" onClick={() => { setMediaOpen(false); setMediaUrl(''); }}>
                       <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl p-5" onClick={e => e.stopPropagation()}>
                         <p className="text-base font-bold text-gray-900 mb-1">Send Media</p>
-                        <p className="text-xs text-gray-400 mb-4">Paste a public HTTPS URL — image, PDF, or video</p>
-                        <div className="flex gap-2 mb-3">
+                        <div className="flex gap-2 mb-4">
                           {(['image','document','video'] as const).map(t => (
-                            <button key={t} onClick={() => setMediaType(t)}
+                            <button key={t} onClick={() => { setMediaType(t); setMediaUrl(''); }}
                               className={`flex-1 rounded-xl border py-1.5 text-xs font-semibold capitalize transition ${mediaType===t ? 'border-green-400 bg-green-50 text-green-700' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}>
                               {t==='image'?'🖼️ Image':t==='document'?'📄 Document':'🎥 Video'}
                             </button>
                           ))}
                         </div>
-                        <input
-                          type="url"
-                          value={mediaUrl}
-                          onChange={e => setMediaUrl(e.target.value)}
-                          placeholder={mediaType==='image'?'https://example.com/photo.jpg':mediaType==='document'?'https://example.com/brochure.pdf':'https://example.com/demo.mp4'}
-                          className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 mb-4"
-                          autoFocus
+                        <input ref={mediaFileRef} type="file" className="hidden"
+                          accept={mediaType==='image'?'image/jpeg,image/png,image/webp':mediaType==='document'?'application/pdf':'video/mp4,video/3gpp'}
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            setMediaUploading(true);
+                            try {
+                              const fd = new FormData();
+                              fd.append('file', file);
+                              const tkn = useAuthStore.getState().token;
+                              const base = process.env.NEXT_PUBLIC_API_URL || '';
+                              const res = await fetch(`${base}/api/automation/upload-media-public`, {
+                                method: 'POST',
+                                headers: tkn ? { Authorization: `Bearer ${tkn}` } : {},
+                                body: fd,
+                              });
+                              const data = await res.json();
+                              if (!res.ok) throw new Error(data.detail || 'Upload failed');
+                              setMediaUrl(data.public_url);
+                            } catch (err: any) {
+                              alert(err.message || 'Upload failed');
+                            } finally {
+                              setMediaUploading(false);
+                              if (mediaFileRef.current) mediaFileRef.current.value = '';
+                            }
+                          }}
                         />
+                        {mediaUrl ? (
+                          <div className="flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 px-3 py-3 mb-4">
+                            <span className="text-xl">{mediaType==='image'?'🖼️':mediaType==='document'?'📄':'🎥'}</span>
+                            <span className="flex-1 truncate text-sm text-gray-700">{mediaUrl.split('/').pop()}</span>
+                            <button onClick={() => setMediaUrl('')} className="text-red-400 hover:text-red-600 text-xs font-semibold">Remove</button>
+                          </div>
+                        ) : (
+                          <button onClick={() => mediaFileRef.current?.click()} disabled={mediaUploading}
+                            className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-200 py-5 text-sm text-gray-500 hover:border-green-400 hover:bg-green-50 hover:text-green-600 transition mb-4 disabled:opacity-50">
+                            {mediaUploading
+                              ? <><Loader2 className="h-5 w-5 animate-spin" /> Uploading...</>
+                              : <><Paperclip className="h-5 w-5" /> Click to upload {mediaType==='image'?'image':mediaType==='document'?'PDF':'video'}</>}
+                          </button>
+                        )}
                         <div className="flex gap-2">
                           <button onClick={() => { setMediaOpen(false); setMediaUrl(''); }}
                             className="flex-1 rounded-xl border border-gray-200 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50">

@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useApi } from '@/hooks/useApi';
-import { Package, Plus, Pencil, Trash2, Search, Tag, IndianRupee, X, Check, RefreshCw, Link2 } from 'lucide-react';
+import { Package, Plus, Pencil, Trash2, Search, Tag, IndianRupee, X, Check, RefreshCw, Link2, Upload, Loader2 } from 'lucide-react';
+import { useAuthStore } from '@/store/authStore';
+import toast from 'react-hot-toast';
 import { Button } from '@/components/button';
 import { useRouter } from 'next/navigation';
 
@@ -52,6 +54,8 @@ export default function CatalogPage() {
   const [metaConn, setMetaConn] = useState<MetaConnection>({ connected: false });
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState('');
+  const [imgUploading, setImgUploading] = useState(false);
+  const imgInputRef = useRef<HTMLInputElement>(null);
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
@@ -355,13 +359,46 @@ export default function CatalogPage() {
                 </div>
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-600">Image URL (optional)</label>
-                <input
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-200"
-                  placeholder="https://..."
-                  value={form.image_url || ''}
-                  onChange={e => setForm(f => ({ ...f, image_url: e.target.value }))}
+                <label className="mb-1 block text-xs font-medium text-gray-600">Product Image (optional)</label>
+                <input ref={imgInputRef} type="file" className="hidden" accept="image/jpeg,image/png,image/webp,image/gif"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    setImgUploading(true);
+                    try {
+                      const fd = new FormData();
+                      fd.append('file', file);
+                      const token = useAuthStore.getState().token;
+                      const base = process.env.NEXT_PUBLIC_API_URL || '';
+                      const res = await fetch(`${base}/api/automation/upload-media-public`, {
+                        method: 'POST',
+                        headers: token ? { Authorization: `Bearer ${token}` } : {},
+                        body: fd,
+                      });
+                      const data = await res.json();
+                      if (!res.ok) throw new Error(data.detail || 'Upload failed');
+                      setForm(f => ({ ...f, image_url: data.public_url }));
+                      toast.success('Image uploaded!');
+                    } catch (err: any) {
+                      toast.error(err.message || 'Upload failed');
+                    } finally {
+                      setImgUploading(false);
+                      if (imgInputRef.current) imgInputRef.current.value = '';
+                    }
+                  }}
                 />
+                {form.image_url ? (
+                  <div className="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+                    <img src={form.image_url} alt="" className="h-10 w-10 rounded-lg object-cover flex-shrink-0" onError={e => { (e.target as HTMLImageElement).style.display='none'; }} />
+                    <span className="flex-1 truncate text-xs text-gray-500">{form.image_url.split('/').pop()}</span>
+                    <button type="button" onClick={() => setForm(f => ({ ...f, image_url: '' }))} className="text-red-400 hover:text-red-600 flex-shrink-0"><X className="h-3.5 w-3.5" /></button>
+                  </div>
+                ) : (
+                  <button type="button" onClick={() => imgInputRef.current?.click()} disabled={imgUploading}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-200 bg-white px-3 py-3 text-sm text-gray-500 hover:border-violet-400 hover:bg-violet-50 hover:text-violet-600 transition disabled:opacity-50">
+                    {imgUploading ? <><Loader2 className="h-4 w-4 animate-spin" /> Uploading...</> : <><Upload className="h-4 w-4" /> Click to upload image</>}
+                  </button>
+                )}
               </div>
               <label className="flex items-center gap-2 cursor-pointer">
                 <div

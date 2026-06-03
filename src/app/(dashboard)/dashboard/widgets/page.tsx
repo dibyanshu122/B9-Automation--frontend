@@ -1,13 +1,14 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Card } from '@/components/card';
 import { Button } from '@/components/button';
 import { UpgradeModal } from '@/components/upgrade-modal';
 import { getApiClient } from '@/hooks/useApi';
 import { usePlanAccess } from '@/hooks/usePlanAccess';
+import { useAuthStore } from '@/store/authStore';
 import { Assistant } from '@/types';
-import { Bot, Check, Code2, Copy, Globe, Loader2, MessageSquare, Plus, Save, Send, ShieldCheck, Trash2 } from 'lucide-react';
+import { Bot, Check, Code2, Copy, Globe, Loader2, MessageSquare, Plus, Save, Send, ShieldCheck, Trash2, Upload, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface WidgetDomain {
@@ -83,6 +84,8 @@ export default function WidgetsPage() {
   const [addingDomain, setAddingDomain] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [fallbackImgUploading, setFallbackImgUploading] = useState(false);
+  const fallbackImgRef = useRef<HTMLInputElement>(null);
   // Preview/test chat state
   const [previewMessages, setPreviewMessages] = useState<{role:string;text:string}[]>([]);
   const [previewInput, setPreviewInput] = useState('');
@@ -513,13 +516,47 @@ export default function WidgetsPage() {
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">Mobile fallback image URL</label>
-                  <input
-                    value={config.fallback_image_url}
-                    onChange={(e) => setConfig({ ...config, fallback_image_url: e.target.value })}
-                    className="input-field"
-                    placeholder="https://example.com/robot.png"
+                  <label className="mb-1 block text-sm font-medium text-gray-700">Mobile fallback image</label>
+                  <input ref={fallbackImgRef} type="file" className="hidden" accept="image/jpeg,image/png,image/webp,image/gif"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setFallbackImgUploading(true);
+                      try {
+                        const fd = new FormData();
+                        fd.append('file', file);
+                        const token = useAuthStore.getState().token;
+                        const base = process.env.NEXT_PUBLIC_API_URL || '';
+                        const res = await fetch(`${base}/api/automation/upload-media-public`, {
+                          method: 'POST',
+                          headers: token ? { Authorization: `Bearer ${token}` } : {},
+                          body: fd,
+                        });
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data.detail || 'Upload failed');
+                        setConfig({ ...config, fallback_image_url: data.public_url });
+                        toast.success('Image uploaded!');
+                      } catch (err: any) {
+                        toast.error(err.message || 'Upload failed');
+                      } finally {
+                        setFallbackImgUploading(false);
+                        if (fallbackImgRef.current) fallbackImgRef.current.value = '';
+                      }
+                    }}
                   />
+                  {config.fallback_image_url ? (
+                    <div className="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={config.fallback_image_url} alt="" className="h-9 w-9 rounded-lg object-cover flex-shrink-0" onError={e => { (e.target as HTMLImageElement).style.display='none'; }} />
+                      <span className="flex-1 truncate text-xs text-gray-500">{config.fallback_image_url.split('/').pop()}</span>
+                      <button type="button" onClick={() => setConfig({ ...config, fallback_image_url: '' })} className="text-red-400 hover:text-red-600 flex-shrink-0"><X className="h-3.5 w-3.5" /></button>
+                    </div>
+                  ) : (
+                    <button type="button" onClick={() => fallbackImgRef.current?.click()} disabled={fallbackImgUploading}
+                      className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-500 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600 transition disabled:opacity-50">
+                      {fallbackImgUploading ? <><Loader2 className="h-4 w-4 animate-spin" /> Uploading...</> : <><Upload className="h-4 w-4" /> Upload fallback image</>}
+                    </button>
+                  )}
                 </div>
                 <div>
                   <label className="mb-1 block text-sm font-medium text-gray-700">Suggested buttons</label>
