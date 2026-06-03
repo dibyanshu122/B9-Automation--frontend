@@ -175,13 +175,10 @@ export const Sidebar = () => {
     children?.some(c => isActive(c.href)) ?? false;
 
   const item = (active: boolean, mini = false) => clsx(
-    // Base: always flex, full width, centered vertically, smooth transitions
     'flex w-full items-center rounded-lg transition-all duration-150 text-sm font-medium',
     mini
-      // Collapsed: perfect center alignment, consistent h-10 touch target, no margin bleed
-      ? 'h-10 justify-center items-center px-0 py-0 gap-0'
-      // Expanded: icon + label row with consistent padding
-      : 'gap-3 px-3 py-2',
+      ? 'h-11 justify-center items-center px-0 py-0 gap-0'   // collapsed: centered icon
+      : 'gap-3 px-3 py-3',                                    // expanded: py-3 + gap-3
     active
       ? mini
         ? 'bg-indigo-500/25 text-white'
@@ -190,7 +187,7 @@ export const Sidebar = () => {
   );
   const child = (active: boolean) => clsx(
     'flex w-full items-center gap-3 rounded-lg transition-all duration-150 text-sm font-medium',
-    'px-3 py-2',
+    'px-3 py-2.5',                                            // tighter child items
     active
       ? 'bg-indigo-500/20 text-indigo-300 font-semibold'
       : 'text-slate-400 hover:bg-white/8 hover:text-slate-100'
@@ -233,11 +230,9 @@ export const Sidebar = () => {
           expanded && 'shadow-[4px_0_20px_rgba(0,0,0,0.3)]',
         )}
       >
-        {/* Nav */}
-        {/* Nav: px-2 when expanded, px-1 when collapsed to keep icons truly centered */}
         <nav className={clsx(
-          'flex-1 overflow-y-auto overflow-x-hidden py-3 space-y-0.5',
-          expanded ? 'px-2' : 'px-1.5'
+          'flex-1 overflow-y-auto overflow-x-hidden py-3',
+          expanded ? 'px-3' : 'px-1.5'   // px-3 expanded (premium), px-1.5 collapsed (centered)
         )}>
           {mainGroups.map((group) => {
             const Icon = ICONS[group.icon as keyof typeof ICONS];
@@ -248,7 +243,7 @@ export const Sidebar = () => {
 
             if (hasKids) {
               return (
-                <div key={group.id}>
+                <div key={group.id} className="mb-2">
                   <button
                     title={!expanded ? group.name : undefined}
                     onClick={() => {
@@ -298,21 +293,22 @@ export const Sidebar = () => {
             }
 
             return (
-              <Link key={group.id} href={group.href || '#'}
-                title={!expanded ? group.name : undefined}
-                className={item(singleActive, !expanded)}
-                onClick={() => setSidebarOpen(false)}>
-                <Icon className="w-5 h-5 shrink-0" />
-                <span className={lbl}>{group.name}</span>
-              </Link>
+              <div key={group.id} className="mb-1">
+                <Link href={group.href || '#'}
+                  title={!expanded ? group.name : undefined}
+                  className={item(singleActive, !expanded)}
+                  onClick={() => setSidebarOpen(false)}>
+                  <Icon className="w-5 h-5 shrink-0" />
+                  <span className={lbl}>{group.name}</span>
+                </Link>
+              </div>
             );
           })}
         </nav>
 
-        {/* Bottom: px adapts to collapsed/expanded state */}
         <div className={clsx(
-          'shrink-0 border-t border-white/10 py-2 space-y-0.5',
-          expanded ? 'px-2' : 'px-1.5'
+          'shrink-0 border-t border-white/10 py-2',
+          expanded ? 'px-3' : 'px-1.5'
         )}>
           {bottomGroups.map((group) => {
             const Icon = ICONS[group.icon as keyof typeof ICONS];
