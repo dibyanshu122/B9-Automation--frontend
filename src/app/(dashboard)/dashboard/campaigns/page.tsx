@@ -1170,6 +1170,7 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
                     <div className="p-3 text-sm text-red-600">
                       <p className="font-semibold">Failed to load templates</p>
                       <p className="text-xs mt-1">{tplLoadError}</p>
+                      <button onClick={() => { setTplLoadError(''); setLoadingTpl(true); get('/api/automation/whatsapp/templates').then(r => setTemplates((r.data?.templates || []).filter((t: any) => t.status === 'APPROVED'))).catch(() => setTplLoadError('Retry failed — check WhatsApp connection.')).finally(() => setLoadingTpl(false)); }} className="mt-2 text-xs font-bold text-red-700 underline hover:text-red-900">Retry →</button>
                     </div>
                   ) : templates.length === 0 ? (
                     <div className="p-3 text-sm text-amber-600">

@@ -2159,8 +2159,11 @@ export default function IntegrationsPage() {
                   ) : (
                     <div className="mt-3">
                       <p className="text-sm text-gray-600">Connect Meta to use Instagram DMs from a Professional account linked to a Facebook Page.</p>
+                      {extraConn['instagram']?.config?.token_expired && (
+                        <div className="mt-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800 font-semibold">⚠️ Instagram token expired — reconnect to restore DM automation.</div>
+                      )}
                       <Button className="mt-3" onClick={connectInstagram} loading={instagramOAuthLoading}>
-                        <ExternalLink className="h-4 w-4" />Connect Instagram
+                        <ExternalLink className="h-4 w-4" />{extraConn['instagram']?.config?.token_expired ? 'Reconnect Instagram' : 'Connect Instagram'}
                       </Button>
                       <p className="mt-2 text-xs text-gray-400">Permissions: Instagram basic, messages, pages list and page metadata.</p>
                     </div>

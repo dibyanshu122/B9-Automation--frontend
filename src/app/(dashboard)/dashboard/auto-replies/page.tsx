@@ -153,7 +153,7 @@ function RuleForm({ ruleType, existing, onClose, onSaved }: {
   const [mediaUrl, setMediaUrl] = useState(existing?.media_url || '');
   const [mediaType, setMediaType] = useState(existing?.media_type || 'image');
   const [mediaCaption, setMediaCaption] = useState(existing?.media_caption || '');
-  const [skipAutomation, setSkipAutomation] = useState(existing?.skip_automation_on_welcome !== false);
+  const [skipAutomation, setSkipAutomation] = useState(existing?.skip_automation_on_welcome ?? true);
   const [saving, setSaving] = useState(false);
   const [mediaUploading, setMediaUploading] = useState(false);
   const [mediaInputMode, setMediaInputMode] = useState<'url' | 'file'>('url');

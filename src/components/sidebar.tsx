@@ -124,6 +124,7 @@ export const Sidebar = () => {
   };
 
   const [teamAccess, setTeamAccess] = useState<TeamAccess | null>(null);
+  const [accessLoaded, setAccessLoaded] = useState(false);
   const [hovered, setHovered] = useState(false);
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -139,11 +140,12 @@ export const Sidebar = () => {
 
   useEffect(() => {
     const token = useAuthStore.getState().token;
-    if (!token) return;
+    if (!token) { setAccessLoaded(true); return; }
     getDashboardBootstrap()
       .then((data) => data.team || null)
       .then((data) => { if (data) setTeamAccess(data); })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setAccessLoaded(true));
   }, []);
 
   const expanded = sidebarPinned || hovered;
@@ -218,9 +220,17 @@ export const Sidebar = () => {
       >
         <nav className={clsx(
           'flex-1 overflow-y-auto overflow-x-hidden py-4',
-          expanded ? 'px-3' : 'px-1.5'   // px-3 expanded (premium), px-1.5 collapsed (centered)
+          expanded ? 'px-3' : 'px-1.5'
         )}>
-          {mainGroups.map((group) => {
+          {/* Skeleton while permissions load — prevents forbidden-route click window */}
+          {!accessLoaded && (
+            <div className="space-y-1 px-1">
+              {[...Array(7)].map((_, i) => (
+                <div key={i} className="h-10 rounded-lg bg-white/[0.06] animate-pulse" style={{ width: expanded ? '100%' : '40px' }} />
+              ))}
+            </div>
+          )}
+          {accessLoaded && mainGroups.map((group) => {
             const Icon = ICONS[group.icon as keyof typeof ICONS];
             const open = openGroups.includes(group.id);
             const hasKids = !!(group.children?.length);
@@ -238,7 +248,13 @@ export const Sidebar = () => {
                     }}
                     className={item(gActive, !expanded)}
                   >
-                    <Icon className="w-5 h-5 shrink-0" />
+                    <span className="relative shrink-0">
+                      <Icon className="w-5 h-5" />
+                      {/* Red dot when group has Messages child with unread — visible even collapsed */}
+                      {!expanded && unreadCount > 0 && group.children?.some(c => c.href === '/dashboard/messages') && (
+                        <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-cyan-500 ring-2 ring-slate-950" />
+                      )}
+                    </span>
                     <span className={clsx(lbl, expanded && 'flex-1 text-left')}>{group.name}</span>
                     {expanded && (
                       <ChevronDown className={clsx(
@@ -294,7 +310,7 @@ export const Sidebar = () => {
         </nav>
 
         <div className={clsx(
-          'shrink-0 border-t border-white/10 py-2',
+          'shrink-0 border-t border-white/[0.08] py-2',
           expanded ? 'px-3' : 'px-1.5'
         )}>
           {bottomGroups.map((group) => {

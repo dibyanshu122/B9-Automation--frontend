@@ -580,6 +580,7 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
   };
 
   const handleSubmit = async () => {
+    if (submitting) return; // guard against rapid double-click before state update
     if (!validate()) return;
     setSubmitting(true);
     try {

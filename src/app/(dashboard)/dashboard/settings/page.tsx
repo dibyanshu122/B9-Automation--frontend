@@ -328,6 +328,15 @@ export default function SettingsPage() {
   }, []);
 
   const saveAiKeys = async () => {
+    // Client-side format validation before API call
+    if (groqKey.trim() && !groqKey.trim().startsWith('gsk_')) {
+      toast.error('Groq API key must start with "gsk_" — check your key at console.groq.com');
+      return;
+    }
+    if (geminiKey.trim() && geminiKey.trim().length < 20) {
+      toast.error('Gemini API key looks too short — check your key at aistudio.google.com');
+      return;
+    }
     setSavingAiKeys(true);
     try {
       const body: any = { byok_enabled: byokEnabled, preferred_model: preferredModel, agentic_max_steps: agenticMaxSteps };

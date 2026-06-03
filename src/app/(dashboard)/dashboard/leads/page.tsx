@@ -106,6 +106,7 @@ export default function LeadsPage() {
   const [leadDateTo, setLeadDateTo] = useState('');
   const leadDateFromRef = useRef<HTMLInputElement>(null);
   const leadDateToRef = useRef<HTMLInputElement>(null);
+  const dragStageTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [selectedLeadIds, setSelectedLeadIds] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState('');
   const [leadMemory, setLeadMemory] = useState<string[]>([]);
@@ -316,12 +317,10 @@ export default function LeadsPage() {
         const data = leadResponse.value.data;
         const newLeads = Array.isArray(data) ? data : (data?.leads || data || []);
         setLeads(newLeads);
-        // Preload multi-tags for all current leads (batch, non-blocking)
-        Promise.allSettled(newLeads.slice(0, 60).map((l: any) => api.get(`/api/leads/${l.id}/tags`))).then(tagResults => {
-          const map: Record<string, string[]> = {};
-          tagResults.forEach((r, i) => { if (r.status === 'fulfilled') map[newLeads[i].id] = r.value.data || []; });
-          setLeadTagsMap(map);
-        });
+        // Preload ALL lead tags in one bulk query (no N+1 per-lead fetches)
+        api.get('/api/leads/tags/bulk').then(r => {
+          if (r.data && typeof r.data === 'object') setLeadTagsMap(r.data);
+        }).catch(() => {});
         setLeadTotal(leadResponse.value.headers?.['x-total-count']
           ? parseInt(leadResponse.value.headers['x-total-count'])
           : (Array.isArray(data) ? data.length : (data?.total || data?.length || 0)));
@@ -1033,10 +1032,16 @@ export default function LeadsPage() {
                       onDragLeave={() => setDragOverStage(null)}
                       onDrop={() => {
                         if (draggingLeadId) {
-                          const lead = leads.find(l => l.id === draggingLeadId);
-                          if (lead && lead.status !== stage.key) updateStage(lead, stage.key);
+                          const dropLeadId = draggingLeadId;
+                          const dropStage = stage.key;
                           setDraggingLeadId(null);
                           setDragOverStage(null);
+                          // Debounce: cancel any pending stage update, fire after 250ms
+                          if (dragStageTimer.current) clearTimeout(dragStageTimer.current);
+                          dragStageTimer.current = setTimeout(() => {
+                            const lead = leads.find(l => l.id === dropLeadId);
+                            if (lead && lead.status !== dropStage) updateStage(lead, dropStage);
+                          }, 250);
                         }
                       }}
                       className={`flex w-72 shrink-0 flex-col rounded-2xl border-2 transition-all ${cfg.border} ${isOver ? 'ring-2 ring-offset-1 ring-primary-300 scale-[1.01]' : ''} bg-white/70`}

@@ -664,10 +664,13 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
-          <div className="mt-4 grid grid-cols-3 gap-2 rounded-xl bg-slate-950 p-3 text-center text-white">
-            <div><p className="text-2xl font-black">{automationStats.hot_leads}</p><p className="text-xs text-red-200">Hot</p></div>
-            <div><p className="text-2xl font-black">{automationStats.warm_leads}</p><p className="text-xs text-amber-200">Warm</p></div>
-            <div><p className="text-2xl font-black">{automationStats.cold_leads}</p><p className="text-xs text-sky-200">Cold</p></div>
+          <div className="mt-4 flex items-center justify-between rounded-xl bg-slate-950 px-4 py-3 text-white">
+            <div className="flex items-center gap-4 text-sm">
+              <span className="font-semibold text-red-300">🔥 {automationStats.hot_leads} hot</span>
+              <span className="font-semibold text-amber-300">~ {automationStats.warm_leads} warm</span>
+              <span className="font-semibold text-sky-300">❄️ {automationStats.cold_leads} cold</span>
+            </div>
+            <Link href="/dashboard/leads" className="shrink-0 text-[11px] font-bold text-slate-400 hover:text-white transition">View CRM →</Link>
           </div>
         </Card>
 

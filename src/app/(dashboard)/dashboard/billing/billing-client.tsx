@@ -123,7 +123,9 @@ export default function BillingClient({ initialPlan, initialInvoices }: BillingC
         description: `${plan.charAt(0) + plan.slice(1).toLowerCase()} Plan - ${pendingCycle === 'yearly' ? 'Annual' : 'Monthly'}`,
         image: '/brand-logo.svg',
         handler: () => {
-          toast.success('Payment confirmed! Activating your plan — this takes up to 60 seconds...');
+          toast.success('Payment confirmed! Activating your plan — this takes up to 3 minutes...');
+          // Store pending plan in localStorage so page refresh can show a banner
+          localStorage.setItem('b9_plan_activating', '1');
           let attempts = 0;
           const poll = setInterval(async () => {
             attempts++;
@@ -131,15 +133,16 @@ export default function BillingClient({ initialPlan, initialInvoices }: BillingC
               const res = await get('/api/billing/current-plan');
               if (res.data?.plan && res.data.plan !== currentPlan?.plan) {
                 clearInterval(poll);
+                localStorage.removeItem('b9_plan_activating');
                 toast.success(`${res.data.plan} plan activated! Unused credits from your old plan saved as top-up (valid 90 days).`);
                 setTimeout(() => window.location.reload(), 1500);
               }
             } catch { /* ignore polling error */ }
-            // 60 attempts × 2s = 120s max wait
-            if (attempts >= 60) {
+            // 90 attempts × 2s = 180s (3 min) to handle slow Razorpay webhooks
+            if (attempts >= 90) {
               clearInterval(poll);
-              toast('Plan activation is taking longer than usual. Refreshing...', { icon: 'ℹ️' });
-              window.location.reload();
+              localStorage.removeItem('b9_plan_activating');
+              toast('Plan activation is taking longer than expected. Please refresh in a minute.', { icon: 'ℹ️', duration: 8000 });
             }
           }, 2000);
         },
@@ -521,6 +524,7 @@ export default function BillingClient({ initialPlan, initialInvoices }: BillingC
                   <th className="px-4 py-3 text-left font-bold text-gray-900">Amount</th>
                   <th className="px-4 py-3 text-left font-bold text-gray-900">Status</th>
                   <th className="px-4 py-3 text-left font-bold text-gray-900">Date</th>
+                  <th className="px-4 py-3 text-left font-bold text-gray-900">PDF</th>
                 </tr>
               </thead>
               <tbody>
@@ -541,6 +545,13 @@ export default function BillingClient({ initialPlan, initialInvoices }: BillingC
                     </td>
                     <td className="px-4 py-3">
                       {new Date(invoice.billing_period_start).toLocaleDateString()}
+                    </td>
+                    <td className="px-4 py-3">
+                      {(invoice as any).invoice_url ? (
+                        <a href={(invoice as any).invoice_url} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline">Download</a>
+                      ) : (
+                        <span className="text-xs text-gray-400">—</span>
+                      )}
                     </td>
                   </tr>
                 ))}
