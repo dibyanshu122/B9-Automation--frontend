@@ -506,14 +506,15 @@ export default function AutoRepliesPage() {
   const [rules, setRules] = useState<Rule[]>([]);
   const [dismissedInfoTabs, setDismissedInfoTabs] = useState<Set<string>>(() => {
     try {
-      const saved = localStorage.getItem('ar_dismissed_info');
+      // sessionStorage: resets on logout/browser close — info guides show again on next login
+      const saved = sessionStorage.getItem('ar_dismissed_info');
       return new Set(saved ? JSON.parse(saved) : []);
     } catch { return new Set(); }
   });
   const dismissInfo = (tab: string) => {
     const next = new Set(dismissedInfoTabs).add(tab);
     setDismissedInfoTabs(next);
-    try { localStorage.setItem('ar_dismissed_info', JSON.stringify([...next])); } catch { /* ignore */ }
+    try { sessionStorage.setItem('ar_dismissed_info', JSON.stringify([...next])); } catch { /* ignore */ }
   };
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
