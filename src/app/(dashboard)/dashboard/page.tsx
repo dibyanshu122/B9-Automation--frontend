@@ -476,8 +476,8 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <UsageMeter label="AI queries" used={quota?.queries_used || 0} limit={quota?.queries_limit || apiLimits?.queries || planFallback.queries} />
-            <UsageMeter label="Automation runs" used={quota?.automation_executions_used || quota?.usage?.automation_executions_used || 0} limit={quota?.automation_executions_limit || apiLimits?.automation_executions_day || planAccess.billing?.quotas?.automation_executions_day || planFallback.automations_day} />
+            <UsageMeter label="AI queries" used={quota?.queries_used || 0} limit={quota?.queries_limit || apiLimits?.queries || planFallback.queries} monthly />
+            <UsageMeter label="Automation runs" used={quota?.automation_executions_used || quota?.usage?.automation_executions_used || 0} limit={quota?.automation_executions_limit || apiLimits?.automation_executions_day || planAccess.billing?.quotas?.automation_executions_day || planFallback.automations_day} monthly />
             <UsageMeter label="Leads today" used={quota?.leads_today || quota?.usage?.leads_today || 0} limit={quota?.leads_limit || apiLimits?.leads_day || planAccess.billing?.quotas?.leads_day || planFallback.leads_day} />
             <UsageMeter label="Storage" used={Math.round(quota?.storage_used_mb || 0)} limit={quota?.storage_limit_mb || apiLimits?.storage_mb || planFallback.storage_mb} suffix="MB" />
           </div>
@@ -741,13 +741,18 @@ export default function DashboardPage() {
   );
 }
 
-function UsageMeter({ label, used, limit, suffix = '' }: { label: string; used: number; limit: number; suffix?: string }) {
+function UsageMeter({ label, used, limit, suffix = '', monthly = false }: { label: string; used: number; limit: number; suffix?: string; monthly?: boolean }) {
   const pct = limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0;
   const isBlocked = limit === 0;
+  const now = new Date();
+  const monthName = now.toLocaleString('en-IN', { month: 'short' });
   return (
     <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm font-bold text-gray-800">{label}</p>
+        <div>
+          <p className="text-sm font-bold text-gray-800">{label}</p>
+          {monthly && <p className="text-[10px] text-gray-400">Resets every month ({monthName})</p>}
+        </div>
         <p className="text-xs font-semibold text-gray-500">{isBlocked ? 'Locked' : `${pct}%`}</p>
       </div>
       <p className="mt-2 text-lg font-black text-gray-950">
