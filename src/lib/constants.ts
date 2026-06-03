@@ -29,8 +29,8 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
     name: 'Inbox',
     icon: 'MessageSquare',
     children: [
-      { name: 'Messages', href: '/dashboard/messages', icon: 'Send' },
-      { name: 'Auto Replies', href: '/dashboard/auto-replies', icon: 'Bot' },
+      { name: 'Live Inbox', href: '/dashboard/messages', icon: 'Inbox' },
+      { name: 'Auto Replies', href: '/dashboard/auto-replies', icon: 'Reply' },
       { name: 'Handover Queue', href: '/dashboard/handover', icon: 'UserCog' },
       { name: 'Opted Out', href: '/dashboard/opted-out', icon: 'UserX' },
       { name: 'Notifications', href: '/dashboard/notifications', icon: 'Bell' },
@@ -58,7 +58,7 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
     icon: 'Zap',
     children: [
       { name: 'Automations', href: '/dashboard/automations', icon: 'Workflow' },
-      { name: 'WA Templates', href: '/dashboard/templates', icon: 'Layout' },
+      { name: 'Message Templates', href: '/dashboard/templates', icon: 'Layout' },
       { name: 'WhatsApp Flows', href: '/dashboard/flows', icon: 'Layers' },
       { name: 'A/B Testing', href: '/dashboard/ab-testing', icon: 'FlaskConical' },
       { name: 'Automation Logs', href: '/dashboard/logs', icon: 'ScrollText' },
@@ -72,7 +72,7 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
       { name: 'AI Assistants', href: '/dashboard/assistants', icon: 'Bot' },
       { name: 'Documents', href: '/dashboard/documents', icon: 'FileText' },
       { name: 'Widgets', href: '/dashboard/widgets', icon: 'Code' },
-      { name: 'Test Chat', href: '/dashboard/chat', icon: 'MessageCircle' },
+      { name: 'Preview Chat', href: '/dashboard/chat', icon: 'MessageCircle' },
     ],
   },
 
