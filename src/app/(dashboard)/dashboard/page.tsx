@@ -83,6 +83,7 @@ export default function DashboardPage() {
     latest_conversations: [] as any[],
     widget_status: null as any,
     whatsapp_connection_status: null as any,
+    period_days: 30,
   });
   const [readiness, setReadiness] = useState<any>(null);
   const [bootstrapLoading, setBootstrapLoading] = useState(true);
@@ -156,6 +157,7 @@ export default function DashboardPage() {
           latest_conversations: d.latest_conversations || [],
           widget_status: d.widget_status || null,
           whatsapp_connection_status: d.whatsapp_connection_status || null,
+          period_days: d.period_days || 30,
         });
       } else {
         // Don't block the page — just mark for retry
@@ -506,6 +508,12 @@ export default function DashboardPage() {
             </div>
           ))}
         </section>
+      )}
+
+      {!bootstrapLoading && (
+        <p className="text-[11px] text-gray-400 -mb-2">
+          📊 Showing last {automationStats.period_days} days — data is live from your account
+        </p>
       )}
 
       <section className={`grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-6 ${bootstrapLoading ? 'hidden' : ''}`}>
