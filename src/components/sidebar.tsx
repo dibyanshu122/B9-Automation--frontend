@@ -175,11 +175,16 @@ export const Sidebar = () => {
     children?.some(c => isActive(c.href)) ?? false;
 
   const item = (active: boolean, mini = false) => clsx(
+    // Base: always flex, full width, centered vertically, smooth transitions
     'flex w-full items-center rounded-lg transition-all duration-150 text-sm font-medium',
-    mini ? 'my-1 h-11 justify-center gap-0 px-0 py-0' : 'gap-3 px-3 py-2.5',
+    mini
+      // Collapsed: perfect center alignment, consistent h-10 touch target, no margin bleed
+      ? 'h-10 justify-center items-center px-0 py-0 gap-0'
+      // Expanded: icon + label row with consistent padding
+      : 'gap-3 px-3 py-2',
     active
       ? mini
-        ? 'bg-indigo-500/25 text-white shadow-[inset_3px_0_0_#818cf8]'
+        ? 'bg-indigo-500/25 text-white'
         : 'bg-indigo-500/20 text-indigo-200 font-semibold'
       : 'text-slate-400 hover:bg-white/[0.08] hover:text-slate-100'
   );
@@ -192,8 +197,11 @@ export const Sidebar = () => {
   );
 
   const lbl = clsx(
-    'transition-all duration-200 whitespace-nowrap overflow-hidden',
-    expanded ? 'opacity-100 max-w-[180px]' : 'opacity-0 max-w-0 pointer-events-none'
+    // Stable label animation: opacity+width, never clips layout during collapse
+    'transition-all duration-200 whitespace-nowrap overflow-hidden leading-none select-none',
+    expanded
+      ? 'opacity-100 max-w-[180px] w-auto'
+      : 'opacity-0 max-w-0 w-0 pointer-events-none'
   );
 
   return (
@@ -226,7 +234,11 @@ export const Sidebar = () => {
         )}
       >
         {/* Nav */}
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-3 px-2 space-y-1">
+        {/* Nav: px-2 when expanded, px-1 when collapsed to keep icons truly centered */}
+        <nav className={clsx(
+          'flex-1 overflow-y-auto overflow-x-hidden py-3 space-y-0.5',
+          expanded ? 'px-2' : 'px-1.5'
+        )}>
           {mainGroups.map((group) => {
             const Icon = ICONS[group.icon as keyof typeof ICONS];
             const open = openGroups.includes(group.id);
@@ -297,8 +309,11 @@ export const Sidebar = () => {
           })}
         </nav>
 
-        {/* Bottom */}
-        <div className="shrink-0 border-t border-white/10 py-2 px-2 space-y-0.5">
+        {/* Bottom: px adapts to collapsed/expanded state */}
+        <div className={clsx(
+          'shrink-0 border-t border-white/10 py-2 space-y-0.5',
+          expanded ? 'px-2' : 'px-1.5'
+        )}>
           {bottomGroups.map((group) => {
             const Icon = ICONS[group.icon as keyof typeof ICONS];
             const a = isActive(group.href || '');
@@ -321,7 +336,7 @@ export const Sidebar = () => {
             title={!expanded ? 'Logout' : undefined}
             className={clsx(
               'flex w-full items-center rounded-lg text-slate-500 transition-all hover:bg-red-500/10 hover:text-red-400 text-sm',
-              expanded ? 'gap-3 px-3 py-2.5' : 'my-1 h-11 justify-center gap-0 px-0 py-0'
+              expanded ? 'gap-3 px-3 py-2' : 'h-10 justify-center items-center px-0 py-0 gap-0'
             )}>
             <LogOut className="w-5 h-5 shrink-0" />
             <span className={lbl}>Logout</span>
@@ -332,7 +347,7 @@ export const Sidebar = () => {
             title={sidebarPinned ? 'Collapse sidebar' : 'Pin sidebar open'}
             className={clsx(
               'flex w-full items-center rounded-lg text-slate-500 transition-all hover:bg-white/10 hover:text-slate-300 text-sm',
-              expanded ? 'gap-3 px-3 py-2.5' : 'my-1 h-11 justify-center gap-0 px-0 py-0'
+              expanded ? 'gap-3 px-3 py-2' : 'h-10 justify-center items-center px-0 py-0 gap-0'
             )}>
             {sidebarPinned ? (
               <ChevronsLeft className="w-4 h-4 shrink-0" />
