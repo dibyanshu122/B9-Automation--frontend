@@ -12,15 +12,9 @@ const ENDPOINTS = [
     items: [
       {
         method: 'POST', path: '/api/auth/login',
-        desc: 'Get an access token',
+        desc: 'Get an access token (session login)',
         body: `{"email": "you@company.com", "password": "yourpassword"}`,
         response: `{"access_token": "eyJ...", "user": {"id": "...", "email": "...", "plan": "GROWTH"}}`,
-      },
-      {
-        method: 'POST', path: '/api/auth/refresh',
-        desc: 'Refresh access token using cookie',
-        body: null,
-        response: `{"access_token": "eyJ...new..."}`,
       },
     ],
   },
@@ -29,28 +23,64 @@ const ENDPOINTS = [
     color: 'blue',
     items: [
       {
-        method: 'GET', path: '/api/leads?limit=50',
-        desc: 'List leads (cursor pagination supported)',
+        method: 'GET', path: '/api/v1/leads?limit=50',
+        desc: 'List leads — scope: leads:read',
         body: null,
         response: `[{"id": "...", "name": "Rahul Sharma", "phone": "+91XXXXXXXXXX", "score_label": "hot", "status": "new", "created_at": "2026-05-30T10:00:00"}]`,
       },
       {
-        method: 'GET', path: '/api/leads?cursor=2026-05-30T10:00:00&limit=50',
-        desc: 'Next page via cursor (faster than offset)',
+        method: 'GET', path: '/api/v1/leads?status=hot&limit=20',
+        desc: 'Filter hot leads — scope: leads:read',
         body: null,
-        response: `[/* next 50 leads */]  // Header: X-Next-Cursor: 2026-05-29T...`,
+        response: `[/* hot leads only */]`,
       },
       {
-        method: 'PATCH', path: '/api/leads/{lead_id}',
-        desc: 'Update lead status or score',
-        body: `{"status": "converted", "score_label": "hot"}`,
-        response: `{"id": "...", "status": "converted", ...}`,
+        method: 'POST', path: '/api/v1/leads',
+        desc: 'Create a new lead — scope: leads:write',
+        body: `{"name": "Rahul Sharma", "phone": "91XXXXXXXXXX", "email": "rahul@example.com", "source": "shopify"}`,
+        response: `{"id": "...", "name": "Rahul Sharma", "status": "new", ...}`,
       },
       {
-        method: 'POST', path: '/api/leads/merge',
-        desc: 'Merge duplicate leads into one',
-        body: `{"primary_lead_id": "abc", "duplicate_lead_ids": ["def", "ghi"]}`,
-        response: `{"merged": 2, "primary_lead_id": "abc"}`,
+        method: 'PATCH', path: '/api/v1/leads/{id}',
+        desc: 'Update lead status/tag/score — scope: leads:write',
+        body: `{"status": "hot", "tag": "interested", "score": 8}`,
+        response: `{"id": "...", "status": "hot", ...}`,
+      },
+    ],
+  },
+  {
+    group: 'WhatsApp Messages',
+    color: 'green',
+    items: [
+      {
+        method: 'POST', path: '/api/v1/whatsapp/send-template',
+        desc: 'Send approved template (any time) — scope: messages:send',
+        body: `{"phone": "91XXXXXXXXXX", "template_name": "order_confirmed", "language_code": "en_US", "variables": ["Rahul", "ORD-123"]}`,
+        response: `{"status": "sent", "message_id": "wamid..."}`,
+      },
+      {
+        method: 'POST', path: '/api/v1/whatsapp/send-text',
+        desc: 'Send plain text — 24h window only — scope: messages:send',
+        body: `{"phone": "91XXXXXXXXXX", "message": "Hi! Your order is ready."}`,
+        response: `{"status": "sent", "message_id": "wamid..."}`,
+      },
+      {
+        method: 'GET', path: '/api/v1/whatsapp/status',
+        desc: 'WhatsApp connection health — scope: integrations:read',
+        body: null,
+        response: `{"connected": true, "phone_number": "+91XXXXXXXXXX", "tier": "TIER_1"}`,
+      },
+      {
+        method: 'GET', path: '/api/v1/messages?status=sent&limit=20',
+        desc: 'List outbound messages — scope: messages:read',
+        body: null,
+        response: `[{"id": "...", "recipient": "91XXXXXXXXXX", "status": "delivered", ...}]`,
+      },
+      {
+        method: 'GET', path: '/api/v1/templates',
+        desc: 'List APPROVED WhatsApp templates — scope: templates:read',
+        body: null,
+        response: `[{"name": "order_confirmed", "status": "APPROVED", "language": "en_US", "category": "UTILITY"}]`,
       },
     ],
   },
@@ -59,34 +89,10 @@ const ENDPOINTS = [
     color: 'emerald',
     items: [
       {
-        method: 'GET', path: '/api/campaigns',
-        desc: 'List all campaigns with status',
+        method: 'GET', path: '/api/v1/campaigns',
+        desc: 'List campaigns with stats — scope: campaigns:read',
         body: null,
-        response: `{"campaigns": [{"name": "Diwali 2026", "status": "completed", "sent": 450, "total": 500, "delivery_rate": 90}]}`,
-      },
-      {
-        method: 'POST', path: '/api/campaigns/send',
-        desc: 'Send a broadcast campaign',
-        body: `{"name": "Diwali Sale", "message": "Hi {name}, 20% off today!", "recipient_filter": "hot", "msg_type": "template", "template_name": "diwali_offer", "language_code": "en_US"}`,
-        response: `{"status": "queued", "queued": 245, "campaign_name": "Diwali Sale"}`,
-      },
-    ],
-  },
-  {
-    group: 'WhatsApp',
-    color: 'green',
-    items: [
-      {
-        method: 'GET', path: '/api/automation/whatsapp/templates',
-        desc: 'List approved WhatsApp templates',
-        body: null,
-        response: `{"data": [{"name": "diwali_offer", "status": "APPROVED", "language": "en_US", "category": "MARKETING"}]}`,
-      },
-      {
-        method: 'POST', path: '/api/automation/outbound-messages',
-        desc: 'Send a single WhatsApp message',
-        body: `{"recipient": "+91XXXXXXXXXX", "message": "Hello Rahul!", "channel": "whatsapp"}`,
-        response: `{"status": "sent", "message_id": "wamid..."}`,
+        response: `[{"name": "Diwali 2026", "status": "completed", "sent": 450, "total": 500, "delivery_rate": 90}]`,
       },
     ],
   },
@@ -95,66 +101,111 @@ const ENDPOINTS = [
     color: 'amber',
     items: [
       {
-        method: 'GET', path: '/api/analytics/dashboard?days=30',
-        desc: 'Get dashboard metrics',
+        method: 'GET', path: '/api/v1/analytics',
+        desc: '30-day usage summary — scope: analytics:read',
         body: null,
-        response: `{"leads_captured": 142, "hot_leads": 38, "messages_sent": 890, "ai_responses": 654, "conversion_rate": 26.7}`,
+        response: `{"leads_captured": 142, "hot_leads": 38, "automations_run": 890, "conversion_rate": 26.7}`,
+      },
+    ],
+  },
+  {
+    group: 'Payments',
+    color: 'rose',
+    items: [
+      {
+        method: 'GET', path: '/api/v1/payments',
+        desc: 'List payment records — scope: payments:read',
+        body: null,
+        response: `[{"id": "...", "amount_paise": 49900, "status": "paid", "customer_phone": "91XXXXXXXXXX"}]`,
+      },
+      {
+        method: 'POST', path: '/api/v1/payments/link',
+        desc: 'Create Razorpay payment link — scope: payments:write',
+        body: `{"phone": "91XXXXXXXXXX", "amount": 49900, "description": "Coaching fee - June batch", "lead_id": "lead_abc123"}`,
+        response: `{"short_url": "https://rzp.io/...", "payment_link_id": "plink_..."}`,
+      },
+    ],
+  },
+  {
+    group: 'Automations',
+    color: 'purple',
+    items: [
+      {
+        method: 'GET', path: '/api/v1/automations',
+        desc: 'List workflows — scope: automations:read',
+        body: null,
+        response: `[{"id": "...", "name": "Welcome Flow", "status": "active", "trigger_type": "new_whatsapp_lead"}]`,
+      },
+      {
+        method: 'POST', path: '/api/v1/automations/{id}/run',
+        desc: 'Trigger a workflow — scope: automations:run',
+        body: `{"context": {"lead_id": "lead_abc123", "message": "interested in product"}}`,
+        response: `{"run_id": "...", "status": "running"}`,
       },
     ],
   },
 ];
 
 const CODE_EXAMPLES: Record<string, string> = {
-  curl: `# Get your API key from Settings → API Keys
-curl -X GET "${API_BASE}/api/leads?limit=10" \\
-  -H "X-API-Key: b9_live_your_key_here" \\
-  -H "Content-Type: application/json"`,
+  curl: `# Get your API key from Dashboard → Settings → API Keys
+# Auth: Authorization: Bearer b9_live_your_key_here
+
+# List leads
+curl -X GET "${API_BASE}/api/v1/leads?limit=10" \\
+  -H "Authorization: Bearer b9_live_your_key_here" \\
+  -H "Content-Type: application/json"
+
+# Send WhatsApp template
+curl -X POST "${API_BASE}/api/v1/whatsapp/send-template" \\
+  -H "Authorization: Bearer b9_live_your_key_here" \\
+  -H "Content-Type: application/json" \\
+  -d '{"phone":"91XXXXXXXXXX","template_name":"order_confirmed","language_code":"en_US","variables":["Rahul","ORD-123"]}'`,
 
   javascript: `const B9_KEY = 'b9_live_your_key_here';
 const BASE = '${API_BASE}';
+const headers = {
+  'Authorization': \`Bearer \${B9_KEY}\`,
+  'Content-Type': 'application/json',
+};
 
+// List leads
 async function getLeads(limit = 50) {
-  const res = await fetch(\`\${BASE}/api/leads?limit=\${limit}\`, {
-    headers: { 'X-API-Key': B9_KEY },
-  });
+  const res = await fetch(\`\${BASE}/api/v1/leads?limit=\${limit}\`, { headers });
   return res.json();
 }
 
-// Cursor pagination — efficient for large datasets
-async function getAllLeads() {
-  const all = [];
-  let cursor = null;
-  do {
-    const url = cursor
-      ? \`\${BASE}/api/leads?limit=50&cursor=\${cursor}\`
-      : \`\${BASE}/api/leads?limit=50\`;
-    const res = await fetch(url, { headers: { 'X-API-Key': B9_KEY } });
-    const leads = await res.json();
-    all.push(...leads);
-    cursor = res.headers.get('x-next-cursor');
-  } while (cursor);
-  return all;
+// Send WhatsApp template
+async function sendTemplate(phone, templateName, variables = []) {
+  const res = await fetch(\`\${BASE}/api/v1/whatsapp/send-template\`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ phone, template_name: templateName, language_code: 'en_US', variables }),
+  });
+  return res.json();
 }`,
 
   python: `import requests
 
 B9_KEY = 'b9_live_your_key_here'
 BASE = '${API_BASE}'
-HEADERS = {'X-API-Key': B9_KEY}
+HEADERS = {
+    'Authorization': f'Bearer {B9_KEY}',
+    'Content-Type': 'application/json',
+}
 
+# List leads
 def get_leads(limit=50):
-    r = requests.get(f'{BASE}/api/leads', params={'limit': limit}, headers=HEADERS)
+    r = requests.get(f'{BASE}/api/v1/leads', params={'limit': limit}, headers=HEADERS)
     r.raise_for_status()
     return r.json()
 
-# Send a campaign
-def send_campaign(name, template_name, recipient_filter='hot'):
-    r = requests.post(f'{BASE}/api/campaigns/send', headers=HEADERS, json={
-        'name': name,
-        'msg_type': 'template',
+# Send WhatsApp template
+def send_template(phone, template_name, variables=None):
+    r = requests.post(f'{BASE}/api/v1/whatsapp/send-template', headers=HEADERS, json={
+        'phone': phone,
         'template_name': template_name,
-        'recipient_filter': recipient_filter,
         'language_code': 'en_US',
+        'variables': variables or [],
     })
     return r.json()`,
 };
@@ -199,22 +250,13 @@ export default function DevelopersPage() {
               <h1 className="text-xl font-bold text-white">B9 Automation API</h1>
               <p className="text-xs text-zinc-500">REST API v1 · Requires PRO plan · Base URL: <span className="text-zinc-300 font-mono">{API_BASE}</span></p>
             </div>
-            <a href={`${API_BASE}/docs`} target="_blank" rel="noreferrer"
-              className="ml-auto flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-zinc-300 hover:bg-white/10 transition">
-              <ExternalLink className="h-3.5 w-3.5" /> Swagger UI
-            </a>
           </div>
 
-          {/* Tabs */}
-          <div className="mt-5 flex gap-1">
-            {([
-              { key: 'endpoints', icon: BookOpen, label: 'Endpoints' },
-              { key: 'examples', icon: Terminal, label: 'Code Examples' },
-              { key: 'auth', icon: Key, label: 'Authentication' },
-            ] as const).map(({ key, icon: Icon, label }) => (
-              <button key={key} onClick={() => setActiveTab(key)}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${activeTab === key ? 'bg-[#00F2FE]/10 text-[#00F2FE] border border-[#00F2FE]/20' : 'text-zinc-500 hover:text-zinc-300'}`}>
-                <Icon className="h-3.5 w-3.5" />{label}
+          <div className="mt-4 flex gap-1">
+            {(['endpoints', 'examples', 'auth'] as const).map(tab => (
+              <button key={tab} onClick={() => setActiveTab(tab)}
+                className={`rounded-lg px-4 py-2 text-sm font-medium transition ${activeTab === tab ? 'bg-white/10 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>
+                {tab === 'endpoints' ? 'Endpoints' : tab === 'examples' ? 'Code Examples' : 'Authentication'}
               </button>
             ))}
           </div>
@@ -225,85 +267,56 @@ export default function DevelopersPage() {
 
         {/* AUTH TAB */}
         {activeTab === 'auth' && (
-          <div className="space-y-6 max-w-2xl">
-            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Key className="h-4 w-4 text-[#00F2FE]" />
-                <h2 className="text-base font-bold">API Key Authentication</h2>
+          <div className="space-y-6">
+            <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-6">
+              <h2 className="text-lg font-bold mb-2 flex items-center gap-2"><Key className="h-5 w-5 text-[#00F2FE]" /> Authentication</h2>
+              <p className="text-zinc-400 text-sm mb-4">All v1 API calls require an API key. Get yours from <strong>Dashboard → Settings → API Keys</strong>.</p>
+              <div className="rounded-lg bg-black/40 p-4 font-mono text-sm text-zinc-300 border border-white/[0.06]">
+                Authorization: Bearer b9_live_your_key_here
               </div>
-              <p className="text-sm text-zinc-400 mb-4">Pass your API key in the <code className="rounded bg-white/10 px-1.5 py-0.5 text-xs text-[#00F2FE]">X-API-Key</code> header on every request.</p>
-              <div className="rounded-xl bg-black/40 border border-white/[0.06] p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs text-zinc-500 font-mono">Request header</span>
-                  <CopyButton text="X-API-Key: b9_live_your_key_here" />
-                </div>
-                <pre className="text-xs text-emerald-400 font-mono">X-API-Key: b9_live_your_key_here</pre>
-              </div>
-              <div className="mt-4 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-xs text-amber-300">
-                API keys require the <strong>PRO plan</strong>. Generate keys at <strong>Dashboard → API Keys</strong>.
-              </div>
+              <p className="text-zinc-500 text-xs mt-3">Keys follow the format <code className="bg-white/5 px-1 rounded">b9_live_...</code> (production) or <code className="bg-white/5 px-1 rounded">b9_test_...</code> (sandbox).</p>
             </div>
-
-            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6">
-              <h2 className="text-base font-bold mb-4">Rate Limits</h2>
-              <div className="space-y-2 text-sm">
-                {[
-                  ['PRO plan', '1,000 requests / minute'],
-                  ['BUSINESS plan', '5,000 requests / minute'],
-                  ['Rate limit header', 'X-RateLimit-Remaining'],
-                  ['Exceeded response', 'HTTP 429 Too Many Requests'],
-                ].map(([k, v]) => (
-                  <div key={k} className="flex justify-between border-b border-white/[0.04] pb-2">
-                    <span className="text-zinc-500">{k}</span>
-                    <span className="text-zinc-300 font-mono text-xs">{v}</span>
-                  </div>
-                ))}
-              </div>
+            <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-5">
+              <p className="text-sm font-semibold text-amber-400 mb-1">Scope-based access</p>
+              <p className="text-xs text-amber-300/70">Each API key has specific scopes. Example: a key with only <code className="bg-black/20 px-1 rounded">leads:read</code> cannot send messages. Assign only the scopes your integration needs.</p>
             </div>
           </div>
         )}
 
         {/* ENDPOINTS TAB */}
         {activeTab === 'endpoints' && (
-          <div className="space-y-8">
-            {ENDPOINTS.map((group) => (
+          <div className="space-y-6">
+            <div className="rounded-xl border border-[#00F2FE]/20 bg-[#00F2FE]/5 p-4 text-sm text-zinc-300">
+              <strong className="text-[#00F2FE]">Base URL:</strong> <code className="font-mono">{API_BASE}/api/v1/</code>
+              {' · '}
+              <strong className="text-[#00F2FE]">Auth:</strong> <code className="font-mono">Authorization: Bearer b9_live_...</code>
+            </div>
+            {ENDPOINTS.map(group => (
               <div key={group.group}>
-                <div className="mb-3 flex items-center gap-2">
-                  <Zap className="h-4 w-4 text-[#00F2FE]" />
-                  <h2 className="text-sm font-bold text-white">{group.group}</h2>
-                </div>
+                <h2 className="text-sm font-bold uppercase tracking-wider text-zinc-500 mb-3">{group.group}</h2>
                 <div className="space-y-2">
-                  {group.items.map((ep) => {
-                    const key = `${ep.method}${ep.path}`;
+                  {group.items.map(ep => {
+                    const key = `${ep.method}:${ep.path}`;
                     const isOpen = openEndpoint === key;
                     return (
                       <div key={key} className="rounded-xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">
-                        <button
-                          onClick={() => setOpenEndpoint(isOpen ? null : key)}
-                          className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/[0.02] transition"
-                        >
-                          <span className={`rounded-md border px-2 py-0.5 text-[10px] font-bold font-mono ${METHOD_COLORS[ep.method] || ''}`}>{ep.method}</span>
+                        <button className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/[0.03] transition"
+                          onClick={() => setOpenEndpoint(isOpen ? null : key)}>
+                          <span className={`rounded-md border px-2 py-0.5 text-[11px] font-bold font-mono ${METHOD_COLORS[ep.method]}`}>{ep.method}</span>
                           <code className="text-sm text-zinc-300 font-mono flex-1">{ep.path}</code>
                           <span className="text-xs text-zinc-500">{ep.desc}</span>
-                          <span className="text-zinc-600 text-xs">{isOpen ? '▲' : '▼'}</span>
                         </button>
                         {isOpen && (
                           <div className="border-t border-white/[0.06] px-4 py-4 space-y-3">
                             {ep.body && (
                               <div>
-                                <div className="flex items-center justify-between mb-1.5">
-                                  <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Request Body</span>
-                                  <CopyButton text={ep.body} />
-                                </div>
-                                <pre className="rounded-xl bg-black/40 border border-white/[0.06] p-3 text-xs text-zinc-300 font-mono overflow-x-auto whitespace-pre-wrap">{ep.body}</pre>
+                                <p className="text-xs text-zinc-500 mb-1">Request body</p>
+                                <pre className="rounded-lg bg-black/40 p-3 text-xs text-zinc-300 overflow-x-auto">{ep.body}</pre>
                               </div>
                             )}
                             <div>
-                              <div className="flex items-center justify-between mb-1.5">
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Response</span>
-                                <CopyButton text={ep.response} />
-                              </div>
-                              <pre className="rounded-xl bg-black/40 border border-white/[0.06] p-3 text-xs text-emerald-400 font-mono overflow-x-auto whitespace-pre-wrap">{ep.response}</pre>
+                              <p className="text-xs text-zinc-500 mb-1">Response</p>
+                              <pre className="rounded-lg bg-black/40 p-3 text-xs text-emerald-300 overflow-x-auto">{ep.response}</pre>
                             </div>
                           </div>
                         )}
@@ -316,36 +329,22 @@ export default function DevelopersPage() {
           </div>
         )}
 
-        {/* CODE EXAMPLES TAB */}
+        {/* EXAMPLES TAB */}
         {activeTab === 'examples' && (
           <div className="space-y-4">
-            <div className="flex gap-1">
-              {(['curl', 'javascript', 'python'] as const).map((lang) => (
+            <div className="flex gap-1 rounded-lg border border-white/[0.06] bg-white/[0.02] p-1 w-fit">
+              {(['curl', 'javascript', 'python'] as const).map(lang => (
                 <button key={lang} onClick={() => setCodeLang(lang)}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${codeLang === lang ? 'bg-[#00F2FE]/10 text-[#00F2FE] border border-[#00F2FE]/20' : 'text-zinc-500 border border-white/[0.06] hover:text-zinc-300'}`}>
+                  className={`rounded-md px-4 py-1.5 text-sm font-medium transition ${codeLang === lang ? 'bg-white/10 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>
                   {lang === 'curl' ? 'cURL' : lang === 'javascript' ? 'JavaScript' : 'Python'}
                 </button>
               ))}
             </div>
-            <div className="rounded-2xl border border-white/[0.06] bg-black/40 overflow-hidden">
-              <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-2.5">
-                <span className="text-xs text-zinc-500 font-mono">{codeLang === 'curl' ? 'shell' : codeLang}</span>
+            <div className="relative rounded-xl border border-white/[0.06] bg-black/60 overflow-hidden">
+              <div className="absolute top-3 right-3">
                 <CopyButton text={CODE_EXAMPLES[codeLang]} />
               </div>
-              <pre className="p-5 text-xs text-zinc-300 font-mono overflow-x-auto whitespace-pre leading-relaxed">{CODE_EXAMPLES[codeLang]}</pre>
-            </div>
-
-            {/* Postman badge */}
-            <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 flex items-center gap-3">
-              <div className="h-8 w-8 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-sm">📮</div>
-              <div>
-                <p className="text-xs font-bold text-white">Postman Collection</p>
-                <p className="text-xs text-zinc-500">Import all endpoints into Postman — set <code className="text-zinc-300">b9_key</code> variable and start testing</p>
-              </div>
-              <a href={`${API_BASE}/openapi.json`} target="_blank" rel="noreferrer"
-                className="ml-auto flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-zinc-300 hover:bg-white/10 transition">
-                <ExternalLink className="h-3 w-3" /> OpenAPI JSON
-              </a>
+              <pre className="p-6 text-sm text-zinc-300 overflow-x-auto leading-relaxed">{CODE_EXAMPLES[codeLang]}</pre>
             </div>
           </div>
         )}

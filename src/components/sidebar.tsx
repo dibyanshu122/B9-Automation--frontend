@@ -84,28 +84,13 @@ function useUnreadCount() {
     const run = () => {
       const token = useAuthStore.getState().token;
       const base = process.env.NEXT_PUBLIC_API_URL || '';
-      fetch(`${base}/api/automation/inbox?limit=50`, {
+      // Lightweight endpoint — returns just {unread: N}, not full message list
+      fetch(`${base}/api/automation/inbox/unread-count`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       })
         .then(r => r.json())
         .then(data => {
-          const items: any[] = data?.items || [];
-          const seen = new Map<string, string>();
-          items.forEach((i: any) => {
-            if (!i.created_at) return;
-            const key = `${i.channel}::${i.sender_id}`;
-            const existing = seen.get(key);
-            if (!existing || i.created_at > existing) seen.set(key, i.created_at);
-          });
-          let unread = 0;
-          seen.forEach((latestMsgTime, key) => {
-            const [channel, senderId] = key.split('::');
-            const lastRead = typeof window !== 'undefined'
-              ? localStorage.getItem(`msg_read_${channel}_${senderId}`) || ''
-              : '';
-            if (!lastRead || latestMsgTime > lastRead) unread++;
-          });
-          setCount(Math.min(unread, 99));
+          setCount(data?.unread ?? 0);
         })
         .catch(() => {});
     };

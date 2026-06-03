@@ -282,8 +282,8 @@ export default function ApiKeysPage() {
             {!showForm && (
               <Button onClick={() => {
                 setShowForm(true);
-                // Default to Full Access — most common use case
-                setSelectedScopes(ALL_SCOPES.map(s => s.value));
+                // Default to Read-Only — least privilege principle (security best practice)
+                setSelectedScopes(ALL_SCOPES.filter(s => s.value.endsWith(':read')).map(s => s.value));
               }} className="flex items-center gap-2">
                 <Plus className="w-4 h-4" /> New API Key
               </Button>
@@ -314,8 +314,8 @@ export default function ApiKeysPage() {
                   </label>
                   <div className="grid grid-cols-3 gap-2 mb-3">
                     {[
-                      { id: 'full', label: 'Full Access', desc: 'All APIs — recommended', icon: '🔓', scopes: ALL_SCOPES.map(s => s.value) },
-                      { id: 'read', label: 'Read Only',  desc: 'View data, no sends',   icon: '👁️', scopes: ALL_SCOPES.filter(s => s.value.endsWith(':read')).map(s => s.value) },
+                      { id: 'read', label: 'Read Only',  desc: 'View data only — recommended start', icon: '👁️', scopes: ALL_SCOPES.filter(s => s.value.endsWith(':read')).map(s => s.value) },
+                      { id: 'full', label: 'Full Access', desc: 'All APIs — enable only if needed', icon: '🔓', scopes: ALL_SCOPES.map(s => s.value) },
                       { id: 'custom', label: 'Custom',   desc: 'Pick manually below',   icon: '⚙️', scopes: [] },
                     ].map(preset => {
                       const isActive = preset.id === 'custom'
