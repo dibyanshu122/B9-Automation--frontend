@@ -453,12 +453,18 @@ export default function WidgetsPage() {
                       <input
                         value={config.primary_color}
                         onChange={(e) => {
-                          let val = e.target.value;
-                          if (val && !val.startsWith('#')) val = `#${val}`;
+                          let val = e.target.value.trim();
+                          // Auto-prepend # for hex without it
+                          if (val && !val.startsWith('#') && !val.startsWith('rgb')) val = `#${val}`;
+                          // Only accept valid 3 or 6 digit hex OR rgb() — reject garbage
+                          const validHex = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(val);
+                          const validRgb = /^rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)$/.test(val);
+                          if (val && !validHex && !validRgb && val.length > 1) return; // ignore invalid
                           setConfig({ ...config, primary_color: val, theme_color: val });
                         }}
                         className="input-field font-mono"
                         placeholder="#f97316"
+                        maxLength={7}
                         required
                       />
                     </div>
@@ -566,6 +572,7 @@ export default function WidgetsPage() {
                     className="input-field"
                     placeholder="Pricing, Services, Book Demo, Talk to Team"
                   />
+                  <p className="mt-0.5 text-[11px] text-gray-400">Comma-separated. Use quotes for text with commas: "Hello, world"</p>
                 </div>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
@@ -765,17 +772,29 @@ export default function WidgetsPage() {
 }
 
 function normalizeDomain(value: string) {
-  return value
-    .trim()
-    .replace(/^https?:\/\//i, '')
-    .replace(/^www\./i, '')
-    .split('/')[0]
-    .toLowerCase();
+  let v = value.trim().toLowerCase();
+  if (!v) return '';
+  // Strip protocol
+  v = v.replace(/^https?:\/\//i, '').replace(/^www\./i, '');
+  // Keep only host (strip path)
+  v = v.split('/')[0];
+  // Keep port if present (e.g. localhost:3000)
+  // Strip query/hash if any slipped through
+  v = v.split('?')[0].split('#')[0];
+  return v;
 }
 
 function splitCsv(value: string) {
-  return value
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean);
+  // Support quoted values: "Hello, world", Services → ["Hello, world", "Services"]
+  const results: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < value.length; i++) {
+    const ch = value[i];
+    if (ch === '"') { inQuotes = !inQuotes; continue; }
+    if (ch === ',' && !inQuotes) { if (current.trim()) results.push(current.trim()); current = ''; continue; }
+    current += ch;
+  }
+  if (current.trim()) results.push(current.trim());
+  return results;
 }
