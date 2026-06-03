@@ -3,8 +3,8 @@
 import { Button } from '@/components/button';
 import { Card } from '@/components/card';
 import { useApi } from '@/hooks/useApi';
-import { CheckCircle2, CheckSquare, Clock, Plus, Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { CalendarDays, CheckCircle2, CheckSquare, Clock, Plus, Trash2 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
 interface BusinessTask {
@@ -126,12 +126,18 @@ export default function TasksPage() {
             <option value="medium">Medium</option>
             <option value="high">High</option>
           </select>
-          <input
-            type="datetime-local"
-            value={form.due_at}
-            onChange={(e) => setForm({ ...form, due_at: e.target.value })}
-            className="input-field"
-          />
+          <div className="relative flex items-center">
+            <input
+              type="datetime-local"
+              value={form.due_at}
+              onChange={(e) => setForm({ ...form, due_at: e.target.value })}
+              className="input-field pr-9"
+              id="task-due-date"
+            />
+            <label htmlFor="task-due-date" className="absolute right-2.5 cursor-pointer text-gray-400 hover:text-indigo-500 transition-colors">
+              <CalendarDays className="h-4 w-4" />
+            </label>
+          </div>
           <Button type="submit" variant="primary" disabled={creating} className="justify-center">
             <Plus className="h-4 w-4" />
             {creating ? 'Adding...' : 'Add'}
