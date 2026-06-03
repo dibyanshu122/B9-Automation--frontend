@@ -154,6 +154,8 @@ export default function LeadsPage() {
   // Kanban view state
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
   const [draggingLeadId, setDraggingLeadId] = useState<string | null>(null);
+  const [lostReasonModal, setLostReasonModal] = useState<{lead: Lead; resolve: (r: string) => void} | null>(null);
+  const [lostReasonInput, setLostReasonInput] = useState('');
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
   // Multi-tag segmentation map: leadId → tags[]
   const [leadTagsMap, setLeadTagsMap] = useState<Record<string, string[]>>({});
@@ -399,6 +401,26 @@ export default function LeadsPage() {
   };
 
   const updateStage = async (lead: Lead, status: string) => {
+    // If marking as "lost", ask for reason first
+    if (status === 'lost' && lead.status !== 'lost') {
+      const reason = await new Promise<string>((resolve) => {
+        setLostReasonInput('');
+        setLostReasonModal({ lead, resolve });
+      });
+      setLostReasonModal(null);
+      if (reason === '__cancel__') return;
+      setBusyAction(`status-${lead.id}`);
+      try {
+        const response = await api.patch(`/api/leads/${lead.id}`, { status, lost_reason: reason || null });
+        updateLeadInList(response.data);
+        toast.success('Lead marked as lost');
+      } catch (error: any) {
+        toast.error(error.response?.data?.detail || 'Failed to update lead');
+      } finally {
+        setBusyAction('');
+      }
+      return;
+    }
     setBusyAction(`status-${lead.id}`);
     try {
       const response = await api.patch(`/api/leads/${lead.id}`, { status });
@@ -1971,6 +1993,38 @@ export default function LeadsPage() {
                 }}
                 className="flex-1 rounded-xl bg-orange-500 py-2 text-sm font-bold text-white hover:bg-orange-600 transition disabled:opacity-50">
                 {savingStages ? 'Saving…' : 'Save Stages'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Lost Lead Reason Modal */}
+      {lostReasonModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => { lostReasonModal.resolve('__cancel__'); }}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6" onClick={e => e.stopPropagation()}>
+            <h2 className="font-bold text-gray-900 text-lg mb-1">Why is this lead lost?</h2>
+            <p className="text-sm text-gray-500 mb-4">Optional — helps you track patterns and improve follow-up.</p>
+            <div className="space-y-2 mb-4">
+              {['Price too high', 'Went with competitor', 'Not ready / timing', 'No response', 'Wrong fit', 'Other'].map(r => (
+                <button key={r} onClick={() => setLostReasonInput(r)}
+                  className={`w-full rounded-xl border px-3 py-2 text-sm text-left transition ${lostReasonInput === r ? 'border-red-400 bg-red-50 text-red-700 font-semibold' : 'border-gray-200 hover:border-gray-300'}`}>
+                  {r}
+                </button>
+              ))}
+              <input value={lostReasonInput} onChange={e => setLostReasonInput(e.target.value)}
+                placeholder="Or type a custom reason…"
+                className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => lostReasonModal.resolve('__cancel__')}
+                className="flex-1 rounded-xl border border-gray-200 py-2 text-sm text-gray-500 hover:bg-gray-50">
+                Cancel
+              </button>
+              <button onClick={() => lostReasonModal.resolve(lostReasonInput)}
+                className="flex-1 rounded-xl bg-red-500 py-2 text-sm font-bold text-white hover:bg-red-600">
+                Mark as Lost
               </button>
             </div>
           </div>

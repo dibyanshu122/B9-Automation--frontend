@@ -2,6 +2,7 @@
 
 import { useAuthStore } from '@/store/authStore';
 import { useUIStore } from '@/store/uiStore';
+import { DarkModeToggle } from './dark-mode-toggle';
 import { useApi } from '@/hooks/useApi';
 import { Button } from './button';
 import Link from 'next/link';
@@ -259,6 +260,9 @@ export const Navbar = () => {
                     {aiCredits < 100 && <span className="ml-1 underline">Buy more</span>}
                   </Link>
                 )}
+
+                {/* Dark mode toggle */}
+                <DarkModeToggle />
 
                 {/* Notification Bell with Dropdown */}
                 <div ref={notifRef} className="relative hidden sm:block">

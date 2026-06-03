@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useUIStore } from '@/store/uiStore';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { QuickActionFAB } from '@/components/quick-action-fab';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef } from 'react';
 import { getDashboardBootstrap } from '@/lib/dashboard-bootstrap';
@@ -125,6 +126,8 @@ export default function DashboardLayout({
           </AnimatePresence>
         </main>
       </div>
+      {/* Floating Action Button — quick create from anywhere */}
+      <QuickActionFAB />
     </div>
   );
 }
