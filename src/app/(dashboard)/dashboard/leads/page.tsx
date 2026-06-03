@@ -8,6 +8,7 @@ import { Button } from '@/components/button';
 import { Card } from '@/components/card';
 import { useApi, getApiClient } from '@/hooks/useApi';
 import { useInvalidate } from '@/hooks/useQueryCache';
+import { useAuthStore } from '@/store/authStore';
 import { Lead } from '@/types';
 
 interface InboxItem {
@@ -78,6 +79,7 @@ export default function LeadsPage() {
   const { get, post, put } = useApi();
   const api = getApiClient();
   const { invalidateLeads } = useInvalidate();
+  const { user: currentUser } = useAuthStore();
   const [leads, setLeads] = useState<Lead[]>([]);
   // Custom pipeline stages — loaded from API, fallback to defaults
   const [stages, setStages] = useState(DEFAULT_STAGES);
@@ -122,6 +124,8 @@ export default function LeadsPage() {
   const [notesLoading, setNotesLoading] = useState(false);
   const [noteText, setNoteText] = useState('');
   const [savingNote, setSavingNote] = useState(false);
+  const [mentionSuggestions, setMentionSuggestions] = useState<string[]>([]);
+  const [showMentions, setShowMentions] = useState(false);
   const [timeline, setTimeline] = useState<any[]>([]);
   const [timelineLoading, setTimelineLoading] = useState(false);
   const [detailTab, setDetailTab] = useState<'info' | 'notes' | 'timeline' | 'deals' | 'tags'>('info');
@@ -132,7 +136,8 @@ export default function LeadsPage() {
   const [savingTag, setSavingTag] = useState(false);
   const [deals, setDeals] = useState<any[]>([]);
   const [dealsLoading, setDealsLoading] = useState(false);
-  const [dealForm, setDealForm] = useState({ title: '', value: '', stage: 'open', probability: '50' });
+  const [dealForm, setDealForm] = useState({ title: '', value: '', stage: 'open', probability: '50', close_date: '' });
+  const [allDeals, setAllDeals] = useState<any[]>([]);
   const [savingDeal, setSavingDeal] = useState(false);
   const [showDealForm, setShowDealForm] = useState(false);
   // Merge/dedup state
@@ -276,9 +281,9 @@ export default function LeadsPage() {
     if (!dealForm.title.trim()) return;
     setSavingDeal(true);
     try {
-      const r = await api.post(`/api/leads/${leadId}/deals`, { title: dealForm.title, value: parseFloat(dealForm.value) || 0, stage: dealForm.stage, probability: parseInt(dealForm.probability) || 50 });
+      const r = await api.post(`/api/leads/${leadId}/deals`, { title: dealForm.title, value: parseFloat(dealForm.value) || 0, stage: dealForm.stage, probability: parseInt(dealForm.probability) || 50, ...(dealForm.close_date ? { close_date: dealForm.close_date } : {}) });
       setDeals(prev => [r.data, ...prev]);
-      setDealForm({ title: '', value: '', stage: 'open', probability: '50' });
+      setDealForm({ title: '', value: '', stage: 'open', probability: '50', close_date: '' });
       setShowDealForm(false);
       toast.success('Deal created');
     } catch { toast.error('Failed to create deal'); }
@@ -352,6 +357,10 @@ export default function LeadsPage() {
     get('/api/leads/pipeline-stages')
       .then(r => { if (r.data?.stages?.length) setStages(r.data.stages); })
       .catch(() => {});
+    // Load all deals for workspace-wide revenue roll-up
+    get('/api/leads/deals')
+      .then(r => { setAllDeals(r.data?.deals || r.data || []); })
+      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -395,6 +404,17 @@ export default function LeadsPage() {
     warm: leads.filter((lead) => lead.score_label === 'warm'),
     cold: leads.filter((lead) => (lead.score_label || 'cold') === 'cold'),
   }), [leads]);
+
+  const stageRevenue = useMemo(() => {
+    const leadStageMap: Record<string, string> = {};
+    leads.forEach(l => { leadStageMap[l.id] = l.status || 'new'; });
+    const totals: Record<string, number> = {};
+    allDeals.forEach((deal: any) => {
+      const stage = leadStageMap[deal.lead_id] || 'new';
+      totals[stage] = (totals[stage] || 0) + (deal.value || 0);
+    });
+    return totals;
+  }, [leads, allDeals]);
 
   const updateLeadInList = (updatedLead: Lead) => {
     setLeads((current) => current.map((lead) => (lead.id === updatedLead.id ? updatedLead : lead)));
@@ -1027,7 +1047,12 @@ export default function LeadsPage() {
                           <div className={`h-2.5 w-2.5 rounded-full ${cfg.dot}`} />
                           <span className="text-sm font-bold">{stage.label}</span>
                         </div>
-                        <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${cfg.count}`}>{stageLeads.length}</span>
+                        <div className="flex flex-col items-end gap-0">
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${cfg.count}`}>{stageLeads.length}</span>
+                          {(stageRevenue[stage.key] || 0) > 0 && (
+                            <span className="text-[10px] font-semibold text-emerald-600">₹{stageRevenue[stage.key].toLocaleString('en-IN')}</span>
+                          )}
+                        </div>
                       </div>
 
                       {/* Lead cards */}
@@ -1320,6 +1345,10 @@ export default function LeadsPage() {
                     </select>
                     <input value={dealForm.probability} onChange={e => setDealForm(p => ({...p, probability: e.target.value}))} placeholder="Prob %" type="number" min="0" max="100" className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm focus:outline-none" />
                   </div>
+                  <div className="flex items-center gap-2">
+                    <label className="text-[10px] font-semibold text-gray-500 whitespace-nowrap">Close date:</label>
+                    <input value={dealForm.close_date} onChange={e => setDealForm(p => ({...p, close_date: e.target.value}))} type="date" className="flex-1 rounded-lg border border-gray-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-300" />
+                  </div>
                   <button onClick={() => createDeal(selectedLead.id)} disabled={savingDeal || !dealForm.title.trim()} className="w-full rounded-lg bg-indigo-600 py-1.5 text-xs font-bold text-white hover:bg-indigo-700 disabled:opacity-40 transition">
                     {savingDeal ? 'Saving...' : 'Create Deal'}
                   </button>
@@ -1339,6 +1368,9 @@ export default function LeadsPage() {
                           <div>
                             <p className="text-sm font-semibold text-gray-900">{deal.title}</p>
                             <p className="text-xs text-gray-500 mt-0.5">₹{Number(deal.value || 0).toLocaleString('en-IN')} · {deal.probability}% probability</p>
+                            {deal.close_date && (
+                              <span className="text-[10px] text-gray-400">Close: {new Date(deal.close_date).toLocaleDateString('en-IN')}</span>
+                            )}
                           </div>
                           <select value={deal.stage} onChange={e => updateDealStage(selectedLead.id, deal.id, e.target.value)} className={`rounded-full px-2 py-0.5 text-[10px] font-bold border-0 cursor-pointer ${stageColor}`}>
                             <option value="open">Open</option><option value="won">Won</option><option value="lost">Lost</option><option value="on_hold">On Hold</option>
@@ -1406,11 +1438,22 @@ export default function LeadsPage() {
           {/* NOTES TAB */}
           {detailTab === 'notes' && (
             <div className="space-y-3">
-              <div className="flex gap-2">
+              <div className="relative flex gap-2">
                 <textarea
                   value={noteText}
-                  onChange={e => setNoteText(e.target.value)}
-                  placeholder="Add a note for your team..."
+                  onChange={e => {
+                    setNoteText(e.target.value);
+                    const words = e.target.value.split(' ');
+                    const lastWord = words[words.length - 1];
+                    if (lastWord.startsWith('@') && lastWord.length > 0) {
+                      const filter = lastWord.slice(1).toLowerCase();
+                      setMentionSuggestions(['@team', '@admin', '@support'].filter(s => s.slice(1).includes(filter)));
+                      setShowMentions(true);
+                    } else {
+                      setShowMentions(false);
+                    }
+                  }}
+                  placeholder="Add a note for your team... (type @ to mention)"
                   rows={2}
                   className="flex-1 resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
                 />
@@ -1421,6 +1464,17 @@ export default function LeadsPage() {
                 >
                   {savingNote ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <SendIcon className="h-3.5 w-3.5" />}
                 </button>
+                {showMentions && mentionSuggestions.length > 0 && (
+                  <div className="absolute left-0 top-full z-10 mt-1 rounded-lg border border-gray-200 bg-white shadow-lg">
+                    {mentionSuggestions.map(s => (
+                      <button key={s} type="button"
+                        onMouseDown={e => { e.preventDefault(); const words = noteText.split(' '); words[words.length-1] = s; setNoteText(words.join(' ') + ' '); setShowMentions(false); }}
+                        className="block w-full px-3 py-1.5 text-left text-xs hover:bg-indigo-50 font-medium text-gray-700">
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
               {notesLoading ? (
                 <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-gray-400" /></div>
@@ -1430,11 +1484,19 @@ export default function LeadsPage() {
                 <div className="space-y-2 max-h-64 overflow-y-auto">
                   {notes.map(note => (
                     <div key={note.id} className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-2">
-                      <p className="text-sm text-gray-800 whitespace-pre-wrap">{note.content}</p>
-                      <div className="mt-1 flex items-center justify-between">
-                        <span className="text-[10px] text-gray-400">{new Date(note.created_at).toLocaleString()}</span>
-                        <button onClick={() => deleteNote(selectedLead.id, note.id)} className="text-[10px] text-red-400 hover:text-red-600">Delete</button>
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <div className="h-4 w-4 rounded-full bg-indigo-100 flex items-center justify-center">
+                          <span className="text-[8px] font-bold text-indigo-600">{note.user_id === currentUser?.id ? 'Y' : 'T'}</span>
+                        </div>
+                        <span className="text-[10px] font-semibold text-gray-600">{note.user_id === currentUser?.id ? 'You' : 'Team member'}</span>
+                        <span className="text-[10px] text-gray-400">· {new Date(note.created_at).toLocaleString()}</span>
                       </div>
+                      <p className="text-sm text-gray-800 whitespace-pre-wrap">{note.content}</p>
+                      {note.user_id === currentUser?.id && (
+                        <div className="mt-1 flex justify-end">
+                          <button onClick={() => deleteNote(selectedLead.id, note.id)} className="text-[10px] text-red-400 hover:text-red-600">Delete</button>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -1459,6 +1521,11 @@ export default function LeadsPage() {
                         <div className="flex items-start justify-between gap-2">
                           <span className="font-semibold text-gray-800">
                             {typeIcon[event.type]} {event.type === 'whatsapp' ? (event.direction === 'inbound' ? 'Customer message' : 'Sent message') : event.type === 'task' ? event.title || 'Task' : event.action || event.type}
+                            {event.type === 'note' && event.user_id && (
+                              <span className="text-[10px] text-gray-400 ml-1 font-normal">
+                                by {event.user_id === currentUser?.id ? 'You' : 'Team'}
+                              </span>
+                            )}
                           </span>
                           <span className="shrink-0 text-gray-400">{new Date(event.created_at).toLocaleString()}</span>
                         </div>

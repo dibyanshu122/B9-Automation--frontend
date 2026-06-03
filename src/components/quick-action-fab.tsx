@@ -1,10 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, X, Users, Zap, Send, FileText, MessageSquare } from 'lucide-react';
+import { Plus, X, Users, Zap, Send, FileText, MessageSquare, CheckSquare } from 'lucide-react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
-const ACTIONS = [
+type ActionItem = { label: string; icon: React.FC<{ className?: string }>; href: string; color: string };
+
+const ACTIONS: ActionItem[] = [
   { label: 'Add Lead', icon: Users, href: '/dashboard/leads', color: 'bg-blue-500 hover:bg-blue-600' },
   { label: 'New Automation', icon: Zap, href: '/dashboard/automations', color: 'bg-violet-500 hover:bg-violet-600' },
   { label: 'Send Campaign', icon: Send, href: '/dashboard/campaigns', color: 'bg-orange-500 hover:bg-orange-600' },
@@ -12,8 +15,35 @@ const ACTIONS = [
   { label: 'Open Inbox', icon: MessageSquare, href: '/dashboard/messages', color: 'bg-green-500 hover:bg-green-600' },
 ];
 
+const PAGE_ACTIONS: Record<string, ActionItem[]> = {
+  '/dashboard/leads': [
+    { label: 'Add Lead', icon: Users, href: '/dashboard/leads', color: 'bg-blue-500 hover:bg-blue-600' },
+    { label: 'New Task', icon: CheckSquare, href: '/dashboard/tasks', color: 'bg-indigo-500 hover:bg-indigo-600' },
+    { label: 'Send Campaign', icon: Send, href: '/dashboard/campaigns', color: 'bg-orange-500 hover:bg-orange-600' },
+  ],
+  '/dashboard/campaigns': [
+    { label: 'New Campaign', icon: Send, href: '/dashboard/campaigns', color: 'bg-orange-500 hover:bg-orange-600' },
+    { label: 'New Template', icon: FileText, href: '/dashboard/templates', color: 'bg-emerald-500 hover:bg-emerald-600' },
+    { label: 'Add Lead', icon: Users, href: '/dashboard/leads', color: 'bg-blue-500 hover:bg-blue-600' },
+  ],
+  '/dashboard/automations': [
+    { label: 'New Automation', icon: Zap, href: '/dashboard/automations', color: 'bg-violet-500 hover:bg-violet-600' },
+    { label: 'New Template', icon: FileText, href: '/dashboard/templates', color: 'bg-emerald-500 hover:bg-emerald-600' },
+  ],
+  '/dashboard/messages': [
+    { label: 'Open Inbox', icon: MessageSquare, href: '/dashboard/messages', color: 'bg-green-500 hover:bg-green-600' },
+    { label: 'Add Lead', icon: Users, href: '/dashboard/leads', color: 'bg-blue-500 hover:bg-blue-600' },
+    { label: 'Send Campaign', icon: Send, href: '/dashboard/campaigns', color: 'bg-orange-500 hover:bg-orange-600' },
+  ],
+  '/dashboard/tasks': [
+    { label: 'New Task', icon: CheckSquare, href: '/dashboard/tasks', color: 'bg-indigo-500 hover:bg-indigo-600' },
+    { label: 'Add Lead', icon: Users, href: '/dashboard/leads', color: 'bg-blue-500 hover:bg-blue-600' },
+  ],
+};
+
 export function QuickActionFAB() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
 
   // Close on Escape
   useEffect(() => {
@@ -31,7 +61,7 @@ export function QuickActionFAB() {
 
       <div className="fixed bottom-6 right-6 z-50 flex flex-col-reverse items-end gap-2">
         {/* Action items */}
-        {open && ACTIONS.map((action, i) => {
+        {open && (PAGE_ACTIONS[pathname ?? ''] || ACTIONS).map((action: ActionItem, i: number) => {
           const Icon = action.icon;
           return (
             <Link

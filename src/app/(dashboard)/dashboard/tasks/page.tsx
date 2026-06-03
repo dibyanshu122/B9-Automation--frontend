@@ -15,6 +15,7 @@ interface BusinessTask {
   priority: string;
   due_at?: string;
   created_at: string;
+  task_metadata?: { recurrence?: string; [key: string]: any };
 }
 
 const blankTask = {
@@ -33,6 +34,8 @@ export default function TasksPage() {
   const [creating, setCreating] = useState(false);
   const [sortByPriority, setSortByPriority] = useState(false);
   const [form, setForm] = useState(blankTask);
+  const [taskRecurrence, setTaskRecurrence] = useState('none');
+  const [calView, setCalView] = useState(false);
 
   const fetchTasks = async () => {
     setLoading(true);
@@ -58,9 +61,11 @@ export default function TasksPage() {
       const response = await post('/api/tasks', {
         ...form,
         due_at: form.due_at ? new Date(form.due_at).toISOString() : null,
+        ...(taskRecurrence !== 'none' ? { task_metadata: { recurrence: taskRecurrence } } : {}),
       });
       setTasks([response.data, ...tasks]);
       setForm(blankTask);
+      setTaskRecurrence('none');
       toast.success('Task created');
     } catch (error: any) {
       toast.error(error.response?.data?.detail || 'Failed to create task');
@@ -103,7 +108,7 @@ export default function TasksPage() {
       </div>
 
       <Card className="border-orange-100 shadow-sm" hoverable={false}>
-        <form onSubmit={createTask} className="grid gap-3 lg:grid-cols-[1fr_1fr_160px_180px_auto]">
+        <form onSubmit={createTask} className="grid gap-3 lg:grid-cols-[1fr_1fr_160px_180px_140px_auto]">
           <input
             value={form.title}
             onChange={(e) => setForm({ ...form, title: e.target.value })}
@@ -138,6 +143,16 @@ export default function TasksPage() {
               <CalendarDays className="h-4 w-4" />
             </label>
           </div>
+          <select
+            value={taskRecurrence}
+            onChange={(e) => setTaskRecurrence(e.target.value)}
+            className="input-field"
+          >
+            <option value="none">No repeat</option>
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+          </select>
           <Button type="submit" variant="primary" disabled={creating} className="justify-center">
             <Plus className="h-4 w-4" />
             {creating ? 'Adding...' : 'Add'}
@@ -148,15 +163,54 @@ export default function TasksPage() {
       {tasks.length > 0 && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-gray-500">{tasks.length} task{tasks.length !== 1 ? 's' : ''}</p>
-          <button
-            type="button"
-            onClick={() => setSortByPriority((p) => !p)}
-            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${sortByPriority ? 'bg-orange-100 text-primary-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-          >
-            {sortByPriority ? '⬆ Sorted by priority' : 'Sort by priority'}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setCalView(v => !v)}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${calView ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            >
+              📅 {calView ? 'List' : 'Calendar'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setSortByPriority((p) => !p)}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${sortByPriority ? 'bg-orange-100 text-primary-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            >
+              {sortByPriority ? '⬆ Sorted by priority' : 'Sort by priority'}
+            </button>
+          </div>
         </div>
       )}
+
+      {calView && (() => {
+        const today = new Date();
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay() + 1); // Monday
+        const days = Array.from({length: 7}, (_, i) => {
+          const d = new Date(startOfWeek);
+          d.setDate(startOfWeek.getDate() + i);
+          return d;
+        });
+        const DAY_NAMES = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+        return (
+          <div className="grid grid-cols-7 gap-2 mb-6">
+            {days.map((day, i) => {
+              const dateStr = day.toISOString().split('T')[0];
+              const isToday = dateStr === today.toISOString().split('T')[0];
+              const dayTasks = tasks.filter((t: any) => t.due_at && t.due_at.startsWith(dateStr));
+              return (
+                <div key={i} className={`rounded-xl border p-2 min-h-24 ${isToday ? 'border-orange-400 bg-orange-50' : 'border-gray-200 bg-white'}`}>
+                  <p className={`text-xs font-bold mb-1 ${isToday ? 'text-orange-600' : 'text-gray-500'}`}>{DAY_NAMES[i]} {day.getDate()}</p>
+                  {dayTasks.map((t: any) => (
+                    <div key={t.id} className="rounded bg-indigo-50 px-1.5 py-0.5 text-[10px] text-indigo-700 font-medium mb-0.5 truncate">{t.title}</div>
+                  ))}
+                  {dayTasks.length === 0 && <p className="text-[10px] text-gray-300">—</p>}
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
 
       <div className="grid gap-4">
         {loading ? (
@@ -182,6 +236,7 @@ export default function TasksPage() {
                     <h2 className="font-bold text-gray-950">{task.title}</h2>
                     <span className={`rounded-full px-2 py-1 text-xs font-semibold ${task.status === 'completed' ? 'bg-emerald-100 text-emerald-700' : task.status === 'in_progress' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>{task.status === 'in_progress' ? 'Doing' : task.status}</span>
                     <span className={`rounded-full px-2 py-1 text-xs font-semibold ${task.priority === 'high' ? 'bg-red-50 text-red-600' : task.priority === 'medium' ? 'bg-amber-50 text-amber-700' : 'bg-gray-50 text-gray-500'}`}>{task.priority}</span>
+                    {task.task_metadata?.recurrence && <span className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-semibold">🔁 {task.task_metadata.recurrence}</span>}
                   </div>
                   {task.description && <p className="mt-2 text-sm text-gray-600">{task.description}</p>}
                   <p className="mt-2 text-xs text-gray-500">

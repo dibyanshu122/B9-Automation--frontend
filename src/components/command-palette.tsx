@@ -56,10 +56,12 @@ export function CommandPalette() {
     if (!q.trim()) { setResults([]); return; }
     setLoading(true);
     try {
-      const [leadsRes, campaignsRes, tplRes] = await Promise.allSettled([
+      const [leadsRes, campaignsRes, tplRes, docsRes, autoRes] = await Promise.allSettled([
         get(`/api/leads?search=${encodeURIComponent(q)}&limit=5`),
         get('/api/campaigns'),
         get('/api/automation/whatsapp/templates'),
+        get(`/api/documents?search=${encodeURIComponent(q)}&limit=5`),
+        get(`/api/automation/workflows?search=${encodeURIComponent(q)}&limit=5`),
       ]);
 
       const items: Result[] = [];
@@ -110,6 +112,36 @@ export function CommandPalette() {
               icon: TYPE_ICONS.template,
             });
           });
+      }
+
+      // Documents
+      if (docsRes.status === 'fulfilled') {
+        const docs = docsRes.value.data?.documents || docsRes.value.data || [];
+        docs.slice(0, 3).forEach((d: any) => {
+          items.push({
+            id: `doc-${d.id}`,
+            type: 'template',
+            title: d.title || d.filename || 'Document',
+            subtitle: `Document · ${d.mime_type || ''}`,
+            href: '/dashboard/documents',
+            icon: <FileText className="h-3.5 w-3.5 text-emerald-500" />,
+          });
+        });
+      }
+
+      // Automations
+      if (autoRes.status === 'fulfilled') {
+        const autos = autoRes.value.data?.workflows || autoRes.value.data || [];
+        autos.slice(0, 3).forEach((a: any) => {
+          items.push({
+            id: `auto-${a.id}`,
+            type: 'automation',
+            title: a.name || 'Automation',
+            subtitle: `Automation · ${a.is_active ? 'Active' : 'Inactive'}`,
+            href: '/dashboard/automations',
+            icon: TYPE_ICONS.automation,
+          });
+        });
       }
 
       // Quick navigation suggestions
