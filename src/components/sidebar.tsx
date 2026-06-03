@@ -115,15 +115,13 @@ function useUnreadCount() {
     };
     const initial = setTimeout(run, 1500);
     const t = setInterval(run, 30000);
-    // Also re-run when localStorage changes (user opens a chat)
-    const onStorage = (e: StorageEvent) => {
-      if (e.key?.startsWith('msg_read_')) run();
-    };
-    window.addEventListener('storage', onStorage);
+    // Re-run when user opens a chat (same-tab CustomEvent)
+    const onRead = () => run();
+    window.addEventListener('inbox-read', onRead);
     return () => {
       clearTimeout(initial);
       clearInterval(t);
-      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('inbox-read', onRead);
     };
   }, []);
   return count;
