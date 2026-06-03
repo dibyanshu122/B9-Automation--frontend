@@ -254,12 +254,13 @@ export const Sidebar = () => {
                     className={item(gActive, !expanded)}
                   >
                     <Icon className="w-5 h-5 shrink-0" />
-                    <span className={clsx(lbl, 'flex-1 text-left')}>{group.name}</span>
-                    <ChevronDown className={clsx(
-                      'w-4 h-4 shrink-0 transition-all duration-200',
-                      open && 'rotate-180',
-                      expanded ? 'opacity-100' : 'opacity-0 w-0'
-                    )} />
+                    <span className={clsx(lbl, expanded && 'flex-1 text-left')}>{group.name}</span>
+                    {expanded && (
+                      <ChevronDown className={clsx(
+                        'w-4 h-4 shrink-0 transition-transform duration-200',
+                        open && 'rotate-180'
+                      )} />
+                    )}
                   </button>
 
                   {open && expanded && (
