@@ -328,6 +328,7 @@ function UnifiedInbox() {
   const [inboxView, setInboxView] = useState<'all' | 'mine' | 'unassigned'>('all');
   const [teamMembers, setTeamMembers] = useState<{user_id:string;name:string;is_self:boolean}[]>([]);
   const [assignMenuPhone, setAssignMenuPhone] = useState<string | null>(null);
+  const [assigningPhone, setAssigningPhone] = useState<string | null>(null); // loading guard
   const [scoreFilter, setScoreFilter] = useState<'all' | 'hot' | 'warm' | 'cold'>('all');
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [filterPanelOpen, setFilterPanelOpen] = useState(false);
@@ -465,7 +466,7 @@ function UnifiedInbox() {
   useEffect(() => {
     get('/api/automation/inbox/team-members')
       .then(r => { if (r.data?.members) setTeamMembers(r.data.members); })
-      .catch(() => {});
+      .catch(() => { /* non-critical — team assignment optional */ });
   }, []); // eslint-disable-line
 
   // Load saved quick replies once
@@ -475,7 +476,7 @@ function UnifiedInbox() {
         const list = r.data?.quick_replies || r.data?.items || (Array.isArray(r.data) ? r.data : []);
         setQuickReplies(list);
       })
-      .catch(() => {});
+      .catch(() => { /* non-critical — quick replies optional */ });
   }, []); // eslint-disable-line
 
   // Close quick reply / template / filter / emoji dropdowns on outside click
@@ -919,14 +920,16 @@ function UnifiedInbox() {
                         {assignMenuPhone === c.sender_id && (
                           <div className="absolute right-0 top-5 z-50 w-44 rounded-xl border border-gray-200 bg-white shadow-lg overflow-hidden">
                             <button
-                              onClick={async e => { e.stopPropagation(); await post('/api/automation/inbox/assign', { phone: c.sender_id, assign_to: null }); setAssignMenuPhone(null); loadInbox(); }}
-                              className="flex w-full items-center px-3 py-2 text-xs text-gray-500 hover:bg-gray-50">
+                              disabled={assigningPhone === c.sender_id}
+                              onClick={async e => { e.stopPropagation(); if (assigningPhone) return; setAssigningPhone(c.sender_id); try { await post('/api/automation/inbox/assign', { phone: c.sender_id, assign_to: null }); setAssignMenuPhone(null); loadInbox(); } finally { setAssigningPhone(null); } }}
+                              className="flex w-full items-center px-3 py-2 text-xs text-gray-500 hover:bg-gray-50 disabled:opacity-40">
                               Unassign
                             </button>
                             {teamMembers.map(m => (
                               <button key={m.user_id}
-                                onClick={async e => { e.stopPropagation(); await post('/api/automation/inbox/assign', { phone: c.sender_id, assign_to: m.user_id }); setAssignMenuPhone(null); loadInbox(); }}
-                                className="flex w-full items-center px-3 py-2 text-xs text-gray-800 hover:bg-blue-50">
+                                disabled={assigningPhone === c.sender_id}
+                                onClick={async e => { e.stopPropagation(); if (assigningPhone) return; setAssigningPhone(c.sender_id); try { await post('/api/automation/inbox/assign', { phone: c.sender_id, assign_to: m.user_id }); setAssignMenuPhone(null); loadInbox(); } finally { setAssigningPhone(null); } }}
+                                className="flex w-full items-center px-3 py-2 text-xs text-gray-800 hover:bg-blue-50 disabled:opacity-40">
                                 {m.is_self ? `🙋 ${m.name} (me)` : `👤 ${m.name}`}
                               </button>
                             ))}
@@ -1319,7 +1322,7 @@ function UnifiedInbox() {
                         onKeyDown={e => {
                           if (e.key === 'Enter' && !e.shiftKey) {
                             e.preventDefault();
-                            if (!blocked) sendReply();
+                            if (!blocked && !sending && !sendingTemplate) sendReply();
                           }
                         }}
                         placeholder={blocked ? 'Window closed — use template' : 'Type a message'}

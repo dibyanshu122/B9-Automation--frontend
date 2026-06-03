@@ -66,9 +66,12 @@ export const useQuota = () => {
     return Math.max(0, limit - used);
   };
 
+  const isExpired = quota ? (quota.days_remaining !== null && quota.days_remaining !== undefined && quota.days_remaining <= 0 && quota.plan !== 'FREE') : false;
+
   return {
     quota: quota as QuotaData,
     loading,
+    isExpired,
     getQuotaPercentage,
     checkLimit,
     getRemainingQuota,

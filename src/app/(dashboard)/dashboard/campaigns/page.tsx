@@ -14,6 +14,7 @@ import toast from 'react-hot-toast';
 import { Button } from '@/components/button';
 import { useApi } from '@/hooks/useApi';
 import { useCampaigns, useInvalidate } from '@/hooks/useQueryCache';
+import { useQuota } from '@/hooks/useQuota';
 
 //  Types 
 
@@ -1248,7 +1249,12 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
                   <p className="text-[11px] text-violet-600">Send two template variants, compare which performs better</p>
                 </div>
                 <button
-                  onClick={() => { setAbEnabled(v => !v); setSelectedB(null); }}
+                  onClick={() => {
+                    const alternates = templates.filter(t => t.name !== selected?.name);
+                    if (!abEnabled && alternates.length === 0) { toast.error('A/B test needs at least 2 approved templates'); return; }
+                    setAbEnabled(v => !v); setSelectedB(null);
+                  }}
+                  title={templates.filter(t => t.name !== selected?.name).length === 0 ? 'Need 2+ approved templates for A/B test' : undefined}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${abEnabled ? 'bg-violet-600' : 'bg-gray-200'}`}
                 >
                   <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${abEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
@@ -1406,6 +1412,7 @@ const STATUS_TABS = [
 ];
 
 export default function CampaignsPage() {
+  const { isExpired } = useQuota();
   const [tab, setTab] = useState('all');
   const [showNew, setShowNew] = useState(false);
   const [detailName, setDetailName] = useState<string | null>(null);
@@ -1460,7 +1467,7 @@ export default function CampaignsPage() {
             style={{ background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e1b4b 100%)' }}>
             <Download className="w-4 h-4" /> Export CSV
           </button>
-          <Button onClick={() => setShowNew(true)} className="flex items-center gap-2">
+          <Button onClick={() => isExpired ? toast.error('Plan expired — renew to create campaigns') : setShowNew(true)} disabled={isExpired} className="flex items-center gap-2" title={isExpired ? 'Plan expired' : undefined}>
             <Plus className="w-4 h-4" /> New Campaign
           </Button>
         </div>

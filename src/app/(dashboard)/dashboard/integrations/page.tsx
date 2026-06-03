@@ -897,12 +897,13 @@ export default function IntegrationsPage() {
     setSetupError('');
     try {
       await post('/api/integrations/gmail/disconnect', {});
+      toast.success('Gmail disconnected');
+      // Clear local state AFTER API confirms (prevents stale UI if refresh fails)
+      await refresh();
       setGmailOAuthConnected(false);
       setGmailSenderEmail('');
       setGmailLastSyncedAt('');
       setGmailRecentEmails([]);
-      toast.success('Gmail disconnected');
-      refresh();
     } catch (err: any) {
       setSetupError(err.response?.data?.detail || 'Disconnect failed.');
     } finally {

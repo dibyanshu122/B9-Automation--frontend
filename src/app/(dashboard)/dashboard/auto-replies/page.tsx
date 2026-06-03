@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 import { Button } from '@/components/button';
 import { useApi } from '@/hooks/useApi';
 import { useAuthStore } from '@/store/authStore';
+import { useQuota } from '@/hooks/useQuota';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -126,6 +127,7 @@ function RuleForm({ ruleType, existing, onClose, onSaved }: {
   ruleType: string; existing?: Rule | null; onClose: () => void; onSaved: () => void;
 }) {
   const { post, put, get } = useApi();
+  const { quota, isExpired } = useQuota();
   const [name, setName] = useState(existing?.name || '');
   const [keywords, setKeywords] = useState((existing?.trigger_keywords || []).join(', '));
   const [matchExact, setMatchExact] = useState(existing?.match_exact || false);
@@ -224,12 +226,25 @@ function RuleForm({ ruleType, existing, onClose, onSaved }: {
                       <input type="checkbox" checked={matchExact} onChange={e => setMatchExact(e.target.checked)} className="rounded" />
                       Exact match only (not partial)
                     </label>
-                    <div className="mt-3 rounded-xl border border-purple-200 bg-purple-50 p-3">
+                    <div className={`mt-3 rounded-xl border p-3 ${(quota && quota.queries_limit - quota.queries_used <= 0) ? 'border-red-200 bg-red-50' : 'border-purple-200 bg-purple-50'}`}>
                       <label className="flex items-start gap-2.5 cursor-pointer">
-                        <input type="checkbox" checked={useAiReply} onChange={e => setUseAiReply(e.target.checked)} className="rounded mt-0.5" />
+                        <input type="checkbox" checked={useAiReply}
+                          onChange={e => {
+                            if (e.target.checked && quota && quota.queries_limit - quota.queries_used <= 0) {
+                              toast.error('AI credits exhausted — buy a top-up to enable AI replies');
+                              return;
+                            }
+                            setUseAiReply(e.target.checked);
+                          }}
+                          className="rounded mt-0.5" />
                         <div>
                           <p className="text-sm font-semibold text-purple-800">Let AI reply instead of fixed text</p>
                           <p className="text-xs text-purple-600 mt-0.5">When keyword matches, AI agent will generate a personalized reply using your knowledge base. The fixed reply below will be ignored.</p>
+                          {quota && quota.queries_limit > 0 && (
+                            <p className={`text-[11px] mt-1 font-semibold ${quota.queries_limit - quota.queries_used <= 0 ? 'text-red-600' : quota.queries_limit - quota.queries_used < 50 ? 'text-amber-600' : 'text-purple-500'}`}>
+                              AI credits: {Math.max(0, quota.queries_limit - quota.queries_used).toLocaleString('en-IN')} remaining
+                            </p>
+                          )}
                         </div>
                       </label>
                     </div>
@@ -504,6 +519,7 @@ export default function AutoRepliesPage() {
   const { get, post } = useApi();
   const [activeTab, setActiveTab] = useState('keyword_reply');
   const [rules, setRules] = useState<Rule[]>([]);
+  const [togglingRuleId, setTogglingRuleId] = useState<string | null>(null);
   const [dismissedInfoTabs, setDismissedInfoTabs] = useState<Set<string>>(() => {
     try {
       // sessionStorage: resets on logout/browser close — info guides show again on next login
@@ -583,14 +599,17 @@ export default function AutoRepliesPage() {
   useEffect(() => { if (activeTab === 'quick_replies') loadQrs(); }, [activeTab]); // eslint-disable-line
 
   const toggle = async (rule: Rule) => {
-    // Optimistic update with rollback
+    if (togglingRuleId === rule.id) return; // debounce — prevent double-click
+    setTogglingRuleId(rule.id);
     const prev = rules;
     setRules(r => r.map(x => x.id === rule.id ? { ...x, is_active: !x.is_active } : x));
     try {
       await post(`/api/auto-replies/rules/${rule.id}/toggle`, {});
     } catch {
-      setRules(prev); // rollback to previous state
+      setRules(prev);
       toast.error('Toggle failed — changes reverted');
+    } finally {
+      setTogglingRuleId(null);
     }
   };
 
@@ -862,7 +881,7 @@ export default function AutoRepliesPage() {
                     )}
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    <button onClick={() => toggle(rule)} className="text-gray-400 hover:text-gray-700 transition" title="Toggle">
+                    <button onClick={() => toggle(rule)} disabled={togglingRuleId === rule.id} className="text-gray-400 hover:text-gray-700 transition disabled:opacity-50 disabled:cursor-not-allowed" title="Toggle">
                       {rule.is_active ? <ToggleRight className="w-6 h-6 text-emerald-500" /> : <ToggleLeft className="w-6 h-6" />}
                     </button>
                     <button onClick={() => { setEditingRule(rule); setShowForm(true); }}
