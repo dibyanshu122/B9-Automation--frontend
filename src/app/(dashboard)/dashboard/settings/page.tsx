@@ -1201,7 +1201,7 @@ function CustomLeadFieldsSection() {
   }, []); // eslint-disable-line
 
   const addField = () => {
-    if (fields.length >= 100) { alert('Maximum 100 custom fields allowed'); return; }
+    if (fields.length >= 100) { toast.error('Maximum 100 custom fields allowed'); return; }
     const key = `custom_${Date.now()}`;
     setFields(prev => [...prev, { key, label: '', type: 'text' }]);
   };
@@ -1285,8 +1285,8 @@ function CsatSettingsSection() {
 
   const save = async () => {
     setSaving(true);
-    try { await put('/api/csat/settings', settings); alert('CSAT settings saved'); }
-    catch { alert('Save failed'); }
+    try { await put('/api/csat/settings', settings); toast.success('CSAT settings saved'); }
+    catch { toast.error('Save failed — please try again'); }
     finally { setSaving(false); }
   };
 

@@ -578,13 +578,14 @@ function UnifiedInbox() {
         recipient: selected.sender_id,
         channel: selected.channel,
         message_type: mediaType,
-        payload: { [mediaType]: { link: mediaUrl.trim() } },
+        // Both 'link' (Meta API format) and 'url' are supported — use link for WhatsApp Media Object spec
+        payload: { [mediaType]: { link: mediaUrl.trim(), url: mediaUrl.trim() } },
       });
       setMediaOpen(false);
       setMediaUrl('');
       setMediaType('image');
       toast.success(`${mediaType === 'image' ? 'Image' : mediaType === 'document' ? 'Document' : 'Video'} sent`);
-    } catch { toast.error('Failed to send media — check the URL is public HTTPS'); }
+    } catch { toast.error('Failed to send media'); }
     finally { setSendingMedia(false); }
   };
 
