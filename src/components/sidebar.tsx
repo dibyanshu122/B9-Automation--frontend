@@ -69,12 +69,10 @@ const NAV_PERMISSIONS: Record<string, string[]> = {
 
 function canSeeHref(access: TeamAccess | null, href?: string) {
   if (!href) return true;
-  // While loading: only show items that require no special permission (safe default)
-  // Prevents briefly showing restricted sections to lower-privilege members
-  if (!access) {
-    const required = NAV_PERMISSIONS[href];
-    return !required?.length; // show unrestricted items only while loading
-  }
+  // While loading (access = null): show ALL items optimistically.
+  // Owners are the common case — hiding items causes jarring layout shift.
+  // If user turns out to be a restricted member, items hide after access loads (~300ms).
+  if (!access) return true;
   const perms = new Set(access.permissions || []);
   if (access.is_owner || access.role === 'owner' || perms.has('*')) return true;
   const required = NAV_PERMISSIONS[href];
