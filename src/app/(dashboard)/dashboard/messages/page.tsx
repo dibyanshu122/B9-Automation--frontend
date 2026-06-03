@@ -858,8 +858,11 @@ function UnifiedInbox() {
               return (
                 <button key={`${c.channel}::${c.sender_id}`}
                   onClick={() => {
-                    // Mark as read — save timestamp so unread count clears
-                    localStorage.setItem(`msg_read_${c.channel}_${c.sender_id}`, c.last_time || new Date().toISOString());
+                    const readKey = `msg_read_${c.channel}_${c.sender_id}`;
+                    const readVal = c.last_time || new Date().toISOString();
+                    localStorage.setItem(readKey, readVal);
+                    // Dispatch storage event so sidebar unread count updates immediately
+                    window.dispatchEvent(new StorageEvent('storage', { key: readKey, newValue: readVal }));
                     setContacts(prev => prev.map(x => x.sender_id === c.sender_id && x.channel === c.channel ? { ...x, unread: 0 } : x));
                     setSelected(c);
                   }}

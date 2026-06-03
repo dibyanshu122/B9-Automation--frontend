@@ -86,24 +86,44 @@ function useUnreadCount() {
     const run = () => {
       const token = useAuthStore.getState().token;
       const base = process.env.NEXT_PUBLIC_API_URL || '';
-      fetch(`${base}/api/automation/inbox?limit=20`, {
+      fetch(`${base}/api/automation/inbox?limit=50`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       })
         .then(r => r.json())
         .then(data => {
           const items: any[] = data?.items || [];
-          const cutoff = Date.now() - 86400000;
-          setCount(Math.min(items.filter(
-            (i: any) => i.direction === 'inbound' && Date.parse(i.created_at) > cutoff
-          ).length, 99));
+          // Group by contact and check against localStorage last-read timestamps
+          // (same keys used by messages/page.tsx when chat is opened)
+          const seen = new Map<string, string>(); // key -> latest message time
+          items.forEach((i: any) => {
+            if (!i.created_at) return;
+            const key = `${i.channel}::${i.sender_id}`;
+            const existing = seen.get(key);
+            if (!existing || i.created_at > existing) seen.set(key, i.created_at);
+          });
+          let unread = 0;
+          seen.forEach((latestMsgTime, key) => {
+            const [channel, senderId] = key.split('::');
+            const lastRead = typeof window !== 'undefined'
+              ? localStorage.getItem(`msg_read_${channel}_${senderId}`) || ''
+              : '';
+            if (!lastRead || latestMsgTime > lastRead) unread++;
+          });
+          setCount(Math.min(unread, 99));
         })
         .catch(() => {});
     };
     const initial = setTimeout(run, 1500);
     const t = setInterval(run, 30000);
+    // Also re-run when localStorage changes (user opens a chat)
+    const onStorage = (e: StorageEvent) => {
+      if (e.key?.startsWith('msg_read_')) run();
+    };
+    window.addEventListener('storage', onStorage);
     return () => {
       clearTimeout(initial);
       clearInterval(t);
+      window.removeEventListener('storage', onStorage);
     };
   }, []);
   return count;
