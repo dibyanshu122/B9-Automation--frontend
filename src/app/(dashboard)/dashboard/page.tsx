@@ -85,6 +85,7 @@ export default function DashboardPage() {
     whatsapp_connection_status: null as any,
   });
   const [readiness, setReadiness] = useState<any>(null);
+  const [bootstrapLoading, setBootstrapLoading] = useState(true);
   const [command, setCommand] = useState('');
   const [topUpOpen, setTopUpOpen] = useState(false);
   const [statsError, setStatsError] = useState(false);
@@ -126,6 +127,7 @@ export default function DashboardPage() {
 
   const loadDashboard = () => {
     setStatsError(false);
+    setBootstrapLoading(true);
     // Silence network errors for these background fetches — the statsError banner handles it
     const silentGet = (url: string) => get(url).catch((e: any) => {
       if (!e.response) return { data: null }; // network error — handled by banner
@@ -166,13 +168,14 @@ export default function DashboardPage() {
       }
       if (bootstrap.readiness) setReadiness(bootstrap.readiness);
       if (bootstrap.team) setTeamMe(bootstrap.team);
+      setBootstrapLoading(false);
       // Fetch Meta Status if WhatsApp is connected
       if (bootstrap.stats?.whatsapp_connection_status?.send_enabled) {
         silentGet('/api/integrations/whatsapp/meta-status').then(r => {
           if (r?.data?.connected) setMetaStatus(r.data);
         });
       }
-    }).catch(() => setStatsError(true));
+    }).catch(() => { setStatsError(true); setBootstrapLoading(false); });
   };
 
   useEffect(() => {
@@ -490,7 +493,22 @@ export default function DashboardPage() {
         </Card>
       </section>
 
-      <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-6">
+      {/* Skeleton loading for stat cards */}
+      {bootstrapLoading && (
+        <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-6">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="h-40 rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden">
+              <div className="p-4 space-y-3">
+                <div className="h-3 w-24 rounded bg-gray-100 animate-pulse" />
+                <div className="h-8 w-16 rounded bg-gray-100 animate-pulse" />
+                <div className="h-3 w-32 rounded bg-gray-100 animate-pulse" />
+              </div>
+            </div>
+          ))}
+        </section>
+      )}
+
+      <section className={`grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-6 ${bootstrapLoading ? 'hidden' : ''}`}>
         {[
           { label: 'Conversations', value: quota?.queries_used ?? 0, icon: MessageCircle, href: '/dashboard/chat', help: 'Customer conversations handled by your AI.', action: 'Open Chat' },
           { label: 'Leads Captured', value: automationStats.leads_captured, icon: Users, href: '/dashboard/leads', help: 'Contacts captured from chatbot, widget, or automation.', action: 'View Leads', badge: liveStats.leads_hour ? `🔴 ${liveStats.leads_hour} last hour` : quota?.leads_today ? `${quota.leads_today} today` : null },

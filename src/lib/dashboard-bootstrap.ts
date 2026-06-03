@@ -22,7 +22,7 @@ export async function getDashboardBootstrap(force = false): Promise<DashboardBoo
   }).then(async (response) => {
     if (!response.ok) throw new Error(`Dashboard bootstrap failed: ${response.status}`);
     const data = await response.json();
-    cached = { token, data, expiresAt: Date.now() + 60_000 };
+    cached = { token, data, expiresAt: Date.now() + 120_000 }; // 2 min cache — reduces repeat loads
     return data;
   }).finally(() => {
     pending = null;
