@@ -1269,71 +1269,77 @@ function UnifiedInbox() {
                   >
                     <Paperclip className="h-6 w-6" />
                   </button>
-                  {/* Media upload dialog */}
+                  {/* Media — hidden file inputs, one per type. Select = auto upload + auto send */}
+                  {(['image','document','video'] as const).map(t => (
+                    <input key={t} type="file" className="hidden"
+                      ref={t === mediaType ? mediaFileRef : undefined}
+                      accept={t==='image'?'image/jpeg,image/png,image/webp,image/gif':t==='document'?'application/pdf':'video/mp4,video/3gpp'}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file || !selected) return;
+                        setMediaUploading(true);
+                        setMediaOpen(false);
+                        toast('Sending ' + (t==='image'?'image':t==='document'?'document':'video') + '…', { icon: '📤' });
+                        try {
+                          // Step 1: upload
+                          const fd = new FormData();
+                          fd.append('file', file);
+                          const tkn = useAuthStore.getState().token;
+                          const base = process.env.NEXT_PUBLIC_API_URL || '';
+                          const res = await fetch(`${base}/api/automation/upload-media-public`, {
+                            method: 'POST',
+                            headers: tkn ? { Authorization: `Bearer ${tkn}` } : {},
+                            body: fd,
+                          });
+                          const data = await res.json();
+                          if (!res.ok) throw new Error(data.detail || 'Upload failed');
+                          const url = data.public_url;
+                          // Step 2: send immediately
+                          await post('/api/automation/outbound-messages', {
+                            recipient: selected.sender_id,
+                            channel: selected.channel,
+                            message_type: t,
+                            payload: { [t]: { link: url, url } },
+                          });
+                          toast.success(`${t==='image'?'Image':t==='document'?'Document':'Video'} sent!`);
+                        } catch (err: any) {
+                          toast.error(err.message || 'Failed to send');
+                        } finally {
+                          setMediaUploading(false);
+                          setMediaUrl('');
+                          if (e.target) e.target.value = '';
+                        }
+                      }}
+                    />
+                  ))}
+                  {/* Media type picker — shows only when attachment icon clicked */}
                   {mediaOpen && (
-                    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center bg-black/40 p-4" onClick={() => { setMediaOpen(false); setMediaUrl(''); }}>
-                      <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl p-5" onClick={e => e.stopPropagation()}>
-                        <p className="text-base font-bold text-gray-900 mb-1">Send Media</p>
-                        <div className="flex gap-2 mb-4">
-                          {(['image','document','video'] as const).map(t => (
-                            <button key={t} onClick={() => { setMediaType(t); setMediaUrl(''); }}
-                              className={`flex-1 rounded-xl border py-1.5 text-xs font-semibold capitalize transition ${mediaType===t ? 'border-green-400 bg-green-50 text-green-700' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}>
-                              {t==='image'?'🖼️ Image':t==='document'?'📄 Document':'🎥 Video'}
-                            </button>
-                          ))}
-                        </div>
-                        <input ref={mediaFileRef} type="file" className="hidden"
-                          accept={mediaType==='image'?'image/jpeg,image/png,image/webp':mediaType==='document'?'application/pdf':'video/mp4,video/3gpp'}
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
-                            setMediaUploading(true);
-                            try {
-                              const fd = new FormData();
-                              fd.append('file', file);
-                              const tkn = useAuthStore.getState().token;
-                              const base = process.env.NEXT_PUBLIC_API_URL || '';
-                              const res = await fetch(`${base}/api/automation/upload-media-public`, {
-                                method: 'POST',
-                                headers: tkn ? { Authorization: `Bearer ${tkn}` } : {},
-                                body: fd,
-                              });
-                              const data = await res.json();
-                              if (!res.ok) throw new Error(data.detail || 'Upload failed');
-                              setMediaUrl(data.public_url);
-                            } catch (err: any) {
-                              alert(err.message || 'Upload failed');
-                            } finally {
-                              setMediaUploading(false);
-                              if (mediaFileRef.current) mediaFileRef.current.value = '';
-                            }
-                          }}
-                        />
-                        {mediaUrl ? (
-                          <div className="flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 px-3 py-3 mb-4">
-                            <span className="text-xl">{mediaType==='image'?'🖼️':mediaType==='document'?'📄':'🎥'}</span>
-                            <span className="flex-1 truncate text-sm text-gray-700">{mediaUrl.split('/').pop()}</span>
-                            <button onClick={() => setMediaUrl('')} className="text-red-400 hover:text-red-600 text-xs font-semibold">Remove</button>
+                    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center bg-black/40 p-4" onClick={() => setMediaOpen(false)}>
+                      <div className="w-full max-w-xs rounded-2xl bg-white shadow-2xl p-4" onClick={e => e.stopPropagation()}>
+                        <p className="text-sm font-bold text-gray-700 mb-3 text-center">Select file type to send</p>
+                        {mediaUploading ? (
+                          <div className="flex flex-col items-center gap-2 py-4">
+                            <Loader2 className="h-8 w-8 animate-spin text-green-500" />
+                            <p className="text-sm text-gray-500">Uploading &amp; sending…</p>
                           </div>
                         ) : (
-                          <button onClick={() => mediaFileRef.current?.click()} disabled={mediaUploading}
-                            className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-200 py-5 text-sm text-gray-500 hover:border-green-400 hover:bg-green-50 hover:text-green-600 transition mb-4 disabled:opacity-50">
-                            {mediaUploading
-                              ? <><Loader2 className="h-5 w-5 animate-spin" /> Uploading...</>
-                              : <><Paperclip className="h-5 w-5" /> Click to upload {mediaType==='image'?'image':mediaType==='document'?'PDF':'video'}</>}
-                          </button>
+                          <div className="grid grid-cols-3 gap-2">
+                            {(['image','document','video'] as const).map(t => (
+                              <button key={t} onClick={() => {
+                                setMediaType(t);
+                                // Open the file picker for this type
+                                const inp = document.querySelector(`input[accept*="${t==='image'?'jpeg':t==='document'?'pdf':'mp4'}"]`) as HTMLInputElement;
+                                inp?.click();
+                                setMediaOpen(false);
+                              }}
+                                className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 py-4 text-xs font-semibold text-gray-600 hover:border-green-400 hover:bg-green-50 hover:text-green-700 transition">
+                                <span className="text-2xl">{t==='image'?'🖼️':t==='document'?'📄':'🎥'}</span>
+                                {t==='image'?'Image':t==='document'?'Document':'Video'}
+                              </button>
+                            ))}
+                          </div>
                         )}
-                        <div className="flex gap-2">
-                          <button onClick={() => { setMediaOpen(false); setMediaUrl(''); }}
-                            className="flex-1 rounded-xl border border-gray-200 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50">
-                            Cancel
-                          </button>
-                          <button onClick={sendMedia} disabled={!mediaUrl.trim() || sendingMedia}
-                            className="flex-1 rounded-xl bg-green-600 py-2 text-sm font-bold text-white hover:bg-green-700 disabled:opacity-40 transition flex items-center justify-center gap-2">
-                            {sendingMedia ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                            Send
-                          </button>
-                        </div>
+                        <button onClick={() => setMediaOpen(false)} className="mt-3 w-full text-xs text-gray-400 hover:text-gray-600 text-center">Cancel</button>
                       </div>
                     </div>
                   )}
