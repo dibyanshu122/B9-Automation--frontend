@@ -699,11 +699,11 @@ function UnifiedInbox() {
     });
 
   return (
-    <div className="grid h-full min-h-0 min-w-0 grid-cols-1 gap-0 overflow-hidden xl:grid-cols-[360px_minmax(0,1fr)] bg-white">
+    <div className="grid h-full min-h-0 min-w-0 grid-cols-1 gap-0 overflow-hidden xl:grid-cols-[360px_minmax(0,1fr)]" style={{background:'#F9FAFB'}}>
       {/* LEFT — Contacts panel */}
-        <div className={`flex min-h-0 flex-col overflow-hidden border-r border-gray-200 bg-white ${selected ? 'hidden xl:flex' : 'flex'}`}>
+        <div className={`flex min-h-0 flex-col overflow-hidden border-r border-[#E5E7EB] bg-white ${selected ? 'hidden xl:flex' : 'flex'}`}>
           {/* Header */}
-          <div className="px-4 py-3 bg-[#f0f2f5] flex flex-col gap-3">
+          <div className="px-4 py-3 bg-white border-b border-[#E5E7EB] flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <h1 className="font-bold text-gray-800 text-xl">Chats</h1>
               <div className="flex items-center gap-1">
@@ -943,10 +943,10 @@ function UnifiedInbox() {
 
         {/* RIGHT — Chat Thread + Lead Profile */}
         {selected ? (
-          <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden bg-white">
-          <div className="flex flex-col flex-1 min-w-0 bg-[#efeae2]">
+          <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden" style={{background:'#F9FAFB'}}>
+          <div className="flex flex-col flex-1 min-w-0" style={{background:'#F9FAFB'}}>
             {/* Chat header */}
-            <div className="flex items-center gap-3 px-4 py-2.5 bg-[#f0f2f5] border-b border-gray-200 shrink-0 shadow-sm z-10">
+            <div className="flex items-center gap-3 px-4 py-3 bg-white border-b border-[#E5E7EB] shrink-0 z-10" style={{boxShadow:'0 1px 3px rgba(0,0,0,0.06)'}}>
               <button onClick={() => setSelected(null)} className="xl:hidden flex items-center gap-1 p-2 rounded-full hover:bg-gray-200 text-gray-500 transition mr-1">
                 <ArrowLeft className="h-5 w-5" />
               </button>
@@ -1063,8 +1063,8 @@ function UnifiedInbox() {
             </div>
 
             {/* Messages */}
-            <div ref={chatBoxRef} className="flex-1 overflow-y-auto p-4 md:p-8 space-y-2 relative" style={{
-              backgroundColor: '#efeae2',
+            <div ref={chatBoxRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-1.5 relative" style={{
+              backgroundColor: '#F9FAFB',
             }}>
               {threadLoading ? (
                 <div className="flex justify-center pt-12"><Loader2 className="h-6 w-6 animate-spin text-gray-400" /></div>
@@ -1089,11 +1089,11 @@ function UnifiedInbox() {
                     </div>
                   )}
                   <div className={`flex items-end gap-2 max-w-[85%] md:max-w-[70%] lg:max-w-[60%]`}>
-                  <div className={`w-full rounded-lg text-[14.5px] shadow-sm relative group ${
+                  <div className={`w-full text-[14px] shadow-sm relative group border border-[#E5E7EB] ${
                     isOutbound
-                      ? 'bg-[#d9fdd3] text-gray-900 rounded-tr-none'
-                      : 'bg-white text-gray-900 rounded-tl-none'
-                  } ${isPureMedia ? 'p-1' : 'px-3 py-1.5'}`}>
+                      ? 'bg-[#EFF6FF] text-gray-900 rounded-2xl rounded-tr-sm'
+                      : 'bg-white text-gray-900 rounded-2xl rounded-tl-sm'
+                  } ${isPureMedia ? 'p-1' : 'px-3 py-2'}`}>
                     {/* Tail svg (optional detail) */}
                     <div className={`absolute top-0 w-3 h-3 ${isOutbound ? '-right-2 text-[#d9fdd3]' : '-left-2 text-white'}`}>
                       <svg viewBox="0 0 8 13" width="8" height="13" className="fill-current">
@@ -1121,7 +1121,7 @@ function UnifiedInbox() {
 
             {/* Reply box */}
 
-            <div className="bg-[#f0f2f5] px-4 py-3 shrink-0 relative">
+            <div className="bg-white border-t border-[#E5E7EB] px-4 py-3 shrink-0 relative">
               {/* 24-hour window compliance banner */}
               {selected && (() => {
                 const win = getWindowStatus(selected.last_time, selected.channel);
@@ -1306,7 +1306,8 @@ function UnifiedInbox() {
                   const win = getWindowStatus(selected.last_time, selected.channel);
                   const blocked = !win.open && selected.channel === 'whatsapp';
                   return (
-                    <div className="flex-1 bg-white rounded-lg border border-transparent focus-within:border-green-500 flex items-end shadow-sm">
+                    <div className="flex-1 bg-white rounded-xl border border-[#E5E7EB] focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100 flex items-end shadow-sm transition-all"
+                      style={{borderRadius:'12px'}}>
                       <textarea
                         rows={1}
                         value={reply}
