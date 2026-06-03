@@ -274,7 +274,7 @@ export default function WidgetsPage() {
       const reply = data.response || data.answer || 'No response';
       setPreviewMessages(prev => [...prev, { role: 'bot', text: reply }]);
     } catch {
-      setPreviewMessages(prev => [...prev, { role: 'bot', text: 'Preview unavailable — ensure WhatsApp domain is whitelisted or use localhost.' }]);
+      setPreviewMessages(prev => [...prev, { role: 'bot', text: 'Preview unavailable. Make sure your assistant is active and has documents uploaded.' }]);
     } finally {
       setPreviewLoading(false);
     }
