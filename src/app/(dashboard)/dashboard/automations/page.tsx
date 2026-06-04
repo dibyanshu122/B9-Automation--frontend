@@ -2846,7 +2846,7 @@ function WorkflowNode({ data }: NodeProps<Node<FlowNodeData>>) {
   const isCondition = block.type === 'condition';
   const meta = NODE_TYPE_META[block.type];
   const { zoom } = useViewport();
-  const compact = zoom < 0.45;
+  const compact = zoom < 0.70;
 
   /* Show output variables on AI nodes */
   const outputVars = block.type === 'ai'
