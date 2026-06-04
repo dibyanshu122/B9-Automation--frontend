@@ -331,7 +331,7 @@ export default function AutomationsPage() {
   const [lockedFeature, setLockedFeature] = useState<FeatureKey | null>(null);
   const [libraryCollapsed, setLibraryCollapsed] = useState(false);
   const [libraryMode, setLibraryMode] = useState<'beginner' | 'advanced'>('beginner');
-  const [settingsOpen, setSettingsOpen] = useState(true);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [backendValidation, setBackendValidation] = useState<WorkflowValidationResult | null>(null);
   const [autosaveReady, setAutosaveReady] = useState(false);
   const [lastAutosavedAt, setLastAutosavedAt] = useState('');
@@ -1137,11 +1137,11 @@ export default function AutomationsPage() {
         {/* CENTER: action buttons */}
         <Button variant="secondary" size="sm" className="shrink-0"
           onClick={() => { const opening = libraryCollapsed; setLibraryCollapsed(!opening); if (opening) setSettingsOpen(false); }}>
-          {libraryCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />} Library
+          {libraryCollapsed ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />} Library
         </Button>
         <Button variant="secondary" size="sm" className="shrink-0"
           onClick={() => { const opening = !settingsOpen; setSettingsOpen(opening); if (opening) setLibraryCollapsed(true); }}>
-          {settingsOpen ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />} Settings
+          {settingsOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />} Settings
         </Button>
 
         {/* Undo/Redo */}
@@ -2569,7 +2569,7 @@ function WorkflowCanvas({
           <button type="button" onClick={onArrange} className="inline-flex items-center gap-2 rounded-lg border border-sky-300/20 bg-sky-400/10 px-3 py-2 text-xs font-bold text-sky-100 hover:bg-sky-400/20">
             <Route className="h-4 w-4" />Arrange
           </button>
-          <button type="button" onClick={onToggleFullscreen}
+          <button type="button" onClick={() => onToggleFullscreen?.()}
             title={isFullscreen ? 'Exit fullscreen (ESC)' : 'Fullscreen — library + canvas + settings'}
             className="inline-flex items-center gap-1.5 rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-xs font-bold text-slate-200 hover:bg-slate-700 hover:border-slate-500 transition">
             {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
