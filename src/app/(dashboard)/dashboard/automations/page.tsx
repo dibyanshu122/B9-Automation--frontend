@@ -2841,7 +2841,7 @@ function WorkflowNode({ data }: NodeProps<Node<FlowNodeData>>) {
     <div
       data-workflow-node
       onClick={() => onSelect(block.id)}
-      className={`b9-flow-node relative min-h-[148px] w-[220px] cursor-pointer overflow-hidden rounded-2xl transition-all duration-300
+      className={`b9-flow-node relative min-h-[148px] w-[220px] cursor-pointer rounded-2xl transition-all duration-300
         ${active
           ? 'ring-2 ring-cyan-400 ring-offset-2 ring-offset-slate-900 animate-pulse shadow-[0_0_20px_rgba(34,211,238,0.35)]'
           : completed
@@ -2864,8 +2864,8 @@ function WorkflowNode({ data }: NodeProps<Node<FlowNodeData>>) {
       {completed && <span className="absolute right-2 top-2 z-10 text-[11px] font-black text-emerald-400 leading-none">✓</span>}
       {failed && <span className="absolute right-2 top-2 z-10 text-[11px] font-black text-red-400 leading-none">✗</span>}
 
-      {/* Top color bar (n8n style) */}
-      <div className={`h-1 w-full ${meta.bar}`} />
+      {/* Top color bar — rounded-t-2xl matches node card top corners */}
+      <div className={`h-1 w-full rounded-t-2xl ${meta.bar}`} />
 
       {/* Handles — onMouseDown to open add menu (fires before ReactFlow absorbs click) + drag still works */}
       <Handle id="in" type="target" position={Position.Left}
