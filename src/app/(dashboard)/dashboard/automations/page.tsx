@@ -2874,17 +2874,23 @@ function WorkflowNode({ data }: NodeProps<Node<FlowNodeData>>) {
         <>
           <Handle id="yes" type="source" position={Position.Right}
             onMouseDown={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'yes'); }}
-            className="!-right-2 !h-7 !w-7 !rounded-full !border-2 !border-emerald-400 !bg-emerald-600 hover:!bg-emerald-400 !cursor-pointer !transition-all !duration-150"
-            style={{ top: '44%' }} />
+            className="!-right-3.5 !h-7 !w-7 !flex !items-center !justify-center !rounded-full !border-2 !border-emerald-400 !bg-slate-800 !text-emerald-300 !text-sm !font-black !cursor-pointer hover:!bg-emerald-600 !transition-all !duration-150"
+            style={{ top: '44%' }}>
+            <span className="pointer-events-none select-none">+</span>
+          </Handle>
           <Handle id="no" type="source" position={Position.Right}
             onMouseDown={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'no'); }}
-            className="!-right-2 !h-7 !w-7 !rounded-full !border-2 !border-amber-400 !bg-amber-600 hover:!bg-amber-400 !cursor-pointer !transition-all !duration-150"
-            style={{ top: '68%' }} />
+            className="!-right-3.5 !h-7 !w-7 !flex !items-center !justify-center !rounded-full !border-2 !border-amber-400 !bg-slate-800 !text-amber-300 !text-sm !font-black !cursor-pointer hover:!bg-amber-600 !transition-all !duration-150"
+            style={{ top: '68%' }}>
+            <span className="pointer-events-none select-none">+</span>
+          </Handle>
         </>
       ) : (
         <Handle id="then" type="source" position={Position.Right}
           onMouseDown={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'then'); }}
-          className="!-right-2 !h-7 !w-7 !rounded-full !border-2 !border-orange-400 !bg-orange-500 hover:!bg-orange-300 !cursor-pointer !transition-all !duration-150" />
+          className="!-right-3.5 !h-7 !w-7 !flex !items-center !justify-center !rounded-full !border-2 !border-slate-500 !bg-slate-800 !text-slate-300 !text-sm !font-black !cursor-pointer hover:!border-orange-400 hover:!bg-slate-700 hover:!text-orange-300 !transition-all !duration-150">
+          <span className="pointer-events-none select-none">+</span>
+        </Handle>
       )}
 
       {/* Node body */}
