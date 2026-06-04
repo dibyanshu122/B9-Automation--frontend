@@ -2769,10 +2769,14 @@ function WorkflowNode({ data }: NodeProps<Node<FlowNodeData>>) {
     : [];
 
   return (
+    /* Outer wrapper: no overflow-hidden so floating + button shows below */
     <div
       data-workflow-node
       onClick={() => onSelect(block.id)}
-      className={`b9-flow-node relative min-h-[148px] w-[220px] cursor-pointer overflow-hidden rounded-2xl transition-all duration-300
+      className={`b9-flow-node relative w-[220px] cursor-pointer transition-all duration-300`}
+    >
+    {/* Inner card: overflow-hidden keeps color bar corners rounded */}
+    <div className={`relative min-h-[148px] w-full overflow-hidden rounded-2xl
         ${active
           ? 'ring-2 ring-cyan-400 ring-offset-2 ring-offset-slate-900 animate-pulse shadow-[0_0_20px_rgba(34,211,238,0.35)]'
           : completed
@@ -2877,43 +2881,44 @@ function WorkflowNode({ data }: NodeProps<Node<FlowNodeData>>) {
           </div>
         )}
       </div>
+    </div>
 
-      {/* Floating "+" circle below node — Resend style, click to add next step */}
-      {isCondition ? (
-        // Condition: two floating circles for YES/NO branches
-        <div className="absolute -bottom-8 left-0 right-0 flex justify-around px-4 pointer-events-none">
-          <button
-            type="button"
-            onMouseDown={(e) => e.stopPropagation()}
-            onClick={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'yes'); }}
-            className="pointer-events-auto flex h-7 w-7 items-center justify-center rounded-full border border-emerald-500/40 bg-slate-800 text-emerald-400 shadow-lg shadow-black/40 hover:bg-emerald-900/60 hover:border-emerald-400 transition-all"
-            title="Add YES branch step"
-          >
-            <Plus className="h-3.5 w-3.5" />
-          </button>
-          <button
-            type="button"
-            onMouseDown={(e) => e.stopPropagation()}
-            onClick={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'no'); }}
-            className="pointer-events-auto flex h-7 w-7 items-center justify-center rounded-full border border-amber-500/40 bg-slate-800 text-amber-400 shadow-lg shadow-black/40 hover:bg-amber-900/60 hover:border-amber-400 transition-all"
-            title="Add NO branch step"
-          >
-            <Plus className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      ) : (
-        // Normal node: single "+" circle below center
+    {/* Floating "+" circle — OUTSIDE the inner card, truly below — Resend style */}
+    {isCondition ? (
+      <div className="mt-3 flex justify-around px-4">
+        <button
+          type="button"
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'yes'); }}
+          className="flex h-8 w-8 items-center justify-center rounded-full border border-emerald-500/50 bg-slate-800 text-emerald-400 shadow-lg shadow-black/50 hover:bg-emerald-900/50 hover:border-emerald-400 hover:scale-110 transition-all"
+          title="Add YES step"
+        >
+          <Plus className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'no'); }}
+          className="flex h-8 w-8 items-center justify-center rounded-full border border-amber-500/50 bg-slate-800 text-amber-400 shadow-lg shadow-black/50 hover:bg-amber-900/50 hover:border-amber-400 hover:scale-110 transition-all"
+          title="Add NO step"
+        >
+          <Plus className="h-4 w-4" />
+        </button>
+      </div>
+    ) : (
+      <div className="mt-3 flex justify-center">
         <button
           type="button"
           onMouseDown={(e) => e.stopPropagation()}
           onClick={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'then'); }}
-          className="absolute -bottom-5 left-1/2 -translate-x-1/2 flex h-8 w-8 items-center justify-center rounded-full border border-slate-600 bg-slate-700 text-slate-300 shadow-lg shadow-black/50 hover:bg-slate-600 hover:border-slate-500 hover:text-white hover:scale-110 transition-all z-10"
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-600 bg-slate-800 text-slate-400 shadow-lg shadow-black/60 hover:bg-slate-700 hover:border-slate-500 hover:text-white hover:scale-110 transition-all"
           title="Add next step"
         >
           <Plus className="h-4 w-4" />
         </button>
-      )}
-    </div>
+      </div>
+    )}
+  </div>
   );
 }
 
