@@ -18,6 +18,7 @@ import {
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
+  useViewport,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import {
@@ -32,6 +33,8 @@ import {
   GitBranch,
   Globe,
   Link,
+  Maximize2,
+  Minimize2,
   MousePointer2,
   Play,
   Plus,
@@ -2427,6 +2430,14 @@ function WorkflowCanvas({
   const { screenToFlowPosition, fitView, zoomIn, zoomOut } = useReactFlow();
   const [addMenu, setAddMenu] = useState<{ sourceId: string; label: string } | null>(null);
   const [addMenuShowAll, setAddMenuShowAll] = useState(false);
+  const [fsCanvas, setFsCanvas] = useState(false);
+
+  // ESC to exit fullscreen
+  React.useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setFsCanvas(false); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
 
   const SUGGESTIONS_BY_SOURCE_TYPE: Record<string, string[]> = {
     trigger: ['Detect Language', 'Analyze Sentiment', 'Qualify Lead', 'Generate Reply', 'Send WhatsApp', 'Send Catalog', 'Decide Next Step'],
@@ -2505,7 +2516,10 @@ function WorkflowCanvas({
   }
 
   return (
-    <div className="b9-node-canvas relative h-full overflow-hidden rounded-2xl border border-white/10 shadow-2xl shadow-black/30">
+    <div className={`b9-node-canvas overflow-hidden border border-white/10 shadow-2xl shadow-black/30 transition-all duration-200
+      ${fsCanvas
+        ? 'fixed inset-0 z-[9999] rounded-none'
+        : 'relative h-full rounded-2xl'}`}>
       <div className="absolute inset-x-0 top-0 z-20 flex items-center justify-between gap-3 border-b border-white/10 bg-slate-950/90 px-4 py-3 backdrop-blur">
         <div>
           <div className="flex items-center gap-2">
@@ -2515,18 +2529,16 @@ function WorkflowCanvas({
           <p className="text-xs text-slate-500">Drag from library · Connect nodes · Left to Right flow</p>
         </div>
         <div className="flex items-center gap-2">
-          <button type="button" onClick={() => zoomOut()} className="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-xs font-bold text-slate-200 hover:bg-white/20">
-            -
-          </button>
-          <button type="button" onClick={() => zoomIn()} className="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-xs font-bold text-slate-200 hover:bg-white/20">
-            +
-          </button>
-          <button type="button" onClick={() => fitView({ padding: 0.25, duration: 300 })} className="rounded-lg border border-cyan-300/20 bg-cyan-400/10 px-3 py-2 text-xs font-bold text-cyan-100 hover:bg-cyan-400/20">
-            Fit
-          </button>
+          <button type="button" onClick={() => zoomOut()} className="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-xs font-bold text-slate-200 hover:bg-white/20">-</button>
+          <button type="button" onClick={() => zoomIn()} className="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-xs font-bold text-slate-200 hover:bg-white/20">+</button>
+          <button type="button" onClick={() => fitView({ padding: 0.25, duration: 300 })} className="rounded-lg border border-cyan-300/20 bg-cyan-400/10 px-3 py-2 text-xs font-bold text-cyan-100 hover:bg-cyan-400/20">Fit</button>
           <button type="button" onClick={onArrange} className="inline-flex items-center gap-2 rounded-lg border border-sky-300/20 bg-sky-400/10 px-3 py-2 text-xs font-bold text-sky-100 hover:bg-sky-400/20">
-            <Route className="h-4 w-4" />
-            Arrange
+            <Route className="h-4 w-4" />Arrange
+          </button>
+          <button type="button" onClick={() => setFsCanvas(v => !v)}
+            title={fsCanvas ? 'Exit fullscreen (ESC)' : 'Fullscreen — focus on canvas'}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-xs font-bold text-slate-200 hover:bg-slate-700 hover:border-slate-500 transition">
+            {fsCanvas ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </button>
         </div>
       </div>
@@ -2726,6 +2738,8 @@ function WorkflowNode({ data }: NodeProps<Node<FlowNodeData>>) {
   const Icon = blockIcons[block.type];
   const isCondition = block.type === 'condition';
   const meta = NODE_TYPE_META[block.type];
+  const { zoom } = useViewport();
+  const compact = zoom < 0.45;
 
   /* Show output variables on AI nodes */
   const outputVars = block.type === 'ai'
@@ -2735,6 +2749,40 @@ function WorkflowNode({ data }: NodeProps<Node<FlowNodeData>>) {
         .filter(Boolean)
         .slice(0, 4)
     : [];
+
+  // Compact mode when zoomed out — just icon + type dot
+  if (compact) {
+    return (
+      <div data-workflow-node onClick={() => onSelect(block.id)}
+        className={`b9-flow-node relative flex h-12 w-12 cursor-pointer items-center justify-center overflow-hidden rounded-xl transition-all duration-200
+          ${selected ? 'ring-2 ring-cyan-300 ring-offset-1 ring-offset-slate-900' : 'hover:ring-1 hover:ring-white/30'}
+          ${active ? 'ring-2 ring-cyan-400 animate-pulse' : ''}
+          ${completed ? 'ring-2 ring-emerald-400' : ''}
+          ${failed ? 'ring-2 ring-red-400' : ''}`}>
+        <div className={`absolute inset-x-0 top-0 h-0.5 ${meta.bar}`} />
+        <Handle id="in" type="target" position={Position.Left}
+          className="!-left-2 !h-4 !w-4 !rounded-full !border !border-slate-600 !bg-slate-800 !cursor-crosshair" />
+        <Icon className="h-5 w-5 text-white" />
+        <span className={`absolute bottom-0.5 right-0.5 h-2 w-2 rounded-full ${isNodeConfigured(block) ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+        {isCondition ? (
+          <>
+            <Handle id="yes" type="source" position={Position.Right}
+              onClick={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'yes'); }}
+              className="!-right-1.5 !h-4 !w-4 !rounded-full !border !border-emerald-400 !bg-emerald-600 !cursor-pointer"
+              style={{ top: '30%' }} />
+            <Handle id="no" type="source" position={Position.Right}
+              onClick={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'no'); }}
+              className="!-right-1.5 !h-4 !w-4 !rounded-full !border !border-amber-400 !bg-amber-600 !cursor-pointer"
+              style={{ top: '70%' }} />
+          </>
+        ) : (
+          <Handle id="then" type="source" position={Position.Right}
+            onClick={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'then'); }}
+            className="!-right-1.5 !h-4 !w-4 !rounded-full !border !border-orange-400 !bg-orange-500 hover:!bg-white !cursor-pointer !transition-all" />
+        )}
+      </div>
+    );
+  }
 
   return (
     <div
@@ -2766,21 +2814,24 @@ function WorkflowNode({ data }: NodeProps<Node<FlowNodeData>>) {
       {/* Top color bar (n8n style) */}
       <div className={`h-1 w-full ${meta.bar}`} />
 
-      {/* Handles */}
+      {/* Handles — click to open add menu, drag to connect existing node */}
       <Handle id="in" type="target" position={Position.Left}
         className="!-left-2 !h-5 !w-5 !rounded-full !border-2 !border-slate-600 !bg-slate-800 hover:!bg-slate-700 hover:!border-slate-400 !cursor-crosshair" />
       {isCondition ? (
         <>
           <Handle id="yes" type="source" position={Position.Right}
-            className="!-right-2 !h-5 !w-5 !rounded-full !border-2 !border-emerald-400 !bg-emerald-600 hover:!bg-emerald-500 !cursor-crosshair"
+            onClick={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'yes'); }}
+            className="!-right-2 !h-6 !w-6 !rounded-full !border-2 !border-emerald-400 !bg-emerald-600 hover:!bg-white hover:!border-white !cursor-pointer !transition-all !duration-150"
             style={{ top: '44%' }} />
           <Handle id="no" type="source" position={Position.Right}
-            className="!-right-2 !h-5 !w-5 !rounded-full !border-2 !border-amber-400 !bg-amber-600 hover:!bg-amber-500 !cursor-crosshair"
+            onClick={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'no'); }}
+            className="!-right-2 !h-6 !w-6 !rounded-full !border-2 !border-amber-400 !bg-amber-600 hover:!bg-white hover:!border-white !cursor-pointer !transition-all !duration-150"
             style={{ top: '68%' }} />
         </>
       ) : (
         <Handle id="then" type="source" position={Position.Right}
-          className="!-right-2 !h-5 !w-5 !rounded-full !border-2 !border-orange-400 !bg-orange-500 hover:!bg-orange-400 !cursor-crosshair" />
+          onClick={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'then'); }}
+          className="!-right-2 !h-6 !w-6 !rounded-full !border-2 !border-orange-400 !bg-orange-500 hover:!bg-white hover:!border-white !cursor-pointer !transition-all !duration-150" />
       )}
 
       {/* Node body */}
@@ -2845,32 +2896,13 @@ function WorkflowNode({ data }: NodeProps<Node<FlowNodeData>>) {
           </div>
         )}
 
-        {/* Footer buttons */}
-        <div className="mt-3 space-y-1.5 border-t border-white/10 pt-2.5">
-          {isCondition ? (
-            <div className="grid grid-cols-2 gap-1.5">
-              <button type="button" onClick={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'yes'); }}
-                className="rounded-lg border border-emerald-400/20 bg-emerald-400/10 py-1.5 text-[11px] font-black text-emerald-200 hover:bg-emerald-400/20">
-                Yes <Plus className="inline h-3 w-3" />
-              </button>
-              <button type="button" onClick={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'no'); }}
-                className="rounded-lg border border-amber-400/20 bg-amber-400/10 py-1.5 text-[11px] font-black text-amber-200 hover:bg-amber-400/20">
-                No <Plus className="inline h-3 w-3" />
-              </button>
-            </div>
-          ) : (
-            <button type="button" onClick={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'then'); }}
-              className="w-full rounded-lg border border-orange-300/30 bg-orange-400/15 py-2.5 text-sm font-black text-orange-200 hover:bg-orange-400/30 active:scale-95 transition-all">
-              + Next Step
-            </button>
-          )}
-          {block.type !== 'trigger' && (
-            <button type="button" onClick={(e) => { e.stopPropagation(); onTestNode(block.id); }}
-              className="w-full rounded-lg border border-sky-400/20 bg-sky-400/10 py-1 text-[10px] font-bold text-sky-300 hover:bg-sky-400/20 hover:text-sky-200 transition">
-              <Play className="inline h-3 w-3 mr-1" />▶ Test This Step
-            </button>
-          )}
-        </div>
+        {/* Condition branch hint — helps user know which circle = which path */}
+        {isCondition && (
+          <div className="mt-2 flex gap-2 border-t border-white/[0.07] pt-2 text-[10px] font-bold">
+            <span className="text-emerald-400">✓ YES →</span>
+            <span className="ml-auto text-amber-400">✗ NO →</span>
+          </div>
+        )}
       </div>
     </div>
   );
