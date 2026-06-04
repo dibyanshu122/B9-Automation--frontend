@@ -558,6 +558,12 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
       form.carouselCards.forEach((c, ci) => {
         if (!c.headerHandle.trim() && !c.headerUrl.trim()) e[`card_img_${ci}`] = 'Upload media for this card';
         if (!c.body.trim()) e[`card_body_${ci}`] = 'Card body required';
+        // Validate variable examples in carousel card body
+        const cardVars = (c.body.match(/\{\{\d+\}\}/g) || []).length;
+        const cardExamples: string[] = (c as any).examples || [];
+        if (cardVars > 0 && cardExamples.filter((ex: string) => ex.trim()).length < cardVars) {
+          e[`card_ex_${ci}`] = `Card ${ci+1}: fill ${cardVars} variable example${cardVars>1?'s':''}`;
+        }
       });
     }
     if (

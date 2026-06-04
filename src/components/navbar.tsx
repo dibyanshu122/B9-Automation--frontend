@@ -154,9 +154,10 @@ export const Navbar = () => {
       get('/api/quota/status')
         .then((res) => {
           const d = res.data || {};
-          const used = d.queries_used ?? 0;
-          const limit = d.queries_limit || planDefault; // API limit wins; fallback to plan default
-          setAiCredits(Math.max(0, limit - used));
+          const used = Number(d.queries_used) || 0;
+          const limit = Number(d.queries_limit) || planDefault; // API limit wins; fallback to plan default
+          const remaining = limit - used;
+          setAiCredits(Number.isFinite(remaining) ? Math.max(0, remaining) : planDefault);
         })
         .catch(() => {});
     };

@@ -878,6 +878,11 @@ export default function AutoRepliesPage() {
                         ? <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700"><CheckCircle2 className="w-3 h-3" />Active</span>
                         : <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">Inactive</span>
                       }
+                      {rule.rule_type === 'opt_out' && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200" title="Required by Meta — disabling may get your WhatsApp account banned">
+                          ⚠️ Meta Compliance
+                        </span>
+                      )}
                     </div>
                     {rule.trigger_keywords?.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-2">

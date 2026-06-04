@@ -110,7 +110,7 @@ export default function BillingClient({ initialPlan, initialInvoices }: BillingC
       try {
         await loadRazorpayScript();
       } catch {
-        toast.error('Payment system unavailable. Please disable ad blocker and retry.');
+        toast.error('Payment system unavailable. Disable ad blocker, then click Upgrade again.', { duration: 6000 });
         return;
       }
 
