@@ -2741,6 +2741,49 @@ function isNodeConfigured(block: BuilderBlock): boolean {
   return true;
 }
 
+/** Returns the right emoji/icon for a block based on tool + source + trigger_type.
+ *  Used in both compact (zoom-out) and full node views for consistency. */
+function getBlockEmoji(block: BuilderBlock): string | null {
+  const tool = block.config?.tool as string | undefined;
+  const source = block.config?.source as string | undefined;
+  const triggerType = block.config?.trigger_type as string | undefined;
+
+  // Action tools
+  if (tool === 'send_whatsapp_message' || tool === 'send_whatsapp_buttons' || tool === 'send_whatsapp_list_message' || tool === 'send_whatsapp_template') return '💬';
+  if (tool === 'send_whatsapp_media') return '🖼️';
+  if (tool === 'send_whatsapp_meta_flow') return '📋';
+  if (tool === 'send_whatsapp_flow_message' || tool === 'conversation_flow_pdf') return '🤖';
+  if (tool === 'send_instagram_dm') return '📸';
+  if (tool === 'send_facebook_message') return '📘';
+  if (tool === 'send_catalog' || tool === 'send_whatsapp_single_product') return '🛒';
+  if (tool === 'create_customer_payment_link' || tool?.includes('payment')) return '💳';
+  if (tool === 'send_email' || tool?.includes('gmail')) return '📧';
+  if (tool === 'add_row_google_sheet' || tool === 'sync_to_sheet') return '📊';
+  if (tool === 'create_task' || tool === 'schedule_followup') return '✅';
+  if (tool === 'auto_handover') return '🙋';
+  if (tool === 'http_request') return '🔗';
+  if (tool === 'wait_node') return '⏳';
+  if (tool === 'notify_owner') return '🔔';
+  if (tool === 'generate_gst_invoice') return '🧾';
+  if (tool === 'qualify_lead' || tool === 'score_lead') return '⭐';
+  if (tool === 'update_lead') return '✏️';
+  if (tool === 'collect_order_form') return '📝';
+
+  // Trigger sources
+  if (source === 'whatsapp' || triggerType?.includes('whatsapp')) return '💬';
+  if (source === 'instagram' || triggerType?.includes('instagram')) return '📸';
+  if (source === 'facebook' || triggerType?.includes('facebook')) return '📘';
+  if (source === 'gmail' || triggerType?.includes('gmail')) return '📧';
+  if (source === 'google_sheets') return '📊';
+  if (source === 'website_widget') return '🌐';
+  if (triggerType === 'payment_success') return '💳';
+  if (triggerType === 'indiamart') return '🏭';
+  if (triggerType === 'webhook') return '🔗';
+  if (triggerType === 'manual_run') return '▶️';
+
+  return null;
+}
+
 function WorkflowNode({ data }: NodeProps<Node<FlowNodeData>>) {
   const { block, stepIndex, selected, active, completed, failed, onSelect, onOpenAddMenu, onTestNode } = data;
   const Icon = blockIcons[block.type];
@@ -2770,17 +2813,8 @@ function WorkflowNode({ data }: NodeProps<Node<FlowNodeData>>) {
         <div className={`absolute inset-x-0 top-0 h-0.5 ${meta.bar}`} />
         <Handle id="in" type="target" position={Position.Left}
           className="!-left-2 !h-4 !w-4 !rounded-full !border !border-slate-600 !bg-slate-800 !cursor-crosshair" />
-        {/* Source-based emoji for known trigger/action types */}
-        {block.config?.source === 'whatsapp' || block.config?.trigger_type?.includes('whatsapp') ? <span className="text-lg leading-none">💬</span>
-          : block.config?.source === 'instagram' || block.config?.trigger_type?.includes('instagram') ? <span className="text-lg leading-none">📸</span>
-          : block.config?.source === 'facebook' || block.config?.trigger_type?.includes('facebook') ? <span className="text-lg leading-none">📘</span>
-          : block.config?.source === 'gmail' || block.config?.trigger_type?.includes('gmail') ? <span className="text-lg leading-none">📧</span>
-          : block.config?.source === 'website_widget' ? <span className="text-lg leading-none">🌐</span>
-          : block.config?.tool === 'send_whatsapp_message' ? <span className="text-lg leading-none">💬</span>
-          : block.config?.tool === 'send_instagram_dm' ? <span className="text-lg leading-none">📸</span>
-          : block.config?.tool === 'send_facebook_message' ? <span className="text-lg leading-none">📘</span>
-          : block.config?.tool?.includes('payment') ? <span className="text-lg leading-none">💳</span>
-          : block.config?.tool?.includes('catalog') ? <span className="text-lg leading-none">🛒</span>
+        {getBlockEmoji(block)
+          ? <span className="text-lg leading-none">{getBlockEmoji(block)}</span>
           : <Icon className="h-5 w-5 text-white" />}
         <span className={`absolute bottom-0.5 right-0.5 h-2 w-2 rounded-full ${isNodeConfigured(block) ? 'bg-emerald-400' : 'bg-amber-400'}`} />
         {isCondition ? (
@@ -2866,10 +2900,9 @@ function WorkflowNode({ data }: NodeProps<Node<FlowNodeData>>) {
               block.config?.tool === 'send_email' || block.config?.tool?.includes('gmail') ? 'border-red-400/40 bg-red-500/20' :
               blockStyles[block.type]
             }`}>
-              {block.config?.tool === 'send_whatsapp_message' ? <span className="text-sm leading-none">💬</span> :
-               block.config?.tool === 'send_instagram_dm' ? <span className="text-sm leading-none">📸</span> :
-               block.config?.tool === 'send_facebook_message' ? <span className="text-sm leading-none">📘</span> :
-               <Icon className="h-4 w-4" />}
+              {getBlockEmoji(block)
+                ? <span className="text-sm leading-none">{getBlockEmoji(block)}</span>
+                : <Icon className="h-4 w-4" />}
             </div>
           </div>
           <div className="flex items-center gap-1.5">
