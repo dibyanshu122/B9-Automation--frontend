@@ -666,6 +666,11 @@ export default function AutomationsPage() {
   };
 
   const clickNode = (nodeId: string) => {
+    // Same node clicked again while settings open → close settings (toggle)
+    if (nodeId === selectedNodeId && settingsOpen) {
+      setSettingsOpen(false);
+      return;
+    }
     setSelectedNodeId(nodeId);
     setSettingsOpen(true);
   };
