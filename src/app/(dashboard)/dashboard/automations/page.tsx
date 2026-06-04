@@ -2431,12 +2431,23 @@ function WorkflowCanvas({
   const [addMenu, setAddMenu] = useState<{ sourceId: string; label: string } | null>(null);
   const [addMenuShowAll, setAddMenuShowAll] = useState(false);
   const [fsCanvas, setFsCanvas] = useState(false);
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
 
-  // ESC to exit fullscreen
+  // Fullscreen using native browser API — works regardless of parent overflow
+  const toggleFullscreen = async () => {
+    if (!document.fullscreenElement) {
+      await canvasContainerRef.current?.requestFullscreen().catch(() => {});
+      setFsCanvas(true);
+    } else {
+      await document.exitFullscreen().catch(() => {});
+      setFsCanvas(false);
+    }
+  };
+
   React.useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setFsCanvas(false); };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    const handler = () => { if (!document.fullscreenElement) setFsCanvas(false); };
+    document.addEventListener('fullscreenchange', handler);
+    return () => document.removeEventListener('fullscreenchange', handler);
   }, []);
 
   const SUGGESTIONS_BY_SOURCE_TYPE: Record<string, string[]> = {
@@ -2516,10 +2527,7 @@ function WorkflowCanvas({
   }
 
   return (
-    <div className={`b9-node-canvas overflow-hidden border border-white/10 shadow-2xl shadow-black/30 transition-all duration-200
-      ${fsCanvas
-        ? 'fixed inset-0 z-[9999] rounded-none'
-        : 'relative h-full rounded-2xl'}`}>
+    <div ref={canvasContainerRef} className="b9-node-canvas relative h-full overflow-hidden rounded-2xl border border-white/10 shadow-2xl shadow-black/30">
       <div className="absolute inset-x-0 top-0 z-20 flex items-center justify-between gap-3 border-b border-white/10 bg-slate-950/90 px-4 py-3 backdrop-blur">
         <div>
           <div className="flex items-center gap-2">
@@ -2535,8 +2543,8 @@ function WorkflowCanvas({
           <button type="button" onClick={onArrange} className="inline-flex items-center gap-2 rounded-lg border border-sky-300/20 bg-sky-400/10 px-3 py-2 text-xs font-bold text-sky-100 hover:bg-sky-400/20">
             <Route className="h-4 w-4" />Arrange
           </button>
-          <button type="button" onClick={() => setFsCanvas(v => !v)}
-            title={fsCanvas ? 'Exit fullscreen (ESC)' : 'Fullscreen — focus on canvas'}
+          <button type="button" onClick={toggleFullscreen}
+            title={fsCanvas ? 'Exit fullscreen (ESC / F11)' : 'Fullscreen — expand canvas to full screen'}
             className="inline-flex items-center gap-1.5 rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-xs font-bold text-slate-200 hover:bg-slate-700 hover:border-slate-500 transition">
             {fsCanvas ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </button>
@@ -2762,23 +2770,34 @@ function WorkflowNode({ data }: NodeProps<Node<FlowNodeData>>) {
         <div className={`absolute inset-x-0 top-0 h-0.5 ${meta.bar}`} />
         <Handle id="in" type="target" position={Position.Left}
           className="!-left-2 !h-4 !w-4 !rounded-full !border !border-slate-600 !bg-slate-800 !cursor-crosshair" />
-        <Icon className="h-5 w-5 text-white" />
+        {/* Source-based emoji for known trigger/action types */}
+        {block.config?.source === 'whatsapp' || block.config?.trigger_type?.includes('whatsapp') ? <span className="text-lg leading-none">💬</span>
+          : block.config?.source === 'instagram' || block.config?.trigger_type?.includes('instagram') ? <span className="text-lg leading-none">📸</span>
+          : block.config?.source === 'facebook' || block.config?.trigger_type?.includes('facebook') ? <span className="text-lg leading-none">📘</span>
+          : block.config?.source === 'gmail' || block.config?.trigger_type?.includes('gmail') ? <span className="text-lg leading-none">📧</span>
+          : block.config?.source === 'website_widget' ? <span className="text-lg leading-none">🌐</span>
+          : block.config?.tool === 'send_whatsapp_message' ? <span className="text-lg leading-none">💬</span>
+          : block.config?.tool === 'send_instagram_dm' ? <span className="text-lg leading-none">📸</span>
+          : block.config?.tool === 'send_facebook_message' ? <span className="text-lg leading-none">📘</span>
+          : block.config?.tool?.includes('payment') ? <span className="text-lg leading-none">💳</span>
+          : block.config?.tool?.includes('catalog') ? <span className="text-lg leading-none">🛒</span>
+          : <Icon className="h-5 w-5 text-white" />}
         <span className={`absolute bottom-0.5 right-0.5 h-2 w-2 rounded-full ${isNodeConfigured(block) ? 'bg-emerald-400' : 'bg-amber-400'}`} />
         {isCondition ? (
           <>
             <Handle id="yes" type="source" position={Position.Right}
-              onClick={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'yes'); }}
+              onMouseDown={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'yes'); }}
               className="!-right-1.5 !h-4 !w-4 !rounded-full !border !border-emerald-400 !bg-emerald-600 !cursor-pointer"
               style={{ top: '30%' }} />
             <Handle id="no" type="source" position={Position.Right}
-              onClick={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'no'); }}
+              onMouseDown={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'no'); }}
               className="!-right-1.5 !h-4 !w-4 !rounded-full !border !border-amber-400 !bg-amber-600 !cursor-pointer"
               style={{ top: '70%' }} />
           </>
         ) : (
           <Handle id="then" type="source" position={Position.Right}
-            onClick={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'then'); }}
-            className="!-right-1.5 !h-4 !w-4 !rounded-full !border !border-orange-400 !bg-orange-500 hover:!bg-white !cursor-pointer !transition-all" />
+            onMouseDown={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'then'); }}
+            className="!-right-1.5 !h-4 !w-4 !rounded-full !border !border-orange-400 !bg-orange-500 !cursor-pointer" />
         )}
       </div>
     );
@@ -2814,24 +2833,24 @@ function WorkflowNode({ data }: NodeProps<Node<FlowNodeData>>) {
       {/* Top color bar (n8n style) */}
       <div className={`h-1 w-full ${meta.bar}`} />
 
-      {/* Handles — click to open add menu, drag to connect existing node */}
+      {/* Handles — onMouseDown to open add menu (fires before ReactFlow absorbs click) + drag still works */}
       <Handle id="in" type="target" position={Position.Left}
         className="!-left-2 !h-5 !w-5 !rounded-full !border-2 !border-slate-600 !bg-slate-800 hover:!bg-slate-700 hover:!border-slate-400 !cursor-crosshair" />
       {isCondition ? (
         <>
           <Handle id="yes" type="source" position={Position.Right}
-            onClick={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'yes'); }}
-            className="!-right-2 !h-6 !w-6 !rounded-full !border-2 !border-emerald-400 !bg-emerald-600 hover:!bg-white hover:!border-white !cursor-pointer !transition-all !duration-150"
+            onMouseDown={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'yes'); }}
+            className="!-right-2 !h-7 !w-7 !rounded-full !border-2 !border-emerald-400 !bg-emerald-600 hover:!bg-emerald-400 !cursor-pointer !transition-all !duration-150"
             style={{ top: '44%' }} />
           <Handle id="no" type="source" position={Position.Right}
-            onClick={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'no'); }}
-            className="!-right-2 !h-6 !w-6 !rounded-full !border-2 !border-amber-400 !bg-amber-600 hover:!bg-white hover:!border-white !cursor-pointer !transition-all !duration-150"
+            onMouseDown={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'no'); }}
+            className="!-right-2 !h-7 !w-7 !rounded-full !border-2 !border-amber-400 !bg-amber-600 hover:!bg-amber-400 !cursor-pointer !transition-all !duration-150"
             style={{ top: '68%' }} />
         </>
       ) : (
         <Handle id="then" type="source" position={Position.Right}
-          onClick={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'then'); }}
-          className="!-right-2 !h-6 !w-6 !rounded-full !border-2 !border-orange-400 !bg-orange-500 hover:!bg-white hover:!border-white !cursor-pointer !transition-all !duration-150" />
+          onMouseDown={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'then'); }}
+          className="!-right-2 !h-7 !w-7 !rounded-full !border-2 !border-orange-400 !bg-orange-500 hover:!bg-orange-300 !cursor-pointer !transition-all !duration-150" />
       )}
 
       {/* Node body */}
