@@ -339,6 +339,24 @@ export default function AutomationsPage() {
   const overflowMenuRef = useRef<HTMLDivElement>(null);
   const [showWorkflowList, setShowWorkflowList] = useState(true);
   const [wfLoading, setWfLoading] = useState(true);
+  const [isCanvasFullscreen, setIsCanvasFullscreen] = useState(false);
+  const threeColRef = useRef<HTMLDivElement>(null);
+
+  const toggleCanvasFullscreen = async () => {
+    if (!document.fullscreenElement) {
+      await threeColRef.current?.requestFullscreen().catch(() => {});
+      setIsCanvasFullscreen(true);
+    } else {
+      await document.exitFullscreen().catch(() => {});
+      setIsCanvasFullscreen(false);
+    }
+  };
+
+  React.useEffect(() => {
+    const handler = () => { if (!document.fullscreenElement) setIsCanvasFullscreen(false); };
+    document.addEventListener('fullscreenchange', handler);
+    return () => document.removeEventListener('fullscreenchange', handler);
+  }, []);
 
   // Warn user before leaving if they have unsaved nodes
   useEffect(() => {
@@ -1318,7 +1336,7 @@ export default function AutomationsPage() {
       )}
 
       {/* ── Main 3-column area ── */}
-      <div className={`relative flex min-h-0 flex-1 overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 ${showWorkflowList ? 'hidden' : ''}`}>
+      <div ref={threeColRef} className={`relative flex min-h-0 flex-1 overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 ${showWorkflowList ? 'hidden' : ''}`}>
 
         {/* Left — Node Library */}
         <div className={`b9-dark-surface z-20 flex min-h-0 shrink-0 flex-col overflow-hidden border-r border-slate-800 bg-slate-950 shadow-xl shadow-black/30 transition-all duration-200 ${libraryCollapsed ? 'w-0 opacity-0' : 'w-[280px] opacity-100'}`}>
@@ -1422,6 +1440,8 @@ export default function AutomationsPage() {
             failedNodeIds={failedNodeIds}
             nodeOutputs={nodeOutputs}
             testing={testing}
+            isFullscreen={isCanvasFullscreen}
+            onToggleFullscreen={toggleCanvasFullscreen}
           />
         </ReactFlowProvider>
         </div>
@@ -2419,6 +2439,8 @@ function WorkflowCanvas({
   edges,
   selectedNodeId,
   library,
+  isFullscreen,
+  onToggleFullscreen,
   onSelectNode,
   onConnectBlocks,
   onAddNode,
@@ -2446,30 +2468,13 @@ function WorkflowCanvas({
   failedNodeIds?: Set<string>;
   nodeOutputs?: Record<string, any>;
   testing?: boolean;
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
 }) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition, fitView, zoomIn, zoomOut } = useReactFlow();
   const [addMenu, setAddMenu] = useState<{ sourceId: string; label: string } | null>(null);
   const [addMenuShowAll, setAddMenuShowAll] = useState(false);
-  const [fsCanvas, setFsCanvas] = useState(false);
-  const canvasContainerRef = useRef<HTMLDivElement>(null);
-
-  // Fullscreen using native browser API — works regardless of parent overflow
-  const toggleFullscreen = async () => {
-    if (!document.fullscreenElement) {
-      await canvasContainerRef.current?.requestFullscreen().catch(() => {});
-      setFsCanvas(true);
-    } else {
-      await document.exitFullscreen().catch(() => {});
-      setFsCanvas(false);
-    }
-  };
-
-  React.useEffect(() => {
-    const handler = () => { if (!document.fullscreenElement) setFsCanvas(false); };
-    document.addEventListener('fullscreenchange', handler);
-    return () => document.removeEventListener('fullscreenchange', handler);
-  }, []);
 
   const SUGGESTIONS_BY_SOURCE_TYPE: Record<string, string[]> = {
     trigger: ['Detect Language', 'Analyze Sentiment', 'Qualify Lead', 'Generate Reply', 'Send WhatsApp', 'Send Catalog', 'Decide Next Step'],
@@ -2548,7 +2553,7 @@ function WorkflowCanvas({
   }
 
   return (
-    <div ref={canvasContainerRef} className="b9-node-canvas relative h-full overflow-hidden rounded-2xl border border-white/10 shadow-2xl shadow-black/30">
+    <div className="b9-node-canvas relative h-full overflow-hidden rounded-2xl border border-white/10 shadow-2xl shadow-black/30">
       <div className="absolute inset-x-0 top-0 z-20 flex items-center justify-between gap-3 border-b border-white/10 bg-slate-950/90 px-4 py-3 backdrop-blur">
         <div>
           <div className="flex items-center gap-2">
@@ -2564,10 +2569,10 @@ function WorkflowCanvas({
           <button type="button" onClick={onArrange} className="inline-flex items-center gap-2 rounded-lg border border-sky-300/20 bg-sky-400/10 px-3 py-2 text-xs font-bold text-sky-100 hover:bg-sky-400/20">
             <Route className="h-4 w-4" />Arrange
           </button>
-          <button type="button" onClick={toggleFullscreen}
-            title={fsCanvas ? 'Exit fullscreen (ESC / F11)' : 'Fullscreen — expand canvas to full screen'}
+          <button type="button" onClick={onToggleFullscreen}
+            title={isFullscreen ? 'Exit fullscreen (ESC)' : 'Fullscreen — library + canvas + settings'}
             className="inline-flex items-center gap-1.5 rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-xs font-bold text-slate-200 hover:bg-slate-700 hover:border-slate-500 transition">
-            {fsCanvas ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </button>
         </div>
       </div>
