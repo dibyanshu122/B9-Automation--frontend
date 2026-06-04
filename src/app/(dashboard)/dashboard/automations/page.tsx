@@ -23,18 +23,30 @@ import {
 import '@xyflow/react/dist/style.css';
 import {
   AlertTriangle,
+  Bell,
   Bot,
+  Brain,
+  Calendar,
+  Camera,
   CheckCircle2,
+  CheckSquare,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Clock,
   Copy,
+  CreditCard,
   ExternalLink,
+  FileText,
   GitBranch,
   Globe,
   Link,
+  Link2,
+  Mail,
   Maximize2,
+  MessageCircle,
   Minimize2,
+  Monitor,
   MousePointer2,
   Play,
   Plus,
@@ -42,8 +54,12 @@ import {
   Route,
   Save,
   Send,
+  ShoppingCart,
   Sparkles,
+  Star,
+  Table2,
   Trash2,
+  UserCheck,
   Workflow,
   Zap,
 } from 'lucide-react';
@@ -2741,47 +2757,77 @@ function isNodeConfigured(block: BuilderBlock): boolean {
   return true;
 }
 
-/** Returns the right emoji/icon for a block based on tool + source + trigger_type.
- *  Used in both compact (zoom-out) and full node views for consistency. */
-function getBlockEmoji(block: BuilderBlock): string | null {
+type NodeIconDef = { icon: React.ElementType; bg: string; fg: string };
+
+/** Maps each node tool/source/trigger to a branded Lucide icon + color.
+ *  Single source of truth used in full node and compact mode. */
+function getNodeIcon(block: BuilderBlock): NodeIconDef {
   const tool = block.config?.tool as string | undefined;
   const source = block.config?.source as string | undefined;
-  const triggerType = block.config?.trigger_type as string | undefined;
+  const tt = block.config?.trigger_type as string | undefined;
 
-  // Action tools
-  if (tool === 'send_whatsapp_message' || tool === 'send_whatsapp_buttons' || tool === 'send_whatsapp_list_message' || tool === 'send_whatsapp_template') return '💬';
-  if (tool === 'send_whatsapp_media') return '🖼️';
-  if (tool === 'send_whatsapp_meta_flow') return '📋';
-  if (tool === 'send_whatsapp_flow_message' || tool === 'conversation_flow_pdf') return '🤖';
-  if (tool === 'send_instagram_dm') return '📸';
-  if (tool === 'send_facebook_message') return '📘';
-  if (tool === 'send_catalog' || tool === 'send_whatsapp_single_product') return '🛒';
-  if (tool === 'create_customer_payment_link' || tool?.includes('payment')) return '💳';
-  if (tool === 'send_email' || tool?.includes('gmail')) return '📧';
-  if (tool === 'add_row_google_sheet' || tool === 'sync_to_sheet') return '📊';
-  if (tool === 'create_task' || tool === 'schedule_followup') return '✅';
-  if (tool === 'auto_handover') return '🙋';
-  if (tool === 'http_request') return '🔗';
-  if (tool === 'wait_node') return '⏳';
-  if (tool === 'notify_owner') return '🔔';
-  if (tool === 'generate_gst_invoice') return '🧾';
-  if (tool === 'qualify_lead' || tool === 'score_lead') return '⭐';
-  if (tool === 'update_lead') return '✏️';
-  if (tool === 'collect_order_form') return '📝';
-
-  // Trigger sources
-  if (source === 'whatsapp' || triggerType?.includes('whatsapp')) return '💬';
-  if (source === 'instagram' || triggerType?.includes('instagram')) return '📸';
-  if (source === 'facebook' || triggerType?.includes('facebook')) return '📘';
-  if (source === 'gmail' || triggerType?.includes('gmail')) return '📧';
-  if (source === 'google_sheets') return '📊';
-  if (source === 'website_widget') return '🌐';
-  if (triggerType === 'payment_success') return '💳';
-  if (triggerType === 'indiamart') return '🏭';
-  if (triggerType === 'webhook') return '🔗';
-  if (triggerType === 'manual_run') return '▶️';
-
-  return null;
+  // WhatsApp
+  if (tool?.includes('whatsapp') || source === 'whatsapp' || tt?.includes('whatsapp'))
+    return { icon: MessageCircle, bg: 'bg-emerald-600', fg: 'text-white' };
+  // Instagram
+  if (tool === 'send_instagram_dm' || source === 'instagram' || tt?.includes('instagram'))
+    return { icon: Camera, bg: 'bg-pink-600', fg: 'text-white' };
+  // Facebook
+  if (tool === 'send_facebook_message' || source === 'facebook' || tt?.includes('facebook'))
+    return { icon: Globe, bg: 'bg-blue-600', fg: 'text-white' };
+  // Gmail / Email
+  if (tool === 'send_email' || tool?.includes('gmail') || source === 'gmail' || tt?.includes('gmail'))
+    return { icon: Mail, bg: 'bg-red-600', fg: 'text-white' };
+  // Google Sheets
+  if (tool === 'add_row_google_sheet' || tool === 'sync_to_sheet' || source === 'google_sheets')
+    return { icon: Table2, bg: 'bg-green-600', fg: 'text-white' };
+  // Payment / Razorpay
+  if (tool?.includes('payment') || tt === 'payment_success')
+    return { icon: CreditCard, bg: 'bg-amber-600', fg: 'text-white' };
+  // Catalog / Products
+  if (tool === 'send_catalog' || tool?.includes('catalog') || tool?.includes('product'))
+    return { icon: ShoppingCart, bg: 'bg-teal-600', fg: 'text-white' };
+  // Invoice
+  if (tool === 'generate_gst_invoice')
+    return { icon: FileText, bg: 'bg-emerald-700', fg: 'text-white' };
+  // Task / Follow-up
+  if (tool === 'create_task' || tool === 'schedule_followup')
+    return { icon: CheckSquare, bg: 'bg-blue-600', fg: 'text-white' };
+  // Handover
+  if (tool === 'auto_handover')
+    return { icon: UserCheck, bg: 'bg-violet-600', fg: 'text-white' };
+  // Wait / Delay
+  if (tool === 'wait_node')
+    return { icon: Clock, bg: 'bg-slate-600', fg: 'text-white' };
+  // Notify
+  if (tool === 'notify_owner')
+    return { icon: Bell, bg: 'bg-amber-600', fg: 'text-white' };
+  // HTTP / Webhook
+  if (tool === 'http_request')
+    return { icon: Link2, bg: 'bg-slate-500', fg: 'text-white' };
+  // Score / Qualify
+  if (tool === 'qualify_lead' || tool === 'score_lead')
+    return { icon: Star, bg: 'bg-amber-500', fg: 'text-white' };
+  // Calendar / Schedule
+  if (tool?.includes('schedule') || tt?.includes('schedule'))
+    return { icon: Calendar, bg: 'bg-blue-500', fg: 'text-white' };
+  // AI types
+  if (block.type === 'ai')
+    return { icon: Brain, bg: 'bg-violet-600', fg: 'text-white' };
+  // Condition
+  if (block.type === 'condition')
+    return { icon: GitBranch, bg: 'bg-amber-600', fg: 'text-white' };
+  // Website widget trigger
+  if (source === 'website_widget')
+    return { icon: Monitor, bg: 'bg-cyan-600', fg: 'text-white' };
+  // Webhook / IndiaMART
+  if (tt === 'webhook' || tt === 'indiamart')
+    return { icon: Zap, bg: 'bg-orange-600', fg: 'text-white' };
+  // Generic trigger
+  if (block.type === 'trigger')
+    return { icon: Zap, bg: 'bg-orange-600', fg: 'text-white' };
+  // Generic action fallback
+  return { icon: Send, bg: 'bg-emerald-600', fg: 'text-white' };
 }
 
 function WorkflowNode({ data }: NodeProps<Node<FlowNodeData>>) {
@@ -2801,22 +2847,24 @@ function WorkflowNode({ data }: NodeProps<Node<FlowNodeData>>) {
         .slice(0, 4)
     : [];
 
-  // Compact mode when zoomed out — just icon + type dot
+  // Compact mode when zoomed out — just icon circle
+  const nodeIconDef = getNodeIcon(block);
+  const NodeIconComp = nodeIconDef.icon as React.FC<{ className?: string }>;
+
   if (compact) {
     return (
       <div data-workflow-node onClick={() => onSelect(block.id)}
-        className={`b9-flow-node relative flex h-12 w-12 cursor-pointer items-center justify-center overflow-hidden rounded-xl transition-all duration-200
+        className={`b9-flow-node relative flex h-12 w-12 cursor-pointer items-center justify-center rounded-xl transition-all duration-200
           ${selected ? 'ring-2 ring-cyan-300 ring-offset-1 ring-offset-slate-900' : 'hover:ring-1 hover:ring-white/30'}
           ${active ? 'ring-2 ring-cyan-400 animate-pulse' : ''}
           ${completed ? 'ring-2 ring-emerald-400' : ''}
           ${failed ? 'ring-2 ring-red-400' : ''}`}>
-        <div className={`absolute inset-x-0 top-0 h-0.5 ${meta.bar}`} />
+        <div className={`h-full w-full rounded-xl flex items-center justify-center ${nodeIconDef.bg}`}>
+          <NodeIconComp className="h-5 w-5 text-white" />
+        </div>
         <Handle id="in" type="target" position={Position.Left}
           className="!-left-2 !h-4 !w-4 !rounded-full !border !border-slate-600 !bg-slate-800 !cursor-crosshair" />
-        {getBlockEmoji(block)
-          ? <span className="text-lg leading-none">{getBlockEmoji(block)}</span>
-          : <Icon className="h-5 w-5 text-white" />}
-        <span className={`absolute bottom-0.5 right-0.5 h-2 w-2 rounded-full ${isNodeConfigured(block) ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+        <span className={`absolute bottom-0.5 right-0.5 h-2 w-2 rounded-full border border-slate-900 ${isNodeConfigured(block) ? 'bg-emerald-400' : 'bg-amber-400'}`} />
         {isCondition ? (
           <>
             <Handle id="yes" type="source" position={Position.Right}
@@ -2893,74 +2941,50 @@ function WorkflowNode({ data }: NodeProps<Node<FlowNodeData>>) {
         </Handle>
       )}
 
-      {/* Node body */}
-      <div className="p-3.5">
-        {/* Header row */}
-        <div className="flex items-start justify-between gap-2">
-          <div className="relative shrink-0">
-            <div className={`flex h-8 w-8 items-center justify-center rounded-lg border ${
-              block.config?.tool === 'send_whatsapp_message' ? 'border-emerald-400/40 bg-emerald-500/20' :
-              block.config?.tool === 'send_instagram_dm' ? 'border-pink-400/40 bg-gradient-to-br from-purple-500/20 to-pink-500/20' :
-              block.config?.tool === 'send_facebook_message' ? 'border-blue-400/40 bg-blue-500/20' :
-              block.config?.tool === 'add_row_google_sheet' || block.config?.tool === 'sync_to_sheet' ? 'border-green-400/40 bg-green-500/20' :
-              block.config?.tool === 'send_email' || block.config?.tool?.includes('gmail') ? 'border-red-400/40 bg-red-500/20' :
-              blockStyles[block.type]
-            }`}>
-              {getBlockEmoji(block)
-                ? <span className="text-sm leading-none">{getBlockEmoji(block)}</span>
-                : <Icon className="h-4 w-4" />}
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span
-              className={`h-2 w-2 rounded-full shrink-0 ${isNodeConfigured(block) ? 'bg-emerald-400' : 'bg-amber-400'}`}
-              title={isNodeConfigured(block) ? 'Ready' : 'Needs setup'}
-            />
-            <span className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ${meta.badge}`}>
-              {meta.label}
-            </span>
-          </div>
+      {/* Node body — Zapier style: icon left, title+badge right */}
+      <div className="flex items-start gap-3 p-3.5">
+        {/* Brand icon box */}
+        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${nodeIconDef.bg} shadow-lg`}>
+          <NodeIconComp className="h-5 w-5 text-white" />
         </div>
 
-        {/* Title + tool hint */}
-        <p className="relative z-10 mt-2.5 text-[14px] font-bold leading-tight text-white tracking-tight">
-          {block.title || (block.config?.tool || block.config?.trigger_type || 'Node').replace(/_/g,' ').replace(/\b\w/g,(c:string)=>c.toUpperCase())}
-        </p>
-        {block.config?.tool && (
-          <p className="relative z-10 mt-0.5 text-[10px] leading-4 text-slate-500 font-mono truncate">
-            {block.config.tool}
-          </p>
-        )}
-        {!block.config?.tool && block.description && (
-          <p className="relative z-10 mt-0.5 line-clamp-1 text-[10px] leading-4 text-slate-500">{block.description}</p>
-        )}
-
-        {/* AI output vars pill row */}
-        {outputVars.length > 0 && (
-          <div className="mt-2.5 flex flex-wrap gap-1">
-            {outputVars.map((v: string) => (
-              <span key={v} className="rounded-md bg-violet-500/20 px-1.5 py-0.5 font-mono text-[10px] text-violet-300">
-                {`{{${v}}}`}
-              </span>
-            ))}
+        {/* Content */}
+        <div className="min-w-0 flex-1">
+          {/* Top row: title + status dot */}
+          <div className="flex items-start justify-between gap-1.5">
+            <p className="text-[13px] font-bold leading-tight text-white tracking-tight truncate">
+              {block.title || (block.config?.tool || block.config?.trigger_type || 'Node').replace(/_/g,' ').replace(/\b\w/g,(c:string)=>c.toUpperCase())}
+            </p>
+            <span
+              className={`mt-0.5 h-2 w-2 shrink-0 rounded-full ${isNodeConfigured(block) ? 'bg-emerald-400' : 'bg-amber-400'}`}
+              title={isNodeConfigured(block) ? 'Ready' : 'Needs setup'}
+            />
           </div>
-        )}
 
-        {/* Condition branch labels */}
-        {isCondition && (
-          <div className="mt-3 flex gap-2 border-t border-white/10 pt-2.5 text-[11px] font-bold">
-            <span className="text-emerald-400">✓ YES</span>
-            <span className="ml-auto text-amber-400">✗ NO</span>
-          </div>
-        )}
+          {/* Type badge */}
+          <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-widest ${meta.badge}`}>
+            {meta.label}
+          </span>
 
-        {/* Condition branch hint — helps user know which circle = which path */}
-        {isCondition && (
-          <div className="mt-2 flex gap-2 border-t border-white/[0.07] pt-2 text-[10px] font-bold">
-            <span className="text-emerald-400">✓ YES →</span>
-            <span className="ml-auto text-amber-400">✗ NO →</span>
-          </div>
-        )}
+          {/* AI output vars */}
+          {outputVars.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1">
+              {outputVars.map((v: string) => (
+                <span key={v} className="rounded-md bg-violet-500/20 px-1.5 py-0.5 font-mono text-[9px] text-violet-300">
+                  {`{{${v}}}`}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Condition YES/NO hint */}
+          {isCondition && (
+            <div className="mt-2 flex gap-3 text-[10px] font-bold">
+              <span className="text-emerald-400">✓ YES</span>
+              <span className="text-amber-400">✗ NO</span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
