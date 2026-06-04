@@ -1207,7 +1207,7 @@ export default function AutomationsPage() {
             Go Live
           </Button>
         )}
-        <Button size="sm" onClick={saveWorkflow} loading={saving}>
+        <Button size="sm" onClick={saveWorkflow} loading={saving} data-save-btn="true" className="transition-all">
           <Save className="h-3.5 w-3.5" /> Save
         </Button>
       </div>
@@ -1217,8 +1217,11 @@ export default function AutomationsPage() {
         <div className="shrink-0 rounded-xl border border-indigo-100 bg-white px-4 py-3 shadow-sm">
           <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-sm font-bold text-gray-950">Compliance score: {complianceScore.score}%</p>
-              <p className="mt-0.5 text-xs text-gray-600">Live WhatsApp nodes: {complianceScore.liveWhatsApp}. Template fallback configured: {complianceScore.templateFallback}. Backend safety checks still run before every send.</p>
+              <p className="text-sm font-bold text-gray-950">WhatsApp Readiness: {complianceScore.score}%</p>
+              <p className="mt-0.5 text-xs text-gray-600">
+                {complianceScore.score >= 90 ? '✅ Automation live bhejne ke liye ready hai.' : complianceScore.score >= 70 ? '⚠️ Kuch nodes draft mode mein hain — "Go Live" dabao sab live karne ke liye.' : '❌ Kuch issues hain — upar warnings dekho aur fix karo.'}{' '}
+                Live nodes: {complianceScore.liveWhatsApp}
+              </p>
             </div>
             <span className={`inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${complianceScore.score >= 90 ? 'bg-emerald-50 text-emerald-700' : complianceScore.score >= 70 ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700'}`}>
               {complianceScore.score >= 90 ? 'Ready to activate' : complianceScore.score >= 70 ? 'Review warnings' : 'Fix blockers first'}
@@ -1252,6 +1255,7 @@ export default function AutomationsPage() {
             setActiveWorkflowId('');
             setWorkflowName('New Automation');
             setShowWorkflowList(false);
+            setLibraryCollapsed(false); // show library so user sees nodes to drag
           }}
           onDelete={async (id) => {
             try {
@@ -1689,8 +1693,27 @@ export default function AutomationsPage() {
                 </div>
                 <p className="text-[10px] text-gray-400 mt-1.5">These fill <code className="font-mono">{'{{lead.name}}'}</code>, <code className="font-mono">{'{{lead.phone}}'}</code> etc. in your nodes</p>
               </details>
+              {/* Test selected node individually */}
+              {selectedNodeId && nodes.find(n => n.id === selectedNodeId)?.type !== 'trigger' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!activeWorkflowId) {
+                      // Clear visual cue — shake the save button area
+                      const saveBtn = document.querySelector('[data-save-btn]');
+                      if (saveBtn) { saveBtn.classList.add('ring-2','ring-red-400'); setTimeout(() => saveBtn.classList.remove('ring-2','ring-red-400'), 1500); }
+                      // Toast with clear instruction
+                      import('react-hot-toast').then(({ default: t }) => t.error('Pehle workflow Save karo — phir ye button kaam karega', { duration: 4000 }));
+                      return;
+                    }
+                    testSingleNode(selectedNodeId);
+                  }}
+                  className="mt-1 w-full rounded-lg border border-sky-200 bg-sky-50 py-1.5 text-xs font-bold text-sky-700 hover:bg-sky-100 transition flex items-center justify-center gap-1.5">
+                  <Play className="h-3 w-3" /> Test This Node Only
+                </button>
+              )}
               <Button className="mt-2 w-full" onClick={testWorkflow} loading={testing}>
-                <Play className="h-4 w-4" /> {testing ? '⚡ Running…' : 'Run Test'}
+                <Play className="h-4 w-4" /> {testing ? '⚡ Running…' : 'Run Full Test'}
               </Button>
               {testing && (
                 <div className="mt-2 flex items-center gap-2 text-xs font-semibold text-cyan-600">
@@ -2661,18 +2684,27 @@ function WorkflowCanvas({
 
         {nodes.length === 0 && (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-center">
-            <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-10 backdrop-blur-sm">
+            <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-10 backdrop-blur-sm max-w-sm">
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-400/10">
                 <Zap className="h-8 w-8 text-orange-400" />
               </div>
-              <p className="text-lg font-bold text-slate-100">Build your automation</p>
-              <p className="mt-2 max-w-xs text-sm text-slate-400">
-                Drag a <span className="font-semibold text-red-300">Trigger</span> from the library, then connect an{' '}
-                <span className="font-semibold text-violet-300">AI Agent</span> and an{' '}
-                <span className="font-semibold text-emerald-300">Action</span>.
-              </p>
-              <p className="mt-3 text-xs text-slate-500">
-                Or click <strong className="text-orange-300">Templates</strong> to start with a ready-made flow.
+              <p className="text-lg font-bold text-slate-100">Automation kaise start karein?</p>
+              <div className="mt-4 space-y-2 text-left">
+                <div className="flex items-start gap-2.5">
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-500/20 text-[10px] font-black text-red-300">1</span>
+                  <p className="text-sm text-slate-400">Left sidebar se ek <span className="font-semibold text-red-300">Trigger</span> drag karo canvas pe</p>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-500/20 text-[10px] font-black text-violet-300">2</span>
+                  <p className="text-sm text-slate-400">Node ke right side se arrow kheencho — agla step add karo</p>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-[10px] font-black text-emerald-300">3</span>
+                  <p className="text-sm text-slate-400">Save karo → Test karo → Activate karo</p>
+                </div>
+              </div>
+              <p className="mt-4 text-xs text-slate-500">
+                Ya upar <strong className="text-orange-300">Templates</strong> ya <strong className="text-violet-300">✨ AI</strong> se ready-made flow load karo
               </p>
             </div>
           </div>
@@ -2844,34 +2876,43 @@ function WorkflowNode({ data }: NodeProps<Node<FlowNodeData>>) {
             <span className="ml-auto text-amber-400">✗ NO</span>
           </div>
         )}
-
-        {/* Footer buttons */}
-        <div className="mt-3 space-y-1.5 border-t border-white/10 pt-2.5">
-          {isCondition ? (
-            <div className="grid grid-cols-2 gap-1.5">
-              <button type="button" onClick={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'yes'); }}
-                className="rounded-lg border border-emerald-400/20 bg-emerald-400/10 py-1.5 text-[11px] font-black text-emerald-200 hover:bg-emerald-400/20">
-                Yes <Plus className="inline h-3 w-3" />
-              </button>
-              <button type="button" onClick={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'no'); }}
-                className="rounded-lg border border-amber-400/20 bg-amber-400/10 py-1.5 text-[11px] font-black text-amber-200 hover:bg-amber-400/20">
-                No <Plus className="inline h-3 w-3" />
-              </button>
-            </div>
-          ) : (
-            <button type="button" onClick={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'then'); }}
-              className="w-full rounded-lg border border-orange-300/30 bg-orange-400/15 py-2.5 text-sm font-black text-orange-200 hover:bg-orange-400/30 active:scale-95 transition-all">
-              + Next Step
-            </button>
-          )}
-          {block.type !== 'trigger' && (
-            <button type="button" onClick={(e) => { e.stopPropagation(); onTestNode(block.id); }}
-              className="w-full rounded-lg border border-sky-400/20 bg-sky-400/10 py-1 text-[10px] font-bold text-sky-300 hover:bg-sky-400/20 hover:text-sky-200 transition">
-              <Play className="inline h-3 w-3 mr-1" />▶ Test This Step
-            </button>
-          )}
-        </div>
       </div>
+
+      {/* Floating "+" circle below node — Resend style, click to add next step */}
+      {isCondition ? (
+        // Condition: two floating circles for YES/NO branches
+        <div className="absolute -bottom-8 left-0 right-0 flex justify-around px-4 pointer-events-none">
+          <button
+            type="button"
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'yes'); }}
+            className="pointer-events-auto flex h-7 w-7 items-center justify-center rounded-full border border-emerald-500/40 bg-slate-800 text-emerald-400 shadow-lg shadow-black/40 hover:bg-emerald-900/60 hover:border-emerald-400 transition-all"
+            title="Add YES branch step"
+          >
+            <Plus className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'no'); }}
+            className="pointer-events-auto flex h-7 w-7 items-center justify-center rounded-full border border-amber-500/40 bg-slate-800 text-amber-400 shadow-lg shadow-black/40 hover:bg-amber-900/60 hover:border-amber-400 transition-all"
+            title="Add NO branch step"
+          >
+            <Plus className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      ) : (
+        // Normal node: single "+" circle below center
+        <button
+          type="button"
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'then'); }}
+          className="absolute -bottom-5 left-1/2 -translate-x-1/2 flex h-8 w-8 items-center justify-center rounded-full border border-slate-600 bg-slate-700 text-slate-300 shadow-lg shadow-black/50 hover:bg-slate-600 hover:border-slate-500 hover:text-white hover:scale-110 transition-all z-10"
+          title="Add next step"
+        >
+          <Plus className="h-4 w-4" />
+        </button>
+      )}
     </div>
   );
 }
