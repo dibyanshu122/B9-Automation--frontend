@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, X, Users, Megaphone, Workflow, FileText, MessageSquare, Zap } from 'lucide-react';
+import { Search, X, Users, Megaphone, Workflow, FileText, MessageSquare, Zap, ShoppingCart, CreditCard } from 'lucide-react';
 import { useApi } from '@/hooks/useApi';
 
 interface Result {
@@ -56,12 +56,13 @@ export function CommandPalette() {
     if (!q.trim()) { setResults([]); return; }
     setLoading(true);
     try {
-      const [leadsRes, campaignsRes, tplRes, docsRes, autoRes] = await Promise.allSettled([
+      const [leadsRes, campaignsRes, tplRes, docsRes, autoRes, catalogRes] = await Promise.allSettled([
         get(`/api/leads?search=${encodeURIComponent(q)}&limit=5`),
-        get('/api/campaigns'),
+        get(`/api/campaigns?search=${encodeURIComponent(q)}&limit=5`),
         get('/api/automation/whatsapp/templates'),
         get(`/api/documents?search=${encodeURIComponent(q)}&limit=5`),
         get(`/api/automation/workflows?search=${encodeURIComponent(q)}&limit=5`),
+        get(`/api/automation/catalog?search=${encodeURIComponent(q)}&limit=5`),
       ]);
 
       const items: Result[] = [];
@@ -144,6 +145,22 @@ export function CommandPalette() {
         });
       }
 
+      // Catalog / Products
+      if (catalogRes.status === 'fulfilled') {
+        const products = catalogRes.value.data?.products || catalogRes.value.data || [];
+        (Array.isArray(products) ? products : []).slice(0, 3).forEach((p: any) => {
+          if (!p.name?.toLowerCase().includes(q.toLowerCase())) return;
+          items.push({
+            id: `prod-${p.id}`,
+            type: 'template',
+            title: p.name || 'Product',
+            subtitle: `Product · ₹${p.price || 0}`,
+            href: '/dashboard/catalog',
+            icon: <ShoppingCart className="h-3.5 w-3.5 text-orange-500" />,
+          });
+        });
+      }
+
       // Quick navigation suggestions
       const quickLinks = [
         { key: 'leads', label: 'Go to Leads', href: '/dashboard/leads' },
@@ -155,6 +172,11 @@ export function CommandPalette() {
         { key: 'messages', label: 'Go to Messages', href: '/dashboard/messages' },
         { key: 'billing', label: 'Go to Billing', href: '/dashboard/billing' },
         { key: 'integrations', label: 'Go to Integrations', href: '/dashboard/integrations' },
+        { key: 'catalog', label: 'Go to Product Catalog', href: '/dashboard/catalog' },
+        { key: 'qr', label: 'Go to QR Codes', href: '/dashboard/qr-codes' },
+        { key: 'segments', label: 'Go to Segments', href: '/dashboard/segments' },
+        { key: 'flows', label: 'Go to WhatsApp Flows', href: '/dashboard/flows' },
+        { key: 'team', label: 'Go to Team', href: '/dashboard/team' },
       ].filter(l => l.label.toLowerCase().includes(q.toLowerCase()) || l.key.includes(q.toLowerCase()));
 
       quickLinks.slice(0, 3).forEach(l => {
