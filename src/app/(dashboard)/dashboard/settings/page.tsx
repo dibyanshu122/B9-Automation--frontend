@@ -779,13 +779,39 @@ export default function SettingsPage() {
           </select>
         </div>
 
-        {/* Agentic AI safety - max steps */}
-        <div className="mt-5">
+        {/* Agentic AI ON/OFF toggle */}
+        <div className="mt-5 rounded-xl border border-gray-200 bg-gray-50 p-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-gray-800">Agentic AI Responses</p>
+              <p className="mt-0.5 text-xs text-gray-500">
+                When ON — AI replies to every WhatsApp message automatically.<br/>
+                When OFF — Only your automation flows run (no AI echo/auto-reply).
+              </p>
+              {agenticMaxSteps === 0 && (
+                <p className="mt-1.5 text-xs font-semibold text-amber-600">
+                  ⚠️ Agentic AI is OFF — only automation flows will respond.
+                </p>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => { setAgenticMaxSteps(agenticMaxSteps === 0 ? 4 : 0); setAiDirty(true); }}
+              className={`relative h-6 w-11 shrink-0 rounded-full transition-colors duration-200 focus:outline-none ${agenticMaxSteps === 0 ? 'bg-gray-300' : 'bg-emerald-500'}`}
+            >
+              <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 ${agenticMaxSteps === 0 ? 'translate-x-0.5' : 'translate-x-5'}`} />
+            </button>
+          </div>
+        </div>
+
+        {/* Agentic AI safety - max steps (only when enabled) */}
+        {agenticMaxSteps > 0 && (
+        <div className="mt-4">
           <label className="mb-1 block text-sm font-semibold text-gray-700">
             Agentic AI - Max Steps per Reply
           </label>
           <p className="mb-2 text-xs text-gray-500">
-            How many tool calls the AI can make per customer message. Higher = more thorough but slower. Range: 2-8.
+            How many tool calls the AI can make per customer message. Higher = more thorough but slower.
           </p>
           <div className="flex items-center gap-3">
             <input
@@ -800,6 +826,7 @@ export default function SettingsPage() {
             </span>
           </div>
         </div>
+        )}
 
         <div className="mt-5 flex items-center gap-3 flex-wrap">
           <Button variant="primary" onClick={saveAiKeys} loading={savingAiKeys}>
