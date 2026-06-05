@@ -459,6 +459,9 @@ function UnifiedInbox() {
   };
 
   useEffect(() => {
+    // Mark inbox as visited — sidebar badge will reset to 0 for messages before this time
+    localStorage.setItem('inbox_last_visited', Date.now().toString());
+    window.dispatchEvent(new CustomEvent('inbox-read'));
     loadInbox();
     const interval = setInterval(loadInbox, 10000);
     return () => clearInterval(interval);

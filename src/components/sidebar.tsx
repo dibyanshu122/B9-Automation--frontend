@@ -84,8 +84,12 @@ function useUnreadCount() {
     const run = () => {
       const token = useAuthStore.getState().token;
       const base = process.env.NEXT_PUBLIC_API_URL || '';
-      // Lightweight endpoint — returns just {unread: N}, not full message list
-      fetch(`${base}/api/automation/inbox/unread-count`, {
+      // Pass last-inbox-visit timestamp so only NEW messages are counted
+      const since = localStorage.getItem('inbox_last_visited') || '';
+      const url = since
+        ? `${base}/api/automation/inbox/unread-count?since=${since}`
+        : `${base}/api/automation/inbox/unread-count`;
+      fetch(url, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       })
         .then(r => r.json())
@@ -96,7 +100,8 @@ function useUnreadCount() {
     };
     const initial = setTimeout(run, 1500);
     const t = setInterval(run, 30000);
-    const onRead = () => run();
+    // inbox-read fires when user opens a chat OR visits the inbox page
+    const onRead = () => { run(); };
     window.addEventListener('inbox-read', onRead);
     return () => {
       clearTimeout(initial);
