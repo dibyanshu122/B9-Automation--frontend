@@ -197,7 +197,7 @@ export const blogPosts = [
     description: 'Step-by-step guide to using B9\'s AI Template Builder to draft, submit, and use approved Meta templates.',
   },
   {
-    title: 'WATI vs AiSensy vs B9: honest comparison for Indian businesses',
+    title: 'B9 honest comparison for Indian businesses',
     date: 'May 12, 2026',
     category: 'Comparison',
     description: 'Feature-by-feature comparison of top WhatsApp automation platforms. Which one actually handles agentic AI flows?',
