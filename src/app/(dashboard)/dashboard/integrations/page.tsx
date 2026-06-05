@@ -258,6 +258,7 @@ export default function IntegrationsPage() {
   const [whatsappConnected, setWhatsappConnected] = useState(false);
   const [metaStatus, setMetaStatus] = useState<any>(null);
   const [metaStatusLoading, setMetaStatusLoading] = useState(false);
+  const [waQuality, setWaQuality] = useState<{quality_rating:string|null,messaging_limit:string|null,display_number:string|null}|null>(null);
 
   /* ── Shopify state ── */
   const [shopifyConnected, setShopifyConnected] = useState(false);
@@ -616,6 +617,10 @@ export default function IntegrationsPage() {
           .then(r => setMetaStatus(r.data))
           .catch(() => {})
           .finally(() => setMetaStatusLoading(false));
+        // Fetch phone number quality rating from Meta
+        get('/api/automation/whatsapp/health')
+          .then(r => setWaQuality(r.data))
+          .catch(() => {});
       }
     } catch {
       setWhatsappConnected(false);
@@ -1525,7 +1530,7 @@ export default function IntegrationsPage() {
       {/* Integration Health Banner */}
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
         {[
-          { label: 'WhatsApp', connected: whatsappConnected, icon: 'WA', detail: whatsappConnected ? 'Ready for health check' : 'Not connected' },
+          { label: 'WhatsApp', connected: whatsappConnected, icon: 'WA', detail: whatsappConnected ? (waQuality?.quality_rating === 'GREEN' ? '✅ Quality: Good' : waQuality?.quality_rating === 'YELLOW' ? '⚠️ Quality: Medium' : waQuality?.quality_rating === 'RED' ? '🔴 Quality: At Risk!' : waQuality?.display_number || 'Checking quality...') : 'Not connected' },
           { label: 'Instagram', connected: instagramConnected, icon: 'IG', detail: instagramConnected ? (instagramUsername ? `@${instagramUsername}` : 'Account linked') : 'Not connected' },
           { label: 'Facebook', connected: facebookConnected, icon: 'FB', detail: facebookConnected ? (facebookAccountName || 'Page linked') : 'Not connected' },
           { label: 'Google Sheets', connected: gsOAuthConnected, icon: 'Sheets', detail: gsOAuthConnected ? (gsConnectedEmail || 'OAuth connected') : 'Not connected' },
