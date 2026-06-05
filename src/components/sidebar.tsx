@@ -129,7 +129,7 @@ export const Sidebar = () => {
   };
 
   const [teamAccess, setTeamAccess] = useState<TeamAccess | null>(null);
-  const [accessLoaded, setAccessLoaded] = useState(false);
+  const [accessLoaded, setAccessLoaded] = useState(true); // show sidebar immediately, load permissions in bg
   const [hovered, setHovered] = useState(false);
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
