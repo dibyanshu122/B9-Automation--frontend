@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  CheckCircle2, Clock, FileText, Image as ImageIcon, MapPin, MessageSquare,
+  CheckCircle2, Clock, Eye, FileText, Image as ImageIcon, MapPin, MessageSquare,
   Plus, Search, Trash2, Video, X, XCircle, ChevronLeft, ChevronRight, MoreVertical,
 } from 'lucide-react';
 import { useEffect, useRef, useState, useCallback } from 'react';
@@ -1273,16 +1273,16 @@ function TemplateRow({ t, idx, onPreview, onEdit, onDuplicate, onDelete, onRowEn
       <div className="col-span-1">
         <span className="text-xs text-gray-400">{t.language}</span>
       </div>
-      <div className="col-span-2 min-w-0">
-        <p
-          className="text-xs text-gray-400 truncate cursor-pointer hover:text-gray-700 transition"
-          title={getBody(t.components)}
+      <div className="col-span-2 flex justify-center">
+        <button
           onClick={onPreview}
           onMouseEnter={e => onRowEnter(e, t)}
           onMouseLeave={onRowLeave}
+          title="Click to preview template"
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 text-gray-400 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-600 transition"
         >
-          {getBody(t.components) || '—'}
-        </p>
+          <Eye className="h-4 w-4" />
+        </button>
       </div>
       {/* 3-dot menu */}
       <div className="col-span-1 flex justify-end" ref={menuRef}>
@@ -1672,7 +1672,7 @@ export default function TemplatesPage() {
                 <div className="col-span-2">Status</div>
                 <div className="col-span-2">Category</div>
                 <div className="col-span-1">Lang</div>
-                <div className="col-span-2">Body Preview</div>
+                <div className="col-span-2 text-center">Preview</div>
                 <div className="col-span-1 text-right">Actions</div>
               </div>
               {filtered.map((t, idx) => (
