@@ -258,6 +258,7 @@ export default function IntegrationsPage() {
   const [whatsappConnected, setWhatsappConnected] = useState(false);
   const [metaStatus, setMetaStatus] = useState<any>(null);
   const [metaStatusLoading, setMetaStatusLoading] = useState(false);
+  const [waHealthSteps, setWaHealthSteps] = useState<{token:boolean,webhook:boolean,test:boolean,live:boolean}|null>(null);
   const [waQuality, setWaQuality] = useState<{quality_rating:string|null,messaging_limit:string|null,display_number:string|null}|null>(null);
 
   /* ── Shopify state ── */
@@ -596,6 +597,7 @@ export default function IntegrationsPage() {
       const connected = Boolean(response.data.connected);
       setWhatsappConnected(connected);
       setWhatsappWebhookUrl(response.data.webhookUrl || '');
+      if (response.data.health_steps) setWaHealthSteps(response.data.health_steps);
       const connection = response.data.connection;
       if (connection) {
         setConfigForm((current) => ({
@@ -1530,19 +1532,44 @@ export default function IntegrationsPage() {
       {/* Integration Health Banner */}
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
         {[
-          { label: 'WhatsApp', connected: whatsappConnected, icon: 'WA', detail: whatsappConnected ? (waQuality?.quality_rating === 'GREEN' ? '✅ Quality: Good' : waQuality?.quality_rating === 'YELLOW' ? '⚠️ Quality: Medium' : waQuality?.quality_rating === 'RED' ? '🔴 Quality: At Risk!' : waQuality?.display_number || 'Checking quality...') : 'Not connected' },
+          {
+            label: 'WhatsApp',
+            connected: whatsappConnected,
+            icon: 'WA',
+            detail: whatsappConnected
+              ? (waQuality?.quality_rating === 'RED' ? '🔴 Number at risk!' : waQuality?.quality_rating === 'YELLOW' ? '⚠️ Quality: Medium' : waQuality?.quality_rating === 'GREEN' ? '✅ Live & Healthy' : 'Connected')
+              : 'Not connected',
+            healthSteps: waHealthSteps,
+          },
           { label: 'Instagram', connected: instagramConnected, icon: 'IG', detail: instagramConnected ? (instagramUsername ? `@${instagramUsername}` : 'Account linked') : 'Not connected' },
           { label: 'Facebook', connected: facebookConnected, icon: 'FB', detail: facebookConnected ? (facebookAccountName || 'Page linked') : 'Not connected' },
           { label: 'Google Sheets', connected: gsOAuthConnected, icon: 'Sheets', detail: gsOAuthConnected ? (gsConnectedEmail || 'OAuth connected') : 'Not connected' },
-        ].map(ch => (
-          <div key={ch.label} className={`rounded-xl border p-3 flex items-center gap-2.5 transition ${ch.connected ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'}`}>
-            <span className="text-lg shrink-0">{ch.icon}</span>
-            <div className="min-w-0">
-              <p className="text-xs font-bold text-gray-900">{ch.label}</p>
-              <p className={`text-[10px] font-semibold truncate ${ch.connected ? 'text-emerald-700' : 'text-amber-700'}`}>
-                {ch.detail}
-              </p>
+        ].map((ch: any) => (
+          <div key={ch.label} className={`rounded-xl border p-3 flex flex-col gap-1.5 transition ${ch.connected ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'}`}>
+            <div className="flex items-center gap-2">
+              <span className="text-base shrink-0">{ch.icon}</span>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-bold text-gray-900">{ch.label}</p>
+                <p className={`text-[10px] font-semibold truncate ${ch.connected ? 'text-emerald-700' : 'text-amber-700'}`}>
+                  {ch.detail}
+                </p>
+              </div>
             </div>
+            {/* Health steps — only for WhatsApp */}
+            {ch.healthSteps && (
+              <div className="flex gap-1 mt-0.5">
+                {[
+                  { key: 'token', label: 'Token' },
+                  { key: 'webhook', label: 'Webhook' },
+                  { key: 'test', label: 'Tested' },
+                  { key: 'live', label: 'Live' },
+                ].map(s => (
+                  <span key={s.key} className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${ch.healthSteps[s.key] ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-400'}`}>
+                    {ch.healthSteps[s.key] ? '✓' : '○'} {s.label}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         ))}
       </div>

@@ -153,6 +153,17 @@ export const Sidebar = () => {
       .finally(() => setAccessLoaded(true));
   }, []);
 
+  // Auto-open the group that contains the current active route
+  useEffect(() => {
+    if (!pathname) return;
+    SIDEBAR_GROUPS.forEach((group) => {
+      if (group.children?.some((c) => pathname === c.href || pathname.startsWith(c.href + '/'))) {
+        const { openGroups: og, toggleGroup: tg } = useUIStore.getState();
+        if (!og.includes(group.id)) tg(group.id);
+      }
+    });
+  }, [pathname]);
+
   const expanded = sidebarPinned || hovered;
   const visibleGroups = SIDEBAR_GROUPS.map((group) => {
     if (!group.children?.length) return canSeeHref(teamAccess, group.href) ? group : null;

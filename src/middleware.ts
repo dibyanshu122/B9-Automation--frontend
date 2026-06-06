@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const AUTH_PAGES = ['/login', '/signup'];
-// Pages that require authentication (redirect to login if not authenticated)
-const PROTECTED_PAGES = ['/api-docs'];
+// All pages requiring authentication
+const PROTECTED_PAGES = ['/api-docs', '/dashboard', '/onboarding'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -27,8 +27,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
-  // Redirect unauthenticated users away from protected pages
-  const isProtected = PROTECTED_PAGES.some((p) => pathname.startsWith(p));
+  // Redirect unauthenticated users away from protected pages (SSR-level guard)
+  const isProtected = PROTECTED_PAGES.some((p) => pathname === p || pathname.startsWith(p + '/'));
   if (isProtected && !isAuthenticated) {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('redirect', pathname);
