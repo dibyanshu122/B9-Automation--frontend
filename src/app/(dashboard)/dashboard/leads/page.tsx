@@ -127,6 +127,9 @@ export default function LeadsPage() {
   const [newLabelName, setNewLabelName] = useState('');
   const [newLabelColor, setNewLabelColor] = useState('#4F46E5');
   const [savingLabel, setSavingLabel] = useState(false);
+  const [editingLabelId, setEditingLabelId] = useState<string | null>(null);
+  const [editingLabelName, setEditingLabelName] = useState('');
+  const [confirmDeleteLabelId, setConfirmDeleteLabelId] = useState<string | null>(null);
   // Notes & Timeline state
   const [notes, setNotes] = useState<any[]>([]);
   const [notesLoading, setNotesLoading] = useState(false);
@@ -515,12 +518,12 @@ export default function LeadsPage() {
     }
   };
 
-  const updateLabel = async (label: LeadLabelOption) => {
-    const nextName = window.prompt('Label name', label.name)?.trim();
-    if (!nextName) return;
+  const updateLabel = async (label: LeadLabelOption, nextName: string) => {
+    const trimmed = nextName.trim();
+    if (!trimmed || trimmed === label.name) { setEditingLabelId(null); return; }
     setSavingLabel(true);
     try {
-      const response = await api.patch(`/api/leads/labels/${label.id}`, { name: nextName, color: label.color || '#4F46E5' });
+      const response = await api.patch(`/api/leads/labels/${label.id}`, { name: trimmed, color: label.color || '#4F46E5' });
       const updated = response.data?.label;
       if (updated) {
         setLeadLabels((current) => current.map((item) => (item.id === updated.id ? updated : item)));
@@ -532,11 +535,12 @@ export default function LeadsPage() {
       toast.error(error.response?.data?.detail || 'Failed to update label');
     } finally {
       setSavingLabel(false);
+      setEditingLabelId(null);
     }
   };
 
   const deleteLabel = async (label: LeadLabelOption) => {
-    if (!confirm(`Delete label "${label.name}"? Leads using it will be unlabelled.`)) return;
+    setConfirmDeleteLabelId(null);
     setSavingLabel(true);
     try {
       await api.delete(`/api/leads/labels/${label.id}`);
@@ -1873,10 +1877,31 @@ export default function LeadsPage() {
                 <div className="max-h-40 space-y-2 overflow-y-auto rounded-xl border border-gray-100 bg-gray-50 p-2">
                   {leadLabels.map((label) => (
                     <div key={label.id} className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm">
-                      <span className="h-3 w-3 rounded-full" style={{ backgroundColor: label.color || '#4F46E5' }} />
-                      <span className="flex-1 font-semibold text-gray-800">{label.name}</span>
-                      <button className="text-xs font-semibold text-indigo-600" onClick={() => updateLabel(label)} disabled={savingLabel}>Edit</button>
-                      <button className="text-xs font-semibold text-red-600" onClick={() => deleteLabel(label)} disabled={savingLabel}>Delete</button>
+                      <span className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: label.color || '#4F46E5' }} />
+                      {editingLabelId === label.id ? (
+                        /* Inline rename input */
+                        <input
+                          autoFocus
+                          className="flex-1 rounded border border-indigo-300 px-1.5 py-0.5 text-xs font-semibold outline-none focus:border-indigo-500"
+                          value={editingLabelName}
+                          onChange={e => setEditingLabelName(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter') updateLabel(label, editingLabelName); if (e.key === 'Escape') setEditingLabelId(null); }}
+                          onBlur={() => updateLabel(label, editingLabelName)}
+                        />
+                      ) : confirmDeleteLabelId === label.id ? (
+                        /* Inline delete confirm */
+                        <>
+                          <span className="flex-1 text-xs text-red-600 font-semibold">Delete "{label.name}"?</span>
+                          <button className="text-[10px] font-bold text-red-600 hover:text-red-800" onClick={() => deleteLabel(label)}>Yes</button>
+                          <button className="text-[10px] font-bold text-gray-500 hover:text-gray-700" onClick={() => setConfirmDeleteLabelId(null)}>No</button>
+                        </>
+                      ) : (
+                        <>
+                          <span className="flex-1 font-semibold text-gray-800">{label.name}</span>
+                          <button className="text-xs font-semibold text-indigo-600 hover:text-indigo-800" onClick={() => { setEditingLabelId(label.id); setEditingLabelName(label.name); }} disabled={savingLabel}>Edit</button>
+                          <button className="text-xs font-semibold text-red-500 hover:text-red-700" onClick={() => setConfirmDeleteLabelId(label.id)} disabled={savingLabel}>Delete</button>
+                        </>
+                      )}
                     </div>
                   ))}
                 </div>

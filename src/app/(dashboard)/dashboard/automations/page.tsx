@@ -2168,6 +2168,7 @@ function WorkflowListView({
 }) {
   const [wfSearch, setWfSearch] = useState('');
   const [wfStatus, setWfStatus] = useState<'all' | 'active' | 'draft'>('all');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [selectedWfIds, setSelectedWfIds] = useState<Set<string>>(new Set());
   const [bulkActing, setBulkActing] = useState(false);
 
@@ -2376,20 +2377,23 @@ function WorkflowListView({
                         ⊕ Clone
                       </button>
                     )}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (window.confirm(`Delete "${wf.name}"? This cannot be undone.`)) {
-                          onDelete(wf.id);
-                        }
-                      }}
-                      className="flex h-5 w-5 items-center justify-center rounded-md text-slate-700 transition hover:bg-red-500/20 hover:text-red-400 opacity-40 group-hover:opacity-100"
-                      title="Delete workflow"
-                      aria-label="Delete workflow"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                    {confirmDeleteId === wf.id ? (
+                      /* Inline confirm — no native dialog */
+                      <span className="flex items-center gap-1 text-[10px]" onClick={e => e.stopPropagation()}>
+                        <button onClick={() => { onDelete(wf.id); setConfirmDeleteId(null); }} className="rounded px-1.5 py-0.5 bg-red-500/20 text-red-400 font-bold hover:bg-red-500/40">Yes</button>
+                        <button onClick={() => setConfirmDeleteId(null)} className="rounded px-1.5 py-0.5 text-slate-500 hover:text-slate-200">No</button>
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(wf.id); }}
+                        className="flex h-5 w-5 items-center justify-center rounded-md text-slate-700 transition hover:bg-red-500/20 hover:text-red-400 opacity-40 group-hover:opacity-100"
+                        title="Delete workflow"
+                        aria-label="Delete workflow"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
                   </div>
                 </div>
                 {triggerLabel && (
