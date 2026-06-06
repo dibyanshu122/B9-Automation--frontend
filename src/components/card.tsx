@@ -9,6 +9,7 @@ interface CardProps {
   className?: string;
   onClick?: () => void;
   hoverable?: boolean;
+  id?: string;
 }
 
 export const Card = ({
@@ -16,11 +17,13 @@ export const Card = ({
   className,
   onClick,
   hoverable = true,
+  id,
 }: CardProps) => {
   const reduceMotion = useReducedMotion();
 
   return (
     <motion.div
+      id={id}
       initial={reduceMotion ? false : { opacity: 0, y: 10 }}
       animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
       transition={{ type: 'spring', stiffness: 140, damping: 20 }}

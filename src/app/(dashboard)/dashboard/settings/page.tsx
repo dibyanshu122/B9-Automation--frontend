@@ -377,15 +377,37 @@ export default function SettingsPage() {
     }
   };
 
+  const SETTING_SECTIONS = [
+    { id: 'profile', label: 'Profile' },
+    { id: 'business', label: 'Business' },
+    { id: 'whatsapp', label: 'WhatsApp' },
+    { id: 'ai', label: 'AI Settings' },
+    { id: 'security', label: 'Security' },
+    { id: 'sessions', label: 'Sessions' },
+    { id: 'notifications', label: 'Notifications' },
+  ];
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-4xl font-bold text-gray-900">Settings</h1>
-        <p className="text-gray-600 mt-2">Manage your account preferences</p>
+        <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
+        <p className="text-gray-500 mt-1 text-sm">Manage your account preferences</p>
+      </div>
+
+      {/* Sticky section nav */}
+      <div className="sticky top-0 z-10 -mx-1 overflow-x-auto bg-white/95 dark:bg-slate-950/95 backdrop-blur pb-2 pt-1">
+        <div className="flex gap-1 min-w-max px-1">
+          {SETTING_SECTIONS.map(s => (
+            <a key={s.id} href={`#settings-${s.id}`}
+              className="rounded-lg px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100 transition whitespace-nowrap">
+              {s.label}
+            </a>
+          ))}
+        </div>
       </div>
 
       {/* Profile */}
-      <Card>
+      <Card id="settings-profile">
         <h2 className="text-xl font-bold text-gray-900 mb-4">Profile</h2>
         <div className="space-y-4">
           <div>
@@ -418,7 +440,7 @@ export default function SettingsPage() {
       </Card>
 
       {/* Security */}
-      <Card>
+      <Card id="settings-business">
         <h2 className="mb-4 text-xl font-bold text-gray-900">Business Profile</h2>
         <div className="grid gap-4 md:grid-cols-2">
           <div>
@@ -552,7 +574,7 @@ export default function SettingsPage() {
         </Button>
       </Card>
 
-      <Card>
+      <Card id="settings-whatsapp">
         <h2 className="mb-4 text-xl font-bold text-gray-900">WhatsApp Integration</h2>
         <div className="rounded-lg border border-orange-100 bg-orange-50 p-4">
           <p className="font-semibold text-gray-950">
@@ -604,7 +626,7 @@ export default function SettingsPage() {
 
       {/* AI & BYOK Settings */}
       {canManageSensitiveSettings === true && (
-      <Card>
+      <Card id="settings-ai">
         <div className="flex items-center gap-3 mb-1">
           <Cpu className="h-5 w-5 text-violet-600" />
           <h2 className="text-xl font-bold text-gray-900">AI Settings</h2>
@@ -870,7 +892,7 @@ export default function SettingsPage() {
       )}
 
       {/* Security */}
-      <Card>
+      <Card id="settings-security">
         <h2 className="text-xl font-bold text-gray-900 mb-1">Security</h2>
 
         {/* Google user — show Set Password section */}
@@ -1010,7 +1032,7 @@ export default function SettingsPage() {
       </Card>
 
       {/* Active Sessions */}
-      <Card>
+      <Card id="settings-sessions">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-xl font-bold text-gray-900">Active Sessions</h2>
@@ -1056,7 +1078,7 @@ export default function SettingsPage() {
       </Card>
 
       {/* Notification Preferences */}
-      <Card>
+      <Card id="settings-notifications">
         <h2 className="text-xl font-bold text-gray-900 mb-1">Notification Preferences</h2>
         <p className="text-sm text-gray-500 mb-4">Choose which events trigger email and in-app notifications</p>
         {notifLoading ? (

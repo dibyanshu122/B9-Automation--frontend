@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store/authStore';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import toast from 'react-hot-toast';
 import { Activity, Bot, CheckCheck, Clock, IndianRupee, MessageCircle, MessageSquare, Send, Target, TrendingUp, Users, Zap, Lock } from 'lucide-react';
+import { EmptyState } from '@/components/empty-state';
 
 type UsageTrend = {
   date: string;
@@ -17,6 +18,7 @@ type UsageTrend = {
 export default function AnalyticsPage() {
   const { user } = useAuthStore();
   const isStarterOrFree = ['FREE', 'STARTER'].includes((user?.plan || 'FREE').toUpperCase());
+  const [anyLocked, setAnyLocked] = useState(false);
   const [impact, setImpact] = useState<any>(null);
   const [trends, setTrends] = useState<UsageTrend[]>([]);
   const [funnel, setFunnel] = useState<any>(null);
@@ -67,9 +69,8 @@ export default function AnalyticsPage() {
         setCampaignRevenue(campaignRevRes.data ?? null);
         setBotDeflection(deflectionRes.data ?? null);
         setTeamPerf(teamRes.data ?? null);
-        // Inline plan-lock indicator instead of disappearing toast
-        const anyLocked = [trendsRes, impactRes, funnelRes, campaignRevRes, deflectionRes, teamRes].some((r: any) => r?._plan_locked);
-        if (anyLocked) toast('Upgrade to GROWTH to unlock full analytics', { duration: 5000 });
+        const locked = [trendsRes, impactRes, funnelRes, campaignRevRes, deflectionRes, teamRes].some((r: any) => r?._plan_locked);
+        setAnyLocked(locked);
       } catch {
         toast.error('Failed to load analytics — check your connection');
       } finally {
@@ -152,8 +153,8 @@ export default function AnalyticsPage() {
 
   return (
     <div className="space-y-8">
-      {/* Plan gate banner for STARTER/FREE */}
-      {isStarterOrFree && (
+      {/* Plan gate banner — shown for FREE/STARTER or when data was locked */}
+      {(isStarterOrFree || anyLocked) && (
         <div className="flex items-center justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100">
@@ -286,11 +287,8 @@ export default function AnalyticsPage() {
         <Card className="border-orange-100 shadow-sm" hoverable={false}>
           <h2 className="mb-6 text-xl font-bold text-gray-950">Conversation Trend</h2>
           {trends.length === 0 ? (
-            <div className="flex h-[300px] items-center justify-center rounded-xl bg-gray-50">
-              <div className="text-center">
-                <p className="font-semibold text-gray-500">No data yet</p>
-                <p className="mt-1 text-sm text-gray-400">Start by connecting a channel in <a href="/dashboard/integrations" className="text-primary-600 underline">Integrations</a> or testing your widget.</p>
-              </div>
+            <div className="flex h-[260px] items-center justify-center rounded-xl bg-gray-50 dark:bg-slate-900">
+              <EmptyState compact icon={<TrendingUp className="w-5 h-5" />} title="No trend data yet" description="Connect WhatsApp in Integrations and start receiving messages." action={{ label: 'Go to Integrations', href: '/dashboard/integrations' }} />
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={300}>

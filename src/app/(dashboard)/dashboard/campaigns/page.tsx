@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { Button } from '@/components/button';
+import { EmptyState } from '@/components/empty-state';
 import { useApi } from '@/hooks/useApi';
 import { useCampaigns, useInvalidate } from '@/hooks/useQueryCache';
 import { useQuota } from '@/hooks/useQuota';
@@ -940,11 +941,11 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
   return (
     <AnimatePresence>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm flex items-center justify-center px-4 overflow-y-auto py-6"
+        className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm flex items-start sm:items-center justify-center px-4 overflow-y-auto py-4 sm:py-6"
         onClick={onClose}>
         <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-          className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[88vh]"
+          className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[92vh] sm:max-h-[88vh] my-auto"
           onClick={e => e.stopPropagation()}>
 
         {/* Header */}
@@ -1556,14 +1557,12 @@ export default function CampaignsPage() {
       {loading ? (
         <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
       ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-gray-200 py-16 text-center">
-          <MessageSquare className="w-10 h-10 text-gray-300" />
-          <p className="font-semibold text-gray-500">{tab === 'all' ? 'No campaigns yet' : `No ${tab} campaigns`}</p>
-          {tab === 'all' && <p className="text-sm text-gray-400">Create your first campaign to send bulk WhatsApp messages</p>}
-          {tab === 'all' && (
-            <Button onClick={() => setShowNew(true)} className="mt-2 flex items-center gap-2"><Plus className="w-4 h-4" /> New Campaign</Button>
-          )}
-        </div>
+        <EmptyState
+          icon={<MessageSquare className="w-6 h-6" />}
+          title={tab === 'all' ? 'No campaigns yet' : `No ${tab} campaigns`}
+          description={tab === 'all' ? 'Send bulk WhatsApp messages to your leads. Create your first campaign to get started.' : `No campaigns with status "${tab}" found.`}
+          action={tab === 'all' ? { label: '+ New Campaign', onClick: () => setShowNew(true) } : undefined}
+        />
       ) : (
         <CampaignTable campaigns={filtered} onDetail={setDetailName} onRefresh={() => { invalidateCampaigns(); load(); }} />
       )}

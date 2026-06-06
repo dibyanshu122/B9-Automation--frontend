@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { AlertTriangle, Brain, CalendarDays, ChevronDown, ChevronUp, Clock, Download, Eye, Flame, GitMerge, Loader2, Mail, MessageSquare, Phone, Plus, Send, Skull, Star, Trash2, Users, StickyNote, Activity, Send as SendIcon, List, Kanban, GripVertical, Tag, X } from 'lucide-react';
 import { Button } from '@/components/button';
 import { Card } from '@/components/card';
+import { EmptyState } from '@/components/empty-state';
 import { useApi, getApiClient } from '@/hooks/useApi';
 import { useInvalidate } from '@/hooks/useQueryCache';
 import { useAuthStore } from '@/store/authStore';
@@ -1063,14 +1064,14 @@ export default function LeadsPage() {
           ))}
         </div>
       ) : leads.length === 0 ? (
-        <Card className="text-center">
-          <Users className="mx-auto mb-3 h-10 w-10 text-gray-300" />
-          <p className="font-semibold text-gray-900">No leads yet</p>
-          <p className="mt-1 text-sm text-gray-500">Capture leads by embedding your widget on your website, connecting Facebook Lead Ads, or sharing your WhatsApp number.</p>
-          <div className="mt-3 flex flex-wrap gap-2 justify-center">
-            <a href="/dashboard/widgets" className="rounded-lg bg-orange-50 px-3 py-1.5 text-xs font-semibold text-primary-700 hover:bg-orange-100">Set up Website Widget →</a>
-            <a href="/dashboard/integrations" className="rounded-lg bg-orange-50 px-3 py-1.5 text-xs font-semibold text-primary-700 hover:bg-orange-100">Connect Facebook / WhatsApp →</a>
-          </div>
+        <Card hoverable={false}>
+          <EmptyState
+            icon={<Users className="w-6 h-6" />}
+            title="No leads yet"
+            description="Capture leads by embedding your widget, connecting Facebook Lead Ads, or sharing your WhatsApp number."
+            action={{ label: 'Connect Channels', href: '/dashboard/integrations' }}
+            secondaryAction={{ label: 'Set up Widget', href: '/dashboard/widgets' }}
+          />
         </Card>
       ) : activeTab === 'pipeline' ? (
         viewMode === 'kanban' ? (
@@ -1211,7 +1212,8 @@ export default function LeadsPage() {
         ) : (
           /* ── LIST VIEW ─────────────────────────────────────────────────── */
           <section className="space-y-4">
-            <Card className="border-orange-100 shadow-sm" hoverable={false}>
+            <Card className="border-orange-100 shadow-sm overflow-x-auto" hoverable={false}>
+              <div className="min-w-[700px]">
               <div className="hidden grid-cols-[24px_1.1fr_1fr_1fr_0.8fr_0.6fr_0.9fr_90px] gap-3 rounded-xl px-3 py-3 mb-1 text-xs font-bold uppercase tracking-wide text-white md:grid" style={{background:'linear-gradient(135deg,#1e293b 0%,#0f172a 50%,#1e1b4b 100%)'}}>
                 <input type="checkbox" className="rounded"
                   ref={el => { if (el) el.indeterminate = selectedLeadIds.size > 0 && selectedLeadIds.size < filteredLeads.length; }}
@@ -1271,6 +1273,7 @@ export default function LeadsPage() {
                 </div>
               )}
               {loadingMore && <p className="mt-2 text-center text-xs text-gray-400">Loading more leads…</p>}
+              </div>{/* end min-w-[700px] */}
             </Card>
           </section>
         )

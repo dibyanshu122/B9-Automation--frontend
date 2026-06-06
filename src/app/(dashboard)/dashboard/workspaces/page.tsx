@@ -13,6 +13,7 @@ export default function WorkspacesPage() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newWorkspace, setNewWorkspace] = useState({
@@ -58,10 +59,7 @@ export default function WorkspacesPage() {
   };
 
   const handleDeleteWorkspace = async (workspace: Workspace) => {
-    const confirmed = window.confirm(
-      `Delete "${workspace.name}" workspace? This will also remove its assistants, documents, and widget setup.`
-    );
-    if (!confirmed) return;
+    setConfirmDeleteId(null);
 
     setDeletingId(workspace.id);
     try {
@@ -153,14 +151,17 @@ export default function WorkspacesPage() {
                     <ArrowRight className="w-4 h-4" />
                   </Button>
                 </Link>
-                <Button
-                  variant="danger"
-                  loading={deletingId === workspace.id}
-                  onClick={() => handleDeleteWorkspace(workspace)}
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Delete
-                </Button>
+                {confirmDeleteId === workspace.id ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-red-600 font-semibold">Delete workspace?</span>
+                    <Button variant="danger" size="sm" loading={deletingId === workspace.id} onClick={() => handleDeleteWorkspace(workspace)}>Yes</Button>
+                    <Button variant="secondary" size="sm" onClick={() => setConfirmDeleteId(null)}>No</Button>
+                  </div>
+                ) : (
+                  <Button variant="danger" loading={deletingId === workspace.id} onClick={() => setConfirmDeleteId(workspace.id)}>
+                    <Trash2 className="w-4 h-4" />Delete
+                  </Button>
+                )}
               </div>
             </Card>
           ))}

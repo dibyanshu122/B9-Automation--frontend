@@ -287,7 +287,7 @@ export const Navbar = () => {
                   </button>
 
                   {showNotifDropdown && (
-                    <div className="absolute right-0 top-full mt-2 w-80 rounded-xl border border-slate-700 bg-slate-900 shadow-2xl shadow-black/80 flex flex-col" style={{ zIndex: 9999, maxHeight: '420px' }}>
+                    <div className="absolute right-0 top-full mt-2 w-80 rounded-xl border border-slate-700 bg-slate-900 shadow-2xl shadow-black/80 flex flex-col" style={{ zIndex: 9999 }}>
                       {/* Header — fixed, doesn't scroll */}
                       <div className="flex items-center justify-between border-b border-white/10 px-4 py-2.5 shrink-0">
                         <div className="flex items-center gap-2">
@@ -307,7 +307,7 @@ export const Navbar = () => {
                       {notifications.length === 0 ? (
                         <p className="px-4 py-6 text-center text-xs text-slate-600">No notifications yet</p>
                       ) : (
-                        <div className="overflow-y-auto flex-1 divide-y divide-white/[0.04]">
+                        <div className="overflow-y-auto flex-1 divide-y divide-white/[0.04]" style={{ maxHeight: '320px' }}>
                           {notifications.map((n) => (
                             <div key={n.id} className="flex items-start gap-3 px-4 py-3 hover:bg-white/[0.03] transition">
                               <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-white/[0.06]">
