@@ -194,7 +194,7 @@ export const Sidebar = () => {
     'px-3 py-2.5',                                            // tighter child items
     active
       ? 'bg-indigo-500/20 text-indigo-300 font-semibold'
-      : 'text-slate-400 hover:bg-white/8 hover:text-slate-100'
+      : 'text-slate-400 hover:bg-white/[0.08] hover:text-slate-100'
   );
 
   const lbl = clsx(

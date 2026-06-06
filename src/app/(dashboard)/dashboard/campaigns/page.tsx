@@ -186,7 +186,8 @@ function exportToExcel(campaigns: Campaign[]) {
 
 function CampaignTable({ campaigns, onDetail, onRefresh }: { campaigns: Campaign[]; onDetail: (name: string) => void; onRefresh: () => void }) {
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-visible">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-x-auto">
+      <div className="min-w-[900px]">
       {/* Premium dark header */}
       <div className="grid text-white text-[11px] font-semibold px-4 py-3 select-none rounded-t-2xl"
         style={{ gridTemplateColumns: COL, background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e1b4b 100%)' }}>
@@ -207,6 +208,7 @@ function CampaignTable({ campaigns, onDetail, onRefresh }: { campaigns: Campaign
       {campaigns.map((c, i) => (
         <CampaignRow key={i} idx={i} c={c} onDetail={onDetail} onRefresh={onRefresh} />
       ))}
+      </div>{/* end min-w wrapper */}
     </div>
   );
 }

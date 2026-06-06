@@ -714,9 +714,7 @@ function UnifiedInbox() {
             <div className="flex items-center justify-between">
               <h1 className="font-bold text-gray-800 text-xl">Chats</h1>
               <div className="flex items-center gap-1">
-                <button className="p-2 rounded-full hover:bg-gray-200 text-gray-500 transition">
-                  <MessageCircle className="h-5 w-5" />
-                </button>
+                {/* placeholder removed — no action assigned */}
                 {/* Filter button with active-indicator dot */}
                 <div ref={filterPanelRef} className="relative">
                   <button
@@ -996,9 +994,7 @@ function UnifiedInbox() {
               >
                 <Phone className="h-5 w-5" />
               </button>
-              <button className="p-2.5 rounded-full hover:bg-gray-200 text-gray-500 transition hidden sm:block">
-                <Search className="h-5 w-5" />
-              </button>
+              {/* Search in-thread — coming soon */}
               {/* 3-dot menu */}
               <div className="relative">
                 <button onClick={e => { e.stopPropagation(); setMenuOpen(o => !o); }}
@@ -1096,13 +1092,13 @@ function UnifiedInbox() {
                     </div>
                   )}
                   <div className={`flex items-end gap-2 max-w-[85%] md:max-w-[70%] lg:max-w-[60%]`}>
-                  <div className={`w-full text-[14px] shadow-sm relative group border border-[#E5E7EB] ${
+                  <div className={`w-full text-[14px] shadow-sm relative group border ${
                     isOutbound
-                      ? 'bg-[#EFF6FF] text-gray-900 rounded-2xl rounded-tr-sm'
-                      : 'bg-white text-gray-900 rounded-2xl rounded-tl-sm'
+                      ? 'bg-[#d9fdd3] text-gray-900 rounded-2xl rounded-tr-sm border-green-200'
+                      : 'bg-white text-gray-900 rounded-2xl rounded-tl-sm border-[#E5E7EB] dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100'
                   } ${isPureMedia ? 'p-1' : 'px-3 py-2'}`}>
-                    {/* Tail svg (optional detail) */}
-                    <div className={`absolute top-0 w-3 h-3 ${isOutbound ? '-right-2 text-[#d9fdd3]' : '-left-2 text-white'}`}>
+                    {/* Tail svg */}
+                    <div className={`absolute top-0 w-3 h-3 ${isOutbound ? '-right-2 text-[#d9fdd3]' : '-left-2 text-white dark:text-slate-700'}`}>
                       <svg viewBox="0 0 8 13" width="8" height="13" className="fill-current">
                         {isOutbound 
                           ? <path d="M5.188 1H0v11.193l6.467-8.625C7.526 2.156 6.958 1 5.188 1z" />

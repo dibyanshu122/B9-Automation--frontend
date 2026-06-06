@@ -10,6 +10,7 @@ import { Bell, LogOut, Settings, Menu, Workflow, Users, MessageCircle, X, Buildi
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
+import toast from 'react-hot-toast';
 
 function timeAgo(iso: string): string {
   if (!iso) return '';
@@ -113,8 +114,7 @@ export const Navbar = () => {
       }
       setShowBizProfile(false);
     } catch {
-      // toast not available here — use alert as fallback
-      alert('Failed to save profile. Please try again.');
+      toast.error('Failed to save profile. Please try again.');
     } finally {
       setBpSaving(false);
     }
@@ -233,7 +233,7 @@ export const Navbar = () => {
               >
                 B9 Automation
               </p>
-              <p className="mt-[3px] text-[9.5px] font-semibold uppercase tracking-[0.25em] text-slate-500">
+              <p className="mt-[3px] text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
                 WhatsApp AI Platform
               </p>
             </div>
@@ -339,7 +339,7 @@ export const Navbar = () => {
 
                 {/* Desktop User Menu */}
                 <div className="hidden sm:flex items-center gap-4">
-                  <span className="text-sm text-slate-400">
+                  <span className="max-w-[180px] truncate text-sm text-slate-400" title={user.email}>
                     {user.email}
                   </span>
                   <div ref={userMenuRef} className="relative">

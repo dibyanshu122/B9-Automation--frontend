@@ -56,19 +56,20 @@ export default function AnalyticsPage() {
           safe(get(`/api/analytics/bot-deflection?days=${globalDays}`)),
           safe(get(`/api/analytics/team-performance?days=${globalDays}`)),
         ]);
-        setTrends(trendsRes.data);
-        setImpact(impactRes.data);
-        setFunnel(funnelRes.data);
-        setTemplatePerf(templatesRes.data);
-        setWaStats(waRes.data);
+        // Always use safe fallbacks — null data from 402/plan-lock would crash charts
+        setTrends(trendsRes.data ?? []);
+        setImpact(impactRes.data ?? null);
+        setFunnel(funnelRes.data ?? null);
+        setTemplatePerf(templatesRes.data ?? []);
+        setWaStats(waRes.data ?? null);
         setWaDays(globalDays);
-        setBusinessMetrics(businessRes.data);
-        setCampaignRevenue(campaignRevRes.data);
-        setBotDeflection(deflectionRes.data);
-        setTeamPerf(teamRes.data);
-        // Show one toast if any section failed due to plan gate
+        setBusinessMetrics(businessRes.data ?? null);
+        setCampaignRevenue(campaignRevRes.data ?? null);
+        setBotDeflection(deflectionRes.data ?? null);
+        setTeamPerf(teamRes.data ?? null);
+        // Inline plan-lock indicator instead of disappearing toast
         const anyLocked = [trendsRes, impactRes, funnelRes, campaignRevRes, deflectionRes, teamRes].some((r: any) => r?._plan_locked);
-        if (anyLocked) toast('Some analytics require GROWTH plan — upgrade to unlock', { icon: '🔒' });
+        if (anyLocked) toast('Upgrade to GROWTH to unlock full analytics', { duration: 5000 });
       } catch {
         toast.error('Failed to load analytics — check your connection');
       } finally {
@@ -76,8 +77,8 @@ export default function AnalyticsPage() {
       }
     };
 
-    const timer = window.setTimeout(fetchAnalytics, 250);
-    return () => window.clearTimeout(timer);
+    fetchAnalytics();
+    return () => {};
   }, [globalDays]); // eslint-disable-line
 
   // Sync loading state with React Query
