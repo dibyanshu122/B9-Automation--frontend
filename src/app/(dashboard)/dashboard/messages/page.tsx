@@ -706,11 +706,11 @@ function UnifiedInbox() {
     });
 
   return (
-    <div className="grid h-full min-h-0 min-w-0 grid-cols-1 gap-0 overflow-hidden xl:grid-cols-[360px_minmax(0,1fr)]" style={{background:'#F9FAFB'}}>
+    <div className="grid h-full min-h-0 min-w-0 grid-cols-1 gap-0 overflow-hidden xl:grid-cols-[360px_minmax(0,1fr)] bg-gray-50 dark:bg-slate-900">
       {/* LEFT — Contacts panel */}
-        <div className={`flex min-h-0 flex-col overflow-hidden border-r border-[#E5E7EB] bg-white ${selected ? 'hidden xl:flex' : 'flex'}`}>
+        <div className={`flex min-h-0 flex-col overflow-hidden border-r border-[#E5E7EB] dark:border-slate-700 bg-white dark:bg-slate-800 ${selected ? 'hidden xl:flex' : 'flex'}`}>
           {/* Header */}
-          <div className="px-4 py-3 bg-white border-b border-[#E5E7EB] flex flex-col gap-3">
+          <div className="px-4 py-3 bg-white dark:bg-slate-800 border-b border-[#E5E7EB] dark:border-slate-700 flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <h1 className="font-bold text-gray-800 text-xl">Chats</h1>
               <div className="flex items-center gap-1">
@@ -952,10 +952,10 @@ function UnifiedInbox() {
 
         {/* RIGHT — Chat Thread + Lead Profile */}
         {selected ? (
-          <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden" style={{background:'#F9FAFB'}}>
-          <div className="flex flex-col flex-1 min-w-0" style={{background:'#F9FAFB'}}>
+          <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden bg-gray-50 dark:bg-slate-900">
+          <div className="flex flex-col flex-1 min-w-0 bg-gray-50 dark:bg-slate-900">
             {/* Chat header */}
-            <div className="flex items-center gap-3 px-4 py-3 bg-white border-b border-[#E5E7EB] shrink-0 z-10" style={{boxShadow:'0 1px 3px rgba(0,0,0,0.06)'}}>
+            <div className="flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-800 border-b border-[#E5E7EB] dark:border-slate-700 shrink-0 z-10" style={{boxShadow:'0 1px 3px rgba(0,0,0,0.06)'}}>
               <button onClick={() => setSelected(null)} className="xl:hidden flex items-center gap-1 p-2 rounded-full hover:bg-gray-200 text-gray-500 transition mr-1">
                 <ArrowLeft className="h-5 w-5" />
               </button>
@@ -1072,9 +1072,7 @@ function UnifiedInbox() {
             </div>
 
             {/* Messages */}
-            <div ref={chatBoxRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-1.5 relative" style={{
-              backgroundColor: '#F9FAFB',
-            }}>
+            <div ref={chatBoxRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-1.5 relative bg-gray-50 dark:bg-slate-900">
               {threadLoading ? (
                 <div className="flex justify-center pt-12"><Loader2 className="h-6 w-6 animate-spin text-gray-400" /></div>
               ) : thread.length === 0 ? (
@@ -1130,7 +1128,7 @@ function UnifiedInbox() {
 
             {/* Reply box */}
 
-            <div className="bg-white border-t border-[#E5E7EB] px-4 py-3 shrink-0 relative">
+            <div className="bg-white dark:bg-slate-800 border-t border-[#E5E7EB] dark:border-slate-700 px-4 py-3 shrink-0 relative">
               {/* 24-hour window compliance banner */}
               {selected && (() => {
                 const win = getWindowStatus(selected.last_time, selected.channel);

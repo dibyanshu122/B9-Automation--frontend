@@ -17,26 +17,69 @@ html.dark {
   color-scheme: dark;
 }
 
-/* ── Global dark mode overrides for all dashboard elements ─────────────── */
-.dark .bg-white          { background-color: #1e293b !important; }
-.dark .bg-gray-50        { background-color: #0f172a !important; }
-.dark .bg-gray-100       { background-color: #1e293b !important; }
-.dark .bg-gray-200       { background-color: #334155 !important; }
-.dark .text-gray-900     { color: #f1f5f9 !important; }
-.dark .text-gray-800     { color: #e2e8f0 !important; }
-.dark .text-gray-700     { color: #cbd5e1 !important; }
-.dark .text-gray-600     { color: #94a3b8 !important; }
-.dark .text-gray-500     { color: #64748b !important; }
-.dark .border-gray-100   { border-color: #1e293b !important; }
-.dark .border-gray-200   { border-color: #334155 !important; }
-.dark .border-gray-300   { border-color: #475569 !important; }
-.dark .shadow-sm         { box-shadow: 0 1px 3px rgba(0,0,0,0.5) !important; }
-.dark .shadow-lg         { box-shadow: 0 10px 30px rgba(0,0,0,0.6) !important; }
-/* Card-like elements */
-.dark .rounded-xl,
-.dark .rounded-2xl       { background-color: inherit; }
-/* Input fields */
-.dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+/* ═══════════════════════════════════════════════════════════════════════════
+   COMPREHENSIVE DARK MODE OVERRIDES
+   Every light color found in dashboard audit — covers all pages at once
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Backgrounds ─────────────────────────────────────────────────────────── */
+.dark .bg-white           { background-color: #1e293b !important; }
+.dark .bg-white\/90       { background-color: rgba(30,41,59,0.9) !important; }
+.dark .bg-white\/70       { background-color: rgba(30,41,59,0.7) !important; }
+.dark .bg-white\/50       { background-color: rgba(30,41,59,0.5) !important; }
+.dark .bg-gray-50         { background-color: #0f172a !important; }
+.dark .bg-gray-100        { background-color: #1e293b !important; }
+.dark .bg-gray-200        { background-color: #334155 !important; }
+.dark .bg-slate-50        { background-color: #0f172a !important; }
+.dark .bg-slate-100       { background-color: #1e293b !important; }
+/* Colored tint backgrounds — soften them in dark mode */
+.dark .bg-orange-50       { background-color: rgba(124,45,18,0.15) !important; }
+.dark .bg-blue-50         { background-color: rgba(23,37,84,0.3) !important; }
+.dark .bg-indigo-50       { background-color: rgba(30,27,75,0.3) !important; }
+.dark .bg-green-50        { background-color: rgba(5,46,22,0.3) !important; }
+.dark .bg-red-50          { background-color: rgba(69,10,10,0.3) !important; }
+.dark .bg-yellow-50       { background-color: rgba(66,32,6,0.3) !important; }
+.dark .bg-amber-50        { background-color: rgba(69,26,3,0.3) !important; }
+.dark .bg-purple-50       { background-color: rgba(46,16,101,0.3) !important; }
+.dark .bg-pink-50         { background-color: rgba(74,4,78,0.2) !important; }
+
+/* ── Text ────────────────────────────────────────────────────────────────── */
+.dark .text-gray-950      { color: #f8fafc !important; }
+.dark .text-gray-900      { color: #f1f5f9 !important; }
+.dark .text-gray-800      { color: #e2e8f0 !important; }
+.dark .text-gray-700      { color: #cbd5e1 !important; }
+.dark .text-gray-600      { color: #94a3b8 !important; }
+.dark .text-gray-500      { color: #64748b !important; }
+.dark .text-gray-400      { color: #475569 !important; }
+.dark .text-slate-900     { color: #f1f5f9 !important; }
+.dark .text-slate-800     { color: #e2e8f0 !important; }
+.dark .text-slate-700     { color: #cbd5e1 !important; }
+.dark .text-slate-600     { color: #94a3b8 !important; }
+/* Keep colored text as-is (emerald, orange, red, blue) — they work in dark */
+
+/* ── Borders ─────────────────────────────────────────────────────────────── */
+.dark .border-gray-50     { border-color: #0f172a !important; }
+.dark .border-gray-100    { border-color: #1e293b !important; }
+.dark .border-gray-200    { border-color: #334155 !important; }
+.dark .border-gray-300    { border-color: #475569 !important; }
+.dark .border-slate-100   { border-color: #1e293b !important; }
+.dark .border-slate-200   { border-color: #334155 !important; }
+.dark .border-\[#E5E7EB\] { border-color: #334155 !important; }
+
+/* ── Shadows ─────────────────────────────────────────────────────────────── */
+.dark .shadow-sm          { box-shadow: 0 1px 3px rgba(0,0,0,0.5) !important; }
+.dark .shadow             { box-shadow: 0 2px 6px rgba(0,0,0,0.5) !important; }
+.dark .shadow-md          { box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important; }
+.dark .shadow-lg          { box-shadow: 0 8px 24px rgba(0,0,0,0.6) !important; }
+.dark .shadow-xl          { box-shadow: 0 12px 32px rgba(0,0,0,0.7) !important; }
+
+/* ── Dividers ────────────────────────────────────────────────────────────── */
+.dark hr                  { border-color: #334155; }
+.dark .divide-gray-100 > * + * { border-color: #1e293b !important; }
+.dark .divide-gray-200 > * + * { border-color: #334155 !important; }
+
+/* ── Form inputs ─────────────────────────────────────────────────────────── */
+.dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
 .dark textarea,
 .dark select {
   background-color: #0f172a !important;
@@ -44,13 +87,40 @@ html.dark {
   border-color: #334155 !important;
 }
 .dark input::placeholder,
-.dark textarea::placeholder { color: #64748b !important; }
-/* Tables */
+.dark textarea::placeholder { color: #475569 !important; }
+.dark input:focus,
+.dark textarea:focus,
+.dark select:focus         { border-color: #6366f1 !important; outline-color: #6366f1 !important; }
+
+/* ── Tables ──────────────────────────────────────────────────────────────── */
 .dark table                { color: #f1f5f9; }
-.dark thead                { background-color: #1e293b !important; }
+.dark thead tr             { background-color: #1e293b !important; border-color: #334155 !important; }
+.dark thead th             { color: #94a3b8 !important; border-color: #334155 !important; }
+.dark tbody td             { border-color: #1e293b !important; }
 .dark tbody tr:hover       { background-color: #1e293b !important; }
-/* Dividers */
-.dark hr                   { border-color: #334155; }
+
+/* ── Modals / dropdowns / popovers ───────────────────────────────────────── */
+.dark [role="dialog"],
+.dark [role="menu"],
+.dark [role="listbox"]     { background-color: #1e293b !important; border-color: #334155 !important; }
+
+/* ── Kanban columns (leads page) ─────────────────────────────────────────── */
+.dark .bg-white\/70        { background-color: rgba(30,41,59,0.7) !important; }
+
+/* ── Badges / pills ──────────────────────────────────────────────────────── */
+.dark .bg-gray-100.text-gray-800,
+.dark .bg-gray-200.text-gray-700 {
+  background-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+/* ── Scrollbars ──────────────────────────────────────────────────────────── */
+.dark ::-webkit-scrollbar-track  { background: #0f172a; }
+.dark ::-webkit-scrollbar-thumb  { background: #334155; border-radius: 4px; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+/* ── Inline style overrides — messages page hardcoded colors ─────────────── */
+/* These can't be overridden via class selectors, handled in component fixes */
 
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;

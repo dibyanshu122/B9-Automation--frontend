@@ -27,7 +27,8 @@ export const Card = ({
       whileHover={!reduceMotion && hoverable ? { y: -3 } : undefined}
       className={clsx(
         'relative rounded-xl border border-gray-200/80 bg-white/90 p-6 backdrop-blur-sm',
-        hoverable && 'hover:border-gray-300 hover:shadow-lg hover:shadow-gray-200/60',
+        'dark:border-slate-700 dark:bg-slate-800/90',
+        hoverable && 'hover:border-gray-300 hover:shadow-lg hover:shadow-gray-200/60 dark:hover:border-slate-600 dark:hover:shadow-slate-900/60',
         'transition-all duration-200',
         onClick && 'cursor-pointer',
         className
