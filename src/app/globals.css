@@ -17,6 +17,41 @@ html.dark {
   color-scheme: dark;
 }
 
+/* ── Global dark mode overrides for all dashboard elements ─────────────── */
+.dark .bg-white          { background-color: #1e293b !important; }
+.dark .bg-gray-50        { background-color: #0f172a !important; }
+.dark .bg-gray-100       { background-color: #1e293b !important; }
+.dark .bg-gray-200       { background-color: #334155 !important; }
+.dark .text-gray-900     { color: #f1f5f9 !important; }
+.dark .text-gray-800     { color: #e2e8f0 !important; }
+.dark .text-gray-700     { color: #cbd5e1 !important; }
+.dark .text-gray-600     { color: #94a3b8 !important; }
+.dark .text-gray-500     { color: #64748b !important; }
+.dark .border-gray-100   { border-color: #1e293b !important; }
+.dark .border-gray-200   { border-color: #334155 !important; }
+.dark .border-gray-300   { border-color: #475569 !important; }
+.dark .shadow-sm         { box-shadow: 0 1px 3px rgba(0,0,0,0.5) !important; }
+.dark .shadow-lg         { box-shadow: 0 10px 30px rgba(0,0,0,0.6) !important; }
+/* Card-like elements */
+.dark .rounded-xl,
+.dark .rounded-2xl       { background-color: inherit; }
+/* Input fields */
+.dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+.dark textarea,
+.dark select {
+  background-color: #0f172a !important;
+  color: #f1f5f9 !important;
+  border-color: #334155 !important;
+}
+.dark input::placeholder,
+.dark textarea::placeholder { color: #64748b !important; }
+/* Tables */
+.dark table                { color: #f1f5f9; }
+.dark thead                { background-color: #1e293b !important; }
+.dark tbody tr:hover       { background-color: #1e293b !important; }
+/* Dividers */
+.dark hr                   { border-color: #334155; }
+
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background-color: #030712;
@@ -131,14 +166,15 @@ select:focus-visible {
          rounded-lg shadow-sm hover:shadow-md transition-shadow;
 }
 
-/* ── Design tokens ────────────────────────────────────────────────────────── */
+/* ── Design tokens — Light mode ───────────────────────────────────────────── */
 :root {
   --color-primary: #4F46E5;
   --color-primary-hover: #4338CA;
   --color-primary-light: #EEF2FF;
-  --color-accent: #F97316;       /* orange — kept for warnings/highlights */
+  --color-accent: #F97316;
   --color-bg: #FFFFFF;
   --color-bg-subtle: #F9FAFB;
+  --color-bg-card: #FFFFFF;
   --color-border: #E5E7EB;
   --color-text: #1F2937;
   --color-text-secondary: #6B7280;
@@ -148,6 +184,27 @@ select:focus-visible {
   --radius-card: 8px;
 }
 
+/* ── Design tokens — Dark mode ────────────────────────────────────────────── */
+.dark {
+  --color-bg: #0f172a;
+  --color-bg-subtle: #1e293b;
+  --color-bg-card: #1e293b;
+  --color-border: #334155;
+  --color-text: #f1f5f9;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #64748b;
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.3);
+  --shadow-card-hover: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+/* ── Utility classes that use tokens ──────────────────────────────────────── */
+.bg-page     { background: var(--color-bg); }
+.bg-subtle   { background: var(--color-bg-subtle); }
+.bg-card     { background: var(--color-bg-card); border-color: var(--color-border); }
+.text-page   { color: var(--color-text); }
+.text-muted  { color: var(--color-text-muted); }
+.border-page { border-color: var(--color-border); }
+
 /* B9 Automation dashboard foundation */
 .b9-command-shell {
   --mouse-x: 50%;
@@ -155,7 +212,7 @@ select:focus-visible {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  background: #FFFFFF;
+  background: var(--color-bg);
   color: var(--color-text);
   scroll-behavior: smooth;
 }

@@ -92,6 +92,13 @@ export default function RootLayout({
         <meta name="theme-color" content="#060608" />
         <meta name="color-scheme" content="dark" />
 
+        {/* Prevent dark mode flash — read persisted preference before React hydrates */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var s=JSON.parse(localStorage.getItem('ui-store-v2')||'{}');if(s.state&&s.state.darkMode===true){document.documentElement.classList.add('dark');}}catch(e){}})();`,
+          }}
+        />
+
         {/* DNS Prefetch for performance */}
         <link rel="dns-prefetch" href="https://b9-automation-backend.onrender.com" />
       </head>
