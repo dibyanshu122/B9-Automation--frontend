@@ -19,7 +19,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const { user, token, hasHydrated, logout } = useAuthStore();
-  const { sidebarPinned } = useUIStore();
+  const { sidebarPinned, darkMode } = useUIStore();
   const router = useRouter();
   const pathname = usePathname();
   const reduceMotion = useReducedMotion();
@@ -78,6 +78,16 @@ export default function DashboardLayout({
     mainRef.current?.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
   }, [pathname]);
 
+  // Apply / remove Tailwind 'dark' class on <html> when user toggles theme
+  useEffect(() => {
+    const root = document.documentElement;
+    if (darkMode) {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+  }, [darkMode]);
+
   useEffect(() => {
     return () => {
       if (pointerFrameRef.current) {
@@ -101,7 +111,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div ref={shellRef} className="b9-command-shell h-screen" onPointerMove={handlePointerMove}>
+    <div ref={shellRef} className={`b9-command-shell h-screen ${darkMode ? 'dark' : ''}`} onPointerMove={handlePointerMove}>
       <CommandPalette />
       <Navbar />
       <div className="relative z-10 flex h-[calc(100vh-64px)] min-w-0 mt-16">
@@ -109,7 +119,7 @@ export default function DashboardLayout({
         {/* Single scroll container; body never scrolls. */}
         <main
           ref={mainRef}
-          className={`min-w-0 flex-1 overflow-hidden transition-[margin] duration-300 ease-in-out ${sidebarPinned ? 'md:ml-72' : 'md:ml-16'}`}
+          className={`min-w-0 flex-1 overflow-hidden transition-[margin] duration-300 ease-in-out bg-white dark:bg-gray-950 dark:text-gray-100 ${sidebarPinned ? 'md:ml-72' : 'md:ml-16'}`}
           style={{ scrollbarGutter: 'stable' }}
         >
           <AnimatePresence mode="wait">
