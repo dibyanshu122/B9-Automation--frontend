@@ -164,14 +164,14 @@ export function HeroAnimation() {
           .to(phraseEls[1], { autoAlpha: 0, y: -16, duration: 0.06 }, 0.58)
           .to(phraseEls[2], { autoAlpha: 1, y: 0, duration: 0.08 }, 0.61)
           .to('[data-agent-node]', {
-            x: (index) => nodePositions[index][0] * 0.82,
-            y: (index) => nodePositions[index][1] * 0.82,
-            scale: 0.92,
-            opacity: 0.82,
+            x: (index) => nodePositions[index][0] * 1.18,
+            y: (index) => nodePositions[index][1] * 1.18,
+            scale: 1,
+            opacity: 1,
             duration: 0.18,
             ease: 'power2.inOut',
           }, 0.72)
-          .to('[data-agent-stream]', { opacity: 0.3, duration: 0.16 }, 0.72);
+          .to('[data-agent-stream]', { opacity: 0.58, duration: 0.16 }, 0.72);
       }, rootRef);
 
       ScrollTrigger.refresh();

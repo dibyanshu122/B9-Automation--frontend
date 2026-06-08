@@ -219,7 +219,8 @@ export default function HomePage() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -10, scale: 0.96 }}
                     transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
-                    className="absolute top-full left-0 mt-3 w-[420px] rounded-2xl border border-white/[0.07] bg-[#030712]/95 backdrop-blur-2xl p-3 shadow-[0_20px_60px_rgba(0,0,0,0.9),0_0_40px_rgba(0,242,254,0.03)] max-h-[480px] overflow-y-auto"
+                    className="absolute top-full left-0 z-[70] mt-3 w-[420px] overscroll-contain rounded-2xl border border-white/[0.07] bg-[#030712]/95 backdrop-blur-2xl p-3 shadow-[0_20px_60px_rgba(0,0,0,0.9),0_0_40px_rgba(0,242,254,0.03)] max-h-[480px] overflow-y-auto"
+                    onWheel={(event) => event.stopPropagation()}
                     onMouseLeave={() => setFeaturesOpen(false)}
                   >
                     <div className="space-y-0.5">
