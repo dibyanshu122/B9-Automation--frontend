@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence, useAnimationFrame } from 'framer-motion';
 import Link from 'next/link';
 // import { Button } from '@/components/button'; // reserved for future use
+import { HeroAnimation } from '@/components/hero-animation';
 import { Logo } from '@/components/logo';
 import { SplineViewer } from '@/components/spline-viewer';
 import { featureHighlights, workflowSteps, trustPoints, blogPosts, allFeatures } from '@/lib/marketing';
@@ -282,108 +283,7 @@ export default function HomePage() {
         </AnimatePresence>
       </nav>
 
-      {/* ③ HERO — Spline Full Screen + Text Overlay */}
-      <section className="relative w-full overflow-hidden" style={{ height: '100vh', minHeight: '700px' }}>
-
-        {/* ── SPLINE — fills 100% width × 100% height ── */}
-        <div className="absolute inset-0 w-full h-full z-0 overflow-hidden">
-          <div
-            className="absolute inset-0"
-            style={{
-              width: '100%',
-              height: '100%',
-              transform: 'scale(1.4) translateX(10%)',
-              transformOrigin: 'center center',
-            }}
-          >
-            <SplineViewer
-              scene="https://prod.spline.design/opPk5PxlbnP5SI7T/scene.splinecode"
-              className="w-full h-full"
-              style={{ width: '100%', height: '100%' }}
-            />
-          </div>
-          
-          {/* smooth fade to page bg at bottom */}
-          <div className="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-[#030712] via-[#030712]/60 to-transparent z-10 pointer-events-none" />
-        </div>
-
-        {/* ── TEXT — floats on LEFT side on top of Spline ── */}
-        <div className="absolute inset-0 z-20 flex items-center">
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={stagger}
-            className="pl-12 md:pl-16 xl:pl-24 space-y-8"
-            style={{ maxWidth: '50%' }}
-          >
-            <motion.div variants={fadeUp}>
-              <SectionLabel>✨ INDIA&apos;S AGENTIC AUTOMATION OS</SectionLabel>
-            </motion.div>
-
-            <motion.h1
-              variants={fadeUp}
-              className="font-bold tracking-[-0.03em] leading-[1.07]"
-              style={{ fontSize: 'clamp(2.2rem, 4vw, 3.75rem)' }}
-            >
-              <span className="text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-zinc-400">
-                Your{' '}
-              </span>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00F2FE] via-[#7BFFF8] to-[#00C6FF]">
-                AI sales team,
-              </span>
-              <br />
-              <span className="relative inline-block text-white">
-                Running on{' '}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#25D366] via-[#4BDD7A] to-[#25D366]">
-                  WhatsApp.
-                </span>
-                <span className="absolute -bottom-2 left-0 w-1/3 h-[3px] bg-gradient-to-r from-[#00F2FE] to-transparent opacity-70 rounded-full" />
-              </span>
-            </motion.h1>
-
-            <motion.p variants={fadeUp} className="text-base md:text-lg text-zinc-400 leading-relaxed font-light" style={{ maxWidth: '480px' }}>
-              B9 Agentic Core drafts WhatsApp bots, Meta templates, lead qualification flows, broadcast campaigns, and payment follow-ups — just describe your business. No code required.
-            </motion.p>
-
-            <motion.div variants={fadeUp} className="flex flex-wrap items-center gap-3">
-              <Link href="/signup">
-                <button
-                  className="group relative inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-sm text-white overflow-hidden transition-all duration-500 hover:scale-[1.02] active:scale-[0.98] shadow-[0_0_25px_rgba(0,242,254,0.2)] hover:shadow-[0_0_45px_rgba(0,242,254,0.35)]"
-                  style={{ background: 'linear-gradient(135deg, rgba(0,242,254,0.2) 0%, rgba(0,242,254,0.08) 100%)', backdropFilter: 'blur(20px)', border: '1px solid rgba(0,242,254,0.35)' }}
-                >
-                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.08] to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                  <span className="text-[#00F2FE] text-base">★</span>
-                  <span className="relative">Start Free Trial</span>
-                </button>
-              </Link>
-              <Link href="/how-it-works">
-                <button
-                  className="group inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-semibold text-sm text-zinc-300 transition-all duration-300 hover:text-white hover:scale-[1.01]"
-                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
-                >
-                  How It Works
-                  <ArrowRight className="h-4 w-4 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all duration-300" />
-                </button>
-              </Link>
-              <Link href="/signup?demo=1">
-                <button className="px-5 py-3.5 text-zinc-500 text-sm font-medium hover:text-zinc-300 transition-colors duration-300">
-                  Book Demo
-                </button>
-              </Link>
-            </motion.div>
-
-            <motion.div variants={fadeUp} className="flex items-center gap-6 text-xs text-zinc-600">
-              {['Free forever plan', 'No credit card', 'Setup in 5 mins'].map((b) => (
-                <span key={b} className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
-                  {b}
-                </span>
-              ))}
-            </motion.div>
-          </motion.div>
-        </div>
-
-      </section>
+      <HeroAnimation />
 
 
       {/* ─── SOCIAL PROOF ─────────────────────────────────────────────── */}
