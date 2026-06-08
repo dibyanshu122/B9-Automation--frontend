@@ -28,12 +28,12 @@ const agentNodes = [
 ];
 
 const nodePositions = [
-  [0, -158],
-  [150, -72],
-  [142, 92],
-  [0, 170],
-  [-142, 92],
-  [-150, -72],
+  [0, -168],
+  [168, -78],
+  [158, 94],
+  [0, 160],
+  [-158, 94],
+  [-168, -78],
 ];
 
 export function HeroAnimation() {
@@ -206,6 +206,14 @@ export function HeroAnimation() {
       ref={rootRef}
       className="relative min-h-[100svh] overflow-hidden border-b border-white/[0.04] bg-[#030712] pt-24 md:pt-28"
     >
+      <style>{`
+        @media (min-width: 768px) and (max-height: 720px) {
+          .b9-hero-orbit-stage {
+            transform: translateY(-32px) scale(0.78);
+            transform-origin: center top;
+          }
+        }
+      `}</style>
       <motion.div
         aria-hidden="true"
         animate={{ x: cursor.x - 9, y: cursor.y - 9, scale: cursor.active ? 1.9 : 1 }}
@@ -274,22 +282,22 @@ export function HeroAnimation() {
           </div>
         </motion.div>
 
-        <div className="relative mx-auto flex min-h-[430px] w-full max-w-[680px] items-center justify-center md:min-h-[650px]">
-          <div className="absolute left-1/2 top-4 z-20 h-16 w-[min(520px,80vw)] -translate-x-1/2 md:top-12">
+        <div className="relative mx-auto flex min-h-[560px] w-full max-w-[680px] items-center justify-center md:min-h-[680px]">
+          <div className="absolute left-1/2 -top-5 z-40 h-16 w-[min(520px,80vw)] -translate-x-1/2 md:-top-20">
             {phrases.map((phrase, index) => (
               <p
                 key={phrase}
                 data-hero-phrase
-                className={`absolute inset-0 flex items-center justify-center text-center text-xl font-semibold tracking-tight text-white md:text-3xl ${index === 0 ? '' : 'opacity-0'}`}
+                className={`absolute inset-0 flex items-center justify-center rounded-full bg-[#030712]/55 px-5 text-center text-xl font-semibold tracking-tight text-[#EAFDFF] shadow-[0_18px_50px_rgba(0,0,0,0.3),0_0_26px_rgba(0,242,254,0.18)] backdrop-blur-md md:text-3xl ${index === 0 ? '' : 'opacity-0'}`}
               >
                 {phrase}
               </p>
             ))}
           </div>
 
-          <div className="relative h-[420px] w-[420px] max-w-[86vw] md:h-[520px] md:w-[520px]">
-            <div data-core-ring className="absolute inset-10 rounded-full border border-[#00F2FE]/18 bg-[conic-gradient(from_130deg,rgba(0,242,254,0),rgba(37,211,102,0.24),rgba(168,85,247,0.24),rgba(255,87,34,0.18),rgba(0,242,254,0))] shadow-[0_0_80px_rgba(0,242,254,0.12)]" />
-            <div className="absolute inset-20 rounded-full border border-white/[0.08] bg-white/[0.018] backdrop-blur-2xl" />
+          <div className="b9-hero-orbit-stage relative mt-6 h-[410px] w-[410px] max-w-[88vw] md:-mt-20 md:h-[510px] md:w-[510px] md:-translate-x-10">
+            <div data-core-ring className="absolute inset-8 rounded-full border border-[#00F2FE]/18 bg-[conic-gradient(from_130deg,rgba(0,242,254,0),rgba(37,211,102,0.24),rgba(168,85,247,0.24),rgba(255,87,34,0.18),rgba(0,242,254,0))] shadow-[0_0_80px_rgba(0,242,254,0.12)]" />
+            <div className="absolute inset-16 rounded-full border border-white/[0.08] bg-white/[0.018] backdrop-blur-2xl" />
             {agentNodes.map((node, index) => {
               const [x, y] = nodePositions[index];
               const length = Math.max(88, Math.sqrt(x * x + y * y) - 54);
@@ -341,7 +349,7 @@ export function HeroAnimation() {
               );
             })}
 
-            <div data-dashboard-card className="absolute bottom-4 left-1/2 z-30 w-[min(420px,86vw)] -translate-x-1/2 rounded-3xl border border-white/[0.09] bg-[#07111f]/92 p-4 shadow-[0_30px_90px_rgba(0,0,0,0.55)] backdrop-blur-2xl">
+            <div data-dashboard-card className="absolute left-1/2 top-[calc(100%+96px)] z-30 w-[min(420px,88vw)] -translate-x-1/2 rounded-3xl border border-white/[0.09] bg-[#07111f]/92 p-4 shadow-[0_30px_90px_rgba(0,0,0,0.55)] backdrop-blur-2xl">
               <div className="mb-4 flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold text-white">Agentic workflow ready</p>
