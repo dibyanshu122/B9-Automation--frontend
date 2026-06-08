@@ -295,7 +295,7 @@ export function HeroAnimation() {
             ))}
           </div>
 
-          <div className="b9-hero-orbit-stage relative mt-6 h-[410px] w-[410px] max-w-[88vw] md:-mt-20 md:h-[510px] md:w-[510px] md:-translate-x-10">
+          <div className="b9-hero-orbit-stage relative mt-6 h-[430px] w-[430px] max-w-[90vw] md:-mt-20 md:h-[550px] md:w-[550px] md:-translate-x-10">
             <div data-core-ring className="absolute inset-8 rounded-full border border-[#00F2FE]/18 bg-[conic-gradient(from_130deg,rgba(0,242,254,0),rgba(37,211,102,0.24),rgba(168,85,247,0.24),rgba(255,87,34,0.18),rgba(0,242,254,0))] shadow-[0_0_80px_rgba(0,242,254,0.12)]" />
             <div className="absolute inset-16 rounded-full border border-white/[0.08] bg-white/[0.018] backdrop-blur-2xl" />
             {agentNodes.map((node, index) => {
