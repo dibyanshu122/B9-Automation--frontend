@@ -425,6 +425,35 @@
       sendMessage();
     });
 
+    // ── Prevent page scroll when scrolling inside the chat messages ──────────
+    // wheel: desktop scroll — stop propagation when messages can still scroll
+    messages.addEventListener("wheel", function (e) {
+      var atTop = messages.scrollTop === 0;
+      var atBottom = messages.scrollTop + messages.clientHeight >= messages.scrollHeight - 1;
+      // Only block if there is somewhere to scroll inside
+      if (messages.scrollHeight > messages.clientHeight) {
+        if (!(atTop && e.deltaY < 0) && !(atBottom && e.deltaY > 0)) {
+          e.stopPropagation();
+        }
+      }
+    }, { passive: true });
+
+    // touch: mobile scroll — prevent page scroll while dragging inside messages
+    var _touchStartY = 0;
+    messages.addEventListener("touchstart", function (e) {
+      _touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+    messages.addEventListener("touchmove", function (e) {
+      var dy = _touchStartY - e.touches[0].clientY;
+      var atTop = messages.scrollTop === 0;
+      var atBottom = messages.scrollTop + messages.clientHeight >= messages.scrollHeight - 1;
+      if (messages.scrollHeight > messages.clientHeight) {
+        if (!(atTop && dy < 0) && !(atBottom && dy > 0)) {
+          e.stopPropagation();
+        }
+      }
+    }, { passive: true });
+
     // Microphone / voice input
     var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
 
