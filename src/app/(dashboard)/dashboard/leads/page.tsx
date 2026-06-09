@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { AlertTriangle, Brain, CalendarDays, ChevronDown, ChevronUp, Clock, Download, Eye, Flame, GitMerge, Loader2, Mail, MessageSquare, Phone, Plus, Send, Skull, Star, Trash2, Users, StickyNote, Activity, Send as SendIcon, List, Kanban, GripVertical, Tag, X } from 'lucide-react';
+import { Activity, AlertTriangle, Brain, CalendarDays, ChevronDown, ChevronFirst, ChevronLast, ChevronLeft, ChevronRight, ChevronUp, Clock, Download, Eye, FileSpreadsheet, Flame, FolderUp, GitMerge, GripVertical, Kanban, List, Loader2, Mail, MessageSquare, MoreHorizontal, Phone, Plus, Send, Send as SendIcon, Skull, Star, StickyNote, Tag, Trash2, Users, X } from 'lucide-react';
 import { Button } from '@/components/button';
 import { Card } from '@/components/card';
 import { EmptyState } from '@/components/empty-state';
@@ -48,20 +49,6 @@ const DEFAULT_STAGES = [
   { key: 'lost', label: 'Lost', color: '#ef4444' },
 ];
 
-// Dynamic stage config based on color
-function buildStageConfig(stageList: {key:string;label:string;color:string}[]) {
-  const cfg: Record<string, {border:string;header:string;dot:string;count:string}> = {};
-  stageList.forEach(s => {
-    cfg[s.key] = {
-      border: `border-gray-200`,
-      header: `text-white`,
-      dot: `bg-white/60`,
-      count: `bg-white/20 text-white`,
-    };
-  });
-  return cfg;
-}
-
 const stageConfig: Record<string, { border: string; header: string; dot: string; count: string }> = {
   new:       { border: 'border-blue-200',    header: 'bg-blue-50 text-blue-700',      dot: 'bg-blue-400',    count: 'bg-blue-100 text-blue-700' },
   contacted: { border: 'border-violet-200',  header: 'bg-violet-50 text-violet-700',  dot: 'bg-violet-400',  count: 'bg-violet-100 text-violet-700' },
@@ -77,6 +64,7 @@ const scoreStyles = {
 };
 
 export default function LeadsPage() {
+  const router = useRouter();
   const { get, post, put } = useApi();
   const api = getApiClient();
   const { invalidateLeads } = useInvalidate();
@@ -309,15 +297,34 @@ export default function LeadsPage() {
   };
 
   const [leadTotal, setLeadTotal] = useState(0);
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const LEAD_PAGE_SIZE = 100;
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [directoryOpen, setDirectoryOpen] = useState(false);
+  const LEAD_PAGE_SIZE = pageSize;
+
+  const goToPage = (requestedPage: number, requestedPageSize = pageSize) => {
+    const requestedTotalPages = Math.max(1, Math.ceil(leadTotal / requestedPageSize));
+    const page = Math.min(Math.max(1, requestedPage), requestedTotalPages);
+    const offset = (page - 1) * requestedPageSize;
+    setLoading(true);
+    get(`/api/leads?limit=${requestedPageSize}&offset=${offset}`)
+      .then(r => {
+        setLeads(r.data?.leads || r.data || []);
+        const total = parseInt(r.headers?.['x-total-count'] || r.headers?.['X-Total-Count'] || '0');
+        if (Number.isFinite(total)) setLeadTotal(total);
+        setCurrentPage(page);
+      })
+      .catch(() => toast.error('Failed to load leads'))
+      .finally(() => setLoading(false));
+  };
+
+  const totalPages = Math.ceil(leadTotal / pageSize);
 
   const refresh = () => {
     setLoading(true);
-    setNextCursor(null);
+    setCurrentPage(1);
     Promise.allSettled([
-      get(`/api/leads?limit=${LEAD_PAGE_SIZE}`),
+      get(`/api/leads?limit=${LEAD_PAGE_SIZE}&offset=0`),
       get('/api/leads/inbox'),
       get('/api/leads/handover-queue'),
       api.get('/api/leads/labels'),
@@ -335,9 +342,6 @@ export default function LeadsPage() {
         setLeadTotal(leadResponse.value.headers?.['x-total-count']
           ? parseInt(leadResponse.value.headers['x-total-count'])
           : (Array.isArray(data) ? data.length : (data?.total || data?.length || 0)));
-        // Store cursor for "Load More" (avoids slow OFFSET scan on large tables)
-        const cursor = leadResponse.value.headers?.['x-next-cursor'];
-        setNextCursor(cursor || null);
         if (inboxResponse.status === 'fulfilled') setInbox(inboxResponse.value.data);
         if (handoverResponse.status === 'fulfilled') setHandoverQueue(handoverResponse.value.data?.items || []);
         if (labelResponse.status === 'fulfilled') setLeadLabels(labelResponse.value.data?.labels || []);
@@ -345,20 +349,6 @@ export default function LeadsPage() {
       })
       .catch((error) => toast.error(error.response?.data?.detail || 'Failed to load CRM data'))
       .finally(() => setLoading(false));
-  };
-
-  const loadMoreLeads = async () => {
-    if (!nextCursor) return;
-    setLoadingMore(true);
-    try {
-      const r = await get(`/api/leads?limit=${LEAD_PAGE_SIZE}&cursor=${encodeURIComponent(nextCursor)}`);
-      const data = r.data;
-      const newLeads = Array.isArray(data) ? data : (data?.leads || []);
-      setLeads(prev => [...prev, ...newLeads]);
-      const cursor = r.headers?.['x-next-cursor'];
-      setNextCursor(cursor || null);
-    } catch { toast.error('Failed to load more leads'); }
-    finally { setLoadingMore(false); }
   };
 
   useEffect(() => {
@@ -407,7 +397,7 @@ export default function LeadsPage() {
       groups[stage.key] = filteredLeads.filter((lead) => lead.status === stage.key);
       return groups;
     }, {});
-  }, [filteredLeads]);
+  }, [filteredLeads, stages]);
 
   const groupedByScore = useMemo(() => ({
     hot: leads.filter((lead) => lead.score_label === 'hot'),
@@ -826,7 +816,7 @@ export default function LeadsPage() {
       )}
 
       <Card className="border-orange-100 shadow-sm" hoverable={false}>
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(260px,1fr)_160px_160px_auto_auto_auto_auto] xl:items-center">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(260px,1fr)_160px_160px_auto_auto_auto_auto_auto] xl:items-center">
           <label className="relative min-w-0">
             <input
               value={searchQuery}
@@ -874,6 +864,14 @@ export default function LeadsPage() {
             <Download className="h-3.5 w-3.5" />
             Export CSV
           </a>
+          <button
+            type="button"
+            onClick={() => setDirectoryOpen(true)}
+            className="inline-flex h-11 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-blue-200 bg-blue-50 px-3 text-xs font-semibold text-blue-700 transition hover:bg-blue-100"
+          >
+            <FolderUp className="h-3.5 w-3.5" />
+            Directory
+          </button>
         </div>
 
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-3">
@@ -1263,16 +1261,56 @@ export default function LeadsPage() {
                 })}
                 {filteredLeads.length === 0 && <p className="py-6 text-center text-sm text-gray-500">No leads match this search.</p>}
               </div>
-              {/* Pagination */}
-              {!loadingMore && nextCursor && !searchQuery && statusFilter === 'all' && labelFilter === 'all' && !leadDateFrom && !leadDateTo && (
-                <div className="mt-3 flex items-center justify-between text-sm text-gray-500 border-t border-gray-100 pt-3">
-                  <span>Showing {leads.length} of {leadTotal} leads</span>
-                  <button onClick={loadMoreLeads} className="rounded-lg border border-primary-200 bg-primary-50 px-4 py-1.5 text-xs font-semibold text-primary-700 hover:bg-primary-100 transition">
-                    Load more
-                  </button>
+              {/* Pagination bar */}
+              {totalPages > 1 && !searchQuery && statusFilter === 'all' && labelFilter === 'all' && !leadDateFrom && !leadDateTo && (
+                <div className="mt-3 border-t border-gray-100 dark:border-slate-700 pt-3 flex flex-wrap items-center justify-between gap-3">
+                  {/* Page controls */}
+                  <div className="flex items-center gap-1">
+                    <button type="button" aria-label="First page" onClick={() => goToPage(1)} disabled={currentPage === 1 || loading}
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 dark:border-slate-600 text-xs text-gray-500 disabled:opacity-30 hover:bg-gray-50 dark:hover:bg-slate-700 transition"><ChevronFirst className="h-4 w-4" /></button>
+                    <button type="button" aria-label="Previous page" onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1 || loading}
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 dark:border-slate-600 text-xs text-gray-500 disabled:opacity-30 hover:bg-gray-50 dark:hover:bg-slate-700 transition"><ChevronLeft className="h-4 w-4" /></button>
+                    {(() => {
+                      const pages: (number | '...')[] = [];
+                      if (totalPages <= 7) {
+                        for (let i = 1; i <= totalPages; i++) pages.push(i);
+                      } else {
+                        pages.push(1);
+                        if (currentPage > 3) pages.push('...');
+                        for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) pages.push(i);
+                        if (currentPage < totalPages - 2) pages.push('...');
+                        pages.push(totalPages);
+                      }
+                      return pages.map((p, i) => p === '...' ? (
+                        <span key={`e${i}`} className="flex h-8 w-8 items-center justify-center text-gray-400"><MoreHorizontal className="h-4 w-4" /></span>
+                      ) : (
+                        <button type="button" key={p} onClick={() => goToPage(p as number)} disabled={loading}
+                          className={`flex h-8 min-w-[32px] items-center justify-center rounded-lg border text-xs font-semibold transition px-2 ${p === currentPage ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm' : 'border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}>
+                          {p}
+                        </button>
+                      ));
+                    })()}
+                    <button type="button" aria-label="Next page" onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages || loading}
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 dark:border-slate-600 text-xs text-gray-500 disabled:opacity-30 hover:bg-gray-50 dark:hover:bg-slate-700 transition"><ChevronRight className="h-4 w-4" /></button>
+                    <button type="button" aria-label="Last page" onClick={() => goToPage(totalPages)} disabled={currentPage === totalPages || loading}
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 dark:border-slate-600 text-xs text-gray-500 disabled:opacity-30 hover:bg-gray-50 dark:hover:bg-slate-700 transition"><ChevronLast className="h-4 w-4" /></button>
+                  </div>
+                  {/* Page size + count */}
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-gray-400 dark:text-slate-500">
+                      {((currentPage - 1) * pageSize + 1).toLocaleString()}-{Math.min(currentPage * pageSize, leadTotal).toLocaleString()} of {leadTotal.toLocaleString()}
+                    </span>
+                    <select value={pageSize} disabled={loading} onChange={e => {
+                      const nextPageSize = Number(e.target.value);
+                      setPageSize(nextPageSize);
+                      goToPage(1, nextPageSize);
+                    }}
+                      className="h-8 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-2 text-xs font-semibold text-gray-700 dark:text-slate-300 focus:outline-none">
+                      {[20, 50, 100].map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </div>
                 </div>
               )}
-              {loadingMore && <p className="mt-2 text-center text-xs text-gray-400">Loading more leads…</p>}
               </div>{/* end min-w-[700px] */}
             </Card>
           </section>
@@ -1868,6 +1906,51 @@ export default function LeadsPage() {
           </select>
           </> )} {/* end info tab */}
         </DetailCard>
+      )}
+
+      {directoryOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm" onClick={() => setDirectoryOpen(false)}>
+          <div className="w-full max-w-lg rounded-lg border border-gray-200 bg-white p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-bold text-gray-950">Contact Directory</h2>
+                <p className="mt-1 text-sm leading-5 text-gray-500">Upload contacts, map their fields, review duplicates, and add them safely to Leads.</p>
+              </div>
+              <button type="button" aria-label="Close directory" onClick={() => setDirectoryOpen(false)} className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => router.push('/dashboard/imports')}
+              className="mt-5 flex w-full items-center gap-4 rounded-lg border border-dashed border-blue-300 bg-blue-50/70 p-5 text-left transition hover:border-blue-500 hover:bg-blue-50"
+            >
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm">
+                <FolderUp className="h-5 w-5" />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-sm font-bold text-gray-950">Upload CSV or Excel</span>
+                <span className="mt-1 block text-xs leading-5 text-gray-500">Open the importer to map columns and review contacts before saving.</span>
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => router.push('/dashboard/imports?source=sheets')}
+              className="mt-3 flex w-full items-center gap-4 rounded-lg border border-gray-200 bg-white p-4 text-left transition hover:border-emerald-300 hover:bg-emerald-50/60"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
+                <FileSpreadsheet className="h-5 w-5" />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-sm font-bold text-gray-950">Import from Google Sheets</span>
+                <span className="mt-0.5 block text-xs text-gray-500">Connect a sheet and choose the contacts to import.</span>
+              </span>
+              <ChevronRight className="ml-auto h-4 w-4 shrink-0 text-gray-400" />
+            </button>
+          </div>
+        </div>
       )}
 
       {labelModalOpen && (

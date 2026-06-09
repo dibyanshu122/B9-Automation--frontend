@@ -97,7 +97,12 @@ export default function ImportsPage() {
   const [sheetsLoading, setSheetsLoading] = useState(false);
   const [history, setHistory] = useState<ImportRecord[]>([]);
 
-  useEffect(() => { setHistory(getHistory()); }, []);
+  useEffect(() => {
+    setHistory(getHistory());
+    if (new URLSearchParams(window.location.search).get('source') === 'sheets') {
+      setImportTab('sheets');
+    }
+  }, []);
 
   const handleFile = useCallback((f: File) => {
     const name = f.name.toLowerCase();
@@ -219,7 +224,7 @@ export default function ImportsPage() {
       } else {
         toast.error(res.data?.detail || 'Could not load Google Sheets data');
       }
-    } catch (err: any) {
+    } catch {
       // If proxy not available, show instructions
       toast.error('Make sure the Google Sheet is shared publicly (Anyone with link can view)');
     } finally {
@@ -399,11 +404,10 @@ export default function ImportsPage() {
                 <li className="flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-indigo-400 shrink-0" />Headers auto-detected from column names</li>
               </ul>
             </div>
-          </div>
-            <p className="mt-3 rounded-lg bg-amber-50 p-2 text-xs text-amber-700">
+            <p className="rounded-lg bg-amber-50 p-2 text-xs text-amber-700">
               Contacts with existing phone numbers are automatically skipped (no duplicates).
             </p>
-          </Card>
+          </div>
         </div>
       )}
 
