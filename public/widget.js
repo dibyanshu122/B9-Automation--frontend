@@ -266,6 +266,7 @@
 
         var paragraph = document.createElement("div");
         var match = line.match(/^(?:[-*]\s+|\d+[.)]\s+)(.*)$/);
+        var isListItem = Boolean(match);
         if (match) {
           paragraph.style.display = "flex";
           paragraph.style.gap = "7px";
@@ -282,15 +283,25 @@
         var content = document.createElement("span");
         content.style.minWidth = "0";
         content.style.flex = "1 1 auto";
-        line.split(/(\*\*[^*]+\*\*)/g).filter(Boolean).forEach(function (part) {
-          if (part.indexOf("**") === 0 && part.lastIndexOf("**") === part.length - 2) {
-            var strong = document.createElement("strong");
-            strong.textContent = part.slice(2, -2);
-            content.appendChild(strong);
-          } else {
-            content.appendChild(document.createTextNode(part));
-          }
-        });
+        var headingMatch = isListItem && line.indexOf("**") === -1
+          ? line.match(/^([^:]{2,70}:)(\s+.*)$/)
+          : null;
+        if (headingMatch) {
+          var heading = document.createElement("strong");
+          heading.textContent = headingMatch[1];
+          content.appendChild(heading);
+          content.appendChild(document.createTextNode(headingMatch[2]));
+        } else {
+          line.split(/(\*\*[^*]+\*\*)/g).filter(Boolean).forEach(function (part) {
+            if (part.indexOf("**") === 0 && part.lastIndexOf("**") === part.length - 2) {
+              var strong = document.createElement("strong");
+              strong.textContent = part.slice(2, -2);
+              content.appendChild(strong);
+            } else {
+              content.appendChild(document.createTextNode(part));
+            }
+          });
+        }
         paragraph.appendChild(content);
         element.appendChild(paragraph);
       });
