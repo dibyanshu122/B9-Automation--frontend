@@ -289,8 +289,13 @@
         if (headingMatch) {
           var heading = document.createElement("strong");
           heading.textContent = headingMatch[1];
+          heading.style.display = "block";
+          heading.style.marginBottom = "2px";
           content.appendChild(heading);
-          content.appendChild(document.createTextNode(headingMatch[2]));
+          var description = document.createElement("span");
+          description.style.display = "block";
+          description.textContent = headingMatch[2].trim();
+          content.appendChild(description);
         } else {
           line.split(/(\*\*[^*]+\*\*)/g).filter(Boolean).forEach(function (part) {
             if (part.indexOf("**") === 0 && part.lastIndexOf("**") === part.length - 2) {
