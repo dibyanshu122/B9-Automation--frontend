@@ -246,147 +246,160 @@ export default function ImportsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Import Contacts</h1>
-          <p className="mt-1 text-sm text-gray-500">Bulk-import leads from a CSV file with field mapping and duplicate detection.</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Import Contacts</h1>
+          <p className="mt-0.5 text-sm text-gray-500 dark:text-slate-400">Upload CSV, Excel or Google Sheets — with field mapping and duplicate detection.</p>
         </div>
-        <Button variant="secondary" onClick={downloadTemplate}>
-          <Download className="h-4 w-4" />
-          Download Template
+        <Button variant="secondary" onClick={downloadTemplate} className="shrink-0">
+          <Download className="h-4 w-4" /> Template
         </Button>
       </div>
 
       {/* Step indicator */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
         {STEPS.map((s, i) => (
-          <div key={s} className="flex items-center gap-2">
-            <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition ${
-              i < step ? 'bg-emerald-500 text-white' : i === step ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-400'
+          <div key={s} className="flex items-center gap-1">
+            <div className={`flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-bold transition-all ${
+              i < step ? 'bg-emerald-500 text-white' : i === step ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'bg-gray-100 dark:bg-slate-700 text-gray-400'
             }`}>
               {i < step ? <Check className="h-3.5 w-3.5" /> : i + 1}
             </div>
-            <span className={`text-sm font-medium ${i === step ? 'text-gray-900' : 'text-gray-400'}`}>{s}</span>
-            {i < STEPS.length - 1 && <div className={`h-px w-8 ${i < step ? 'bg-emerald-300' : 'bg-gray-200'}`} />}
+            <span className={`text-xs font-semibold mr-1 ${i === step ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-slate-500'}`}>{s}</span>
+            {i < STEPS.length - 1 && <div className={`h-px w-6 mr-1 ${i < step ? 'bg-emerald-300' : 'bg-gray-200 dark:bg-slate-600'}`} />}
           </div>
         ))}
       </div>
 
       {/* STEP 0 — Upload */}
       {step === 0 && (
-        <div className="grid gap-6 lg:grid-cols-2">
-          <Card hoverable={false} className="border-gray-200">
-            {/* Import type tabs */}
-            <div className="flex gap-1 mb-5 bg-gray-100 dark:bg-slate-800 rounded-xl p-1">
-              <button type="button" onClick={() => setImportTab('file')}
-                className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-2 text-xs font-semibold transition ${importTab === 'file' ? 'bg-white dark:bg-slate-700 shadow text-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-700'}`}>
-                <FileSpreadsheet className="h-3.5 w-3.5" /> CSV / Excel
-              </button>
-              <button type="button" onClick={() => setImportTab('sheets')}
-                className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-2 text-xs font-semibold transition ${importTab === 'sheets' ? 'bg-white dark:bg-slate-700 shadow text-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-700'}`}>
-                <Link2 className="h-3.5 w-3.5" /> Google Sheets
-              </button>
+        <div className="grid gap-5 lg:grid-cols-[1fr_340px]">
+
+          {/* LEFT — upload panel */}
+          <div className="rounded-2xl border border-gray-200 bg-white dark:bg-slate-800 dark:border-slate-700 p-6 shadow-sm">
+
+            {/* Source type tabs */}
+            <div className="flex gap-1 mb-6 bg-gray-100 dark:bg-slate-700/60 rounded-xl p-1">
+              {([['file', FileSpreadsheet, 'CSV / Excel'], ['sheets', Link2, 'Google Sheets']] as const).map(([tab, Icon, label]) => (
+                <button key={tab} type="button" onClick={() => setImportTab(tab as 'file' | 'sheets')}
+                  className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold transition-all ${importTab === tab ? 'bg-white dark:bg-slate-600 shadow-sm text-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:hover:text-slate-300'}`}>
+                  <Icon className="h-4 w-4" />{label}
+                </button>
+              ))}
             </div>
 
             {importTab === 'sheets' ? (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Google Sheets URL</label>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">Google Sheets URL</label>
                   <input value={sheetsUrl} onChange={e => setSheetsUrl(e.target.value)}
                     placeholder="https://docs.google.com/spreadsheets/d/..."
-                    className="input-field text-sm" />
-                  <p className="mt-1 text-xs text-gray-400">Sheet must be shared: <strong>Anyone with link → Viewer</strong></p>
+                    className="input-field" />
+                  <p className="mt-1.5 text-xs text-gray-400">Sheet must be shared as <strong className="text-gray-600">Anyone with link → Viewer</strong></p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Source label</label>
-                  <input value={source} onChange={e => setSource(e.target.value)} placeholder="google-sheets" className="input-field text-sm" />
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">Source label</label>
+                  <input value={source} onChange={e => setSource(e.target.value)} placeholder="e.g. google-sheets" className="input-field" />
                 </div>
-                <Button onClick={importFromSheets} loading={sheetsLoading} disabled={!sheetsUrl.trim()}>
-                  <Link2 className="h-4 w-4" /> Load from Sheets
+                <Button variant="primary" onClick={importFromSheets} loading={sheetsLoading} disabled={!sheetsUrl.trim()} className="w-full justify-center">
+                  <Link2 className="h-4 w-4" /> Load from Google Sheets
                 </Button>
               </div>
             ) : (
-            <>
-            <div
-              className={`flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed p-10 cursor-pointer transition ${
-                dragOver ? 'border-primary-400 bg-primary-50' : file ? 'border-emerald-400 bg-emerald-50' : 'border-gray-200 hover:border-primary-300 hover:bg-primary-50/30'
-              }`}
-              onClick={() => inputRef.current?.click()}
-              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-              onDragLeave={() => setDragOver(false)}
-              onDrop={handleDrop}
-            >
-              <Upload className={`h-10 w-10 ${file ? 'text-emerald-500' : dragOver ? 'text-primary-500' : 'text-gray-300'}`} />
-              {file ? (
-                <div className="text-center">
-                  <p className="font-semibold text-gray-900">{file.name}</p>
-                  <p className="text-xs text-gray-500">
-                    {(file.size / 1024).toFixed(1)} KB · {parsed ? `${parsed.rows.length} rows, ${parsed.headers.length} columns` : 'parsing…'} · Click to change
-                  </p>
+              <>
+                {/* Drop zone */}
+                <div
+                  className={`relative flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed cursor-pointer transition-all min-h-[200px] ${
+                    dragOver ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-950/30' :
+                    file ? 'border-emerald-400 bg-emerald-50 dark:bg-emerald-950/20' :
+                    'border-gray-200 dark:border-slate-600 hover:border-indigo-300 hover:bg-indigo-50/40 dark:hover:border-indigo-500'
+                  }`}
+                  onClick={() => inputRef.current?.click()}
+                  onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={handleDrop}
+                >
+                  <div className={`flex h-14 w-14 items-center justify-center rounded-2xl transition-colors ${file ? 'bg-emerald-100 dark:bg-emerald-900/40' : dragOver ? 'bg-indigo-100' : 'bg-gray-100 dark:bg-slate-700'}`}>
+                    <Upload className={`h-6 w-6 ${file ? 'text-emerald-600' : dragOver ? 'text-indigo-500' : 'text-gray-400'}`} />
+                  </div>
+                  {file ? (
+                    <div className="text-center px-4">
+                      <p className="font-bold text-gray-900 dark:text-white text-sm">{file.name}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {(file.size / 1024).toFixed(1)} KB · {parsed ? `${parsed.rows.length} rows, ${parsed.headers.length} columns` : 'Parsing…'}
+                      </p>
+                      <p className="text-xs text-indigo-500 mt-1 font-medium">Click to change file</p>
+                    </div>
+                  ) : (
+                    <div className="text-center px-4">
+                      <p className="font-semibold text-gray-700 dark:text-slate-300">Click to upload or drag & drop</p>
+                      <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">CSV (.csv) · Excel (.xlsx, .xls) · Max 5MB</p>
+                    </div>
+                  )}
+                  <input ref={inputRef} type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={handleInputChange} />
                 </div>
-              ) : (
-                <div className="text-center">
-                  <p className="font-semibold text-gray-600">Click or drag & drop</p>
-                  <p className="text-xs text-gray-400">CSV (.csv) or Excel (.xlsx) · Max 5MB · Up to 1,000 contacts</p>
-                </div>
-              )}
-              <input ref={inputRef} type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={handleInputChange} />
-            </div>
 
-            <div className="mt-4 flex gap-3 items-end">
-              <div className="flex-1">
-                <label className="mb-1 block text-sm font-medium text-gray-700">Source label</label>
-                <input
-                  type="text"
-                  value={source}
-                  onChange={e => setSource(e.target.value)}
-                  placeholder="import / trade-show / webinar"
-                  className="input-field"
-                />
-              </div>
-              <Button
-                disabled={!parsed || !hasPhoneCol}
-                onClick={() => setStep(1)}
-              >
-                Next <ArrowRight className="h-4 w-4" />
-              </Button>
-            </div>
-            {file && !hasPhoneCol && (
-              <p className="mt-2 text-xs text-amber-600 flex items-center gap-1">
-                <AlertCircle className="h-3.5 w-3.5" />
-                No phone column detected — please map it in the next step.
-              </p>
+                {/* Source + Next */}
+                <div className="mt-5 grid grid-cols-[1fr_auto] gap-3 items-end">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">Source label</label>
+                    <input type="text" value={source} onChange={e => setSource(e.target.value)}
+                      placeholder="import / trade-show / webinar"
+                      className="input-field" />
+                  </div>
+                  <Button variant="primary" disabled={!parsed || !hasPhoneCol} onClick={() => setStep(1)}
+                    className="h-[42px] px-6 gap-2">
+                    Next <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                {file && !hasPhoneCol && (
+                  <div className="mt-3 flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2">
+                    <AlertCircle className="h-4 w-4 text-amber-600 shrink-0" />
+                    <p className="text-xs text-amber-700 font-medium">No phone column detected — you can map it manually in the next step.</p>
+                  </div>
+                )}
+              </>
             )}
-            </>
-            )} {/* end importTab === 'file' */}
-          </Card>
+          </div>
 
-          <Card hoverable={false} className="border-gray-200">
-            <h2 className="mb-4 text-lg font-bold text-gray-900">Supported Formats</h2>
-            <div className="space-y-3 mb-4">
-              <div className="flex items-center gap-3 rounded-xl border border-gray-100 p-3">
-                <FileSpreadsheet className="h-8 w-8 text-emerald-600 shrink-0" />
-                <div><p className="text-sm font-semibold text-gray-800">CSV (.csv)</p><p className="text-xs text-gray-400">Standard comma-separated values</p></div>
-              </div>
-              <div className="flex items-center gap-3 rounded-xl border border-gray-100 p-3">
-                <FileSpreadsheet className="h-8 w-8 text-blue-600 shrink-0" />
-                <div><p className="text-sm font-semibold text-gray-800">Excel (.xlsx, .xls)</p><p className="text-xs text-gray-400">Microsoft Excel workbooks — first sheet used</p></div>
-              </div>
-              <div className="flex items-center gap-3 rounded-xl border border-gray-100 p-3">
-                <Link2 className="h-8 w-8 text-orange-500 shrink-0" />
-                <div><p className="text-sm font-semibold text-gray-800">Google Sheets</p><p className="text-xs text-gray-400">Paste sheet URL — must be publicly visible</p></div>
+          {/* RIGHT — format guide */}
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-gray-200 bg-white dark:bg-slate-800 dark:border-slate-700 p-5 shadow-sm">
+              <p className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-3">Supported Formats</p>
+              <div className="space-y-2">
+                {[
+                  { icon: FileSpreadsheet, color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30', name: 'CSV (.csv)', desc: 'Comma-separated values' },
+                  { icon: FileSpreadsheet, color: 'text-blue-600 bg-blue-50 dark:bg-blue-900/30', name: 'Excel (.xlsx, .xls)', desc: 'First sheet is used' },
+                  { icon: Link2, color: 'text-orange-500 bg-orange-50 dark:bg-orange-900/30', name: 'Google Sheets', desc: 'Share publicly first' },
+                ].map(({ icon: Icon, color, name, desc }) => (
+                  <div key={name} className="flex items-center gap-3 rounded-xl border border-gray-100 dark:border-slate-700 px-3 py-2.5">
+                    <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${color}`}>
+                      <Icon className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-800 dark:text-slate-200">{name}</p>
+                      <p className="text-[11px] text-gray-400 dark:text-slate-500">{desc}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-            <div className="rounded-xl bg-gray-950 p-3 font-mono text-xs text-emerald-400 overflow-x-auto">
-              <p className="text-gray-500"># Required column:</p>
-              <p>phone,name,email,tag</p>
-              <p>+91XXXXXXXXXX,Rahul Sharma,r@ex.com,hot</p>
+
+            <div className="rounded-2xl border border-gray-200 bg-white dark:bg-slate-800 dark:border-slate-700 p-5 shadow-sm">
+              <p className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-slate-500 mb-3">Required Column</p>
+              <div className="rounded-xl bg-gray-950 px-4 py-3 font-mono text-xs text-emerald-400 overflow-x-auto mb-3">
+                <p className="text-gray-600"># phone is mandatory</p>
+                <p className="text-white">phone,name,email,tag</p>
+                <p>+91XXXXXXXXXX,Rahul,r@ex.com,hot</p>
+              </div>
+              <ul className="space-y-1.5 text-xs text-gray-500 dark:text-slate-400">
+                <li className="flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" /><strong className="text-gray-700 dark:text-slate-300">phone</strong> — required (+91 format)</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-gray-300 shrink-0" /><strong className="text-gray-600 dark:text-slate-400">name, email, tag, source</strong> — optional</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-indigo-400 shrink-0" />Headers auto-detected from column names</li>
+              </ul>
             </div>
-            <ul className="mt-3 space-y-1.5 text-xs text-gray-500">
-              <li className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" /><strong>phone</strong> required (+91 format)</li>
-              <li className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-gray-300 shrink-0" /><strong>name, email, tag, source</strong> optional</li>
-              <li className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-blue-400 shrink-0" />Columns auto-mapped from headers</li>
-            </ul>
+          </div>
             <p className="mt-3 rounded-lg bg-amber-50 p-2 text-xs text-amber-700">
               Contacts with existing phone numbers are automatically skipped (no duplicates).
             </p>
