@@ -1,11 +1,30 @@
 'use client';
 
-import { useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { CheckCircle2, Download, Upload, Users, ArrowRight, ArrowLeft, Shuffle, Eye, AlertCircle, X, Check } from 'lucide-react';
+import { CheckCircle2, Download, Upload, Users, ArrowRight, ArrowLeft, Shuffle, Eye, AlertCircle, X, Check, FileSpreadsheet, Link2, Clock, Trash2 } from 'lucide-react';
 import { Button } from '@/components/button';
 import { Card } from '@/components/card';
 import { useApi } from '@/hooks/useApi';
+
+// ── Import history stored in localStorage ────────────────────────────────────
+interface ImportRecord {
+  id: string;
+  name: string;
+  source: string;
+  created: number;
+  skipped: number;
+  date: string;
+  type: 'csv' | 'excel' | 'sheets';
+}
+
+function getHistory(): ImportRecord[] {
+  if (typeof window === 'undefined') return [];
+  try { return JSON.parse(localStorage.getItem('b9_import_history') || '[]'); } catch { return []; }
+}
+function saveHistory(records: ImportRecord[]) {
+  try { localStorage.setItem('b9_import_history', JSON.stringify(records.slice(0, 20))); } catch {}
+}
 
 const LEAD_FIELDS = [
   { key: 'phone',   label: 'Phone *', required: true,  hint: '+91XXXXXXXXXX' },
@@ -73,19 +92,51 @@ export default function ImportsPage() {
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<{ created: number; skipped_duplicates: number; errors: string[] } | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [importTab, setImportTab] = useState<'file' | 'sheets'>('file');
+  const [sheetsUrl, setSheetsUrl] = useState('');
+  const [sheetsLoading, setSheetsLoading] = useState(false);
+  const [history, setHistory] = useState<ImportRecord[]>([]);
+
+  useEffect(() => { setHistory(getHistory()); }, []);
 
   const handleFile = useCallback((f: File) => {
-    if (!f.name.endsWith('.csv')) { toast.error('Please upload a .csv file'); return; }
+    const name = f.name.toLowerCase();
+    const isCSV = name.endsWith('.csv');
+    const isExcel = name.endsWith('.xlsx') || name.endsWith('.xls');
+    if (!isCSV && !isExcel) { toast.error('Please upload a CSV (.csv) or Excel (.xlsx) file'); return; }
     setFile(f);
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const text = e.target?.result as string;
-      const p = parseCSV(text);
-      if (p.headers.length === 0) { toast.error('CSV file is empty or invalid'); return; }
-      setParsed(p);
-      setMapping(guessMapping(p.headers));
-    };
-    reader.readAsText(f);
+
+    if (isExcel) {
+      // Parse Excel using xlsx library
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const XLSX = await import('xlsx');
+          const data = new Uint8Array(e.target?.result as ArrayBuffer);
+          const wb = XLSX.read(data, { type: 'array' });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          const rows: string[][] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' }) as string[][];
+          if (rows.length < 2) { toast.error('Excel file is empty'); return; }
+          const headers = rows[0].map(String);
+          const dataRows = rows.slice(1).map(r => headers.map((_, i) => String(r[i] || '')));
+          const p: ParsedCSV = { headers, rows: dataRows };
+          setParsed(p);
+          setMapping(guessMapping(headers));
+        } catch { toast.error('Failed to read Excel file. Try saving as CSV first.'); }
+      };
+      reader.readAsArrayBuffer(f);
+    } else {
+      // Parse CSV
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const text = e.target?.result as string;
+        const p = parseCSV(text);
+        if (p.headers.length === 0) { toast.error('CSV file is empty or invalid'); return; }
+        setParsed(p);
+        setMapping(guessMapping(p.headers));
+      };
+      reader.readAsText(f);
+    }
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -110,17 +161,69 @@ export default function ImportsPage() {
     if (!file) return;
     setUploading(true);
     try {
+      // If Excel, convert to CSV blob before sending
+      let uploadFile = file;
+      const isExcel = file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls');
+      if (isExcel && parsed) {
+        const csvContent = [parsed.headers, ...parsed.rows].map(row => row.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+        uploadFile = new File([csvContent], file.name.replace(/\.xlsx?$/, '.csv'), { type: 'text/csv' });
+      }
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', uploadFile);
       formData.append('mapping', JSON.stringify(mapping));
       const res = await post(`/api/leads/import/csv?source=${encodeURIComponent(source)}`, formData);
       setResult(res.data);
       setStep(3);
+      // Save to history
+      const record: ImportRecord = {
+        id: Date.now().toString(),
+        name: file.name,
+        source,
+        created: res.data.created || 0,
+        skipped: res.data.skipped_duplicates || 0,
+        date: new Date().toLocaleString('en-IN'),
+        type: isExcel ? 'excel' : 'csv',
+      };
+      const newHistory = [record, ...getHistory()];
+      saveHistory(newHistory);
+      setHistory(newHistory);
       toast.success(`Import complete: ${res.data.created} contacts added`);
     } catch (err: any) {
       toast.error(err.response?.data?.detail || 'Import failed');
     } finally {
       setUploading(false);
+    }
+  };
+
+  const importFromSheets = async () => {
+    if (!sheetsUrl.trim()) return;
+    setSheetsLoading(true);
+    try {
+      // Convert Google Sheets URL to CSV export URL
+      let csvUrl = sheetsUrl.trim();
+      const match = csvUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+      if (match) {
+        const sheetId = match[1];
+        csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
+      }
+      // Fetch via backend proxy to avoid CORS
+      const res = await post('/api/leads/import/google-sheets', { url: csvUrl, source });
+      if (res.data?.rows) {
+        // Got back parsed data — set as parsed CSV for mapping step
+        setParsed(res.data);
+        setMapping(guessMapping(res.data.headers));
+        setFile(new File([], 'google-sheets.csv'));
+        setImportTab('file');
+        setStep(1);
+        toast.success(`Loaded ${res.data.rows.length} rows from Google Sheets`);
+      } else {
+        toast.error(res.data?.detail || 'Could not load Google Sheets data');
+      }
+    } catch (err: any) {
+      // If proxy not available, show instructions
+      toast.error('Make sure the Google Sheet is shared publicly (Anyone with link can view)');
+    } finally {
+      setSheetsLoading(false);
     }
   };
 
@@ -173,7 +276,37 @@ export default function ImportsPage() {
       {step === 0 && (
         <div className="grid gap-6 lg:grid-cols-2">
           <Card hoverable={false} className="border-gray-200">
-            <h2 className="mb-4 text-lg font-bold text-gray-900">Upload CSV File</h2>
+            {/* Import type tabs */}
+            <div className="flex gap-1 mb-5 bg-gray-100 dark:bg-slate-800 rounded-xl p-1">
+              <button type="button" onClick={() => setImportTab('file')}
+                className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-2 text-xs font-semibold transition ${importTab === 'file' ? 'bg-white dark:bg-slate-700 shadow text-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-700'}`}>
+                <FileSpreadsheet className="h-3.5 w-3.5" /> CSV / Excel
+              </button>
+              <button type="button" onClick={() => setImportTab('sheets')}
+                className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-2 text-xs font-semibold transition ${importTab === 'sheets' ? 'bg-white dark:bg-slate-700 shadow text-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-700'}`}>
+                <Link2 className="h-3.5 w-3.5" /> Google Sheets
+              </button>
+            </div>
+
+            {importTab === 'sheets' ? (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Google Sheets URL</label>
+                  <input value={sheetsUrl} onChange={e => setSheetsUrl(e.target.value)}
+                    placeholder="https://docs.google.com/spreadsheets/d/..."
+                    className="input-field text-sm" />
+                  <p className="mt-1 text-xs text-gray-400">Sheet must be shared: <strong>Anyone with link → Viewer</strong></p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Source label</label>
+                  <input value={source} onChange={e => setSource(e.target.value)} placeholder="google-sheets" className="input-field text-sm" />
+                </div>
+                <Button onClick={importFromSheets} loading={sheetsLoading} disabled={!sheetsUrl.trim()}>
+                  <Link2 className="h-4 w-4" /> Load from Sheets
+                </Button>
+              </div>
+            ) : (
+            <>
             <div
               className={`flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed p-10 cursor-pointer transition ${
                 dragOver ? 'border-primary-400 bg-primary-50' : file ? 'border-emerald-400 bg-emerald-50' : 'border-gray-200 hover:border-primary-300 hover:bg-primary-50/30'
@@ -193,11 +326,11 @@ export default function ImportsPage() {
                 </div>
               ) : (
                 <div className="text-center">
-                  <p className="font-semibold text-gray-600">Click or drag & drop CSV</p>
-                  <p className="text-xs text-gray-400">Max 5MB · Up to 1,000 contacts</p>
+                  <p className="font-semibold text-gray-600">Click or drag & drop</p>
+                  <p className="text-xs text-gray-400">CSV (.csv) or Excel (.xlsx) · Max 5MB · Up to 1,000 contacts</p>
                 </div>
               )}
-              <input ref={inputRef} type="file" accept=".csv" className="hidden" onChange={handleInputChange} />
+              <input ref={inputRef} type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={handleInputChange} />
             </div>
 
             <div className="mt-4 flex gap-3 items-end">
@@ -224,19 +357,35 @@ export default function ImportsPage() {
                 No phone column detected — please map it in the next step.
               </p>
             )}
+            </>
+            )} {/* end importTab === 'file' */}
           </Card>
 
           <Card hoverable={false} className="border-gray-200">
-            <h2 className="mb-4 text-lg font-bold text-gray-900">CSV Format</h2>
-            <div className="rounded-xl bg-gray-950 p-4 font-mono text-xs text-emerald-400 overflow-x-auto mb-4">
-              <p>phone,name,email,message,tag</p>
-              <p>+91XXXXXXXXXX,Rahul Sharma,r@ex.com,Demo req,hot</p>
-              <p>+91XXXXXXXXXX,Priya Singh,,,warm</p>
+            <h2 className="mb-4 text-lg font-bold text-gray-900">Supported Formats</h2>
+            <div className="space-y-3 mb-4">
+              <div className="flex items-center gap-3 rounded-xl border border-gray-100 p-3">
+                <FileSpreadsheet className="h-8 w-8 text-emerald-600 shrink-0" />
+                <div><p className="text-sm font-semibold text-gray-800">CSV (.csv)</p><p className="text-xs text-gray-400">Standard comma-separated values</p></div>
+              </div>
+              <div className="flex items-center gap-3 rounded-xl border border-gray-100 p-3">
+                <FileSpreadsheet className="h-8 w-8 text-blue-600 shrink-0" />
+                <div><p className="text-sm font-semibold text-gray-800">Excel (.xlsx, .xls)</p><p className="text-xs text-gray-400">Microsoft Excel workbooks — first sheet used</p></div>
+              </div>
+              <div className="flex items-center gap-3 rounded-xl border border-gray-100 p-3">
+                <Link2 className="h-8 w-8 text-orange-500 shrink-0" />
+                <div><p className="text-sm font-semibold text-gray-800">Google Sheets</p><p className="text-xs text-gray-400">Paste sheet URL — must be publicly visible</p></div>
+              </div>
             </div>
-            <ul className="space-y-2 text-sm text-gray-600">
-              <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" /><strong>phone</strong> — required, with country code (+91...)</li>
-              <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-gray-300 shrink-0" /><strong>name</strong>, <strong>email</strong>, <strong>message</strong>, <strong>tag</strong> — optional</li>
-              <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-blue-400 shrink-0" />Field mapping auto-detected from column names</li>
+            <div className="rounded-xl bg-gray-950 p-3 font-mono text-xs text-emerald-400 overflow-x-auto">
+              <p className="text-gray-500"># Required column:</p>
+              <p>phone,name,email,tag</p>
+              <p>+91XXXXXXXXXX,Rahul Sharma,r@ex.com,hot</p>
+            </div>
+            <ul className="mt-3 space-y-1.5 text-xs text-gray-500">
+              <li className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" /><strong>phone</strong> required (+91 format)</li>
+              <li className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-gray-300 shrink-0" /><strong>name, email, tag, source</strong> optional</li>
+              <li className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-blue-400 shrink-0" />Columns auto-mapped from headers</li>
             </ul>
             <p className="mt-3 rounded-lg bg-amber-50 p-2 text-xs text-amber-700">
               Contacts with existing phone numbers are automatically skipped (no duplicates).
@@ -426,6 +575,39 @@ export default function ImportsPage() {
             </div>
           </div>
         </Card>
+      )}
+
+      {/* ── Import History ────────────────────────────────────────────────── */}
+      {history.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+              <Clock className="h-5 w-5 text-gray-400" /> Import History
+            </h2>
+            <button type="button" onClick={() => { saveHistory([]); setHistory([]); }}
+              className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1">
+              <Trash2 className="h-3 w-3" /> Clear history
+            </button>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {history.map(r => (
+              <div key={r.id} className="rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 flex items-start gap-3 shadow-sm">
+                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${r.type === 'excel' ? 'bg-blue-50 text-blue-600' : r.type === 'sheets' ? 'bg-orange-50 text-orange-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                  {r.type === 'sheets' ? <Link2 className="h-5 w-5" /> : <FileSpreadsheet className="h-5 w-5" />}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-gray-900 truncate" title={r.name}>{r.name}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{r.date}</p>
+                  <div className="flex items-center gap-3 mt-1.5">
+                    <span className="text-xs font-bold text-emerald-600">+{r.created} added</span>
+                    {r.skipped > 0 && <span className="text-xs text-gray-400">{r.skipped} skipped</span>}
+                    <span className="text-xs text-gray-400 bg-gray-100 dark:bg-slate-700 rounded px-1.5 py-0.5">{r.source}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );

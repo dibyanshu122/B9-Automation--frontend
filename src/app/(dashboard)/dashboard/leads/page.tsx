@@ -311,7 +311,7 @@ export default function LeadsPage() {
   const [leadTotal, setLeadTotal] = useState(0);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
-  const LEAD_PAGE_SIZE = 50;
+  const LEAD_PAGE_SIZE = 100;
 
   const refresh = () => {
     setLoading(true);
