@@ -338,27 +338,39 @@ export default function SettingsPage() {
       return;
     }
     setSavingAiKeys(true);
-    try {
-      const body: any = { byok_enabled: byokEnabled, preferred_model: preferredModel, agentic_max_steps: agenticMaxSteps };
-      if (groqKey.trim()) body.groq_api_key = groqKey.trim();
-      if (geminiKey.trim()) body.gemini_api_key = geminiKey.trim();
-      await post('/api/settings/ai-keys', body);
-      toast.success('AI settings saved');
-      setAiDirty(false);
-      // Refresh masked key status
-      const res = await get('/api/settings/ai-keys').catch(() => ({ data: null }));
-      if (res.data) {
-        setAiKeys(res.data);
-        setByokEnabled(res.data.byok_enabled ?? false);
+    const body: any = { byok_enabled: byokEnabled, preferred_model: preferredModel, agentic_max_steps: agenticMaxSteps };
+    if (groqKey.trim()) body.groq_api_key = groqKey.trim();
+    if (geminiKey.trim()) body.gemini_api_key = geminiKey.trim();
+
+    // Retry once on network error (Render cold start can cause first request to fail)
+    let lastError: any = null;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        await post('/api/settings/ai-keys', body);
+        toast.success('AI settings saved');
+        setAiDirty(false);
+        const res = await get('/api/settings/ai-keys').catch(() => ({ data: null }));
+        if (res.data) {
+          setAiKeys(res.data);
+          setByokEnabled(res.data.byok_enabled ?? false);
+        }
+        setGroqKey('');
+        setGeminiKey('');
+        setTestResult({});
+        setSavingAiKeys(false);
+        return;
+      } catch (error: any) {
+        lastError = error;
+        if (!error.response && attempt < 2) {
+          // Network error — server may be cold-starting, wait 3s and retry
+          await new Promise(r => setTimeout(r, 3000));
+          continue;
+        }
+        break;
       }
-      setGroqKey('');
-      setGeminiKey('');
-      setTestResult({});
-    } catch (error: any) {
-      toast.error(error.response?.data?.detail || 'Failed to save AI settings');
-    } finally {
-      setSavingAiKeys(false);
     }
+    toast.error(lastError?.response?.data?.detail || 'Failed to save. Server is starting up — please try again in a few seconds.');
+    setSavingAiKeys(false);
   };
 
   const testAiKey = async (provider: 'groq' | 'gemini') => {
@@ -394,14 +406,17 @@ export default function SettingsPage() {
         <p className="text-gray-500 mt-1 text-sm">Manage your account preferences</p>
       </div>
 
-      {/* Sticky section nav */}
+      {/* Sticky section nav — using buttons + scrollIntoView to avoid URL hash changes */}
       <div className="sticky top-0 z-10 -mx-1 overflow-x-auto bg-white/95 dark:bg-slate-950/95 backdrop-blur pb-2 pt-1">
         <div className="flex gap-1 min-w-max px-1">
           {SETTING_SECTIONS.map(s => (
-            <a key={s.id} href={`#settings-${s.id}`}
+            <button key={s.id} type="button"
+              onClick={() => {
+                document.getElementById(`settings-${s.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}
               className="rounded-lg px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100 transition whitespace-nowrap">
               {s.label}
-            </a>
+            </button>
           ))}
         </div>
       </div>
@@ -1363,7 +1378,7 @@ function CsatSettingsSection() {
       <h2 className="text-xl font-bold text-gray-900 mb-1">CSAT Survey</h2>
       <p className="text-sm text-gray-500 mb-4">Automatically ask customers to rate their experience after a conversation ends.</p>
       <div className="rounded-xl border border-gray-200 bg-white p-5 space-y-4">
-        <label className="flex items-center justify-between cursor-pointer">
+        <div className="flex items-center justify-between">
           <div>
             <p className="font-semibold text-gray-800">Enable CSAT surveys</p>
             <p className="text-xs text-gray-400">Sends a WhatsApp message asking for a 1-5 star rating</p>
@@ -1372,7 +1387,7 @@ function CsatSettingsSection() {
             className={`relative h-6 w-11 rounded-full transition-colors ${settings.enabled ? 'bg-orange-500' : 'bg-gray-300'}`}>
             <span className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-transform ${settings.enabled ? 'translate-x-6' : 'translate-x-1'}`} />
           </button>
-        </label>
+        </div>
         {settings.enabled && (
           <>
             <div>
