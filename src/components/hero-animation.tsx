@@ -72,6 +72,10 @@ export function HeroAnimation() {
           smoothWheel: true,
           wheelMultiplier: 1.25,
           touchMultiplier: 0,
+          prevent: (node: HTMLElement) =>
+            node.hasAttribute('data-lenis-prevent') ||
+            node.classList.contains('brainai-panel') ||
+            node.classList.contains('brainai-messages'),
         }) as typeof lenis;
 
         const raf = (time: number) => {

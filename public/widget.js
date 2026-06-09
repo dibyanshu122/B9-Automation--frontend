@@ -133,7 +133,7 @@
       ".brainai-close{border:0;background:rgba(255,255,255,.15);color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;transition:background .2s;flex-shrink:0}",
       ".brainai-close:hover{background:rgba(255,255,255,.28)}",
       /* Messages */
-      ".brainai-messages{flex:1;overflow-y:auto;padding:16px 14px;background:linear-gradient(180deg,#f8fafc 0%,#f1f5f9 100%);display:flex;flex-direction:column;gap:8px;scroll-behavior:smooth;overscroll-behavior:none;touch-action:pan-y;-webkit-overflow-scrolling:touch}",
+      ".brainai-messages{flex:1;min-height:0;overflow-y:auto;padding:16px 14px;background:linear-gradient(180deg,#f8fafc 0%,#f1f5f9 100%);display:flex;flex-direction:column;gap:8px;scroll-behavior:smooth;overscroll-behavior:none;touch-action:pan-y;-webkit-overflow-scrolling:touch}",
       ".brainai-messages::-webkit-scrollbar{width:4px}",
       ".brainai-messages::-webkit-scrollbar-track{background:transparent}",
       ".brainai-messages::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:99px}",
@@ -182,9 +182,9 @@
       "@media(max-width:520px){.brainai-panel{width:calc(100vw - 24px);height:calc(100vh - 96px);border-radius:16px}.brainai-bubble{max-width:220px}.brainai-robot{width:92px;height:92px}.brainai-robot spline-viewer{display:none}.brainai-fallback,.brainai-bot-face{display:flex}}",
       "</style>",
       "<div class='brainai-stage'>",
-      "<div class='brainai-panel' role='dialog' aria-label='B9 Automation chat'>",
+      "<div class='brainai-panel' data-lenis-prevent role='dialog' aria-label='B9 Automation chat'>",
       "<div class='brainai-header'><div class='brainai-avatar' style='position:relative'>🤖<span class='brainai-online-dot'></span></div><div class='brainai-title-wrap'><div class='brainai-title'></div><div class='brainai-subtitle'>Online now</div></div><button class='brainai-close' aria-label='Close chat'><svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' viewBox='0 0 24 24' stroke='currentColor' stroke-width='2.5'><path stroke-linecap='round' stroke-linejoin='round' d='M6 18L18 6M6 6l12 12'/></svg></button></div>",
-      "<div class='brainai-messages'></div>",
+      "<div class='brainai-messages' data-lenis-prevent></div>",
       "<form class='brainai-form'><button type='button' class='brainai-mic' title='Speak'><svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='2'><path stroke-linecap='round' stroke-linejoin='round' d='M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-7V5a3 3 0 016 0v6'/></svg></button><input class='brainai-input' placeholder='Ask me anything...' autocomplete='off' /><button class='brainai-send' type='submit'><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M2.01 21L23 12 2.01 3 2 10l15 2-15 2z'/></svg></button></form>",
       config.watermark_enabled && !config.white_label ? "<div class='brainai-watermark'>Powered by <a href='https://b9automation.com' target='_blank' rel='noopener'>B9 Automation</a></div>" : "",
       "</div>",
@@ -255,6 +255,41 @@
       hideSplineLogo(robot.querySelector("spline-viewer"));
     }
 
+    function renderAssistantText(element, text) {
+      element.textContent = "";
+      String(text || "").split(/\r?\n/).forEach(function (rawLine, index) {
+        var line = rawLine.trim();
+        if (!line) {
+          if (index > 0) element.appendChild(document.createElement("br"));
+          return;
+        }
+
+        var paragraph = document.createElement("div");
+        var match = line.match(/^(?:[-*]\s+|\d+[.)]\s+)(.*)$/);
+        if (match) {
+          paragraph.style.display = "flex";
+          paragraph.style.gap = "7px";
+          paragraph.style.marginTop = index ? "6px" : "0";
+          var marker = document.createElement("span");
+          marker.textContent = "•";
+          marker.setAttribute("aria-hidden", "true");
+          paragraph.appendChild(marker);
+          line = match[1];
+        }
+
+        line.split(/(\*\*[^*]+\*\*)/g).filter(Boolean).forEach(function (part) {
+          if (part.indexOf("**") === 0 && part.lastIndexOf("**") === part.length - 2) {
+            var strong = document.createElement("strong");
+            strong.textContent = part.slice(2, -2);
+            paragraph.appendChild(strong);
+          } else {
+            paragraph.appendChild(document.createTextNode(part));
+          }
+        });
+        element.appendChild(paragraph);
+      });
+    }
+
     function addMessage(role, text) {
       var row = document.createElement("div");
       row.className = "brainai-msg-row " + role;
@@ -272,7 +307,7 @@
           item.style.border = "none";
           item.style.boxShadow = "none";
         } else {
-          item.textContent = text;
+          renderAssistantText(item, text);
         }
       } else {
         item.textContent = text;
@@ -399,7 +434,7 @@
           loading.style.background = "";
           loading.style.border = "";
           loading.style.boxShadow = "";
-          loading.textContent = data.response || "No response received.";
+          renderAssistantText(loading, data.response || "No response received.");
           if (data.lead_captured) pendingLead = null;
           if (data.should_capture_lead || (!leadShown && messageCount >= (config.lead_capture_after_messages || 3))) {
             showLeadForm();
