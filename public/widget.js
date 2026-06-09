@@ -269,23 +269,29 @@
         if (match) {
           paragraph.style.display = "flex";
           paragraph.style.gap = "7px";
+          paragraph.style.alignItems = "flex-start";
           paragraph.style.marginTop = index ? "6px" : "0";
           var marker = document.createElement("span");
           marker.textContent = "•";
           marker.setAttribute("aria-hidden", "true");
+          marker.style.flex = "0 0 auto";
           paragraph.appendChild(marker);
           line = match[1];
         }
 
+        var content = document.createElement("span");
+        content.style.minWidth = "0";
+        content.style.flex = "1 1 auto";
         line.split(/(\*\*[^*]+\*\*)/g).filter(Boolean).forEach(function (part) {
           if (part.indexOf("**") === 0 && part.lastIndexOf("**") === part.length - 2) {
             var strong = document.createElement("strong");
             strong.textContent = part.slice(2, -2);
-            paragraph.appendChild(strong);
+            content.appendChild(strong);
           } else {
-            paragraph.appendChild(document.createTextNode(part));
+            content.appendChild(document.createTextNode(part));
           }
         });
+        paragraph.appendChild(content);
         element.appendChild(paragraph);
       });
     }
