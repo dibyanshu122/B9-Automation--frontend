@@ -117,7 +117,7 @@
       "@keyframes brainai-panel-in{0%{opacity:0;transform:translateY(24px) scale(0.95)}100%{opacity:1;transform:translateY(0) scale(1)}}",
       "@keyframes brainai-dot{0%,80%,100%{transform:translateY(0);opacity:.4}40%{transform:translateY(-6px);opacity:1}}",
       /* Panel */
-      ".brainai-panel{display:none;width:min(380px,calc(100vw - 32px));height:min(580px,calc(100vh - 112px));background:#fff;border-radius:20px;box-shadow:0 32px 80px rgba(17,24,39,.22),0 0 0 1px rgba(0,0,0,.06);overflow:hidden;transform-origin:bottom right}",
+      ".brainai-panel{display:none;width:min(380px,calc(100vw - 32px));height:min(580px,calc(100vh - 112px));max-height:calc(100dvh - 112px);background:#fff;border-radius:20px;box-shadow:0 32px 80px rgba(17,24,39,.22),0 0 0 1px rgba(0,0,0,.06);overflow:hidden;transform-origin:bottom right}",
       ".brainai-panel.open{display:flex;flex-direction:column;animation:brainai-panel-in 0.35s cubic-bezier(.175,.885,.32,1.1) forwards}",
       /* Header */
       ".brainai-header{background:linear-gradient(135deg," + primaryColor + " 0%," + primaryColor + "dd 100%);color:#fff;padding:16px 16px;display:flex;align-items:center;gap:12px;position:relative;overflow:hidden}",
@@ -133,7 +133,7 @@
       ".brainai-close{border:0;background:rgba(255,255,255,.15);color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;transition:background .2s;flex-shrink:0}",
       ".brainai-close:hover{background:rgba(255,255,255,.28)}",
       /* Messages */
-      ".brainai-messages{flex:1;overflow-y:auto;padding:16px 14px;background:linear-gradient(180deg,#f8fafc 0%,#f1f5f9 100%);display:flex;flex-direction:column;gap:8px;scroll-behavior:smooth}",
+      ".brainai-messages{flex:1;overflow-y:auto;padding:16px 14px;background:linear-gradient(180deg,#f8fafc 0%,#f1f5f9 100%);display:flex;flex-direction:column;gap:8px;scroll-behavior:smooth;overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch}",
       ".brainai-messages::-webkit-scrollbar{width:4px}",
       ".brainai-messages::-webkit-scrollbar-track{background:transparent}",
       ".brainai-messages::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:99px}",
