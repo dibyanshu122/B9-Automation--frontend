@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import {
@@ -16,7 +16,11 @@ import {
   Workflow,
 } from 'lucide-react';
 
-const phrases = ['AI reads your intent.', 'AI drafts the workflow.', 'Business runs 24/7.'];
+const phrases = [
+  'Turn every inquiry into action.',
+  'Give every lead the right next step.',
+  'Keep sales moving after your team logs off.',
+];
 
 const agentNodes = [
   { label: 'WhatsApp', detail: 'Replies and campaigns', icon: MessageCircle, accent: '#25D366' },
@@ -39,15 +43,6 @@ const nodePositions = [
 export function HeroAnimation() {
   const rootRef = useRef<HTMLElement | null>(null);
   const [cursor, setCursor] = useState({ x: -100, y: -100, active: false });
-
-  const metrics = useMemo(
-    () => [
-      { label: 'AI replies left', value: '20K' },
-      { label: 'Setup time', value: '5 min' },
-      { label: 'Channels', value: '9' },
-    ],
-    []
-  );
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -90,7 +85,7 @@ export function HeroAnimation() {
         const nodes = gsap.utils.toArray<HTMLElement>('[data-agent-node]');
         const phraseEls = gsap.utils.toArray<HTMLElement>('[data-hero-phrase]');
 
-        gsap.set('[data-ai-core], [data-core-ring], [data-agent-node], [data-dashboard-card]', {
+        gsap.set('[data-ai-core], [data-core-ring], [data-agent-node]', {
           willChange: 'transform, opacity',
           force3D: true,
         });
@@ -100,11 +95,6 @@ export function HeroAnimation() {
             '[data-agent-node]',
             { opacity: 0, y: 18, scale: 0.94 },
             { opacity: 1, y: 0, scale: 1, duration: 0.7, stagger: 0.08, ease: 'power3.out' }
-          );
-          gsap.fromTo(
-            '[data-dashboard-card]',
-            { opacity: 0, y: 22 },
-            { opacity: 1, y: 0, duration: 0.8, delay: 0.35, ease: 'power3.out' }
           );
           return;
         }
@@ -118,7 +108,6 @@ export function HeroAnimation() {
         });
         gsap.set(phraseEls, { autoAlpha: 0, y: 20 });
         gsap.set(phraseEls[0], { autoAlpha: 1, y: 0 });
-        gsap.set('[data-dashboard-card]', { opacity: 0.52, y: 12, scale: 0.96 });
         gsap.set('[data-agent-stream]', { scaleX: 0.2, opacity: 0.22, transformOrigin: 'left center' });
 
         const timeline = gsap.timeline({
@@ -160,7 +149,6 @@ export function HeroAnimation() {
           .to(phraseEls[0], { autoAlpha: 0, y: -16, duration: 0.06 }, 0.28)
           .to(phraseEls[1], { autoAlpha: 1, y: 0, duration: 0.08 }, 0.31)
           .to('[data-agent-node]', { scale: 1.06, duration: 0.14, stagger: 0.02, ease: 'power2.out' }, 0.36)
-          .to('[data-dashboard-card]', { opacity: 1, y: 0, scale: 1, duration: 0.18, ease: 'power3.out' }, 0.42)
           .to(phraseEls[1], { autoAlpha: 0, y: -16, duration: 0.06 }, 0.58)
           .to(phraseEls[2], { autoAlpha: 1, y: 0, duration: 0.08 }, 0.61)
           .to('[data-agent-node]', {
@@ -204,7 +192,7 @@ export function HeroAnimation() {
   return (
     <section
       ref={rootRef}
-      className="relative min-h-[100svh] overflow-hidden border-b border-white/[0.04] bg-[#030712] pt-24 md:pt-28"
+      className="relative min-h-[100svh] overflow-hidden border-b border-white/[0.04] bg-[#030712] pt-20 md:pt-20"
     >
       <style>{`
         @media (min-width: 768px) and (max-height: 720px) {
@@ -230,19 +218,19 @@ export function HeroAnimation() {
         <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-[#030712] via-[#030712]/80 to-transparent" />
       </div>
 
-      <div className="relative z-10 mx-auto grid min-h-[calc(100svh-7rem)] max-w-7xl grid-cols-1 items-center gap-10 px-6 pb-14 md:grid-cols-[0.9fr_1.1fr] md:gap-12 md:pb-20 lg:gap-16">
+      <div className="relative z-10 mx-auto grid min-h-[calc(100svh-7rem)] max-w-7xl grid-cols-1 items-start gap-10 px-6 pb-14 md:grid-cols-[0.9fr_1.1fr] md:gap-12 md:pt-2 md:pb-20 lg:gap-16">
         <motion.div
           initial={{ opacity: 0, y: 26 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
-          className="max-w-2xl"
+          className="max-w-2xl md:pt-2"
         >
           <span className="inline-flex items-center gap-2 rounded-full border border-[#00F2FE]/20 bg-[#00F2FE]/[0.07] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#7BFFF8]">
             <Sparkles className="h-3.5 w-3.5" />
             India's Agentic Automation OS
           </span>
 
-          <h1 className="relative z-20 mt-7 max-w-[720px] text-5xl font-bold leading-[0.96] tracking-[-0.04em] text-white sm:text-6xl lg:text-7xl xl:text-[5.8rem]">
+          <h1 className="relative z-20 mt-7 max-w-[680px] text-4xl font-bold leading-[0.98] tracking-[-0.04em] text-white sm:text-5xl lg:text-6xl xl:text-[4.9rem]">
             <span className="block text-white" style={{ WebkitTextFillColor: '#ffffff', textShadow: '0 0 1px rgba(255,255,255,0.35)' }}>Your AI sales team,</span>
             <span className="block text-[#22F3DF] md:bg-gradient-to-r md:from-[#25D366] md:via-[#00F2FE] md:to-[#7BFFF8] md:bg-clip-text md:text-transparent" style={{ WebkitTextFillColor: 'currentColor', textShadow: '0 0 1px rgba(34,243,223,0.35)' }}>
               running on WhatsApp.
@@ -250,8 +238,8 @@ export function HeroAnimation() {
           </h1>
 
           <p className="mt-7 max-w-xl text-base leading-7 text-zinc-400 md:text-lg">
-            B9 Agentic Core turns plain-English intent into WhatsApp replies, Meta templates, lead flows,
-            campaigns, payments, and human handover. You review, approve, and your business keeps moving.
+            Tell B9 the outcome you want. Its Agentic Core builds the WhatsApp journey, qualifies every lead,
+            follows up automatically, collects payments, and brings your team in exactly when a human is needed.
           </p>
 
           <div className="mt-9 flex flex-wrap items-center gap-3">
@@ -272,30 +260,22 @@ export function HeroAnimation() {
             </Link>
           </div>
 
-          <div className="mt-8 grid max-w-lg grid-cols-3 gap-3">
-            {metrics.map((metric) => (
-              <div key={metric.label} className="rounded-2xl border border-white/[0.07] bg-white/[0.025] p-4 backdrop-blur-xl">
-                <p className="text-xl font-bold text-white">{metric.value}</p>
-                <p className="mt-1 text-[11px] leading-4 text-zinc-500">{metric.label}</p>
-              </div>
-            ))}
-          </div>
         </motion.div>
 
-        <div className="relative mx-auto flex min-h-[560px] w-full max-w-[680px] items-center justify-center md:min-h-[680px]">
-          <div className="absolute left-1/2 -top-5 z-40 h-16 w-[min(520px,80vw)] -translate-x-1/2 md:-top-20">
+        <div className="relative mx-auto flex min-h-[560px] w-full max-w-[680px] flex-col items-center justify-start md:min-h-[680px]">
+          <div className="relative z-40 h-12 w-[min(460px,82vw)] shrink-0">
             {phrases.map((phrase, index) => (
               <p
                 key={phrase}
                 data-hero-phrase
-                className={`absolute inset-0 flex items-center justify-center rounded-full bg-[#030712]/55 px-5 text-center text-xl font-semibold tracking-tight text-[#EAFDFF] shadow-[0_18px_50px_rgba(0,0,0,0.3),0_0_26px_rgba(0,242,254,0.18)] backdrop-blur-md md:text-3xl ${index === 0 ? '' : 'opacity-0'}`}
+                className={`absolute inset-0 flex items-center justify-center rounded-xl border border-[#7BFFF8]/15 bg-[#06111b]/55 px-4 text-center text-sm font-semibold tracking-tight text-[#DFFFFC] shadow-[0_12px_34px_rgba(0,0,0,0.3),0_0_24px_rgba(0,242,254,0.1),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl [text-shadow:0_0_20px_rgba(0,242,254,0.32)] md:text-lg ${index === 0 ? '' : 'opacity-0'}`}
               >
                 {phrase}
               </p>
             ))}
           </div>
 
-          <div className="b9-hero-orbit-stage relative mt-6 h-[430px] w-[430px] max-w-[90vw] md:-mt-20 md:h-[550px] md:w-[550px] md:-translate-x-10">
+          <div className="b9-hero-orbit-stage relative mt-7 h-[430px] w-[430px] max-w-[90vw] md:mt-7 md:h-[550px] md:w-[550px] md:-translate-x-10">
             <div data-core-ring className="absolute inset-8 rounded-full border border-[#00F2FE]/18 bg-[conic-gradient(from_130deg,rgba(0,242,254,0),rgba(37,211,102,0.24),rgba(168,85,247,0.24),rgba(255,87,34,0.18),rgba(0,242,254,0))] shadow-[0_0_80px_rgba(0,242,254,0.12)]" />
             <div className="absolute inset-16 rounded-full border border-white/[0.08] bg-white/[0.018] backdrop-blur-2xl" />
             {agentNodes.map((node, index) => {
@@ -349,28 +329,6 @@ export function HeroAnimation() {
               );
             })}
 
-            <div data-dashboard-card className="absolute left-1/2 top-[calc(100%+96px)] z-30 w-[min(420px,88vw)] -translate-x-1/2 rounded-3xl border border-white/[0.09] bg-[#07111f]/92 p-4 shadow-[0_30px_90px_rgba(0,0,0,0.55)] backdrop-blur-2xl">
-              <div className="mb-4 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-white">Agentic workflow ready</p>
-                  <p className="text-xs text-zinc-500">Intent, template, flow and payment path generated.</p>
-                </div>
-                <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-1 text-[10px] font-bold text-emerald-300">
-                  REVIEW
-                </span>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                {['Reply', 'Flow', 'Payment'].map((item) => (
-                  <div key={item} className="rounded-2xl border border-white/[0.06] bg-white/[0.035] px-3 py-2 text-center text-xs font-semibold text-zinc-300">
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="absolute bottom-0 left-1/2 hidden -translate-x-1/2 items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.035] px-3 py-1.5 text-[11px] font-semibold text-zinc-500 backdrop-blur-xl md:flex">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#00F2FE] shadow-[0_0_14px_rgba(0,242,254,0.8)]" />
-            Scroll to watch B9 build the workflow
           </div>
         </div>
       </div>
