@@ -124,18 +124,19 @@ function MessageContent({ msg, isOutbound }: { msg: any; isOutbound: boolean }) 
   const payload = msg.payload || {};
   const text = msg.text || '';
 
-  // Image
+  // Image — inbound via media proxy (ID), outbound via direct public URL
   if (type === 'image') {
     const img = payload.image || {};
     const caption = img.caption || text;
     const mediaId = img.id || '';
+    const imgSrc = mediaId ? mediaProxyUrl(mediaId) : (img.link || img.url || payload.media_url || '');
     return (
       <div className="space-y-1">
         <div className="rounded-lg overflow-hidden bg-gray-100 max-w-[240px]">
-          {mediaId ? (
+          {imgSrc ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={mediaProxyUrl(mediaId)}
+              src={imgSrc}
               alt="image"
               className="max-w-full rounded-lg block"
               style={{maxHeight: 300}}
@@ -209,10 +210,11 @@ function MessageContent({ msg, isOutbound }: { msg: any; isOutbound: boolean }) 
     const filename = doc.filename || text || 'Document';
     const caption = doc.caption || '';
     const mediaId = doc.id || '';
+    const docHref = mediaId ? mediaProxyUrl(mediaId) : (doc.link || doc.url || payload.media_url || '#');
     return (
       <div className="space-y-1">
         <a
-          href={mediaId ? mediaProxyUrl(mediaId) : '#'}
+          href={docHref}
           download={filename}
           target="_blank"
           rel="noreferrer"
