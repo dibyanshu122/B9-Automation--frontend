@@ -61,6 +61,13 @@ export default function HandoverPage() {
 
   useEffect(() => {
     load();
+    // Auto-refresh every 30s so waiting handovers surface without manual reload
+    const interval = setInterval(() => {
+      get('/api/leads/handover-queue')
+        .then((res) => setItems(res.data?.items || []))
+        .catch(() => {});
+    }, 30000);
+    return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -78,6 +85,19 @@ export default function HandoverPage() {
       load();
     } catch (error: any) {
       toast.error(error.response?.data?.detail || 'Failed to accept handover');
+    } finally {
+      setBusy('');
+    }
+  };
+
+  const resolve = async (item: HandoverItem) => {
+    setBusy(item.id);
+    try {
+      await post(`/api/leads/inbox/${item.id}/handover`, { status: 'resolved', reason: 'Resolved — conversation handed back to AI' });
+      toast.success('Handover resolved — AI will handle this conversation again');
+      load();
+    } catch (error: any) {
+      toast.error(error.response?.data?.detail || 'Failed to resolve handover');
     } finally {
       setBusy('');
     }
@@ -155,9 +175,15 @@ export default function HandoverPage() {
                   <a className="inline-flex items-center justify-center rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50" href="/dashboard/leads">
                     Open CRM
                   </a>
-                  <Button variant="primary" onClick={() => accept(item)} loading={busy === item.id}>
-                    Accept
-                  </Button>
+                  {item.handover_status === 'human_active' ? (
+                    <Button variant="secondary" onClick={() => resolve(item)} loading={busy === item.id}>
+                      Resolve — back to AI
+                    </Button>
+                  ) : (
+                    <Button variant="primary" onClick={() => accept(item)} loading={busy === item.id}>
+                      Accept
+                    </Button>
+                  )}
                 </div>
               </div>
             </Card>

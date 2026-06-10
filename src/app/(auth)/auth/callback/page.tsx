@@ -26,6 +26,9 @@ function AuthCallbackContent() {
       return;
     }
 
+    // Remove sensitive token from URL immediately to prevent browser history exposure
+    window.history.replaceState({}, '', window.location.pathname);
+
     setUser({
       id: userId,
       email,

@@ -153,39 +153,52 @@ function MessageContent({ msg, isOutbound }: { msg: any; isOutbound: boolean }) 
     );
   }
 
-  // Video
+  // Video — real playback via media proxy
   if (type === 'video') {
     const vid = payload.video || {};
     const caption = vid.caption || text;
+    const mediaId = vid.id || '';
+    const mediaSrc = mediaId ? mediaProxyUrl(mediaId) : (vid.link || vid.url || '');
     return (
       <div className="space-y-1">
-        <div className="rounded-lg bg-gray-800 text-white flex items-center justify-center gap-2 px-4 py-6 min-w-[200px]">
-          <Play className="h-8 w-8 opacity-80" />
-          <span className="text-sm font-medium opacity-80">Video</span>
-        </div>
+        {mediaSrc ? (
+          <video
+            controls
+            preload="metadata"
+            src={mediaSrc}
+            className="rounded-lg max-w-[260px] bg-black"
+            style={{ maxHeight: 280 }}
+          />
+        ) : (
+          <div className="rounded-lg bg-gray-800 text-white flex items-center justify-center gap-2 px-4 py-6 min-w-[200px]">
+            <Play className="h-8 w-8 opacity-80" />
+            <span className="text-sm font-medium opacity-80">Video unavailable</span>
+          </div>
+        )}
         {caption && <p className="text-[14.5px] leading-snug text-gray-800">{caption}</p>}
       </div>
     );
   }
 
-  // Audio / Voice
+  // Audio / Voice — real playback via media proxy
   if (type === 'audio' || type === 'voice') {
+    const aud = payload.audio || payload.voice || {};
+    const mediaId = aud.id || '';
+    const mediaSrc = mediaId ? mediaProxyUrl(mediaId) : (aud.link || aud.url || '');
+    if (mediaSrc) {
+      return (
+        <div className="min-w-[220px] max-w-[280px]">
+          <audio controls preload="none" src={mediaSrc} className="w-full" style={{ height: 40 }} />
+          <p className={`text-[10px] mt-1 opacity-70 ${isOutbound ? 'text-green-800' : 'text-gray-500'}`}>Voice message</p>
+        </div>
+      );
+    }
     return (
       <div className={`flex items-center gap-3 px-3 py-2 rounded-lg min-w-[180px] ${isOutbound ? 'bg-green-100/50' : 'bg-gray-100'}`}>
         <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${isOutbound ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-600'}`}>
           <Play className="h-4 w-4 ml-0.5" />
         </div>
-        <div className="flex-1">
-          <div className="flex gap-0.5 items-end h-5">
-            {Array.from({length: 24}).map((_, i) => (
-              <div key={i} className="w-[3px] rounded-full opacity-40" style={{
-                height: `${30 + Math.sin(i * 0.5) * 40 + Math.cos(i * 1.1) * 30}%`,
-                background: isOutbound ? '#166534' : '#4b5563'
-              }} />
-            ))}
-          </div>
-          <p className={`text-[10px] mt-1 opacity-70 ${isOutbound ? 'text-green-800' : 'text-gray-500'}`}>Voice message</p>
-        </div>
+        <p className={`text-[12px] opacity-70 ${isOutbound ? 'text-green-800' : 'text-gray-500'}`}>Voice message unavailable</p>
       </div>
     );
   }
@@ -220,12 +233,50 @@ function MessageContent({ msg, isOutbound }: { msg: any; isOutbound: boolean }) 
     );
   }
 
-  // Sticker
+  // Sticker — load actual sticker image (webp) via media proxy
   if (type === 'sticker') {
+    const st = payload.sticker || {};
+    const mediaId = st.id || '';
+    if (mediaId) {
+      return (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={mediaProxyUrl(mediaId)}
+          alt="sticker"
+          className="h-32 w-32 object-contain"
+          onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+        />
+      );
+    }
     return (
       <div className="flex flex-col items-center gap-1 opacity-80 py-2">
         <Sticker className="h-12 w-12 text-gray-400" />
         <span className="text-[10px] uppercase font-medium text-gray-400">Sticker</span>
+      </div>
+    );
+  }
+
+  // Contacts (vCard share)
+  if (type === 'contacts') {
+    const list: any[] = Array.isArray(payload.contacts) ? payload.contacts : [];
+    if (list.length === 0) return <p className="text-sm italic text-gray-400">Contact shared</p>;
+    return (
+      <div className="space-y-1.5 min-w-[200px]">
+        {list.map((ct, i) => {
+          const name = ct.name?.formatted_name || ct.name?.first_name || 'Contact';
+          const phone = (ct.phones || [])[0]?.phone || (ct.phones || [])[0]?.wa_id || '';
+          return (
+            <div key={i} className={`flex items-center gap-3 rounded-lg px-3 py-2 ${isOutbound ? 'bg-green-100/60' : 'bg-gray-100'}`}>
+              <div className="h-9 w-9 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center shrink-0">
+                <User className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[14px] font-semibold text-gray-900 truncate">{name}</p>
+                {phone && <p className="text-[12px] text-gray-500">{phone}</p>}
+              </div>
+            </div>
+          );
+        })}
       </div>
     );
   }
@@ -371,11 +422,17 @@ function UnifiedInbox() {
   const emojiRef = useRef<HTMLDivElement>(null);
   // Media attach dialog
   const [mediaOpen, setMediaOpen] = useState(false);
-  const [mediaUrl, setMediaUrl] = useState('');
-  const [mediaType, setMediaType] = useState<'image'|'document'|'video'>('image');
-  const [sendingMedia, setSendingMedia] = useState(false);
+  const [mediaType, setMediaType] = useState<'image'|'document'|'video'|'audio'>('image');
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [mediaCaption, setMediaCaption] = useState('');
   const [mediaUploading, setMediaUploading] = useState(false);
   const mediaFileRef = useRef<HTMLInputElement>(null);
+  const MEDIA_ACCEPTS: Record<string, string> = {
+    image: 'image/jpeg,image/png,image/webp,image/gif',
+    document: 'application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain',
+    video: 'video/mp4,video/3gpp',
+    audio: 'audio/aac,audio/mp4,audio/mpeg,audio/amr,audio/ogg',
+  };
 
   // Fetch leads once to map phone → name
   useEffect(() => {
@@ -410,8 +467,11 @@ function UnifiedInbox() {
         items.forEach(item => {
           const key = `${item.channel}::${item.sender_id}`;
           const lastRead = getLastRead(item.channel, item.sender_id);
-          // Only count as unread if message arrived AFTER user last opened this contact
-          const isUnread = !lastRead || item.created_at > lastRead;
+          // WhatsApp: server-side read state (synced across devices/team).
+          // IG/FB: localStorage fallback until those channels track read_at.
+          const isUnread = item.channel === 'whatsapp'
+            ? !item.read_at
+            : (!lastRead || item.created_at > lastRead);
 
           if (!map.has(key)) {
             map.set(key, {
@@ -573,23 +633,42 @@ function UnifiedInbox() {
       .catch(() => setAssignedAgent(null));
   }, [selected?.sender_id]); // eslint-disable-line
 
-  const sendMedia = async () => {
-    if (!selected || !mediaUrl.trim()) return;
-    setSendingMedia(true);
+  const sendPendingMedia = async () => {
+    if (!selected || !pendingFile) return;
+    setMediaUploading(true);
     try {
+      // Step 1: upload to get a public URL
+      const fd = new FormData();
+      fd.append('file', pendingFile);
+      const tkn = useAuthStore.getState().token;
+      const base = process.env.NEXT_PUBLIC_API_URL || '';
+      const res = await fetch(`${base}/api/automation/upload-media-public`, {
+        method: 'POST',
+        headers: tkn ? { Authorization: `Bearer ${tkn}` } : {},
+        body: fd,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Upload failed');
+      const url = data.public_url;
+      // Step 2: send with optional caption
+      const mediaObj: Record<string, string> = { link: url, url };
+      if (mediaCaption.trim() && mediaType !== 'audio') mediaObj.caption = mediaCaption.trim();
       await post('/api/automation/outbound-messages', {
         recipient: selected.sender_id,
         channel: selected.channel,
         message_type: mediaType,
-        // Both 'link' (Meta API format) and 'url' are supported — use link for WhatsApp Media Object spec
-        payload: { [mediaType]: { link: mediaUrl.trim(), url: mediaUrl.trim() } },
+        payload: { [mediaType]: mediaObj },
       });
+      toast.success(`${mediaType.charAt(0).toUpperCase() + mediaType.slice(1)} sent!`);
       setMediaOpen(false);
-      setMediaUrl('');
-      setMediaType('image');
-      toast.success(`${mediaType === 'image' ? 'Image' : mediaType === 'document' ? 'Document' : 'Video'} sent`);
-    } catch { toast.error('Failed to send media'); }
-    finally { setSendingMedia(false); }
+      setPendingFile(null);
+      setMediaCaption('');
+      setTimeout(() => fetchThread(selected), 1500);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to send');
+    } finally {
+      setMediaUploading(false);
+    }
   };
 
   const assignToMe = async () => {
@@ -605,17 +684,21 @@ function UnifiedInbox() {
   };
 
   const fetchThread = (s: typeof selected) => {
-    if (!s) return;
-    get(`/api/automation/inbox/conversation?sender_id=${encodeURIComponent(s.sender_id)}&channel=${s.channel}`)
-      .then(res => setThread(res.data?.messages || []))
+    if (!s) return Promise.resolve();
+    return get(`/api/automation/inbox/conversation?sender_id=${encodeURIComponent(s.sender_id)}&channel=${s.channel}`)
+      .then(res => setThread(prev => {
+        const server = res.data?.messages || [];
+        // Keep optimistic messages that failed to send so the user can retry them
+        const failedTemps = prev.filter(m => String(m.id).startsWith('temp-') && m.status === 'failed');
+        return [...server, ...failedTemps];
+      }))
       .catch(() => {});
   };
 
   useEffect(() => {
     if (!selected) return;
     setThreadLoading(true);
-    fetchThread(selected);
-    setThreadLoading(false);
+    Promise.resolve(fetchThread(selected)).finally(() => setThreadLoading(false));
 
     // Auto-poll every 5 seconds for new incoming messages
     const interval = setInterval(() => fetchThread(selected), 5000);
@@ -633,9 +716,10 @@ function UnifiedInbox() {
     setSending(true);
     const msgText = reply.trim();
     setReply('');
+    const tempId = `temp-${Date.now()}`;
     // Optimistic UI — show message immediately
     setThread(prev => [...prev, {
-      id: `temp-${Date.now()}`,
+      id: tempId,
       direction: 'outbound',
       text: msgText,
       created_at: new Date().toISOString(),
@@ -652,11 +736,10 @@ function UnifiedInbox() {
       });
       toast.success('Sent ✓');
       // Refresh thread after 1.5s
-      setTimeout(() => {
-        get(`/api/automation/inbox/conversation?sender_id=${encodeURIComponent(selected.sender_id)}&channel=${selected.channel}`)
-          .then(res => setThread(res.data?.messages || []));
-      }, 1500);
+      setTimeout(() => fetchThread(selected), 1500);
     } catch (err: any) {
+      // Mark the optimistic message as failed so the user can see and retry it
+      setThread(prev => prev.map(m => m.id === tempId ? { ...m, status: 'failed' } : m));
       const detail = err?.response?.data?.detail || '';
       if (detail.includes('24-hour') || detail.includes('window closed') || detail.includes('template')) {
         toast.error('24h window closed — use an approved template to message this contact.');
@@ -664,10 +747,15 @@ function UnifiedInbox() {
       } else if (detail.includes('paid plan') || detail.includes('upgrade')) {
         toast.error('Upgrade to STARTER plan to send live messages');
       } else {
-        toast('Saved as draft — WhatsApp may not be connected', { icon: '📋' });
+        toast.error('Message failed to send — tap it to retry');
       }
     }
     finally { setSending(false); }
+  };
+
+  const retryFailedMessage = (msg: any) => {
+    setThread(prev => prev.filter(m => m.id !== msg.id));
+    setReply(msg.text || '');
   };
 
   const sendTemplate = async (template: any, body: string, values: string[] = []) => {
@@ -693,6 +781,21 @@ function UnifiedInbox() {
       setSendingTemplate(false);
     }
   };
+
+  // Thread preprocessing: attach reactions to their target message, resolve quoted replies
+  const wamidMap = new Map<string, any>();
+  thread.forEach(m => { if (m.wa_message_id) wamidMap.set(m.wa_message_id, m); });
+  const reactionsByTarget: Record<string, string[]> = {};
+  const displayThread = thread.filter(m => {
+    if (m.message_type === 'reaction') {
+      const r = m.payload?.reaction || {};
+      if (r.message_id && r.emoji) {
+        (reactionsByTarget[r.message_id] = reactionsByTarget[r.message_id] || []).push(r.emoji);
+      }
+      return false; // reactions render as badges on the target message, not as rows
+    }
+    return true;
+  });
 
   const filtered = contacts
     .filter(c => filter === 'all' || c.channel === filter)
@@ -798,9 +901,6 @@ function UnifiedInbox() {
                   )}
                 </div>
 
-                <button className="p-2 rounded-full hover:bg-gray-200 text-gray-500 transition">
-                  <MoreVertical className="h-5 w-5" />
-                </button>
               </div>
             </div>
             {/* Search */}
@@ -870,6 +970,8 @@ function UnifiedInbox() {
                     window.dispatchEvent(new CustomEvent('inbox-read'));
                     setContacts(prev => prev.map(x => x.sender_id === c.sender_id && x.channel === c.channel ? { ...x, unread: 0 } : x));
                     setSelected(c);
+                    // Server-side read state + blue ticks to the customer (best effort)
+                    post('/api/automation/inbox/mark-read', { sender_id: c.sender_id, channel: c.channel }).catch(() => {});
                   }}
                   className={`w-full flex items-center gap-3 px-3 py-3 text-left transition-all border-b border-gray-100 last:border-0 ${
                     isSelected ? 'bg-[#f0f2f5]' : 'bg-white hover:bg-[#f5f6f6]'
@@ -1071,18 +1173,21 @@ function UnifiedInbox() {
             <div ref={chatBoxRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-1.5 relative bg-gray-50 dark:bg-slate-900">
               {threadLoading ? (
                 <div className="flex justify-center pt-12"><Loader2 className="h-6 w-6 animate-spin text-gray-400" /></div>
-              ) : thread.length === 0 ? (
+              ) : displayThread.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full gap-3 opacity-70">
                   <div className="bg-[#d9fdd3] text-green-900 px-4 py-2 rounded-lg text-sm shadow-sm inline-flex items-center gap-2">
                     <Zap className="h-4 w-4 text-amber-500" /> Messages are end-to-end encrypted
                   </div>
                 </div>
-              ) : thread.map(msg => {
+              ) : displayThread.map(msg => {
                 const isOutbound = msg.direction === 'outbound';
                 const isAutomated = !!(msg.is_automated);
                 const isPureMedia = ['image','video','audio','voice','sticker','location','document'].includes(msg.message_type);
+                const reactions = msg.wa_message_id ? reactionsByTarget[msg.wa_message_id] : undefined;
+                const quotedId = msg.payload?.context?.id || '';
+                const quoted = quotedId ? wamidMap.get(quotedId) : undefined;
                 return (
-                <div key={msg.id} className={`flex flex-col w-full ${isOutbound ? 'items-end' : 'items-start'}`}>
+                <div key={msg.id} className={`flex flex-col w-full ${isOutbound ? 'items-end' : 'items-start'} ${reactions?.length ? 'mb-3' : ''}`}>
                   {/* AI badge above automated outbound messages */}
                   {isAutomated && isOutbound && (
                     <div className="flex items-center gap-1 mb-0.5 mr-1">
@@ -1106,7 +1211,33 @@ function UnifiedInbox() {
                       </svg>
                     </div>
 
+                    {/* Quoted reply context */}
+                    {quoted && (
+                      <div className={`mb-1.5 rounded-lg border-l-4 px-2.5 py-1.5 text-[12.5px] ${
+                        isOutbound ? 'border-green-500 bg-green-50/80' : 'border-blue-400 bg-gray-50'
+                      }`}>
+                        <p className="font-semibold text-[11px] text-gray-600 mb-0.5">
+                          {quoted.direction === 'outbound' ? 'You' : 'Customer'}
+                        </p>
+                        <p className="text-gray-600 truncate max-w-[260px]">
+                          {quoted.text || `[${quoted.message_type}]`}
+                        </p>
+                      </div>
+                    )}
+                    {!quoted && quotedId && (
+                      <div className={`mb-1.5 rounded-lg border-l-4 px-2.5 py-1.5 text-[12px] italic text-gray-400 ${
+                        isOutbound ? 'border-green-300 bg-green-50/60' : 'border-gray-300 bg-gray-50'
+                      }`}>
+                        ↩︎ Replied to an earlier message
+                      </div>
+                    )}
                     <MessageContent msg={msg} isOutbound={isOutbound} />
+                    {/* Reactions on this message */}
+                    {reactions && reactions.length > 0 && (
+                      <div className={`absolute -bottom-3 ${isOutbound ? 'right-2' : 'left-2'} flex gap-0.5 rounded-full bg-white border border-gray-200 shadow-sm px-1.5 py-0.5 text-[13px] leading-none`}>
+                        {reactions.slice(0, 3).map((e, i) => <span key={i}>{e}</span>)}
+                      </div>
+                    )}
                     <div className={`flex items-center justify-end gap-1 mt-0.5 ${isPureMedia ? 'px-2 pb-1 absolute bottom-1 right-2 bg-black/20 rounded-full px-1.5 py-0.5' : ''}`}>
                       <span className={`text-[10px] ${isPureMedia ? 'text-white' : 'text-gray-500'}`}
                         title={msg.created_at ? new Date(msg.created_at + 'Z').toLocaleString() : ''}>
@@ -1116,6 +1247,14 @@ function UnifiedInbox() {
                     </div>
                   </div>
                   </div>
+                  {msg.status === 'failed' && (
+                    <button
+                      onClick={() => retryFailedMessage(msg)}
+                      className="mt-0.5 mr-1 text-[11px] font-semibold text-red-600 hover:text-red-700 hover:underline"
+                    >
+                      Failed to send — tap to retry
+                    </button>
+                  )}
                 </div>
                 );
               })}
@@ -1260,83 +1399,81 @@ function UnifiedInbox() {
                   </div>
                   {/* Attach media */}
                   <button
-                    onClick={() => setMediaOpen(true)}
+                    onClick={() => { setPendingFile(null); setMediaCaption(''); setMediaOpen(true); }}
                     className="p-2.5 rounded-full text-gray-500 hover:bg-gray-200 transition"
-                    title="Send image, document or video"
+                    title="Send image, document, video or audio"
                   >
                     <Paperclip className="h-6 w-6" />
                   </button>
-                  {/* Media — hidden file inputs, one per type. Select = auto upload + auto send */}
-                  {(['image','document','video'] as const).map(t => (
-                    <input key={t} type="file" className="hidden"
-                      ref={t === mediaType ? mediaFileRef : undefined}
-                      accept={t==='image'?'image/jpeg,image/png,image/webp,image/gif':t==='document'?'application/pdf':'video/mp4,video/3gpp'}
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file || !selected) return;
-                        setMediaUploading(true);
-                        setMediaOpen(false);
-                        toast('Sending ' + (t==='image'?'image':t==='document'?'document':'video') + '…', { icon: '📤' });
-                        try {
-                          // Step 1: upload
-                          const fd = new FormData();
-                          fd.append('file', file);
-                          const tkn = useAuthStore.getState().token;
-                          const base = process.env.NEXT_PUBLIC_API_URL || '';
-                          const res = await fetch(`${base}/api/automation/upload-media-public`, {
-                            method: 'POST',
-                            headers: tkn ? { Authorization: `Bearer ${tkn}` } : {},
-                            body: fd,
-                          });
-                          const data = await res.json();
-                          if (!res.ok) throw new Error(data.detail || 'Upload failed');
-                          const url = data.public_url;
-                          // Step 2: send immediately
-                          await post('/api/automation/outbound-messages', {
-                            recipient: selected.sender_id,
-                            channel: selected.channel,
-                            message_type: t,
-                            payload: { [t]: { link: url, url } },
-                          });
-                          toast.success(`${t==='image'?'Image':t==='document'?'Document':'Video'} sent!`);
-                        } catch (err: any) {
-                          toast.error(err.message || 'Failed to send');
-                        } finally {
-                          setMediaUploading(false);
-                          setMediaUrl('');
-                          if (e.target) e.target.value = '';
-                        }
-                      }}
-                    />
-                  ))}
-                  {/* Media type picker — shows only when attachment icon clicked */}
+                  {/* Single hidden file input — accept changes with chosen type */}
+                  <input
+                    type="file"
+                    className="hidden"
+                    ref={mediaFileRef}
+                    accept={MEDIA_ACCEPTS[mediaType]}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) setPendingFile(file);
+                      if (e.target) e.target.value = '';
+                    }}
+                  />
+                  {/* Media picker + caption modal */}
                   {mediaOpen && (
-                    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center bg-black/40 p-4" onClick={() => setMediaOpen(false)}>
-                      <div className="w-full max-w-xs rounded-2xl bg-white shadow-2xl p-4" onClick={e => e.stopPropagation()}>
-                        <p className="text-sm font-bold text-gray-700 mb-3 text-center">Select file type to send</p>
+                    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center bg-black/40 p-4" onClick={() => !mediaUploading && setMediaOpen(false)}>
+                      <div className="w-full max-w-sm rounded-2xl bg-white shadow-2xl p-4" onClick={e => e.stopPropagation()}>
                         {mediaUploading ? (
-                          <div className="flex flex-col items-center gap-2 py-4">
+                          <div className="flex flex-col items-center gap-2 py-6">
                             <Loader2 className="h-8 w-8 animate-spin text-green-500" />
                             <p className="text-sm text-gray-500">Uploading &amp; sending…</p>
                           </div>
-                        ) : (
-                          <div className="grid grid-cols-3 gap-2">
-                            {(['image','document','video'] as const).map(t => (
-                              <button key={t} onClick={() => {
-                                setMediaType(t);
-                                // Open the file picker for this type
-                                const inp = document.querySelector(`input[accept*="${t==='image'?'jpeg':t==='document'?'pdf':'mp4'}"]`) as HTMLInputElement;
-                                inp?.click();
-                                setMediaOpen(false);
-                              }}
-                                className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 py-4 text-xs font-semibold text-gray-600 hover:border-green-400 hover:bg-green-50 hover:text-green-700 transition">
-                                <span className="text-2xl">{t==='image'?'🖼️':t==='document'?'📄':'🎥'}</span>
-                                {t==='image'?'Image':t==='document'?'Document':'Video'}
+                        ) : pendingFile ? (
+                          <>
+                            <p className="text-sm font-bold text-gray-700 mb-3">Send {mediaType}</p>
+                            <div className="flex items-center gap-3 rounded-xl bg-gray-50 border border-gray-200 px-3 py-2.5 mb-3">
+                              <span className="text-2xl">{mediaType==='image'?'🖼️':mediaType==='document'?'📄':mediaType==='video'?'🎥':'🎵'}</span>
+                              <div className="min-w-0">
+                                <p className="text-[13px] font-semibold text-gray-800 truncate">{pendingFile.name}</p>
+                                <p className="text-[11px] text-gray-500">{(pendingFile.size / 1024).toFixed(0)} KB</p>
+                              </div>
+                            </div>
+                            {mediaType !== 'audio' && (
+                              <input
+                                value={mediaCaption}
+                                onChange={e => setMediaCaption(e.target.value)}
+                                placeholder="Add a caption (optional)"
+                                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-green-400"
+                              />
+                            )}
+                            <div className="flex gap-2">
+                              <button onClick={() => { setPendingFile(null); setMediaCaption(''); }}
+                                className="flex-1 rounded-lg border border-gray-200 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">
+                                Back
                               </button>
-                            ))}
-                          </div>
+                              <button onClick={sendPendingMedia}
+                                className="flex-1 rounded-lg bg-green-600 py-2 text-sm font-bold text-white hover:bg-green-700 transition">
+                                Send
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-sm font-bold text-gray-700 mb-3 text-center">Select file type to send</p>
+                            <div className="grid grid-cols-4 gap-2">
+                              {(['image','document','video','audio'] as const).map(t => (
+                                <button key={t} onClick={() => {
+                                  setMediaType(t);
+                                  // Let the accept attribute update before opening the picker
+                                  setTimeout(() => mediaFileRef.current?.click(), 50);
+                                }}
+                                  className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 py-4 text-xs font-semibold text-gray-600 hover:border-green-400 hover:bg-green-50 hover:text-green-700 transition">
+                                  <span className="text-2xl">{t==='image'?'🖼️':t==='document'?'📄':t==='video'?'🎥':'🎵'}</span>
+                                  {t.charAt(0).toUpperCase() + t.slice(1)}
+                                </button>
+                              ))}
+                            </div>
+                            <button onClick={() => setMediaOpen(false)} className="mt-3 w-full text-xs text-gray-400 hover:text-gray-600 text-center">Cancel</button>
+                          </>
                         )}
-                        <button onClick={() => setMediaOpen(false)} className="mt-3 w-full text-xs text-gray-400 hover:text-gray-600 text-center">Cancel</button>
                       </div>
                     </div>
                   )}
@@ -1511,9 +1648,23 @@ function UnifiedInbox() {
                   </div>
 
                   <div className="p-5">
-                    <a href="/dashboard/leads" className="flex items-center justify-center gap-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-[14px] font-medium text-red-600 hover:bg-red-50 hover:border-red-100 transition">
+                    <button
+                      onClick={async () => {
+                        if (!leadProfile?.id) return;
+                        if (!confirm(`Delete ${leadProfile.name || 'this contact'} from CRM? This cannot be undone.`)) return;
+                        try {
+                          await post('/api/leads/bulk-delete', { lead_ids: [leadProfile.id] });
+                          toast.success('Contact deleted');
+                          setProfileOpen(false);
+                          setLeadProfile(null);
+                        } catch (err: any) {
+                          toast.error(err?.response?.data?.detail || 'Failed to delete contact');
+                        }
+                      }}
+                      className="flex items-center justify-center gap-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-[14px] font-medium text-red-600 hover:bg-red-50 hover:border-red-100 transition"
+                    >
                       <Trash2 className="h-4 w-4" /> Delete Contact
-                    </a>
+                    </button>
                   </div>
                 </div>
               ) : (

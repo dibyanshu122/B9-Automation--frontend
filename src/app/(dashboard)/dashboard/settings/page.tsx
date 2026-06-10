@@ -154,7 +154,7 @@ export default function SettingsPage() {
     }
     setDeletingAccount(true);
     try {
-      await del('/api/auth/account');
+      await del('/api/auth/me');
       toast.success('Account deleted.');
       logout();
     } catch (error: any) {

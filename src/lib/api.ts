@@ -2,6 +2,7 @@ import axios, {
   AxiosInstance,
   AxiosError,
   AxiosRequestConfig,
+  InternalAxiosRequestConfig,
 } from 'axios';
 import { useAuthStore } from '@/store/authStore';
 import toast from 'react-hot-toast';
@@ -53,11 +54,31 @@ class ApiClient {
     // Response interceptor
     this.instance.interceptors.response.use(
       (response) => response,
-      (error: AxiosError) => {
+      async (error: AxiosError) => {
         const status = error.response?.status;
 
-        // Handle 401 Unauthorized
+        // Handle 401 Unauthorized — try silent token refresh before logging out
         if (status === 401) {
+          const originalRequest = error.config as InternalAxiosRequestConfig & { _retried?: boolean };
+          if (originalRequest && !originalRequest._retried) {
+            originalRequest._retried = true;
+            try {
+              const refreshRes = await axios.post(
+                `${this.baseURL}/api/auth/refresh`,
+                {},
+                { withCredentials: true }
+              );
+              const newToken = refreshRes.data?.token || refreshRes.data?.access_token;
+              if (newToken) {
+                useAuthStore.getState().setToken(newToken);
+                originalRequest.headers = originalRequest.headers ?? {};
+                originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
+                return this.instance(originalRequest);
+              }
+            } catch {
+              // Refresh failed — fall through to logout
+            }
+          }
           useAuthStore.getState().logout();
           toast.error('Session expired. Please login again.');
           window.location.href = '/login';
