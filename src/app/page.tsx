@@ -6,7 +6,7 @@ import Link from 'next/link';
 // import { Button } from '@/components/button'; // reserved for future use
 import { HeroAnimation } from '@/components/hero-animation';
 import { SplineViewer } from '@/components/spline-viewer';
-import { TiltCard, CountUp } from '@/components/premium-motion';
+import { TiltCard, CountUp, MagneticButton } from '@/components/premium-motion';
 import { Logo } from '@/components/logo';
 import { featureHighlights, workflowSteps, trustPoints, blogPosts, allFeatures } from '@/lib/marketing';
 import {
@@ -214,14 +214,16 @@ export default function HomePage() {
           <div className="hidden md:flex items-center gap-8">
             {/* Features dropdown */}
             <div className="relative">
-              <button
-                onClick={() => setFeaturesOpen(!featuresOpen)}
-                className="group relative flex items-center gap-1 text-sm font-medium text-zinc-400 hover:text-white transition-colors duration-300 py-1"
-              >
-                Features
-                <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-300 ${featuresOpen ? 'rotate-180' : ''}`} />
-                <span className="absolute bottom-0 left-0 w-full h-[1.5px] bg-gradient-to-r from-[#00F2FE] to-[#FF5722] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] origin-left" />
-              </button>
+              <MagneticButton strength={0.3}>
+                <button
+                  onClick={() => setFeaturesOpen(!featuresOpen)}
+                  className="group relative flex items-center gap-1 text-sm font-medium text-zinc-400 hover:text-white transition-colors duration-300 py-1"
+                >
+                  Features
+                  <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-300 ${featuresOpen ? 'rotate-180' : ''}`} />
+                  <span className="absolute bottom-0 left-0 w-full h-[1.5px] bg-gradient-to-r from-[#00F2FE] to-[#FF5722] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] origin-left" />
+                </button>
+              </MagneticButton>
 
               <AnimatePresence>
                 {featuresOpen && (
@@ -239,8 +241,8 @@ export default function HomePage() {
                         const Icon = f.icon;
                         return (
                           <Link key={f.title} href={f.href} onClick={() => setFeaturesOpen(false)}
-                            className="flex gap-3 rounded-xl p-3 hover:bg-white/[0.04] transition-all duration-300 group/item">
-                            <div className="mt-0.5 h-8 w-8 shrink-0 rounded-lg bg-[#00F2FE]/10 border border-[#00F2FE]/20 flex items-center justify-center">
+                            className="flex gap-3 rounded-xl p-3 hover:bg-white/[0.04] hover:translate-x-1.5 transition-all duration-300 group/item">
+                            <div className="mt-0.5 h-8 w-8 shrink-0 rounded-lg bg-[#00F2FE]/10 border border-[#00F2FE]/20 flex items-center justify-center transition-transform duration-300 group-hover/item:scale-110 group-hover/item:rotate-3">
                               <Icon className="h-4 w-4 text-[#00F2FE]" />
                             </div>
                             <div>
@@ -257,22 +259,28 @@ export default function HomePage() {
             </div>
 
             {['Pricing', 'Blog', 'About'].map((label) => (
-              <Link key={label} href={`/${label.toLowerCase()}`}
-                className="group relative text-sm font-medium text-zinc-400 hover:text-white transition-colors duration-300 py-1">
-                {label}
-                <span className="absolute bottom-0 left-0 w-full h-[1.5px] bg-gradient-to-r from-[#00F2FE] to-[#FF5722] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] origin-left" />
-              </Link>
+              <MagneticButton key={label} strength={0.3}>
+                <Link href={`/${label.toLowerCase()}`}
+                  className="group relative text-sm font-medium text-zinc-400 hover:text-white transition-colors duration-300 py-1">
+                  {label}
+                  <span className="absolute bottom-0 left-0 w-full h-[1.5px] bg-gradient-to-r from-[#00F2FE] to-[#FF5722] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] origin-left" />
+                </Link>
+              </MagneticButton>
             ))}
           </div>
 
           {/* CTAs */}
           <div className="flex items-center gap-4">
-            <Link href="/login" className="hidden sm:block text-sm font-medium text-zinc-400 hover:text-white transition-colors duration-300">Log In</Link>
-            <Link href="/signup">
-              <button className="relative inline-flex items-center justify-center px-5 py-2.5 text-sm font-semibold text-white bg-[#00F2FE]/[0.12] border border-[#00F2FE]/35 rounded-full backdrop-blur-xl overflow-hidden transition-all duration-300 hover:bg-[#00F2FE]/[0.22] hover:shadow-[0_0_20px_rgba(0,242,254,0.3)] hover:scale-[1.04] active:scale-[0.98]">
-                Get Started
-              </button>
-            </Link>
+            <MagneticButton strength={0.3}>
+              <Link href="/login" className="hidden sm:block text-sm font-medium text-zinc-400 hover:text-white transition-colors duration-300">Log In</Link>
+            </MagneticButton>
+            <MagneticButton>
+              <Link href="/signup">
+                <button className="relative inline-flex items-center justify-center px-5 py-2.5 text-sm font-semibold text-white bg-[#00F2FE]/[0.12] border border-[#00F2FE]/35 rounded-full backdrop-blur-xl overflow-hidden transition-all duration-300 hover:bg-[#00F2FE]/[0.22] hover:shadow-[0_0_20px_rgba(0,242,254,0.3)] active:scale-[0.98]">
+                  Get Started
+                </button>
+              </Link>
+            </MagneticButton>
             <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden p-2 text-zinc-400 hover:text-white rounded-lg hover:bg-white/[0.04] transition-all">
               {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
@@ -285,8 +293,8 @@ export default function HomePage() {
             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
               className="md:hidden mt-4 rounded-2xl border border-white/[0.06] bg-[#030712]/95 backdrop-blur-2xl overflow-hidden">
               <div className="px-4 py-4 space-y-1">
-                {['Features', 'Pricing', 'Blog', 'About', 'Log In'].map((link) => (
-                  <Link key={link} href={`/${link.toLowerCase().replace(' ', '-')}`}
+                {[['Home', '/'], ['Features', '/features'], ['Pricing', '/pricing'], ['Blog', '/blog'], ['About', '/about'], ['Log In', '/login']].map(([link, href]) => (
+                  <Link key={link} href={href}
                     className="block text-sm font-medium text-zinc-400 hover:text-white py-2.5 px-3 rounded-xl hover:bg-white/[0.04] transition-all">{link}</Link>
                 ))}
               </div>

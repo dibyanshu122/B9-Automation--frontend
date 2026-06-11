@@ -7,6 +7,7 @@ import { Logo } from '@/components/logo';
 import { marketingNav, allFeatures } from '@/lib/marketing';
 import { useAuthStore } from '@/store/authStore';
 import { ArrowRight, ChevronDown } from 'lucide-react';
+import { MagneticButton } from '@/components/premium-motion';
 
 export function MarketingNav({ variant = 'light' }: { variant?: 'light' | 'dark' }) {
   const { user } = useAuthStore();
@@ -25,17 +26,31 @@ export function MarketingNav({ variant = 'light' }: { variant?: 'light' | 'dark'
         <Logo variant={isDark ? 'dark' : 'light'} />
 
         <nav className="hidden items-center gap-7 md:flex">
-          {/* Features dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setFeaturesOpen(!featuresOpen)}
-              className={`flex items-center gap-1 text-sm font-medium transition-colors ${
+          {/* Home */}
+          <MagneticButton strength={0.3}>
+            <Link
+              href="/"
+              className={`text-sm font-medium transition-colors ${
                 isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-950'
               }`}
             >
-              Features
-              <ChevronDown className={`h-4 w-4 transition-transform ${featuresOpen ? 'rotate-180' : ''}`} />
-            </button>
+              Home
+            </Link>
+          </MagneticButton>
+
+          {/* Features dropdown */}
+          <div className="relative">
+            <MagneticButton strength={0.3}>
+              <button
+                onClick={() => setFeaturesOpen(!featuresOpen)}
+                className={`flex items-center gap-1 text-sm font-medium transition-colors ${
+                  isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-950'
+                }`}
+              >
+                Features
+                <ChevronDown className={`h-4 w-4 transition-transform ${featuresOpen ? 'rotate-180' : ''}`} />
+              </button>
+            </MagneticButton>
             <AnimatePresence>
               {featuresOpen && (
                 <motion.div
@@ -54,9 +69,9 @@ export function MarketingNav({ variant = 'light' }: { variant?: 'light' | 'dark'
                           key={f.title}
                           href={f.href}
                           onClick={() => setFeaturesOpen(false)}
-                          className="flex gap-3 rounded-lg p-2.5 hover:bg-white/5 transition group"
+                          className="flex gap-3 rounded-lg p-2.5 hover:bg-white/5 hover:translate-x-1.5 transition-all duration-300 group"
                         >
-                          <Icon className="h-5 w-5 text-gray-500 group-hover:text-gray-300 shrink-0 mt-0.5" />
+                          <Icon className="h-5 w-5 text-gray-500 group-hover:text-gray-300 group-hover:scale-110 transition-transform duration-300 shrink-0 mt-0.5" />
                           <div>
                             <p className="text-sm font-semibold text-gray-300 group-hover:text-white">{f.title}</p>
                             <p className="text-xs text-gray-600 group-hover:text-gray-500">{f.description}</p>
@@ -72,15 +87,16 @@ export function MarketingNav({ variant = 'light' }: { variant?: 'light' | 'dark'
 
           {/* Other nav links */}
           {marketingNav.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`text-sm font-medium transition-colors ${
-                isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-950'
-              }`}
-            >
-              {item.label}
-            </Link>
+            <MagneticButton key={item.href} strength={0.3}>
+              <Link
+                href={item.href}
+                className={`text-sm font-medium transition-colors ${
+                  isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-950'
+                }`}
+              >
+                {item.label}
+              </Link>
+            </MagneticButton>
           ))}
         </nav>
 
@@ -93,17 +109,19 @@ export function MarketingNav({ variant = 'light' }: { variant?: 'light' | 'dark'
           >
             {user ? 'Dashboard' : 'Sign In'}
           </Link>
-          <Link
-            href={user ? '/dashboard' : '/signup'}
-            className={`inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition-all duration-300 ${
-              isDark
-                ? 'border border-[#00F2FE]/35 bg-[#00F2FE]/[0.12] text-white backdrop-blur-xl hover:bg-[#00F2FE]/[0.22] hover:shadow-[0_0_20px_rgba(0,242,254,0.25)]'
-                : 'bg-gray-950 text-white hover:bg-gray-800'
-            }`}
-          >
-            Get Started
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
+          <MagneticButton>
+            <Link
+              href={user ? '/dashboard' : '/signup'}
+              className={`inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition-all duration-300 ${
+                isDark
+                  ? 'border border-[#00F2FE]/35 bg-[#00F2FE]/[0.12] text-white backdrop-blur-xl hover:bg-[#00F2FE]/[0.22] hover:shadow-[0_0_20px_rgba(0,242,254,0.25)]'
+                  : 'bg-gray-950 text-white hover:bg-gray-800'
+              }`}
+            >
+              Get Started
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </MagneticButton>
         </div>
       </div>
     </header>
