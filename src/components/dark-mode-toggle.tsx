@@ -9,26 +9,38 @@ export const DarkModeToggle = () => {
   return (
     <button
       onClick={toggleDarkMode}
-      title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
-      className="relative flex h-7 w-14 items-center rounded-full border border-white/10 bg-white/10 p-0.5 transition-all duration-300 hover:bg-white/20 focus:outline-none"
+      role="switch"
+      aria-checked={darkMode}
       aria-label="Toggle dark mode"
+      title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+      className={`relative h-7 w-[52px] shrink-0 rounded-full border transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/60 ${
+        darkMode
+          ? 'border-indigo-400/30 bg-slate-800'
+          : 'border-white/15 bg-white/10 hover:bg-white/15'
+      }`}
     >
-      {/* Track fill */}
+      {/* Tiny stars — only visible in dark mode */}
       <span
-        className={`absolute inset-0 rounded-full transition-all duration-300 ${
-          darkMode ? 'bg-indigo-600/70' : 'bg-amber-400/70'
-        }`}
+        aria-hidden
+        className={`pointer-events-none absolute left-2.5 top-2 h-[3px] w-[3px] rounded-full bg-indigo-300 transition-opacity duration-300 ${darkMode ? 'opacity-80' : 'opacity-0'}`}
       />
+      <span
+        aria-hidden
+        className={`pointer-events-none absolute left-5 top-4 h-[2px] w-[2px] rounded-full bg-indigo-200 transition-opacity duration-300 ${darkMode ? 'opacity-60' : 'opacity-0'}`}
+      />
+
       {/* Thumb */}
       <span
-        className={`relative z-10 flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-md transition-transform duration-300 ${
-          darkMode ? 'translate-x-7' : 'translate-x-0'
+        className={`absolute left-0 top-1/2 flex h-[22px] w-[22px] -translate-y-1/2 items-center justify-center rounded-full shadow-md transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+          darkMode
+            ? 'translate-x-[27px] bg-gradient-to-br from-indigo-400 to-indigo-600 shadow-indigo-900/50'
+            : 'translate-x-[3px] bg-gradient-to-br from-amber-300 to-amber-500 shadow-amber-900/30'
         }`}
       >
         {darkMode ? (
-          <Moon className="h-3.5 w-3.5 text-indigo-600" />
+          <Moon className="h-3 w-3 text-white" strokeWidth={2.5} />
         ) : (
-          <Sun className="h-3.5 w-3.5 text-amber-500" />
+          <Sun className="h-3 w-3 text-white" strokeWidth={2.5} />
         )}
       </span>
     </button>

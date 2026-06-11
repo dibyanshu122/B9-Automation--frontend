@@ -42,6 +42,45 @@ html.dark {
 .dark .bg-amber-50        { background-color: rgba(69,26,3,0.3) !important; }
 .dark .bg-purple-50       { background-color: rgba(46,16,101,0.3) !important; }
 .dark .bg-pink-50         { background-color: rgba(74,4,78,0.2) !important; }
+.dark .bg-emerald-50      { background-color: rgba(2,44,34,0.35) !important; }
+.dark .bg-violet-50       { background-color: rgba(46,16,101,0.3) !important; }
+.dark .bg-sky-50          { background-color: rgba(8,47,73,0.35) !important; }
+.dark .bg-cyan-50         { background-color: rgba(8,51,68,0.35) !important; }
+.dark .bg-rose-50         { background-color: rgba(76,5,25,0.25) !important; }
+.dark .bg-teal-50         { background-color: rgba(4,47,46,0.35) !important; }
+.dark .bg-lime-50         { background-color: rgba(26,46,5,0.3) !important; }
+.dark .bg-white\/80       { background-color: rgba(30,41,59,0.8) !important; }
+.dark .bg-white\/60       { background-color: rgba(30,41,59,0.6) !important; }
+.dark .bg-\[\#f0f2f5\]    { background-color: #0f172a !important; }
+
+/* ── Tint borders — pastel *-100/*-200 borders glow in dark; dim them ───── */
+.dark .border-orange-100,  .dark .border-orange-200  { border-color: rgba(154,52,18,0.45) !important; }
+.dark .border-amber-100,   .dark .border-amber-200   { border-color: rgba(146,64,14,0.45) !important; }
+.dark .border-yellow-100,  .dark .border-yellow-200  { border-color: rgba(133,77,14,0.45) !important; }
+.dark .border-red-100,     .dark .border-red-200     { border-color: rgba(153,27,27,0.45) !important; }
+.dark .border-rose-100,    .dark .border-rose-200    { border-color: rgba(159,18,57,0.4) !important; }
+.dark .border-pink-100,    .dark .border-pink-200    { border-color: rgba(157,23,77,0.4) !important; }
+.dark .border-purple-100,  .dark .border-purple-200  { border-color: rgba(107,33,168,0.4) !important; }
+.dark .border-violet-100,  .dark .border-violet-200  { border-color: rgba(109,40,217,0.4) !important; }
+.dark .border-indigo-100,  .dark .border-indigo-200  { border-color: rgba(55,48,163,0.45) !important; }
+.dark .border-blue-100,    .dark .border-blue-200    { border-color: rgba(30,64,175,0.45) !important; }
+.dark .border-sky-100,     .dark .border-sky-200     { border-color: rgba(7,89,133,0.45) !important; }
+.dark .border-cyan-100,    .dark .border-cyan-200    { border-color: rgba(14,116,144,0.45) !important; }
+.dark .border-teal-100,    .dark .border-teal-200    { border-color: rgba(15,118,110,0.45) !important; }
+.dark .border-emerald-100, .dark .border-emerald-200 { border-color: rgba(6,95,70,0.45) !important; }
+.dark .border-green-100,   .dark .border-green-200   { border-color: rgba(22,101,52,0.45) !important; }
+.dark .border-lime-100,    .dark .border-lime-200    { border-color: rgba(63,98,18,0.4) !important; }
+
+/* ── Light gradient stops — header banners and tinted hero cards ────────── */
+.dark .from-orange-50 { --tw-gradient-from: rgba(124,45,18,0.18) var(--tw-gradient-from-position) !important; }
+.dark .from-violet-50 { --tw-gradient-from: rgba(46,16,101,0.25) var(--tw-gradient-from-position) !important; }
+.dark .from-red-50    { --tw-gradient-from: rgba(69,10,10,0.25) var(--tw-gradient-from-position) !important; }
+.dark .from-slate-50  { --tw-gradient-from: #0f172a var(--tw-gradient-from-position) !important; }
+.dark .from-white     { --tw-gradient-from: #1e293b var(--tw-gradient-from-position) !important; }
+.dark .via-white      { --tw-gradient-via: #1e293b var(--tw-gradient-via-position) !important; }
+.dark .to-white       { --tw-gradient-to: #1e293b var(--tw-gradient-to-position) !important; }
+.dark .to-orange-50   { --tw-gradient-to: rgba(124,45,18,0.15) var(--tw-gradient-to-position) !important; }
+.dark .to-slate-50    { --tw-gradient-to: #0f172a var(--tw-gradient-to-position) !important; }
 
 /* ── Text ────────────────────────────────────────────────────────────────── */
 .dark .text-gray-950      { color: #f8fafc !important; }
