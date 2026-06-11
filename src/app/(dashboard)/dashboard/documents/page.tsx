@@ -176,11 +176,11 @@ export default function DocumentsPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-4xl font-bold text-gray-900">Documents</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Documents</h1>
           <p className="text-gray-600 mt-2">Upload and manage your documents</p>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">

@@ -119,12 +119,12 @@ export default function AssistantsPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
 
       {/* Create New Assistant Section */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-4xl font-bold text-gray-900">Create New Assistant</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Create New Assistant</h1>
           <p className="mt-2 text-gray-600">Add a new AI assistant to your workshop</p>
         </div>
         <Button

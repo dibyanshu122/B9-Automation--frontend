@@ -1519,7 +1519,7 @@ export default function IntegrationsPage() {
               <Sparkles className="h-3.5 w-3.5 animate-pulse" />
               AI actions across your tools
             </p>
-            <h1 className="text-3xl font-bold text-gray-950">Integrations</h1>
+            <h1 className="text-2xl font-bold text-gray-950">Integrations</h1>
             <p className="mt-2 max-w-2xl text-gray-600">
               Connect WhatsApp, Facebook, Instagram, Gmail, Sheets, Razorpay and more. Add your credentials to start sending, syncing, and automating in real time.
             </p>

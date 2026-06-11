@@ -734,7 +734,7 @@ export default function LeadsPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-950">Lead CRM</h1>
+          <h1 className="text-2xl font-bold text-gray-950">Lead CRM</h1>
           <p className="mt-2 text-gray-600">Qualified leads, pipeline stages, conversation context, and handover actions.</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">

@@ -74,10 +74,10 @@ export default function WorkspacesPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-4xl font-bold text-gray-900">Workspaces</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Workspaces</h1>
           <p className="text-gray-600 mt-2">
             Organize assistants, documents, widgets, and team knowledge in one place.
           </p>

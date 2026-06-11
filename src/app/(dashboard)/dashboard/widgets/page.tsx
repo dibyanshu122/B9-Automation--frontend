@@ -293,7 +293,7 @@ export default function WidgetsPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
-          <h1 className="text-4xl font-bold text-gray-900">Widgets</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Widgets</h1>
           <p className="mt-2 text-gray-600">Choose which assistant should appear on each website and copy its embed code.</p>
           <p className="mt-2 text-sm font-semibold text-gray-500">
             Plan: {widgetAccess.currentPlan} · Watermark: {widgetAccess.currentPlan === 'STARTER' ? 'ON' : widgetAccess.currentPlan === 'FREE' ? 'Locked' : 'Removed'}

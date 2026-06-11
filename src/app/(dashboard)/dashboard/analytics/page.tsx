@@ -123,7 +123,7 @@ export default function AnalyticsPage() {
           </div>
         )}
         <div className="relative overflow-hidden rounded-xl border border-orange-100 bg-white p-6 shadow-sm">
-          <h1 className="text-4xl font-bold text-gray-950">Analytics</h1>
+          <h1 className="text-2xl font-bold text-gray-950">Analytics</h1>
           <p className="mt-2 text-gray-600">Track conversations, leads, automations, saved time, and launch readiness.</p>
         </div>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -174,7 +174,7 @@ export default function AnalyticsPage() {
         <div className="absolute right-6 top-6 h-20 w-20 rounded-full bg-orange-100 blur-2xl" />
         <div className="relative flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-4xl font-bold text-gray-950">Analytics</h1>
+            <h1 className="text-2xl font-bold text-gray-950">Analytics</h1>
             <p className="mt-2 max-w-2xl text-gray-600">
               Track conversations, leads, automations, saved time, and launch readiness in one place.
             </p>

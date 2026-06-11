@@ -105,7 +105,7 @@ export default function LaunchCenterPage() {
       <section className="relative overflow-hidden rounded-xl border border-gray-200 bg-gray-950 p-6 text-white shadow-xl">
         <div className="relative grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
           <div>
-            <h1 className="text-3xl font-bold sm:text-4xl">Production Launch Center</h1>
+            <h1 className="text-2xl font-bold">Production Launch Center</h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-300">
               Final readiness checklist for WhatsApp, payments, security, business value, widget, automation, and the real owner journey.
             </p>
