@@ -6,6 +6,7 @@ import Link from 'next/link';
 // import { Button } from '@/components/button'; // reserved for future use
 import { HeroAnimation } from '@/components/hero-animation';
 import { SplineViewer } from '@/components/spline-viewer';
+import { TiltCard, CountUp } from '@/components/premium-motion';
 import { Logo } from '@/components/logo';
 import { featureHighlights, workflowSteps, trustPoints, blogPosts, allFeatures } from '@/lib/marketing';
 import {
@@ -95,7 +96,8 @@ function BentoCard({ title, desc, tag, icon: Icon }: {
   title: string; desc: string; tag: string; icon: React.ComponentType<{ className?: string }>;
 }) {
   return (
-    <div className="group relative rounded-2xl p-8 bg-white/[0.01] border border-white/[0.06] backdrop-blur-xl transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-2 hover:bg-white/[0.025] hover:border-[#00F2FE]/30 hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8),0_0_50px_rgba(0,242,254,0.04)] overflow-hidden cursor-default">
+    <TiltCard className="h-full rounded-2xl">
+    <div className="group relative h-full rounded-2xl p-8 bg-white/[0.01] border border-white/[0.06] backdrop-blur-xl transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-white/[0.025] hover:border-[#00F2FE]/30 hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8),0_0_50px_rgba(0,242,254,0.04)] overflow-hidden cursor-default">
       {/* Inner top glow */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#00F2FE]/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-2xl" />
       {/* Subtle corner accent */}
@@ -114,6 +116,7 @@ function BentoCard({ title, desc, tag, icon: Icon }: {
         </span>
       </div>
     </div>
+    </TiltCard>
   );
 }
 
@@ -138,6 +141,14 @@ function PremiumH2({ children, className = '' }: { children: React.ReactNode; cl
 // ─── Main Component ────────────────────────────────────────────────────────────
 export default function HomePage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [faqTyping, setFaqTyping] = useState(false);
+
+  const askFaq = (i: number) => {
+    if (openFaq === i) { setOpenFaq(null); return; }
+    setOpenFaq(i);
+    setFaqTyping(true);
+    setTimeout(() => setFaqTyping(false), 750);
+  };
   const [mobileOpen, setMobileOpen] = useState(false);
   const [featuresOpen, setFeaturesOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -286,6 +297,28 @@ export default function HomePage() {
 
       <HeroAnimation />
 
+      {/* ─── LIVE PROOF TICKER ────────────────────────────────────────── */}
+      <section className="relative z-10 border-b border-white/[0.04] bg-white/[0.008]">
+        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-px md:grid-cols-4">
+          {[
+            { value: 12480, suffix: '+', label: 'Messages sent this week' },
+            { value: 2340, suffix: '+', label: 'Leads captured this week' },
+            { value: 890, suffix: '+', label: 'Automations running daily' },
+            { value: 98, suffix: '%', label: 'Delivery success rate' },
+          ].map((stat, i) => (
+            <div key={stat.label} className={`flex flex-col items-center gap-1 px-4 py-7 text-center ${i > 0 ? 'border-l border-white/[0.04]' : ''} ${i === 2 ? 'max-md:border-l-0' : ''}`}>
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                </span>
+                <CountUp to={stat.value} suffix={stat.suffix} className="text-2xl font-bold tracking-tight text-white md:text-3xl" />
+              </div>
+              <p className="text-[11px] font-medium uppercase tracking-wider text-zinc-600">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+      </section>
 
       {/* ─── SOCIAL PROOF ─────────────────────────────────────────────── */}
       <section className="py-12 border-b border-white/[0.04] relative z-10">
@@ -616,33 +649,97 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* FAQ */}
-      <section className="py-28 lg:py-36 border-b border-white/[0.04] relative z-10">
-        <div className="mx-auto max-w-4xl px-6">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="text-center mb-20">
+      {/* FAQ — Ask the AI orb */}
+      <section className="py-28 lg:py-36 border-b border-white/[0.04] relative z-10 overflow-hidden">
+        <div className="absolute inset-0 flex items-start justify-center pointer-events-none">
+          <div className="mt-32 w-[600px] h-[300px] bg-[#00F2FE]/[0.03] rounded-full blur-[130px]" />
+        </div>
+        <div className="mx-auto max-w-4xl px-6 relative z-10">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="text-center mb-14">
             <motion.div variants={fadeUp}><SectionLabel>💬 FAQ</SectionLabel></motion.div>
-            <motion.div variants={fadeUp}><PremiumH2 className="text-4xl mt-3">Frequently asked questions</PremiumH2></motion.div>
+            <motion.div variants={fadeUp}><PremiumH2 className="text-4xl mt-3">Ask B9 anything</PremiumH2></motion.div>
+            <motion.p variants={fadeUp} className="mt-4 text-zinc-500 text-sm">Tap a question — the AI answers, just like it will for your customers.</motion.p>
           </motion.div>
 
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="space-y-2">
-            {faqs.map((faq, i) => (
-              <motion.div key={faq.q} variants={fadeUp}
-                className={`rounded-2xl border overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${openFaq === i ? 'border-[#00F2FE]/25 bg-white/[0.025] shadow-[0_0_30px_rgba(0,242,254,0.04)]' : 'border-white/[0.05] bg-white/[0.01] hover:border-white/[0.09]'}`}>
-                <button onClick={() => setOpenFaq(openFaq === i ? null : i)} className="w-full flex items-center justify-between p-6 text-left">
-                  <p className="text-base font-medium text-zinc-200 pr-4">{faq.q}</p>
-                  <div className={`h-8 w-8 rounded-lg border flex items-center justify-center shrink-0 transition-all duration-300 ${openFaq === i ? 'border-[#00F2FE]/30 bg-[#00F2FE]/10' : 'border-white/[0.06]'}`}>
-                    <ChevronDown className={`h-4 w-4 transition-transform duration-300 ${openFaq === i ? 'rotate-180 text-[#00F2FE]' : 'text-zinc-600'}`} />
+          {/* The Orb */}
+          <motion.div initial={{ opacity: 0, scale: 0.85 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }}
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }} className="relative mx-auto mb-10 flex h-36 w-36 items-center justify-center">
+            {/* Pulse rings — excited while "thinking" */}
+            {[0, 1].map((r) => (
+              <div key={r}
+                className={`absolute inset-0 rounded-full border transition-colors duration-300 ${faqTyping ? 'border-[#00F2FE]/40' : 'border-[#00F2FE]/15'}`}
+                style={{ animation: `b9-faq-ring ${faqTyping ? '1.1s' : '2.6s'} ease-out ${r * (faqTyping ? 0.55 : 1.3)}s infinite` }}
+              />
+            ))}
+            <div className={`relative flex h-24 w-24 items-center justify-center rounded-[1.6rem] border bg-[#03121b]/90 transition-all duration-300 ${faqTyping ? 'border-[#00F2FE]/50 shadow-[0_0_60px_rgba(0,242,254,0.35)]' : 'border-[#00F2FE]/30 shadow-[0_0_45px_rgba(0,242,254,0.18)]'}`}>
+              <div className="absolute inset-0 rounded-[1.6rem] bg-gradient-to-br from-[#00F2FE]/20 via-transparent to-[#A855F7]/15" />
+              <Bot className={`relative h-10 w-10 text-[#7BFFF8] transition-transform duration-300 ${faqTyping ? 'scale-110' : ''}`} />
+            </div>
+            <style>{`
+              @keyframes b9-faq-ring {
+                0% { transform: scale(0.7); opacity: 0.9; }
+                100% { transform: scale(1.45); opacity: 0; }
+              }
+            `}</style>
+          </motion.div>
+
+          {/* Answer bubble — AI types, then answers */}
+          <div className="mx-auto mb-12 min-h-[110px] max-w-2xl">
+            <AnimatePresence mode="wait">
+              {openFaq !== null && (
+                <motion.div
+                  key={`${openFaq}-${faqTyping ? 'typing' : 'answer'}`}
+                  initial={{ opacity: 0, y: 14, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                  transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                  className="relative rounded-2xl rounded-tl-md border border-[#00F2FE]/20 bg-[#06111b]/80 p-6 shadow-[0_18px_50px_rgba(0,0,0,0.45),0_0_30px_rgba(0,242,254,0.06)] backdrop-blur-xl"
+                >
+                  <div className="mb-2 flex items-center gap-2">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-md border border-[#00F2FE]/30 bg-[#00F2FE]/10">
+                      <Bot className="h-3 w-3 text-[#7BFFF8]" />
+                    </span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#00F2FE]/80">B9 AI</span>
                   </div>
-                </button>
-                <AnimatePresence>
-                  {openFaq === i && (
-                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }} className="overflow-hidden">
-                      <div className="px-6 pb-6 text-zinc-500 text-sm leading-relaxed border-t border-white/[0.04] pt-4">{faq.a}</div>
-                    </motion.div>
+                  {faqTyping ? (
+                    <div className="flex items-center gap-1.5 py-2">
+                      {[0, 1, 2].map((d) => (
+                        <span key={d} className="h-2 w-2 rounded-full bg-[#00F2FE]/60 animate-bounce" style={{ animationDelay: `${d * 0.15}s` }} />
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-[15px] leading-relaxed text-zinc-300">{faqs[openFaq].a}</p>
                   )}
-                </AnimatePresence>
-              </motion.div>
+                </motion.div>
+              )}
+              {openFaq === null && (
+                <motion.p
+                  key="faq-hint"
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  className="pt-8 text-center text-sm text-zinc-600"
+                >
+                  ↓ Pick a question below
+                </motion.p>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Question chips */}
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}
+            className="flex flex-wrap justify-center gap-2.5">
+            {faqs.map((faq, i) => (
+              <motion.button
+                key={faq.q}
+                variants={fadeUp}
+                onClick={() => askFaq(i)}
+                className={`rounded-full border px-4 py-2.5 text-[13px] font-medium transition-all duration-300 ${
+                  openFaq === i
+                    ? 'border-[#00F2FE]/45 bg-[#00F2FE]/[0.12] text-white shadow-[0_0_24px_rgba(0,242,254,0.15)]'
+                    : 'border-white/[0.07] bg-white/[0.015] text-zinc-400 hover:border-[#00F2FE]/25 hover:text-zinc-200 hover:-translate-y-0.5'
+                }`}
+              >
+                {faq.q}
+              </motion.button>
             ))}
           </motion.div>
         </div>

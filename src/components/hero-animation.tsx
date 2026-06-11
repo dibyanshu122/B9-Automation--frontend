@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { MagneticButton } from '@/components/premium-motion';
 import {
   ArrowRight,
   Bot,
@@ -209,6 +210,53 @@ export function HeroAnimation() {
     return () => window.removeEventListener('mousemove', onMove);
   }, []);
 
+  // Cursor parallax — orbit nodes lean toward the cursor at different depths.
+  // Applied to an INNER wrapper so it composes with GSAP's outer x/y transforms.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (window.matchMedia('(max-width: 767px)').matches) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const root = rootRef.current;
+    if (!root) return;
+
+    let raf = 0;
+    let targetX = 0;
+    let targetY = 0;
+    let curX = 0;
+    let curY = 0;
+
+    const onMove = (e: MouseEvent) => {
+      const rect = root.getBoundingClientRect();
+      targetX = ((e.clientX - rect.left) / rect.width - 0.5) * 2;   // -1..1
+      targetY = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
+    };
+
+    const tick = () => {
+      curX += (targetX - curX) * 0.06; // lazy follow — feels weighty
+      curY += (targetY - curY) * 0.06;
+      const inners = root.querySelectorAll<HTMLElement>('[data-node-parallax]');
+      inners.forEach((el) => {
+        const depth = parseFloat(el.dataset.nodeParallax || '10');
+        el.style.transform = `translate3d(${curX * depth}px, ${curY * depth}px, 0)`;
+      });
+      const core = root.querySelector<HTMLElement>('[data-core-parallax]');
+      if (core) core.style.transform = `translate3d(${curX * 5}px, ${curY * 5}px, 0)`;
+      const blobs = root.querySelectorAll<HTMLElement>('[data-blob-parallax]');
+      blobs.forEach((el, i) => {
+        const d = 14 + i * 6;
+        el.style.transform = `translate3d(${-curX * d}px, ${-curY * d}px, 0)`; // opposite = depth
+      });
+      raf = requestAnimationFrame(tick);
+    };
+
+    window.addEventListener('mousemove', onMove, { passive: true });
+    raf = requestAnimationFrame(tick);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+
   return (
     <section
       ref={rootRef}
@@ -252,9 +300,9 @@ export function HeroAnimation() {
 
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute left-1/2 top-1/2 h-[720px] w-[720px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#00F2FE]/[0.055] blur-[140px]" />
-        <div className="absolute right-[-10%] top-[15%] h-[500px] w-[500px] rounded-full bg-[#FF5722]/[0.035] blur-[130px]" />
-        <div className="absolute left-[12%] top-[18%] h-[360px] w-[360px] rounded-full bg-[#25D366]/[0.025] blur-[120px]" />
-        <div className="absolute bottom-[10%] right-[28%] h-[300px] w-[300px] rounded-full bg-[#A855F7]/[0.025] blur-[110px]" />
+        <div data-blob-parallax className="absolute right-[-10%] top-[15%] h-[500px] w-[500px] rounded-full bg-[#FF5722]/[0.035] blur-[130px]" />
+        <div data-blob-parallax className="absolute left-[12%] top-[18%] h-[360px] w-[360px] rounded-full bg-[#25D366]/[0.025] blur-[120px]" />
+        <div data-blob-parallax className="absolute bottom-[10%] right-[28%] h-[300px] w-[300px] rounded-full bg-[#A855F7]/[0.025] blur-[110px]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.04)_1px,transparent_1px)] [background-size:38px_38px] opacity-[0.25]" />
         <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-[#030712] via-[#030712]/80 to-transparent" />
       </div>
@@ -284,17 +332,21 @@ export function HeroAnimation() {
           </p>
 
           <div className="mt-9 flex flex-wrap items-center gap-3">
-            <Link href="/signup">
-              <button className="group inline-flex items-center gap-2 rounded-xl border border-[#00F2FE]/35 bg-[#00F2FE]/[0.14] px-7 py-3.5 text-sm font-semibold text-white shadow-[0_0_35px_rgba(0,242,254,0.18)] transition-all duration-300 hover:scale-[1.02] hover:bg-[#00F2FE]/[0.2] hover:shadow-[0_0_48px_rgba(0,242,254,0.28)] active:scale-[0.98]">
-                Start Free Trial
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-              </button>
-            </Link>
-            <Link href="/signup?demo=1">
-              <button className="rounded-xl border border-white/[0.09] bg-white/[0.035] px-7 py-3.5 text-sm font-semibold text-zinc-200 transition-all duration-300 hover:border-white/[0.16] hover:bg-white/[0.06] active:scale-[0.98]">
-                Book Demo
-              </button>
-            </Link>
+            <MagneticButton>
+              <Link href="/signup">
+                <button className="group inline-flex items-center gap-2 rounded-xl border border-[#00F2FE]/35 bg-[#00F2FE]/[0.14] px-7 py-3.5 text-sm font-semibold text-white shadow-[0_0_35px_rgba(0,242,254,0.18)] transition-all duration-300 hover:bg-[#00F2FE]/[0.2] hover:shadow-[0_0_48px_rgba(0,242,254,0.28)] active:scale-[0.98]">
+                  Start Free Trial
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                </button>
+              </Link>
+            </MagneticButton>
+            <MagneticButton strength={0.25}>
+              <Link href="/signup?demo=1">
+                <button className="rounded-xl border border-white/[0.09] bg-white/[0.035] px-7 py-3.5 text-sm font-semibold text-zinc-200 transition-all duration-300 hover:border-white/[0.16] hover:bg-white/[0.06] active:scale-[0.98]">
+                  Book Demo
+                </button>
+              </Link>
+            </MagneticButton>
             <Link href="/how-it-works" className="inline-flex items-center gap-2 px-2 py-3 text-sm font-semibold text-zinc-500 transition-colors hover:text-zinc-200">
               How it works
               <MousePointer2 className="h-4 w-4" />
@@ -349,12 +401,12 @@ export function HeroAnimation() {
 
             <div data-ai-core className="absolute left-1/2 top-1/2 z-20 flex h-36 w-36 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-[2rem] border border-[#00F2FE]/30 bg-[#03121b]/90 shadow-[0_0_65px_rgba(0,242,254,0.24)]">
               <div className="absolute inset-0 rounded-[2rem] bg-gradient-to-br from-[#00F2FE]/22 via-[#25D366]/10 to-[#FF5722]/18" />
-              <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl border border-white/[0.12] bg-white/[0.06]">
+              <div data-core-parallax className="relative flex h-20 w-20 items-center justify-center rounded-2xl border border-white/[0.12] bg-white/[0.06] will-change-transform">
                 <Bot className="h-9 w-9 text-[#7BFFF8]" />
               </div>
             </div>
 
-            {agentNodes.map((node) => {
+            {agentNodes.map((node, nodeIndex) => {
               const Icon = node.icon;
               return (
                 <div
@@ -363,7 +415,8 @@ export function HeroAnimation() {
                   className="absolute left-1/2 top-1/2 z-10 w-[150px] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-white/[0.1] bg-[#07111f]/82 p-3 shadow-[0_18px_50px_rgba(0,0,0,0.38)] backdrop-blur-2xl"
                   style={{ boxShadow: `0 18px 50px rgba(0,0,0,0.38), 0 0 28px ${node.accent}22` }}
                 >
-                  <div className="flex items-center gap-2">
+                  {/* Inner parallax wrapper — composes with GSAP's outer transform */}
+                  <div data-node-parallax={String(7 + (nodeIndex % 3) * 4)} className="flex items-center gap-2 will-change-transform">
                     <span
                       className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border text-white"
                       style={{ borderColor: `${node.accent}40`, background: `${node.accent}18`, color: node.accent }}
