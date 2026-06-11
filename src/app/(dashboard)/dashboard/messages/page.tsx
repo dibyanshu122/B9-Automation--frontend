@@ -393,6 +393,16 @@ function UnifiedInbox() {
   const agentSseRef = useRef<EventSource | null>(null);
   const [reply, setReply] = useState('');
   const [sending, setSending] = useState(false);
+  // Typing indicator — show "typing…" to the customer while agent composes.
+  // Meta's indicator lasts ~25s, so re-fire at most every 20s while typing.
+  const lastTypingSentRef = useRef(0);
+  const notifyTyping = (c: Contact | null) => {
+    if (!c || c.channel !== 'whatsapp') return;
+    const now = Date.now();
+    if (now - lastTypingSentRef.current < 20000) return;
+    lastTypingSentRef.current = now;
+    post('/api/automation/inbox/typing', { sender_id: c.sender_id, channel: c.channel }).catch(() => {});
+  };
   const [menuOpen, setMenuOpen] = useState(false);
   const [leadsMap, setLeadsMap] = useState<Record<string, string>>({});
   const [quickReplies, setQuickReplies] = useState<{id: string; title: string; message: string}[]>([]);
@@ -1493,6 +1503,7 @@ function UnifiedInbox() {
                         value={reply}
                         onChange={e => {
                           setReply(e.target.value);
+                          if (e.target.value.trim()) notifyTyping(selected);
                           e.target.style.height = 'auto';
                           e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
                         }}
