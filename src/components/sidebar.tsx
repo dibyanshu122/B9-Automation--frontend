@@ -32,20 +32,43 @@ const ICONS = {
 // Dark sidebar
 const BG = '#0F172A';
 
-// Per-icon hover animation — each icon moves true to its meaning (see globals.css)
+// Per-icon hover animation — EVERY icon has its own signature motion (see globals.css)
 const ICON_ANIM: Record<string, string> = {
-  Settings: 'icon-anim-spin',
-  Bell: 'icon-anim-ring', MessageSquare: 'icon-anim-ring', MessageCircle: 'icon-anim-ring', Inbox: 'icon-anim-ring',
-  Zap: 'icon-anim-zap', Workflow: 'icon-anim-zap',
-  Upload: 'icon-anim-lift', BarChart3: 'icon-anim-lift', Layers: 'icon-anim-lift',
-  Plug: 'icon-anim-wiggle', Bot: 'icon-anim-wiggle', FlaskConical: 'icon-anim-wiggle', Megaphone: 'icon-anim-wiggle', UserCog: 'icon-anim-wiggle',
-  Brain: 'icon-anim-pulse', Target: 'icon-anim-pulse', QrCode: 'icon-anim-pulse', LayoutDashboard: 'icon-anim-pulse',
-  ShoppingCart: 'icon-anim-nudge', CreditCard: 'icon-anim-nudge', Reply: 'icon-anim-nudge', Send: 'icon-anim-nudge', LogOut: 'icon-anim-nudge',
-  UserX: 'icon-anim-shake',
-  Key: 'icon-anim-turn',
-  Rocket: 'icon-anim-rocket',
+  LayoutDashboard: 'ia-dashboard',  // tiles zoom-settle
+  MessageSquare: 'ia-chat',         // chat bubble bob
+  Inbox: 'ia-tray',                 // message drops in tray
+  Reply: 'ia-reply',                // reply arrow swing
+  UserCog: 'ia-handover',           // person tilts to agent
+  UserX: 'ia-denied',               // firm denied head-shake
+  Bell: 'ia-bell',                  // bell rings from hinge
+  Target: 'ia-target',              // crosshair locks on
+  Users: 'ia-people',               // greeting bounce
+  Megaphone: 'ia-megaphone',        // tilts up & blasts
+  Filter: 'ia-funnel',              // contents pour through
+  CheckSquare: 'ia-check',          // checkmark stamp
+  ShoppingCart: 'ia-cart',          // rolls on wheels
+  Upload: 'ia-upload',              // double arrow lift
+  QrCode: 'ia-qr',                  // scanner flash
+  Zap: 'ia-zap',                    // electric strike
+  Workflow: 'ia-flow',              // nodes flow through
+  Layout: 'ia-flip',                // 3D card flip
+  Layers: 'ia-layers',              // stack fans up
+  FlaskConical: 'ia-flask',         // liquid swirl
+  ScrollText: 'ia-scroll',          // paper unrolls
+  Brain: 'ia-brain',                // thinking heartbeat
+  Bot: 'ia-bot',                    // robot head-tilt
+  FileText: 'ia-page',              // page flips open
+  Code: 'ia-code',                  // brackets glitch-type
+  MessageCircle: 'ia-chat',         // chat bubble bob
+  BarChart3: 'ia-chart',            // bars grow up
+  Plug: 'ia-plug',                  // plugs in & clicks
+  Settings: 'ia-gear',              // gear spin
+  CreditCard: 'ia-card',            // card swipe
+  Key: 'ia-key',                    // insert & turn
+  Rocket: 'ia-rocket',              // engine shake + liftoff
+  LogOut: 'ia-exit',                // walks out the door
 };
-const iconAnim = (name?: string) => (name && ICON_ANIM[name]) || 'icon-anim-pop';
+const iconAnim = (name?: string) => (name && ICON_ANIM[name]) || 'ia-pop';
 
 type TeamAccess = {
   role?: string;
@@ -368,7 +391,7 @@ export const Sidebar = () => {
               'nav-item flex w-full items-center rounded-lg text-slate-500 transition-all hover:bg-red-500/10 hover:text-red-400 text-sm',
               expanded ? 'gap-3 px-3 py-2' : 'h-10 justify-center items-center px-0 py-0 gap-0'
             )}>
-            <LogOut className="w-5 h-5 shrink-0 nav-icon icon-anim-nudge" />
+            <LogOut className="w-5 h-5 shrink-0 nav-icon ia-exit" />
             <span className={lbl}>Logout</span>
           </button>
 

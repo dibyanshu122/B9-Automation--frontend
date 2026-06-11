@@ -819,31 +819,141 @@ select:focus-visible {
   transform: translateZ(0);
 }
 
-/* ── Sidebar icon hover animations — each icon moves true to its meaning ── */
-.nav-item .nav-icon { transform-origin: center; }
-.nav-item:hover .icon-anim-spin   { animation: nav-spin 0.5s ease; }        /* Settings gear */
-.nav-item:hover .icon-anim-ring   { animation: nav-ring 0.6s ease; }        /* Bells & chat bubbles */
-.nav-item:hover .icon-anim-zap    { animation: nav-zap 0.45s ease; }        /* Automations bolt */
-.nav-item:hover .icon-anim-lift   { animation: nav-lift 0.45s ease; }       /* Upload & charts rise */
-.nav-item:hover .icon-anim-wiggle { animation: nav-wiggle 0.5s ease; }      /* Plug, bot, flask */
-.nav-item:hover .icon-anim-pulse  { animation: nav-pulse 0.5s ease; }       /* Brain, target, QR */
-.nav-item:hover .icon-anim-nudge  { animation: nav-nudge 0.4s ease; }       /* Cart, card, reply */
-.nav-item:hover .icon-anim-shake  { animation: nav-shake 0.4s ease; }       /* Opted-out X */
-.nav-item:hover .icon-anim-turn   { animation: nav-turn 0.5s ease; }        /* API key turning */
-.nav-item:hover .icon-anim-rocket { animation: nav-rocket 0.5s ease; }      /* Go Live liftoff */
-.nav-item:hover .icon-anim-pop    { animation: nav-pop 0.35s ease; }        /* Default */
+/* ── Sidebar icon hover micro-animations — every icon has its OWN motion ──
+   Premium micro-interactions: each animation tells the icon's story.       */
+.nav-item .nav-icon { transform-origin: center; will-change: transform; }
 
-@keyframes nav-spin   { from { transform: rotate(0deg); } to { transform: rotate(180deg); } }
-@keyframes nav-ring   { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(-14deg); } 40% { transform: rotate(11deg); } 60% { transform: rotate(-7deg); } 80% { transform: rotate(4deg); } }
-@keyframes nav-zap    { 0%, 100% { transform: scale(1); } 30% { transform: scale(1.25) rotate(-8deg); } 60% { transform: scale(0.95); } }
-@keyframes nav-lift   { 0%, 100% { transform: translateY(0); } 45% { transform: translateY(-4px); } }
-@keyframes nav-wiggle { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-12deg); } 70% { transform: rotate(10deg); } }
-@keyframes nav-pulse  { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.22); } }
-@keyframes nav-nudge  { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(4px); } }
-@keyframes nav-shake  { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 55% { transform: translateX(3px); } 80% { transform: translateX(-2px); } }
-@keyframes nav-turn   { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(28deg); } }
-@keyframes nav-rocket { 0%, 100% { transform: translate(0, 0) rotate(0); } 50% { transform: translate(2px, -4px) rotate(10deg); } }
-@keyframes nav-pop    { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.18); } }
+/* Dashboard — tiles zoom-settle into place */
+.nav-item:hover .ia-dashboard { animation: ia-dashboard 0.55s cubic-bezier(.34,1.56,.64,1); }
+@keyframes ia-dashboard { 0% { transform: scale(1); } 35% { transform: scale(0.82) rotate(-4deg); } 70% { transform: scale(1.12) rotate(2deg); } 100% { transform: scale(1); } }
+
+/* Inbox group bubble — chat notification bob (squash & stretch) */
+.nav-item:hover .ia-chat { animation: ia-chat 0.55s cubic-bezier(.34,1.56,.64,1); }
+@keyframes ia-chat { 0%,100% { transform: translateY(0) scale(1,1); } 30% { transform: translateY(-4px) scale(0.95,1.08); } 60% { transform: translateY(1px) scale(1.06,0.92); } 80% { transform: translateY(-1px) scale(1,1); } }
+
+/* Live Inbox tray — message drops into the tray */
+.nav-item:hover .ia-tray { animation: ia-tray 0.5s ease-out; }
+@keyframes ia-tray { 0% { transform: translateY(0); } 35% { transform: translateY(3px) scale(1.05,0.92); } 65% { transform: translateY(-2px) scale(0.98,1.04); } 100% { transform: translateY(0) scale(1,1); } }
+
+/* Reply arrow — swings back like replying */
+.nav-item:hover .ia-reply { animation: ia-reply 0.55s cubic-bezier(.34,1.56,.64,1); transform-origin: left center; }
+@keyframes ia-reply { 0%,100% { transform: rotate(0) translateX(0); } 40% { transform: rotate(-18deg) translateX(-3px); } 75% { transform: rotate(6deg) translateX(1px); } }
+
+/* Handover — person tilts toward the agent */
+.nav-item:hover .ia-handover { animation: ia-handover 0.6s ease; transform-origin: bottom center; }
+@keyframes ia-handover { 0%,100% { transform: rotate(0); } 30% { transform: rotate(-10deg) translateX(-1px); } 65% { transform: rotate(8deg) translateX(2px); } }
+
+/* Opted-out X — firm "denied" head-shake */
+.nav-item:hover .ia-denied { animation: ia-denied 0.45s ease; }
+@keyframes ia-denied { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-3px) rotate(-3deg); } 45% { transform: translateX(3px) rotate(3deg); } 70% { transform: translateX(-2px) rotate(-1deg); } 88% { transform: translateX(1px); } }
+
+/* Bell — true bell ring, hinged from the top */
+.nav-item:hover .ia-bell { animation: ia-bell 0.7s ease; transform-origin: top center; }
+@keyframes ia-bell { 0%,100% { transform: rotate(0); } 15% { transform: rotate(-18deg); } 32% { transform: rotate(14deg); } 49% { transform: rotate(-9deg); } 66% { transform: rotate(5deg); } 83% { transform: rotate(-2deg); } }
+
+/* Target — crosshair locks on (zoom focus from outside in) */
+.nav-item:hover .ia-target { animation: ia-target 0.5s cubic-bezier(.22,1,.36,1); }
+@keyframes ia-target { 0% { transform: scale(1); opacity: 1; } 30% { transform: scale(1.35); opacity: 0.6; } 100% { transform: scale(1); opacity: 1; } }
+
+/* Leads people — friendly greeting bounce */
+.nav-item:hover .ia-people { animation: ia-people 0.5s cubic-bezier(.34,1.56,.64,1); transform-origin: bottom center; }
+@keyframes ia-people { 0%,100% { transform: scale(1,1); } 35% { transform: scale(1.08,0.88); } 70% { transform: scale(0.96,1.1) translateY(-2px); } }
+
+/* Megaphone — announces: tilts up and blasts twice */
+.nav-item:hover .ia-megaphone { animation: ia-megaphone 0.6s ease; transform-origin: bottom left; }
+@keyframes ia-megaphone { 0%,100% { transform: rotate(0) scale(1); } 25% { transform: rotate(-14deg) scale(1.08); } 45% { transform: rotate(-14deg) scale(1.16); } 60% { transform: rotate(-14deg) scale(1.06); } 80% { transform: rotate(-6deg) scale(1.1); } }
+
+/* Filter funnel — contents pour down through it */
+.nav-item:hover .ia-funnel { animation: ia-funnel 0.55s ease; }
+@keyframes ia-funnel { 0%,100% { transform: translateY(0) scale(1,1); } 35% { transform: translateY(-2px) scale(1.06,0.94); } 70% { transform: translateY(3px) scale(0.94,1.08); } }
+
+/* Tasks check — stamps the checkmark */
+.nav-item:hover .ia-check { animation: ia-check 0.45s cubic-bezier(.34,1.56,.64,1); }
+@keyframes ia-check { 0% { transform: scale(1) rotate(0); } 35% { transform: scale(1.3) rotate(-8deg); } 70% { transform: scale(0.92) rotate(2deg); } 100% { transform: scale(1) rotate(0); } }
+
+/* Cart — rolls forward on its wheels */
+.nav-item:hover .ia-cart { animation: ia-cart 0.6s ease-in-out; }
+@keyframes ia-cart { 0%,100% { transform: translateX(0) rotate(0); } 30% { transform: translateX(4px) rotate(-4deg); } 55% { transform: translateX(2px) rotate(2deg); } 80% { transform: translateX(3px) rotate(0); } }
+
+/* Upload — double arrow lift, like files flying up */
+.nav-item:hover .ia-upload { animation: ia-upload 0.6s ease; }
+@keyframes ia-upload { 0%,100% { transform: translateY(0); } 25% { transform: translateY(-4px); } 45% { transform: translateY(-1px); } 65% { transform: translateY(-5px); } 85% { transform: translateY(0); } }
+
+/* QR — scanner flash */
+.nav-item:hover .ia-qr { animation: ia-qr 0.5s ease; }
+@keyframes ia-qr { 0%,100% { transform: scale(1); opacity: 1; } 30% { transform: scale(1.12); opacity: 0.4; } 50% { transform: scale(1.12); opacity: 1; } 70% { transform: scale(1.12); opacity: 0.55; } 90% { transform: scale(1); opacity: 1; } }
+
+/* Zap — electric strike: sharp jolt with recoil */
+.nav-item:hover .ia-zap { animation: ia-zap 0.5s cubic-bezier(.36,.07,.19,.97); }
+@keyframes ia-zap { 0%,100% { transform: scale(1) rotate(0); } 20% { transform: scale(1.35) rotate(-12deg) translateY(-2px); } 40% { transform: scale(0.88) rotate(6deg) translateY(1px); } 60% { transform: scale(1.15) rotate(-4deg); } 80% { transform: scale(0.97) rotate(1deg); } }
+
+/* Workflow — nodes flow left to right */
+.nav-item:hover .ia-flow { animation: ia-flow 0.55s ease-in-out; }
+@keyframes ia-flow { 0%,100% { transform: translateX(0) skewX(0); } 30% { transform: translateX(-3px) skewX(6deg); } 65% { transform: translateX(3px) skewX(-6deg); } }
+
+/* Template layout — 3D card flip */
+.nav-item:hover .ia-flip { animation: ia-flip 0.6s ease-in-out; }
+@keyframes ia-flip { 0%,100% { transform: perspective(120px) rotateY(0); } 50% { transform: perspective(120px) rotateY(180deg); } }
+
+/* Layers — stack fans upward */
+.nav-item:hover .ia-layers { animation: ia-layers 0.55s ease; }
+@keyframes ia-layers { 0%,100% { transform: translateY(0) scale(1,1); } 35% { transform: translateY(-3px) scale(1,1.15); } 70% { transform: translateY(0) scale(1,0.95); } }
+
+/* Flask — liquid swirls inside */
+.nav-item:hover .ia-flask { animation: ia-flask 0.7s ease-in-out; transform-origin: bottom center; }
+@keyframes ia-flask { 0%,100% { transform: rotate(0); } 20% { transform: rotate(-14deg); } 45% { transform: rotate(11deg); } 68% { transform: rotate(-6deg); } 85% { transform: rotate(3deg); } }
+
+/* Logs scroll — paper unrolls downward */
+.nav-item:hover .ia-scroll { animation: ia-scroll 0.5s ease; transform-origin: top center; }
+@keyframes ia-scroll { 0%,100% { transform: scaleY(1) translateY(0); } 35% { transform: scaleY(1.15) translateY(2px); } 70% { transform: scaleY(0.95) translateY(-1px); } }
+
+/* Brain — thinking double-heartbeat */
+.nav-item:hover .ia-brain { animation: ia-brain 0.7s ease; }
+@keyframes ia-brain { 0%,100% { transform: scale(1); } 18% { transform: scale(1.18); } 36% { transform: scale(1); } 54% { transform: scale(1.24); } 76% { transform: scale(0.97); } }
+
+/* Bot — curious robot head-tilt */
+.nav-item:hover .ia-bot { animation: ia-bot 0.7s ease; transform-origin: bottom center; }
+@keyframes ia-bot { 0%,100% { transform: rotate(0); } 25% { transform: rotate(12deg); } 55% { transform: rotate(12deg); } 80% { transform: rotate(-4deg); } }
+
+/* Document — page flips open from the left edge */
+.nav-item:hover .ia-page { animation: ia-page 0.55s ease; transform-origin: left center; }
+@keyframes ia-page { 0%,100% { transform: perspective(120px) rotateY(0); } 50% { transform: perspective(120px) rotateY(-30deg); } }
+
+/* Code — brackets glitch-type */
+.nav-item:hover .ia-code { animation: ia-code 0.45s steps(1) ; }
+@keyframes ia-code { 0%,100% { transform: translateX(0) skewX(0); } 25% { transform: translateX(-2px) skewX(-8deg); } 50% { transform: translateX(2px) skewX(8deg); } 75% { transform: translateX(-1px) skewX(-4deg); } }
+
+/* Analytics bars — bars grow up from the baseline */
+.nav-item:hover .ia-chart { animation: ia-chart 0.55s cubic-bezier(.34,1.56,.64,1); transform-origin: bottom center; }
+@keyframes ia-chart { 0% { transform: scaleY(1); } 35% { transform: scaleY(0.6); } 75% { transform: scaleY(1.15); } 100% { transform: scaleY(1); } }
+
+/* Plug — pushes into the socket and clicks */
+.nav-item:hover .ia-plug { animation: ia-plug 0.5s ease; }
+@keyframes ia-plug { 0%,100% { transform: translateX(0) rotate(0); } 35% { transform: translateX(-3px) rotate(-8deg); } 65% { transform: translateX(2px) rotate(0); } 80% { transform: translateX(0) scale(1.1); } }
+
+/* Settings — gear spins (the one you liked) */
+.nav-item:hover .ia-gear { animation: ia-gear 0.6s ease-in-out; }
+@keyframes ia-gear { from { transform: rotate(0deg); } to { transform: rotate(180deg); } }
+
+/* Credit card — swipes through the reader */
+.nav-item:hover .ia-card { animation: ia-card 0.55s ease-in-out; }
+@keyframes ia-card { 0%,100% { transform: translateX(0) rotate(0); } 30% { transform: translateX(-4px) rotate(-6deg); } 70% { transform: translateX(5px) rotate(4deg); } }
+
+/* Key — inserts and turns in the lock */
+.nav-item:hover .ia-key { animation: ia-key 0.6s ease; }
+@keyframes ia-key { 0%,100% { transform: translateX(0) rotate(0); } 30% { transform: translateX(3px) rotate(0); } 60% { transform: translateX(3px) rotate(38deg); } 85% { transform: translateX(0) rotate(0); } }
+
+/* Rocket — engine shake then liftoff */
+.nav-item:hover .ia-rocket { animation: ia-rocket 0.7s ease-in; }
+@keyframes ia-rocket { 0% { transform: translate(0,0) rotate(0); } 15% { transform: translate(-1px,0); } 25% { transform: translate(1px,1px); } 35% { transform: translate(-1px,0); } 60% { transform: translate(2px,-4px) rotate(8deg) scale(1.05); } 80% { transform: translate(3px,-6px) rotate(10deg) scale(1.02); } 100% { transform: translate(0,0) rotate(0) scale(1); } }
+
+/* Logout — walks out the door */
+.nav-item:hover .ia-exit { animation: ia-exit 0.5s ease; }
+@keyframes ia-exit { 0%,100% { transform: translateX(0); opacity: 1; } 45% { transform: translateX(5px); opacity: 0.5; } 60% { transform: translateX(-2px); opacity: 1; } }
+
+/* UserCog fallback + anything unmapped — soft spring pop */
+.nav-item:hover .ia-pop { animation: ia-pop 0.45s cubic-bezier(.34,1.56,.64,1); }
+@keyframes ia-pop { 0%,100% { transform: scale(1); } 40% { transform: scale(1.22); } 75% { transform: scale(0.96); } }
 
 /* Accessibility */
 @media (prefers-reduced-motion: reduce) {
