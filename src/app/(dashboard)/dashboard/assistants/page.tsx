@@ -291,7 +291,7 @@ export default function AssistantsPage() {
                   </div>
                   <button type="button" onClick={() => setNewAssistant({ ...newAssistant, compliance_mode: !newAssistant.compliance_mode })}
                     className={`relative h-6 w-11 rounded-full transition-colors ${newAssistant.compliance_mode ? 'bg-indigo-500' : 'bg-gray-300'}`}>
-                    <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${newAssistant.compliance_mode ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                    <span className={`absolute left-0 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${newAssistant.compliance_mode ? 'translate-x-5' : 'translate-x-0.5'}`} />
                   </button>
                 </div>
               </div>
@@ -319,7 +319,7 @@ export default function AssistantsPage() {
                 </div>
                 <button type="button" onClick={() => setNewAssistant({ ...newAssistant, lead_capture_enabled: !newAssistant.lead_capture_enabled })}
                   className={`relative h-6 w-11 rounded-full transition-colors ${newAssistant.lead_capture_enabled ? 'bg-indigo-500' : 'bg-gray-300'}`}>
-                  <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${newAssistant.lead_capture_enabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                  <span className={`absolute left-0 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${newAssistant.lead_capture_enabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
                 </button>
               </div>
 

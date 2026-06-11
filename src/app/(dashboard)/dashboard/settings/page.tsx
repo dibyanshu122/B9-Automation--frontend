@@ -709,7 +709,7 @@ export default function SettingsPage() {
             onClick={() => { setByokEnabled(!byokEnabled); setAiDirty(true); }}
             className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${byokEnabled ? 'bg-violet-500' : 'bg-gray-300'}`}
           >
-            <span className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-transform ${byokEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+            <span className={`absolute left-0 top-1 h-4 w-4 rounded-full bg-white shadow transition-transform ${byokEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
           </button>
         </div>
 
@@ -836,7 +836,7 @@ export default function SettingsPage() {
               onClick={() => { setAgenticMaxSteps(agenticMaxSteps === 0 ? 4 : 0); setAiDirty(true); }}
               className={`relative h-6 w-11 shrink-0 rounded-full transition-colors duration-200 focus:outline-none ${agenticMaxSteps === 0 ? 'bg-gray-300' : 'bg-emerald-500'}`}
             >
-              <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 ${agenticMaxSteps === 0 ? 'translate-x-0.5' : 'translate-x-5'}`} />
+              <span className={`absolute left-0 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 ${agenticMaxSteps === 0 ? 'translate-x-0.5' : 'translate-x-5'}`} />
             </button>
           </div>
         </div>
@@ -1385,7 +1385,7 @@ function CsatSettingsSection() {
           </div>
           <button type="button" onClick={() => setSettings(s => ({ ...s, enabled: !s.enabled }))}
             className={`relative h-6 w-11 rounded-full transition-colors ${settings.enabled ? 'bg-orange-500' : 'bg-gray-300'}`}>
-            <span className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-transform ${settings.enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+            <span className={`absolute left-0 top-1 h-4 w-4 rounded-full bg-white shadow transition-transform ${settings.enabled ? 'translate-x-6' : 'translate-x-1'}`} />
           </button>
         </div>
         {settings.enabled && (

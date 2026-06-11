@@ -176,7 +176,7 @@ export function TopUpModal({ isOpen, onClose }: TopUpModalProps) {
             onClick={() => setAutoTopup(!autoTopup)}
             className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${autoTopup ? 'bg-emerald-500' : 'bg-gray-300'}`}
           >
-            <span className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-transform ${autoTopup ? 'translate-x-6' : 'translate-x-1'}`} />
+            <span className={`absolute left-0 top-1 h-4 w-4 rounded-full bg-white shadow transition-transform ${autoTopup ? 'translate-x-6' : 'translate-x-1'}`} />
           </button>
         </div>
 
