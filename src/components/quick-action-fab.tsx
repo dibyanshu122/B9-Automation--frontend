@@ -52,6 +52,9 @@ export function QuickActionFAB() {
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
+  // Hide on the live inbox — the FAB sits exactly over the message send button
+  if (pathname?.startsWith('/dashboard/messages')) return null;
+
   return (
     <>
       {/* Backdrop */}
