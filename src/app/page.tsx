@@ -6,7 +6,6 @@ import Link from 'next/link';
 // import { Button } from '@/components/button'; // reserved for future use
 import { HeroAnimation } from '@/components/hero-animation';
 import { Logo } from '@/components/logo';
-import { SplineViewer } from '@/components/spline-viewer';
 import { featureHighlights, workflowSteps, trustPoints, blogPosts, allFeatures } from '@/lib/marketing';
 import {
   ArrowRight, Bot, Brain, Building2, ChevronDown, MessageCircle, Sparkles, Users,
@@ -428,7 +427,7 @@ export default function HomePage() {
                     Even when you don&apos;t.
                   </span>
                 </PremiumH2>
-                <p className="mt-6 text-zinc-500 text-lg font-light leading-relaxed">
+                <p className="mt-6 text-zinc-400 text-lg font-light leading-relaxed">
                   Set up automation workflows once. B9 handles lead capture, follow-ups, appointment booking, and support while you focus on growing.
                 </p>
               </motion.div>
@@ -446,11 +445,56 @@ export default function HomePage() {
           </motion.div>
 
           <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} transition={{ duration: 1.4 }} viewport={{ once: true }}
-            className="relative h-[500px] lg:h-full overflow-hidden bg-[#030712]">
-            <SplineViewer scene="https://prod.spline.design/jxk-XEJksbP0STuI/scene.splinecode" className="absolute inset-0 w-full h-full" />
-            <div className="absolute inset-y-0 left-0 w-40 bg-gradient-to-r from-[#030712] to-transparent z-10 pointer-events-none" />
-            <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#030712] to-transparent z-10 pointer-events-none" />
-            <div className="absolute bottom-0 right-0 w-[240px] h-20 bg-[#030712] z-20" />
+            className="relative h-[500px] lg:h-full overflow-hidden bg-[#030712] flex items-center justify-center">
+            {/* Lightweight CSS orbit — echoes the hero's AI-core identity, zero JS cost */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,242,254,0.05),transparent_60%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.03)_1px,transparent_1px)] [background-size:32px_32px] opacity-30" />
+            <div className="relative h-[340px] w-[340px]">
+              {/* Pulsing rings */}
+              {[0, 1, 2].map((ring) => (
+                <div
+                  key={ring}
+                  className="absolute inset-0 rounded-full border border-[#00F2FE]/15"
+                  style={{
+                    transform: `scale(${0.55 + ring * 0.25})`,
+                    animation: `b9-ring-pulse 4s ease-in-out ${ring * 1.2}s infinite`,
+                  }}
+                />
+              ))}
+              {/* Slow conic sweep */}
+              <div className="absolute inset-6 rounded-full bg-[conic-gradient(from_0deg,rgba(0,242,254,0),rgba(0,242,254,0.16),rgba(167,139,250,0.14),rgba(0,242,254,0))] animate-[spin_14s_linear_infinite]" />
+              {/* Core */}
+              <div className="absolute left-1/2 top-1/2 flex h-28 w-28 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-[1.75rem] border border-[#00F2FE]/30 bg-[#03121b]/90 shadow-[0_0_55px_rgba(0,242,254,0.22)]">
+                <div className="absolute inset-0 rounded-[1.75rem] bg-gradient-to-br from-[#00F2FE]/20 via-transparent to-[#A78BFA]/15" />
+                <Bot className="relative h-10 w-10 text-[#7BFFF8]" />
+              </div>
+              {/* Floating mini-badges */}
+              {[
+                { label: 'Lead captured', x: '-8%', y: '12%', delay: '0s' },
+                { label: 'Payment link sent', x: '64%', y: '4%', delay: '1.4s' },
+                { label: 'Follow-up scheduled', x: '58%', y: '78%', delay: '2.8s' },
+                { label: 'Catalog shared', x: '-14%', y: '70%', delay: '4.2s' },
+              ].map((b) => (
+                <div
+                  key={b.label}
+                  className="absolute rounded-full border border-white/[0.08] bg-[#07111f]/85 px-3 py-1.5 text-[11px] font-semibold text-zinc-300 shadow-[0_8px_24px_rgba(0,0,0,0.45)] backdrop-blur-xl"
+                  style={{ left: b.x, top: b.y, animation: `b9-badge-float 5.5s ease-in-out ${b.delay} infinite` }}
+                >
+                  <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 align-middle" />
+                  {b.label}
+                </div>
+              ))}
+            </div>
+            <style>{`
+              @keyframes b9-ring-pulse {
+                0%, 100% { opacity: 0.5; }
+                50% { opacity: 1; box-shadow: 0 0 30px rgba(0,242,254,0.08); }
+              }
+              @keyframes b9-badge-float {
+                0%, 100% { transform: translateY(0); }
+                50% { transform: translateY(-8px); }
+              }
+            `}</style>
           </motion.div>
         </div>
       </section>
@@ -464,7 +508,7 @@ export default function HomePage() {
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="text-center mb-20 max-w-3xl mx-auto">
             <motion.div variants={fadeUp}><SectionLabel>🧠 B9 Agentic Core</SectionLabel></motion.div>
             <motion.div variants={fadeUp}><PremiumH2 className="text-4xl lg:text-5xl mt-3">Describe it. B9 builds it.</PremiumH2></motion.div>
-            <motion.p variants={fadeUp} className="mt-5 text-zinc-500 text-lg font-light">
+            <motion.p variants={fadeUp} className="mt-5 text-zinc-400 text-lg font-light">
               B9 Agentic AI drafts your entire automation — templates, flows, campaigns, follow-ups — from a plain-English description.
             </motion.p>
           </motion.div>
@@ -532,7 +576,7 @@ export default function HomePage() {
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="text-center">
             <motion.div variants={fadeUp}><SectionLabel>🔗 Integrations</SectionLabel></motion.div>
             <motion.div variants={fadeUp}><PremiumH2 className="text-4xl lg:text-5xl mt-3">9 live integrations. All working today.</PremiumH2></motion.div>
-            <motion.p variants={fadeUp} className="mt-5 text-zinc-500 text-lg font-light max-w-2xl mx-auto">
+            <motion.p variants={fadeUp} className="mt-5 text-zinc-400 text-lg font-light max-w-2xl mx-auto">
               Connect WhatsApp, Instagram, Facebook, Gmail, Google Sheets, Razorpay, IndiaMART, Shopify, and Webhooks. Each connection includes setup and health checks before live use.
             </motion.p>
             <motion.div variants={fadeUp} className="mt-5 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/[0.06] px-4 py-1.5">
@@ -586,7 +630,7 @@ export default function HomePage() {
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="text-center mb-20 max-w-3xl mx-auto">
             <motion.div variants={fadeUp}><SectionLabel>🔒 Security & Privacy</SectionLabel></motion.div>
             <motion.div variants={fadeUp}><PremiumH2 className="text-4xl lg:text-5xl mt-3">Your data. Your rules. Always.</PremiumH2></motion.div>
-            <motion.p variants={fadeUp} className="mt-5 text-zinc-500 text-lg font-light">Built with encryption, access control, and GDPR-ready practices.</motion.p>
+            <motion.p variants={fadeUp} className="mt-5 text-zinc-400 text-lg font-light">Built with encryption, access control, and GDPR-ready practices.</motion.p>
           </motion.div>
 
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}

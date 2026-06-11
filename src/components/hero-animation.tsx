@@ -103,67 +103,83 @@ export function HeroAnimation() {
           return;
         }
 
-        gsap.set(nodes, {
-          x: (index) => nodePositions[index][0] * 0.28,
-          y: (index) => nodePositions[index][1] * 0.28,
-          scale: 0.7,
-          opacity: 0.46,
-          rotate: 0,
-        });
         gsap.set(phraseEls, { autoAlpha: 0, y: 20 });
         gsap.set(phraseEls[0], { autoAlpha: 1, y: 0 });
-        gsap.set('[data-agent-stream]', { scaleX: 0.2, opacity: 0.22, transformOrigin: 'left center' });
 
-        const timeline = gsap.timeline({
-          scrollTrigger: {
-            trigger: rootRef.current,
-            start: 'top top',
-            end: '+=135%',
-            scrub: 0.35,
-            pin: true,
-            pinSpacing: true,
-            anticipatePin: 1,
-            invalidateOnRefresh: true,
-          },
+        // ── Phase 1: auto-play intro on load — the orbit assembles itself
+        //    without needing a scroll, so the first impression is complete.
+        gsap.set(nodes, { x: 0, y: 0, scale: 0.4, opacity: 0, rotate: 0 });
+        gsap.set('[data-agent-stream]', { scaleX: 0, opacity: 0, transformOrigin: 'left center' });
+        gsap.set('[data-ai-core]', { opacity: 0, scale: 0.7, rotate: -14 });
+
+        const intro = gsap.timeline({
+          defaults: { ease: 'power3.out' },
+          onComplete: buildScrollTimeline,
         });
-
-        timeline
-          .fromTo(
-            '[data-ai-core]',
-            { opacity: 0.9, scale: 0.9, rotate: -10 },
-            { opacity: 1, scale: 1.03, rotate: 0, duration: 0.14, ease: 'power2.out' },
-            0
-          )
-          .to('[data-core-ring]', { rotate: 250, scale: 1.16, duration: 0.82, ease: 'none' }, 0)
-          .to('[data-agent-stream]', { scaleX: 1, opacity: 0.65, duration: 0.2, stagger: 0.025, ease: 'power2.out' }, 0.05)
-          .to(
-            nodes,
-            {
-              x: (index) => nodePositions[index][0],
-              y: (index) => nodePositions[index][1],
-              opacity: 1,
-              scale: 1,
-              rotate: (index) => (index % 2 === 0 ? 4 : -4),
-              duration: 0.28,
-              stagger: 0.035,
-              ease: 'power3.out',
-            },
-            0.08
-          )
-          .to(phraseEls[0], { autoAlpha: 0, y: -16, duration: 0.06 }, 0.28)
-          .to(phraseEls[1], { autoAlpha: 1, y: 0, duration: 0.08 }, 0.31)
-          .to('[data-agent-node]', { scale: 1.06, duration: 0.14, stagger: 0.02, ease: 'power2.out' }, 0.36)
-          .to(phraseEls[1], { autoAlpha: 0, y: -16, duration: 0.06 }, 0.58)
-          .to(phraseEls[2], { autoAlpha: 1, y: 0, duration: 0.08 }, 0.61)
-          .to('[data-agent-node]', {
-            x: (index) => nodePositions[index][0] * 1.18,
-            y: (index) => nodePositions[index][1] * 1.18,
-            scale: 1,
+        intro
+          .to('[data-ai-core]', { opacity: 1, scale: 1, rotate: 0, duration: 0.55 }, 0.1)
+          .to('[data-agent-stream]', { scaleX: 1, opacity: 0.6, duration: 0.5, stagger: 0.06 }, 0.35)
+          .to(nodes, {
+            x: (index) => nodePositions[index][0] * 0.92,
+            y: (index) => nodePositions[index][1] * 0.92,
             opacity: 1,
-            duration: 0.18,
-            ease: 'power2.inOut',
-          }, 0.72)
-          .to('[data-agent-stream]', { opacity: 0.58, duration: 0.16 }, 0.72);
+            scale: 0.96,
+            duration: 0.7,
+            stagger: 0.07,
+            ease: 'back.out(1.4)',
+          }, 0.45);
+
+        // ── Phase 2: scroll-driven enhancement (built AFTER intro so the
+        //    scrubbed timeline captures the settled positions as its start)
+        function buildScrollTimeline() {
+          const timeline = gsap.timeline({
+            scrollTrigger: {
+              trigger: rootRef.current,
+              start: 'top top',
+              end: '+=135%',
+              scrub: 0.35,
+              pin: true,
+              pinSpacing: true,
+              anticipatePin: 1,
+              invalidateOnRefresh: true,
+            },
+          });
+
+          timeline
+            .to('[data-ai-core]', { scale: 1.03, duration: 0.14, ease: 'power2.out' }, 0)
+            .to('[data-core-ring]', { rotate: 250, scale: 1.16, duration: 0.82, ease: 'none' }, 0)
+            .to('[data-agent-stream]', { opacity: 0.7, duration: 0.2, stagger: 0.025, ease: 'power2.out' }, 0.05)
+            .to(
+              nodes,
+              {
+                x: (index) => nodePositions[index][0],
+                y: (index) => nodePositions[index][1],
+                opacity: 1,
+                scale: 1,
+                rotate: (index) => (index % 2 === 0 ? 4 : -4),
+                duration: 0.28,
+                stagger: 0.035,
+                ease: 'power3.out',
+              },
+              0.08
+            )
+            .to(phraseEls[0], { autoAlpha: 0, y: -16, duration: 0.06 }, 0.28)
+            .to(phraseEls[1], { autoAlpha: 1, y: 0, duration: 0.08 }, 0.31)
+            .to('[data-agent-node]', { scale: 1.06, duration: 0.14, stagger: 0.02, ease: 'power2.out' }, 0.36)
+            .to(phraseEls[1], { autoAlpha: 0, y: -16, duration: 0.06 }, 0.58)
+            .to(phraseEls[2], { autoAlpha: 1, y: 0, duration: 0.08 }, 0.61)
+            .to('[data-agent-node]', {
+              x: (index) => nodePositions[index][0] * 1.18,
+              y: (index) => nodePositions[index][1] * 1.18,
+              scale: 1,
+              opacity: 1,
+              duration: 0.18,
+              ease: 'power2.inOut',
+            }, 0.72)
+            .to('[data-agent-stream]', { opacity: 0.58, duration: 0.16 }, 0.72);
+
+          ScrollTrigger.refresh();
+        }
       }, rootRef);
 
       ScrollTrigger.refresh();
@@ -204,6 +220,27 @@ export function HeroAnimation() {
             transform: translateY(-32px) scale(0.78);
             transform-origin: center top;
           }
+        }
+        /* Data pulses travelling from the AI core out along each wire */
+        .b9-stream-pulse {
+          position: absolute;
+          top: 50%;
+          left: 0;
+          height: 5px;
+          width: 5px;
+          border-radius: 9999px;
+          transform: translateY(-50%);
+          animation: b9-pulse-travel 2.4s linear infinite;
+          opacity: 0;
+        }
+        @keyframes b9-pulse-travel {
+          0%   { left: 0%;   opacity: 0; }
+          12%  { opacity: 1; }
+          82%  { opacity: 1; }
+          100% { left: 100%; opacity: 0; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .b9-stream-pulse { animation: none; opacity: 0; }
         }
       `}</style>
       <motion.div
@@ -297,7 +334,16 @@ export function HeroAnimation() {
                     background: `linear-gradient(90deg, ${node.accent}00, ${node.accent}cc, ${node.accent}22)`,
                     boxShadow: `0 0 18px ${node.accent}55`,
                   }}
-                />
+                >
+                  <span
+                    className="b9-stream-pulse"
+                    style={{
+                      background: node.accent,
+                      boxShadow: `0 0 10px ${node.accent}, 0 0 18px ${node.accent}88`,
+                      animationDelay: `${index * 0.4}s`,
+                    }}
+                  />
+                </span>
               );
             })}
 

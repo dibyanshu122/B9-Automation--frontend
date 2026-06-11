@@ -41,7 +41,7 @@ export function MarketingWidget() {
         __html: `
           (function() {
             var s = document.createElement('script');
-            s.src = 'https://b9-automation-frontend.vercel.app/widget.js?v=1.1.3';
+            s.src = 'https://b9-automation-frontend.vercel.app/widget.js?v=1.1.4';
             s.async = true;
             s.onload = function() {
               B9Automation.init({
