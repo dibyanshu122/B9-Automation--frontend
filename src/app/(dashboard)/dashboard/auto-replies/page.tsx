@@ -30,7 +30,7 @@ const TABS = [
   { key: 'keyword_reply',  label: 'Keyword Reply',  icon: <Zap className="w-4 h-4" />,          desc: 'Auto-reply when message contains a keyword' },
   { key: 'welcome',        label: 'Welcome',        icon: <MessageSquare className="w-4 h-4" />, desc: 'First message from a new contact' },
   { key: 'out_of_office',  label: 'Out of Office',  icon: <Clock className="w-4 h-4" />,        desc: 'Auto-reply outside working hours' },
-  { key: 'opt_out',        label: 'Opt Out',        icon: <PhoneOff className="w-4 h-4" />,     desc: 'Handle STOP / unsubscribe keywords' },
+  { key: 'opt_out',        label: 'STOP Rule',      icon: <PhoneOff className="w-4 h-4" />,     desc: 'Auto-reply rule for STOP / unsubscribe keywords' },
   { key: 'keyword_alert',  label: 'Keyword Alerts', icon: <Bell className="w-4 h-4" />,         desc: 'Get notified when keyword detected' },
   { key: 'auto_assign',    label: 'Auto Assign',    icon: <UserCheck className="w-4 h-4" />,    desc: 'Route chats to specific agents by keyword' },
   { key: 'quick_replies',  label: 'Quick Replies',  icon: <Zap className="w-4 h-4" />,          desc: 'Saved short replies — use ⚡ button in inbox to insert instantly' },
@@ -77,8 +77,8 @@ const TAB_INFO: Record<string, { title: string; body: string; tip?: string; colo
     color: 'purple',
   },
   opt_out: {
-    title: '🚫 Opt Out — Handle STOP Requests (Meta Compliance)',
-    body: 'When a customer sends "STOP" or "UNSUBSCRIBE", this rule automatically tags them as opted-out and sends a confirmation. This is a mandatory Meta compliance requirement.',
+    title: '🚫 STOP Rule — Handle Opt-Out Requests (Meta Compliance)',
+    body: 'When a customer sends "STOP" or "UNSUBSCRIBE", this rule automatically tags them as opted-out and sends a confirmation. This is a mandatory Meta compliance requirement. The full list of opted-out contacts is under Inbox → Opted Out.',
     bullets: [
       'Default keywords: STOP, UNSUBSCRIBE, OPTOUT — fully customizable',
       'Opted-out contacts are excluded from future bulk messages',

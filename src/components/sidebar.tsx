@@ -32,6 +32,21 @@ const ICONS = {
 // Dark sidebar
 const BG = '#0F172A';
 
+// Per-icon hover animation — each icon moves true to its meaning (see globals.css)
+const ICON_ANIM: Record<string, string> = {
+  Settings: 'icon-anim-spin',
+  Bell: 'icon-anim-ring', MessageSquare: 'icon-anim-ring', MessageCircle: 'icon-anim-ring', Inbox: 'icon-anim-ring',
+  Zap: 'icon-anim-zap', Workflow: 'icon-anim-zap',
+  Upload: 'icon-anim-lift', BarChart3: 'icon-anim-lift', Layers: 'icon-anim-lift',
+  Plug: 'icon-anim-wiggle', Bot: 'icon-anim-wiggle', FlaskConical: 'icon-anim-wiggle', Megaphone: 'icon-anim-wiggle', UserCog: 'icon-anim-wiggle',
+  Brain: 'icon-anim-pulse', Target: 'icon-anim-pulse', QrCode: 'icon-anim-pulse', LayoutDashboard: 'icon-anim-pulse',
+  ShoppingCart: 'icon-anim-nudge', CreditCard: 'icon-anim-nudge', Reply: 'icon-anim-nudge', Send: 'icon-anim-nudge', LogOut: 'icon-anim-nudge',
+  UserX: 'icon-anim-shake',
+  Key: 'icon-anim-turn',
+  Rocket: 'icon-anim-rocket',
+};
+const iconAnim = (name?: string) => (name && ICON_ANIM[name]) || 'icon-anim-pop';
+
 type TeamAccess = {
   role?: string;
   is_owner?: boolean;
@@ -179,7 +194,7 @@ export const Sidebar = () => {
     children?.some(c => isActive(c.href)) ?? false;
 
   const item = (active: boolean, mini = false) => clsx(
-    'flex w-full items-center rounded-lg transition-all duration-150 text-sm font-medium',
+    'nav-item flex w-full items-center rounded-lg transition-all duration-150 text-sm font-medium',
     mini
       ? 'h-12 justify-center items-center px-0 py-0 gap-0'   // collapsed: h-12 = natural gap between icons
       : 'gap-3 px-3 py-3',                                    // expanded: py-3 + gap-3
@@ -190,7 +205,7 @@ export const Sidebar = () => {
       : 'text-slate-400 hover:bg-white/[0.08] hover:text-slate-100'
   );
   const child = (active: boolean) => clsx(
-    'flex w-full items-center gap-3 rounded-lg transition-all duration-150 text-sm font-medium',
+    'nav-item flex w-full items-center gap-3 rounded-lg transition-all duration-150 text-sm font-medium',
     'px-3 py-2.5',                                            // tighter child items
     active
       ? 'bg-indigo-500/20 text-indigo-300 font-semibold'
@@ -265,7 +280,7 @@ export const Sidebar = () => {
                     className={item(gActive, !expanded)}
                   >
                     <span className="relative shrink-0">
-                      <Icon className="w-5 h-5" />
+                      <Icon className={clsx('w-5 h-5 nav-icon', iconAnim(group.icon))} />
                       {/* Red dot when group has Messages child with unread — visible even collapsed */}
                       {!expanded && unreadCount > 0 && group.children?.some(c => c.href === '/dashboard/messages') && (
                         <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-cyan-500 ring-2 ring-slate-950" />
@@ -290,7 +305,7 @@ export const Sidebar = () => {
                           <Link key={c.href} href={c.href}
                             className={child(cActive)}
                             onClick={() => setSidebarOpen(false)}>
-                            <CIcon className="w-4 h-4 shrink-0" />
+                            <CIcon className={clsx('w-4 h-4 shrink-0 nav-icon', iconAnim(c.icon))} />
                             <span className="flex-1 whitespace-nowrap overflow-hidden">{c.name}</span>
                             {c.badge && (
                               <span className="rounded-full bg-amber-400/15 px-1.5 py-0.5 text-[9px] font-bold text-amber-200 ring-1 ring-amber-300/20">
@@ -317,7 +332,7 @@ export const Sidebar = () => {
                   title={!expanded ? group.name : undefined}
                   className={item(singleActive, !expanded)}
                   onClick={() => setSidebarOpen(false)}>
-                  <Icon className="w-5 h-5 shrink-0" />
+                  <Icon className={clsx('w-5 h-5 shrink-0 nav-icon', iconAnim(group.icon))} />
                   <span className={lbl}>{group.name}</span>
                 </Link>
               </div>
@@ -337,7 +352,7 @@ export const Sidebar = () => {
                 title={!expanded ? group.name : undefined}
                 className={item(a, !expanded)}
                 onClick={() => setSidebarOpen(false)}>
-                <Icon className="w-5 h-5 shrink-0" />
+                <Icon className={clsx('w-5 h-5 shrink-0 nav-icon', iconAnim(group.icon))} />
                 <span className={lbl}>{group.name}</span>
               </Link>
             );
@@ -350,10 +365,10 @@ export const Sidebar = () => {
             onClick={handleLogout}
             title={!expanded ? 'Logout' : undefined}
             className={clsx(
-              'flex w-full items-center rounded-lg text-slate-500 transition-all hover:bg-red-500/10 hover:text-red-400 text-sm',
+              'nav-item flex w-full items-center rounded-lg text-slate-500 transition-all hover:bg-red-500/10 hover:text-red-400 text-sm',
               expanded ? 'gap-3 px-3 py-2' : 'h-10 justify-center items-center px-0 py-0 gap-0'
             )}>
-            <LogOut className="w-5 h-5 shrink-0" />
+            <LogOut className="w-5 h-5 shrink-0 nav-icon icon-anim-nudge" />
             <span className={lbl}>Logout</span>
           </button>
 
@@ -399,7 +414,7 @@ export const Sidebar = () => {
               return (
                 <div key={group.id}>
                   <button onClick={() => toggleGroup(group.id)} className={item(gActive)}>
-                    <Icon className="w-5 h-5 shrink-0" />
+                    <Icon className={clsx('w-5 h-5 shrink-0 nav-icon', iconAnim(group.icon))} />
                     <span className="flex-1 text-left">{group.name}</span>
                     <ChevronDown className={clsx('w-4 h-4 transition-transform', open && 'rotate-180')} />
                   </button>
@@ -412,7 +427,7 @@ export const Sidebar = () => {
                         return (
                           <Link key={c.href} href={c.href} className={child(cActive)}
                             onClick={() => setSidebarOpen(false)}>
-                            <CIcon className="w-4 h-4 shrink-0" />
+                            <CIcon className={clsx('w-4 h-4 shrink-0 nav-icon', iconAnim(c.icon))} />
                             <span className="flex-1">{c.name}</span>
                             {c.badge && (
                               <span className="rounded-full bg-amber-400/15 px-1.5 py-0.5 text-[9px] font-bold text-amber-200 ring-1 ring-amber-300/20">
@@ -436,7 +451,7 @@ export const Sidebar = () => {
             return (
               <Link key={group.id} href={group.href || '#'} className={item(sActive)}
                 onClick={() => setSidebarOpen(false)}>
-                <Icon className="w-5 h-5 shrink-0" />
+                <Icon className={clsx('w-5 h-5 shrink-0 nav-icon', iconAnim(group.icon))} />
                 <span>{group.name}</span>
               </Link>
             );
@@ -447,7 +462,7 @@ export const Sidebar = () => {
             return (
               <Link key={group.id} href={group.href || '#'} className={item(isActive(group.href || ''))}
                 onClick={() => setSidebarOpen(false)}>
-                <Icon className="w-5 h-5 shrink-0" />
+                <Icon className={clsx('w-5 h-5 shrink-0 nav-icon', iconAnim(group.icon))} />
                 <span>{group.name}</span>
               </Link>
             );

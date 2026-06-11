@@ -87,6 +87,10 @@ export default function OptedOutPage() {
           </div>
           <p className="text-sm text-gray-500 mt-0.5">
             Customers who sent STOP or were manually blocked. B9 will not send them automation or campaign messages.
+            {' '}
+            <a href="/dashboard/auto-replies" className="text-indigo-600 hover:underline font-medium">
+              Configure the STOP auto-reply rule →
+            </a>
           </p>
         </div>
         <Button variant="secondary" onClick={exportCsv} className="flex items-center gap-2">

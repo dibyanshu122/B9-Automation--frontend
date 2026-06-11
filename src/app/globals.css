@@ -819,6 +819,32 @@ select:focus-visible {
   transform: translateZ(0);
 }
 
+/* ── Sidebar icon hover animations — each icon moves true to its meaning ── */
+.nav-item .nav-icon { transform-origin: center; }
+.nav-item:hover .icon-anim-spin   { animation: nav-spin 0.5s ease; }        /* Settings gear */
+.nav-item:hover .icon-anim-ring   { animation: nav-ring 0.6s ease; }        /* Bells & chat bubbles */
+.nav-item:hover .icon-anim-zap    { animation: nav-zap 0.45s ease; }        /* Automations bolt */
+.nav-item:hover .icon-anim-lift   { animation: nav-lift 0.45s ease; }       /* Upload & charts rise */
+.nav-item:hover .icon-anim-wiggle { animation: nav-wiggle 0.5s ease; }      /* Plug, bot, flask */
+.nav-item:hover .icon-anim-pulse  { animation: nav-pulse 0.5s ease; }       /* Brain, target, QR */
+.nav-item:hover .icon-anim-nudge  { animation: nav-nudge 0.4s ease; }       /* Cart, card, reply */
+.nav-item:hover .icon-anim-shake  { animation: nav-shake 0.4s ease; }       /* Opted-out X */
+.nav-item:hover .icon-anim-turn   { animation: nav-turn 0.5s ease; }        /* API key turning */
+.nav-item:hover .icon-anim-rocket { animation: nav-rocket 0.5s ease; }      /* Go Live liftoff */
+.nav-item:hover .icon-anim-pop    { animation: nav-pop 0.35s ease; }        /* Default */
+
+@keyframes nav-spin   { from { transform: rotate(0deg); } to { transform: rotate(180deg); } }
+@keyframes nav-ring   { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(-14deg); } 40% { transform: rotate(11deg); } 60% { transform: rotate(-7deg); } 80% { transform: rotate(4deg); } }
+@keyframes nav-zap    { 0%, 100% { transform: scale(1); } 30% { transform: scale(1.25) rotate(-8deg); } 60% { transform: scale(0.95); } }
+@keyframes nav-lift   { 0%, 100% { transform: translateY(0); } 45% { transform: translateY(-4px); } }
+@keyframes nav-wiggle { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-12deg); } 70% { transform: rotate(10deg); } }
+@keyframes nav-pulse  { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.22); } }
+@keyframes nav-nudge  { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(4px); } }
+@keyframes nav-shake  { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 55% { transform: translateX(3px); } 80% { transform: translateX(-2px); } }
+@keyframes nav-turn   { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(28deg); } }
+@keyframes nav-rocket { 0%, 100% { transform: translate(0, 0) rotate(0); } 50% { transform: translate(2px, -4px) rotate(10deg); } }
+@keyframes nav-pop    { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.18); } }
+
 /* Accessibility */
 @media (prefers-reduced-motion: reduce) {
   *,
