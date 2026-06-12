@@ -1086,3 +1086,33 @@ html.mk-light div.bg-\[\#030712\]:not(.b9-command-shell *) {
 html.mk-light [class*="shadow-[0_0_"]:not(.b9-command-shell *) { box-shadow: 0 10px 24px rgba(15,23,42,0.08) !important; }
 /* Headline gradient text: deepen for white bg */
 html.mk-light .md\:bg-clip-text:not(.b9-command-shell *) { background-image: linear-gradient(90deg,#00A8C2,#7C3AED) !important; }
+
+
+/* ── Aurora Light: text-rendering fixes (screenshots round) ── */
+/* 1) Hero h1 spans set -webkit-text-fill-color:#fff INLINE — CSS !important beats inline */
+html.mk-light .text-white:not(.b9-command-shell *) {
+  -webkit-text-fill-color: #0F172A !important;
+  text-shadow: none !important;
+}
+/* 2) Gradient headlines (white->zinc bg-clip-text) ghost ho jate the — dark gradient me badlo */
+html.mk-light .text-transparent.bg-clip-text:not(.b9-command-shell *) {
+  background-image: linear-gradient(180deg, #0F172A 0%, #334155 70%, #64748b 100%) !important;
+  -webkit-text-fill-color: transparent !important;
+}
+/* 3) Hero phrase pill — neon-cyan text white pill pe unreadable */
+html.mk-light .text-\[\#DFFFFC\]:not(.b9-command-shell *) {
+  color: #0F172A !important;
+  -webkit-text-fill-color: #0F172A !important;
+}
+html.mk-light [class*="text-shadow"]:not(.b9-command-shell *) { text-shadow: none !important; }
+/* 4) Spline section ke dark fade-overlays light me black smudge bante the */
+html.mk-light .from-\[\#030712\]:not(.b9-command-shell *) {
+  --tw-gradient-from: #FAFBFF var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgba(250,251,255,0) var(--tw-gradient-to-position) !important;
+}
+html.mk-light .via-\[\#030712\]\/80:not(.b9-command-shell *) {
+  --tw-gradient-via: rgba(250,251,255,0.8) var(--tw-gradient-via-position) !important;
+}
+/* 5) zinc-950/900 jaise extra-dark texts (kahin ho to) */
+html.mk-light .text-zinc-100:not(.b9-command-shell *),
+html.mk-light .text-zinc-50:not(.b9-command-shell *) { color: #0F172A !important; }
