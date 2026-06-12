@@ -30,7 +30,7 @@ function NotifIcon({ type }: { type: string }) {
 
 export const Navbar = () => {
   const { user, logout } = useAuthStore();
-  const { toggleSidebar } = useUIStore();
+  const { toggleSidebar, darkMode } = useUIStore();
   const { get, post } = useApi();
   const router = useRouter();
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -203,7 +203,7 @@ export const Navbar = () => {
 
   return (
     <>
-    <nav className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-slate-950/80 shadow-2xl shadow-black/20 backdrop-blur-2xl">
+    <nav className={`fixed inset-x-0 top-0 z-50 border-b backdrop-blur-2xl ${darkMode ? "border-white/10 bg-slate-950/80 shadow-2xl shadow-black/20" : "border-slate-200 bg-white/80 shadow-sm"}`}>
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
@@ -276,18 +276,18 @@ export const Navbar = () => {
                       }
                     }}
                     aria-label="Notifications"
-                    className="relative flex h-9 w-9 items-center justify-center rounded-full text-slate-400 hover:bg-white/10 hover:text-white transition"
+                    className={`relative flex h-9 w-9 items-center justify-center rounded-full text-slate-400 hover:bg-white/10 hover:${darkMode ? 'text-white' : 'text-slate-900'} transition`}
                   >
                     <Bell className="h-5 w-5" />
                     {unreadCount > 0 && (
-                      <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
+                      <span className={`absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
                         {unreadCount > 9 ? '9+' : unreadCount}
                       </span>
                     )}
                   </button>
 
                   {showNotifDropdown && (
-                    <div className="absolute right-0 top-full mt-2 w-80 rounded-xl border border-slate-700 bg-slate-900 shadow-2xl shadow-black/80 flex flex-col" style={{ zIndex: 9999 }}>
+                    <div className={`absolute right-0 top-full mt-2 w-80 rounded-xl border ${darkMode ? "border-slate-700 bg-slate-900 shadow-2xl shadow-black/80" : "border-slate-200 bg-white shadow-xl"} flex flex-col`} style={{ zIndex: 9999 }}>
                       {/* Header — fixed, doesn't scroll */}
                       <div className="flex items-center justify-between border-b border-white/10 px-4 py-2.5 shrink-0">
                         <div className="flex items-center gap-2">
@@ -298,7 +298,7 @@ export const Navbar = () => {
                             </span>
                           )}
                         </div>
-                        <button onClick={() => setShowNotifDropdown(false)} className="text-slate-600 hover:text-slate-300">
+                        <button onClick={() => setShowNotifDropdown(false)} className={`text-slate-600 hover:${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
                           <X className="h-3.5 w-3.5" />
                         </button>
                       </div>
@@ -314,7 +314,7 @@ export const Navbar = () => {
                                 <NotifIcon type={n.type} />
                               </div>
                               <div className="min-w-0 flex-1">
-                                <p className="text-xs font-semibold text-slate-200 leading-snug">{n.title}</p>
+                                <p className={`text-xs font-semibold ${darkMode ? 'text-slate-200' : 'text-slate-700'} leading-snug`}>{n.title}</p>
                                 {n.body && <p className="mt-0.5 text-[11px] text-slate-500 leading-snug line-clamp-2">{n.body}</p>}
                               </div>
                               <p className="shrink-0 text-[10px] text-slate-600 mt-0.5">{timeAgo(n.created_at)}</p>
@@ -345,22 +345,22 @@ export const Navbar = () => {
                   <div ref={userMenuRef} className="relative">
                     <button
                       onClick={() => setShowUserMenu(!showUserMenu)}
-                      className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-cyan-500 text-white flex items-center justify-center shadow-sm font-bold text-sm"
+                      className={`w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-cyan-500 ${darkMode ? 'text-white' : 'text-slate-900'} flex items-center justify-center shadow-sm font-bold text-sm`}
                     >
                       {user.name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || 'U'}
                     </button>
                     {showUserMenu && (
                       <div
-                        className="absolute right-0 top-full mt-2 w-48 overflow-hidden rounded-xl border border-slate-700 bg-slate-900 shadow-2xl shadow-black/60"
+                        className={`absolute right-0 top-full mt-2 w-48 overflow-hidden rounded-xl border ${darkMode ? "border-slate-700 bg-slate-900 shadow-2xl shadow-black/60" : "border-slate-200 bg-white shadow-xl"}`}
                         style={{ zIndex: 9999 }}
                       >
                         <div className="border-b border-white/10 px-4 py-2.5">
-                          <p className="text-xs font-semibold text-slate-300 truncate">{user.name || user.email}</p>
+                          <p className={`text-xs font-semibold ${darkMode ? 'text-slate-300' : 'text-slate-600'} truncate`}>{user.name || user.email}</p>
                           <p className="text-[10px] text-slate-500 truncate">{user.email}</p>
                         </div>
                         <button
                           onClick={openBizProfile}
-                          className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-slate-300 hover:bg-white/[0.08] hover:text-white transition"
+                          className={`flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-slate-300 hover:bg-white/[0.08] hover:${darkMode ? 'text-white' : 'text-slate-900'} transition`}
                         >
                           <Building2 className="w-4 h-4 shrink-0 text-cyan-400" />
                           Business Profile
@@ -368,7 +368,7 @@ export const Navbar = () => {
                         <Link
                           href="/dashboard/settings"
                           onClick={() => setShowUserMenu(false)}
-                          className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-300 hover:bg-white/[0.08] hover:text-white transition"
+                          className={`flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-300 hover:bg-white/[0.08] hover:${darkMode ? 'text-white' : 'text-slate-900'} transition`}
                         >
                           <Settings className="w-4 h-4 shrink-0" />
                           Settings
@@ -428,11 +428,11 @@ export const Navbar = () => {
                 <Building2 className="h-5 w-5 text-cyan-400" />
               </div>
               <div>
-                <p className="text-sm font-bold text-white">Business Profile</p>
+                <p className={`text-sm font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>Business Profile</p>
                 <p className="text-[10px] text-slate-500">Visible to your customers on WhatsApp &amp; AI bot</p>
               </div>
             </div>
-            <button onClick={() => setShowBizProfile(false)} className="rounded-lg p-1.5 text-slate-400 hover:bg-white/10 hover:text-white transition">
+            <button onClick={() => setShowBizProfile(false)} className={`rounded-lg p-1.5 text-slate-400 hover:bg-white/10 hover:${darkMode ? 'text-white' : 'text-slate-900'} transition`}>
               <X className="h-5 w-5" />
             </button>
           </div>
@@ -466,7 +466,7 @@ export const Navbar = () => {
                           value={(bpForm as any)[f.key]}
                           onChange={e => setBpForm(p => ({ ...p, [f.key]: e.target.value }))}
                           placeholder={f.placeholder}
-                          className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 focus:border-cyan-500/30"
+                          className={`w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm ${darkMode ? 'text-white' : 'text-slate-900'} placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 focus:border-cyan-500/30`}
                         />
                       </div>
                     ))}
@@ -475,7 +475,7 @@ export const Navbar = () => {
                       <select
                         value={bpForm.tone}
                         onChange={e => setBpForm(p => ({ ...p, tone: e.target.value }))}
-                        className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-cyan-500/50"
+                        className={`w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm ${darkMode ? 'text-white' : 'text-slate-900'} focus:outline-none focus:ring-1 focus:ring-cyan-500/50`}
                       >
                         {['friendly', 'professional', 'casual', 'formal'].map(t => (
                           <option key={t} value={t} className="bg-slate-900">{t.charAt(0).toUpperCase() + t.slice(1)}</option>
@@ -503,7 +503,7 @@ export const Navbar = () => {
                           value={(bpForm as any)[f.key]}
                           onChange={e => setBpForm(p => ({ ...p, [f.key]: e.target.value }))}
                           placeholder={f.placeholder}
-                          className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-green-500/40 focus:border-green-500/30"
+                          className={`w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm ${darkMode ? 'text-white' : 'text-slate-900'} placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-green-500/40 focus:border-green-500/30`}
                         />
                       </div>
                     ))}
@@ -514,7 +514,7 @@ export const Navbar = () => {
                         onChange={e => setBpForm(p => ({ ...p, wa_description: e.target.value }))}
                         placeholder="Detailed description of your business"
                         rows={3}
-                        className="w-full resize-none rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-green-500/40"
+                        className={`w-full resize-none rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm ${darkMode ? 'text-white' : 'text-slate-900'} placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-green-500/40`}
                       />
                     </div>
                   </div>
