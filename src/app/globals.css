@@ -1143,3 +1143,10 @@ html.mk-light .pointer-events-none[class*="from-\[\#030712\]"]:not(.b9-command-s
 }
 /* Right edge ki patli dark strip: body bhi light */
 html.mk-light body { background-color: #FAFBFF !important; }
+
+
+/* Aurora Light r5: scrolled navbar (80-opacity variant) */
+html.mk-light .bg-\[\#030712\]\/80:not(.b9-command-shell *) {
+  background-color: rgba(255,255,255,0.85) !important;
+  box-shadow: 0 1px 0 rgba(15,23,42,0.06) !important;
+}

@@ -43,7 +43,6 @@ const nodePositions = [
 
 export function HeroAnimation() {
   const rootRef = useRef<HTMLElement | null>(null);
-  const [cursor, setCursor] = useState({ x: -100, y: -100, active: false });
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -130,57 +129,10 @@ export function HeroAnimation() {
             ease: 'back.out(1.4)',
           }, 0.45);
 
-        // ── Phase 2: scroll-driven enhancement (built AFTER intro so the
-        //    scrubbed timeline captures the settled positions as its start)
-        function buildScrollTimeline() {
-          const timeline = gsap.timeline({
-            scrollTrigger: {
-              trigger: rootRef.current,
-              start: 'top top',
-              end: '+=135%',
-              scrub: 0.35,
-              pin: true,
-              pinSpacing: true,
-              anticipatePin: 1,
-              invalidateOnRefresh: true,
-            },
-          });
-
-          timeline
-            .to('[data-ai-core]', { scale: 1.03, duration: 0.14, ease: 'power2.out' }, 0)
-            .to('[data-core-ring]', { rotate: 250, scale: 1.16, duration: 0.82, ease: 'none' }, 0)
-            .to('[data-agent-stream]', { opacity: 0.7, duration: 0.2, stagger: 0.025, ease: 'power2.out' }, 0.05)
-            .to(
-              nodes,
-              {
-                x: (index) => nodePositions[index][0],
-                y: (index) => nodePositions[index][1],
-                opacity: 1,
-                scale: 1,
-                rotate: (index) => (index % 2 === 0 ? 4 : -4),
-                duration: 0.28,
-                stagger: 0.035,
-                ease: 'power3.out',
-              },
-              0.08
-            )
-            .to(phraseEls[0], { autoAlpha: 0, y: -16, duration: 0.06 }, 0.28)
-            .to(phraseEls[1], { autoAlpha: 1, y: 0, duration: 0.08 }, 0.31)
-            .to('[data-agent-node]', { scale: 1.06, duration: 0.14, stagger: 0.02, ease: 'power2.out' }, 0.36)
-            .to(phraseEls[1], { autoAlpha: 0, y: -16, duration: 0.06 }, 0.58)
-            .to(phraseEls[2], { autoAlpha: 1, y: 0, duration: 0.08 }, 0.61)
-            .to('[data-agent-node]', {
-              x: (index) => nodePositions[index][0] * 1.18,
-              y: (index) => nodePositions[index][1] * 1.18,
-              scale: 1,
-              opacity: 1,
-              duration: 0.18,
-              ease: 'power2.inOut',
-            }, 0.72)
-            .to('[data-agent-stream]', { opacity: 0.58, duration: 0.16 }, 0.72);
-
-          ScrollTrigger.refresh();
-        }
+        // Scroll-scrub/pin removed — it broke the orbit mid-scroll in both
+        // themes. The load intro above is the full experience now.
+        function buildScrollTimeline() { /* intentionally empty */ }
+        void buildScrollTimeline;
       }, rootRef);
 
       ScrollTrigger.refresh();
@@ -194,20 +146,6 @@ export function HeroAnimation() {
       lenis?.destroy();
       ctx?.revert();
     };
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || window.matchMedia('(max-width: 767px)').matches) return;
-    const onMove = (event: MouseEvent) => {
-      const target = event.target as HTMLElement | null;
-      setCursor({
-        x: event.clientX,
-        y: event.clientY,
-        active: Boolean(target?.closest('a, button')),
-      });
-    };
-    window.addEventListener('mousemove', onMove, { passive: true });
-    return () => window.removeEventListener('mousemove', onMove);
   }, []);
 
   // Cursor parallax — orbit nodes lean toward the cursor at different depths.
@@ -291,12 +229,6 @@ export function HeroAnimation() {
           .b9-stream-pulse { animation: none; opacity: 0; }
         }
       `}</style>
-      <motion.div
-        aria-hidden="true"
-        animate={{ x: cursor.x - 9, y: cursor.y - 9, scale: cursor.active ? 1.9 : 1 }}
-        transition={{ type: 'spring', stiffness: 520, damping: 34, mass: 0.4 }}
-        className="pointer-events-none fixed left-0 top-0 z-[80] hidden h-[18px] w-[18px] rounded-full border border-[#00F2FE]/45 bg-[#00F2FE]/20 mix-blend-screen md:block"
-      />
 
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute left-1/2 top-1/2 h-[720px] w-[720px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#00F2FE]/[0.055] blur-[140px]" />
