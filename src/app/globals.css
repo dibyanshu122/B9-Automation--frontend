@@ -23,15 +23,15 @@ html.dark {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ── Backgrounds ─────────────────────────────────────────────────────────── */
-.dark .bg-white           { background-color: #1e293b !important; }
-.dark .bg-white\/90       { background-color: rgba(30,41,59,0.9) !important; }
-.dark .bg-white\/70       { background-color: rgba(30,41,59,0.7) !important; }
+.dark .bg-white           { background-color: #111827 !important; }
+.dark .bg-white\/90       { background-color: rgba(17,24,39,0.9) !important; }
+.dark .bg-white\/70       { background-color: rgba(17,24,39,0.8) !important; }
 .dark .bg-white\/50       { background-color: rgba(30,41,59,0.5) !important; }
 .dark .bg-gray-50         { background-color: #0f172a !important; }
-.dark .bg-gray-100        { background-color: #1e293b !important; }
-.dark .bg-gray-200        { background-color: #334155 !important; }
+.dark .bg-gray-100        { background-color: #1F2937 !important; }
+.dark .bg-gray-200        { background-color: #374151 !important; }
 .dark .bg-slate-50        { background-color: #0f172a !important; }
-.dark .bg-slate-100       { background-color: #1e293b !important; }
+.dark .bg-slate-100       { background-color: #1F2937 !important; }
 /* Colored tint backgrounds — soften them in dark mode */
 .dark .bg-orange-50       { background-color: rgba(124,45,18,0.15) !important; }
 .dark .bg-blue-50         { background-color: rgba(23,37,84,0.3) !important; }
@@ -49,7 +49,7 @@ html.dark {
 .dark .bg-rose-50         { background-color: rgba(76,5,25,0.25) !important; }
 .dark .bg-teal-50         { background-color: rgba(4,47,46,0.35) !important; }
 .dark .bg-lime-50         { background-color: rgba(26,46,5,0.3) !important; }
-.dark .bg-white\/80       { background-color: rgba(30,41,59,0.8) !important; }
+.dark .bg-white\/80       { background-color: rgba(17,24,39,0.85) !important; }
 .dark .bg-white\/60       { background-color: rgba(30,41,59,0.6) !important; }
 .dark .bg-\[\#f0f2f5\]    { background-color: #0f172a !important; }
 
@@ -98,12 +98,12 @@ html.dark {
 
 /* ── Borders ─────────────────────────────────────────────────────────────── */
 .dark .border-gray-50     { border-color: #0f172a !important; }
-.dark .border-gray-100    { border-color: #1e293b !important; }
-.dark .border-gray-200    { border-color: #334155 !important; }
-.dark .border-gray-300    { border-color: #475569 !important; }
+.dark .border-gray-100    { border-color: #1F2937 !important; }
+.dark .border-gray-200    { border-color: #374151 !important; }
+.dark .border-gray-300    { border-color: #4B5563 !important; }
 .dark .border-slate-100   { border-color: #1e293b !important; }
-.dark .border-slate-200   { border-color: #334155 !important; }
-.dark .border-\[#E5E7EB\] { border-color: #334155 !important; }
+.dark .border-slate-200   { border-color: #374151 !important; }
+.dark .border-\[#E5E7EB\] { border-color: #374151 !important; }
 
 /* ── Shadows ─────────────────────────────────────────────────────────────── */
 .dark .shadow-sm          { box-shadow: 0 1px 3px rgba(0,0,0,0.5) !important; }
@@ -121,15 +121,15 @@ html.dark {
 .dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
 .dark textarea,
 .dark select {
-  background-color: #0f172a !important;
-  color: #f1f5f9 !important;
-  border-color: #334155 !important;
+  background-color: #111827 !important;
+  color: #f8fafc !important;
+  border-color: #374151 !important;
 }
 .dark input::placeholder,
 .dark textarea::placeholder { color: #475569 !important; }
 .dark input:focus,
 .dark textarea:focus,
-.dark select:focus         { border-color: #6366f1 !important; outline-color: #6366f1 !important; }
+.dark select:focus         { border-color: #00d3ee !important; outline-color: #00d3ee !important; box-shadow: 0 0 0 3px rgba(0,211,238,0.18) !important; }
 
 /* ── Tables ──────────────────────────────────────────────────────────────── */
 .dark table                { color: #f1f5f9; }
@@ -1015,3 +1015,14 @@ select:focus-visible {
 /* ── Light theme: zebra table rows (Gemini Option-B spec) ── */
 html:not(.dark) main table tbody tr:nth-child(even) { background-color: #F1F5F9; }
 html:not(.dark) main table tbody tr:hover { background-color: #E2E8F0; }
+
+
+/* ── PART 2: Premium Black refinements (Gemini dark spec) ── */
+.dark .shadow-sm, .dark .shadow { box-shadow: 0 8px 16px -6px rgba(0,0,0,0.45) !important; }
+.dark .shadow-lg, .dark .shadow-xl { box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5), 0 10px 10px -5px rgba(0,0,0,0.2) !important; }
+/* Electric-cyan glow ONLY on primary CTAs — restrained, not casino */
+.dark .bg-primary-500, .dark .bg-primary-600 { box-shadow: 0 4px 14px rgba(0,211,238,0.35) !important; }
+.dark .bg-primary-500:hover, .dark .bg-primary-600:hover { box-shadow: 0 4px 20px rgba(0,211,238,0.5) !important; }
+/* Dark zebra tables: #111827 / #1F2937 */
+html.dark main table tbody tr:nth-child(even) { background-color: #1F2937 !important; }
+html.dark main table tbody tr:hover { background-color: #374151 !important; }

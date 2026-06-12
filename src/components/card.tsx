@@ -31,7 +31,7 @@ export const Card = ({
       className={clsx(
         'relative rounded-xl border border-slate-200 bg-white/70 p-6 backdrop-blur-[12px]',
         'shadow-[0_10px_15px_-3px_rgba(15,23,42,0.03),0_4px_6px_-4px_rgba(15,23,42,0.03)]',
-        'dark:border-slate-700 dark:bg-slate-800/90',
+        'dark:border-[#374151] dark:bg-[#111827]/95',
         hoverable && 'hover:border-slate-300 hover:shadow-[0_14px_20px_-3px_rgba(15,23,42,0.06)] dark:hover:border-slate-600 dark:hover:shadow-slate-900/60',
         'transition-all duration-200',
         onClick && 'cursor-pointer',
