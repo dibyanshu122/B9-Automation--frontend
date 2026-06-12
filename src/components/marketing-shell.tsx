@@ -8,6 +8,7 @@ import { marketingNav, allFeatures } from '@/lib/marketing';
 import { useAuthStore } from '@/store/authStore';
 import { ArrowRight, ChevronDown } from 'lucide-react';
 import { MagneticButton } from '@/components/premium-motion';
+import { MarketingThemeToggle } from '@/components/marketing-theme-toggle';
 
 export function MarketingNav({ variant = 'light' }: { variant?: 'light' | 'dark' }) {
   const { user } = useAuthStore();
@@ -101,6 +102,7 @@ export function MarketingNav({ variant = 'light' }: { variant?: 'light' | 'dark'
         </nav>
 
         <div className="flex items-center gap-2">
+          <MarketingThemeToggle />
           <Link
             href={user ? '/dashboard' : '/login'}
             className={`hidden sm:block text-sm font-medium transition-colors ${

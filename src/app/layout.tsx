@@ -84,6 +84,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: `try{if(localStorage.getItem('marketing-theme')==='light')document.documentElement.classList.add('mk-light')}catch(e){}` }} />
+      </head>
+      <head>
         {/* Favicon */}
         <link rel="icon" href="/brand-logo.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/brand-logo.svg" />

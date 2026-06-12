@@ -1051,3 +1051,38 @@ select:focus-visible {
 .dark .border-green-200 { border-color: rgba(0,92,75,0.8) !important; }
 .dark .bg-green-100 { background-color: rgba(0,92,75,0.5) !important; }
 .dark .bg-green-50 { background-color: rgba(5,46,22,0.4) !important; }
+
+
+/* ═══ MARKETING "AURORA LIGHT" THEME — opt-in via html.mk-light ═══
+   Dark stays the default and untouched. Every rule is guarded with
+   :not(.b9-command-shell *) so the dashboard is never affected. */
+html.mk-light .bg-\[\#030712\]:not(.b9-command-shell *) { background-color: #FAFBFF !important; }
+html.mk-light .bg-black:not(.b9-command-shell *) { background-color: #F4F6FB !important; }
+html.mk-light .bg-slate-950\/95:not(.b9-command-shell *) { background-color: rgba(255,255,255,0.9) !important; }
+html.mk-light .bg-\[\#06111b\]\/55:not(.b9-command-shell *),
+html.mk-light .bg-\[\#07111f\]\/82:not(.b9-command-shell *),
+html.mk-light .bg-\[\#03121b\]\/90:not(.b9-command-shell *) { background-color: rgba(255,255,255,0.85) !important; }
+html.mk-light .text-white:not(.b9-command-shell *) { color: #0F172A !important; }
+html.mk-light .text-zinc-200:not(.b9-command-shell *),
+html.mk-light .text-zinc-300:not(.b9-command-shell *) { color: #334155 !important; }
+html.mk-light .text-zinc-400:not(.b9-command-shell *) { color: #475569 !important; }
+html.mk-light .text-zinc-500:not(.b9-command-shell *) { color: #64748b !important; }
+html.mk-light .text-zinc-600:not(.b9-command-shell *),
+html.mk-light .text-zinc-700:not(.b9-command-shell *) { color: #94a3b8 !important; }
+html.mk-light .text-gray-400:not(.b9-command-shell *) { color: #475569 !important; }
+html.mk-light .text-gray-300:not(.b9-command-shell *) { color: #334155 !important; }
+html.mk-light [class*="border-white/"]:not(.b9-command-shell *) { border-color: #E2E8F0 !important; }
+html.mk-light [class*="bg-white/[0.0"]:not(.b9-command-shell *) { background-color: rgba(255,255,255,0.78) !important; backdrop-filter: blur(12px); box-shadow: 0 10px 15px -3px rgba(15,23,42,0.04); }
+html.mk-light .bg-white\/10:not(.b9-command-shell *) { background-color: rgba(15,23,42,0.05) !important; }
+/* Aurora wash: the Automation gradient as soft background atmosphere */
+html.mk-light section.bg-\[\#030712\]:not(.b9-command-shell *),
+html.mk-light div.bg-\[\#030712\]:not(.b9-command-shell *) {
+  background-image:
+    radial-gradient(900px 480px at 12% 0%, rgba(0,242,254,0.10), transparent 60%),
+    radial-gradient(800px 520px at 88% 18%, rgba(139,92,246,0.10), transparent 60%),
+    radial-gradient(700px 420px at 50% 100%, rgba(124,58,237,0.06), transparent 65%) !important;
+}
+/* Glow shadows -> soft light shadows */
+html.mk-light [class*="shadow-[0_0_"]:not(.b9-command-shell *) { box-shadow: 0 10px 24px rgba(15,23,42,0.08) !important; }
+/* Headline gradient text: deepen for white bg */
+html.mk-light .md\:bg-clip-text:not(.b9-command-shell *) { background-image: linear-gradient(90deg,#00A8C2,#7C3AED) !important; }
