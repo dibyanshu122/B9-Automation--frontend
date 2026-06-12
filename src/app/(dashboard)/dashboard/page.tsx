@@ -470,19 +470,19 @@ export default function DashboardPage() {
                   {readiness === null ? <span className="text-3xl text-gray-400">-</span> : `${readinessScore}%`}
                 </p>
               </div>
-              <ShieldCheck className="h-11 w-11 text-emerald-300" />
+              <ShieldCheck className="h-11 w-11 text-emerald-500 dark:text-emerald-300" />
             </div>
-            <div className="mt-6 h-3 overflow-hidden rounded-full bg-white/10">
+            <div className="mt-6 h-3 overflow-hidden rounded-full bg-slate-200 dark:bg-white/10">
               <div className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-sky-400 to-amber-400" style={{ width: `${Math.min(readinessScore, 100)}%` }} />
             </div>
-            <p className="mt-4 text-sm font-semibold capitalize text-cyan-100">
+            <p className="mt-4 text-sm font-semibold capitalize text-primary-700 dark:text-cyan-100">
               {(readiness?.launch_status || 'setup_needed').split('_').join(' ')}
             </p>
             <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-gray-300">
               Complete documents, widget, WhatsApp, and automation checks before going live.
             </p>
             {nextFix && (
-              <Link href={nextFixHref} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-amber-300/20 bg-amber-400/10 px-3 py-2 text-sm font-bold text-amber-100 transition hover:bg-amber-400/20">
+              <Link href={nextFixHref} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-bold text-amber-700 transition hover:bg-amber-100 dark:border-amber-300/20 dark:bg-amber-400/10 dark:text-amber-100 dark:hover:bg-amber-400/20">
                 Fix next: {nextFix.action || nextFix.label || 'Open setup'}
                 <ChevronRight className="h-4 w-4" />
               </Link>

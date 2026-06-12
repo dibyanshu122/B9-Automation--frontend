@@ -1026,3 +1026,19 @@ html:not(.dark) main table tbody tr:hover { background-color: #E2E8F0; }
 /* Dark zebra tables: #111827 / #1F2937 */
 html.dark main table tbody tr:nth-child(even) { background-color: #1F2937 !important; }
 html.dark main table tbody tr:hover { background-color: #374151 !important; }
+
+
+/* ── Dark: brand/sky text legibility on near-black surfaces ── */
+.dark .text-primary-700, .dark .text-primary-600,
+.dark .text-sky-700, .dark .text-sky-600,
+.dark .text-cyan-700, .dark .text-cyan-600 { color: #67e8f9 !important; }
+.dark .text-primary-500, .dark .text-sky-500 { color: #22d3ee !important; }
+.dark .text-slate-500 { color: #94a3b8 !important; }
+.dark .text-slate-400 { color: #8494ab !important; }
+.dark .bg-primary-50 { background-color: rgba(8,51,68,0.4) !important; }
+.dark .border-primary-100, .dark .border-primary-200 { border-color: rgba(14,116,144,0.5) !important; }
+.dark .text-amber-700 { color: #fcd34d !important; }
+.dark .text-emerald-700 { color: #6ee7b7 !important; }
+.dark .text-red-700 { color: #fca5a5 !important; }
+.dark .text-violet-700 { color: #c4b5fd !important; }
+.dark .text-blue-700 { color: #93c5fd !important; }
