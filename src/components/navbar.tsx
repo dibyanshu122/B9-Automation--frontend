@@ -360,7 +360,7 @@ export const Navbar = () => {
                         </div>
                         <button
                           onClick={openBizProfile}
-                          className={`flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-slate-300 hover:bg-white/[0.08] hover:${darkMode ? 'text-white' : 'text-slate-900'} transition`}
+                          className={`flex w-full items-center gap-2.5 px-4 py-2.5 text-sm ${darkMode ? 'text-slate-300 hover:bg-white/[0.08]' : 'text-slate-700 hover:bg-slate-100'} hover:${darkMode ? 'text-white' : 'text-slate-900'} transition`}
                         >
                           <Building2 className="w-4 h-4 shrink-0 text-cyan-400" />
                           Business Profile
@@ -368,7 +368,7 @@ export const Navbar = () => {
                         <Link
                           href="/dashboard/settings"
                           onClick={() => setShowUserMenu(false)}
-                          className={`flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-300 hover:bg-white/[0.08] hover:${darkMode ? 'text-white' : 'text-slate-900'} transition`}
+                          className={`flex items-center gap-2.5 px-4 py-2.5 text-sm ${darkMode ? 'text-slate-300 hover:bg-white/[0.08]' : 'text-slate-700 hover:bg-slate-100'} hover:${darkMode ? 'text-white' : 'text-slate-900'} transition`}
                         >
                           <Settings className="w-4 h-4 shrink-0" />
                           Settings
