@@ -84,9 +84,6 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: `try{if(localStorage.getItem('marketing-theme')==='light')document.documentElement.classList.add('mk-light')}catch(e){}` }} />
-      </head>
-      <head>
         {/* Favicon */}
         <link rel="icon" href="/brand-logo.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/brand-logo.svg" />
@@ -106,6 +103,7 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://b9-automation-backend.onrender.com" />
       </head>
       <body className={`${inter.className} ${spaceGrotesk.variable} font-sans`} suppressHydrationWarning>
+        <script dangerouslySetInnerHTML={{ __html: `try{if(localStorage.getItem('marketing-theme')==='light')document.documentElement.classList.add('mk-light')}catch(e){}` }} />
         <Providers>{children}</Providers>
         <MarketingWidget />
         <PWAInstaller />
