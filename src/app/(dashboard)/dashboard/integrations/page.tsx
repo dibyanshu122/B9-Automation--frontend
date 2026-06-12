@@ -1520,7 +1520,7 @@ export default function IntegrationsPage() {
               AI actions across your tools
             </p>
             <h1 className="text-2xl font-bold text-gray-950">Integrations</h1>
-            <p className="mt-2 max-w-2xl text-gray-600">
+            <p className="mt-1 max-w-2xl text-xs text-gray-500">
               Connect WhatsApp, Facebook, Instagram, Gmail, Sheets, Razorpay and more. Add your credentials to start sending, syncing, and automating in real time.
             </p>
           </div>
@@ -1672,7 +1672,7 @@ export default function IntegrationsPage() {
       <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
         <Card className="border-blue-100 shadow-sm" hoverable={false}>
           <h2 className="text-xl font-bold text-gray-950">Test Multi-channel Actions</h2>
-          <p className="mt-1 text-sm text-gray-600">These actions create real dashboard records now. Sending and syncing will turn live after provider connections are ready.</p>
+          <p className="mt-0.5 text-xs text-gray-500">These actions create real dashboard records now. Sending and syncing will turn live after provider connections are ready.</p>
           <div className="mt-5 grid gap-3 md:grid-cols-2">
             {actionTemplates.map((template) => (
               <button key={template.key} type="button" onClick={() => runAction(template)} disabled={!!loading}
@@ -2334,7 +2334,7 @@ export default function IntegrationsPage() {
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-xs font-bold uppercase tracking-wide text-gray-500">WhatsApp Business</p>
-                      <p className="mt-1 text-sm text-gray-600">{whatsappConnected ? 'Verified and connected' : 'Not connected'}</p>
+                      <p className="mt-0.5 text-xs text-gray-500">{whatsappConnected ? 'Verified and connected' : 'Not connected'}</p>
                     </div>
                     <span className={`rounded-full px-3 py-1 text-xs font-bold ${whatsappConnected ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
                       {whatsappConnected ? 'Connected' : 'Not Connected'}

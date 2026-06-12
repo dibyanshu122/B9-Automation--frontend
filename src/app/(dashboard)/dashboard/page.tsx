@@ -66,6 +66,23 @@ export default function DashboardPage() {
   const { get } = useApi();
   const [apiLimits, setApiLimits] = useState<any>(null);
   const [metaStatus, setMetaStatus] = useState<any>(null);
+  const [attention, setAttention] = useState<{ handover: number; unread: number }>({ handover: 0, unread: 0 });
+
+  // "Needs attention" — action-first home: what should the user do RIGHT NOW
+  useEffect(() => {
+    const token = useAuthStore.getState().token;
+    const base = process.env.NEXT_PUBLIC_API_URL || '';
+    const h: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+    Promise.allSettled([
+      fetch(`${base}/api/leads/handover-queue`, { headers: h }).then(r => r.json()),
+      fetch(`${base}/api/automation/inbox/unread-count`, { headers: h }).then(r => r.json()),
+    ]).then(([hq, uc]) => {
+      setAttention({
+        handover: hq.status === 'fulfilled' ? (hq.value?.items?.length || 0) : 0,
+        unread: uc.status === 'fulfilled' ? (uc.value?.unread || 0) : 0,
+      });
+    });
+  }, []);
   const [onboarding, setOnboarding] = useState<OnboardingStatus | null>(null);
   const [automationStats, setAutomationStats] = useState({
     leads_captured: 0,
@@ -395,6 +412,23 @@ export default function DashboardPage() {
         );
       })()}
 
+      {/* ⚡ Needs Attention — action-first: aaj kya karna hai */}
+      {(attention.handover > 0 || attention.unread > 0) && (
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5">
+          <span className="text-sm font-bold text-amber-900">⚡ Needs attention:</span>
+          {attention.unread > 0 && (
+            <a href="/dashboard/messages" className="rounded-full bg-cyan-600 px-3 py-1 text-xs font-bold text-white transition hover:bg-cyan-700">
+              💬 {attention.unread} unread message{attention.unread > 1 ? 's' : ''} →
+            </a>
+          )}
+          {attention.handover > 0 && (
+            <a href="/dashboard/handover" className="rounded-full bg-red-600 px-3 py-1 text-xs font-bold text-white transition hover:bg-red-700">
+              🙋 {attention.handover} handover{attention.handover > 1 ? 's' : ''} waiting →
+            </a>
+          )}
+        </div>
+      )}
+
       <section className="relative overflow-hidden rounded-2xl border border-white/10 bg-slate-950/90 p-5 text-white shadow-xl shadow-black/30 lg:p-6">
         <div className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-cyan-500/20 blur-3xl" />
         <div className="absolute bottom-0 right-28 h-40 w-40 rounded-full bg-sky-500/10 blur-3xl" />
@@ -582,7 +616,7 @@ export default function DashboardPage() {
                 </span>
               </div>
               <p className="mt-4 font-bold text-gray-950">Website Widget</p>
-              <p className="mt-1 text-sm text-gray-600">{automationStats.widget_status?.active_domains || 0} allowed domains active</p>
+              <p className="mt-0.5 text-xs text-gray-500">{automationStats.widget_status?.active_domains || 0} allowed domains active</p>
             </Link>
             {/* WhatsApp Status / Meta Status Card */}
             {automationStats.whatsapp_connection_status?.send_enabled && metaStatus ? (
@@ -731,7 +765,7 @@ export default function DashboardPage() {
                       <ChevronRight className="h-4 w-4 text-gray-400" />
                     </div>
                     <p className="mt-4 font-bold text-gray-950">{item.title}</p>
-                    <p className="mt-1 text-sm text-gray-600">{item.text}</p>
+                    <p className="mt-0.5 text-xs text-gray-500">{item.text}</p>
                   </Link>
                 );
               })}

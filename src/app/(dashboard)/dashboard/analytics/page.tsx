@@ -175,7 +175,7 @@ export default function AnalyticsPage() {
         <div className="relative flex items-start justify-between gap-4 flex-wrap">
           <div>
             <h1 className="text-2xl font-bold text-gray-950">Analytics</h1>
-            <p className="mt-2 max-w-2xl text-gray-600">
+            <p className="mt-1 max-w-2xl text-xs text-gray-500">
               Track conversations, leads, automations, saved time, and launch readiness in one place.
             </p>
           </div>

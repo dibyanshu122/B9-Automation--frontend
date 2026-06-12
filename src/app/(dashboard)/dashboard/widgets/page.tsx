@@ -744,7 +744,7 @@ export default function WidgetsPage() {
             <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">Embed Code</h2>
-                <p className="mt-1 text-gray-600">Paste this snippet before the closing body tag.</p>
+                <p className="mt-0.5 text-xs text-gray-500">Paste this snippet before the closing body tag.</p>
               </div>
               <Button
                 type="button"

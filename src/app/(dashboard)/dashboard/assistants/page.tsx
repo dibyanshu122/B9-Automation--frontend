@@ -155,7 +155,7 @@ export default function AssistantsPage() {
               <div className="mb-4 flex items-start justify-between">
                 <div className="flex-1">
                   <h3 className="text-lg font-bold text-gray-900">{assistant.name}</h3>
-                  <p className="mt-1 text-sm text-gray-600">{assistant.description}</p>
+                  <p className="mt-0.5 text-xs text-gray-500">{assistant.description}</p>
                 </div>
                 <div className="relative h-12 w-12 flex-shrink-0 rounded-lg bg-gradient-to-br from-orange-100 to-green-100 shadow-inner">
                   <div className="absolute inset-1 rounded-lg bg-white shadow-sm" />

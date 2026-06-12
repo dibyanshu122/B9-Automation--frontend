@@ -571,7 +571,7 @@ export default function ImportsPage() {
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-gray-900">Import Complete</p>
-              <p className="mt-1 text-sm text-gray-600">
+              <p className="mt-0.5 text-xs text-gray-500">
                 <span className="font-bold text-emerald-700">{result.created} contacts added</span>
                 {result.skipped_duplicates > 0 && <span className="ml-2 text-gray-500">· {result.skipped_duplicates} duplicates skipped</span>}
               </p>

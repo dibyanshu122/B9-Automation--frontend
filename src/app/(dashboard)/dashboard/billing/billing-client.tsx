@@ -362,7 +362,7 @@ export default function BillingClient({ initialPlan, initialInvoices }: BillingC
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Upgrade Your Plan</h2>
-            <p className="mt-1 text-sm text-gray-600">
+            <p className="mt-0.5 text-xs text-gray-500">
               {billingCycle === 'yearly' ? 'Yearly billing selected' : 'Monthly billing selected'}
             </p>
             <p className="mt-1 text-xs text-gray-500">

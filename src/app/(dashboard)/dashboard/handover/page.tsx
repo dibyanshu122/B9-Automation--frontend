@@ -108,7 +108,7 @@ export default function HandoverPage() {
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-950">Handover Queue</h1>
-          <p className="mt-1 text-sm text-gray-600">Complaints, low-confidence AI chats, and hot leads waiting for human review.</p>
+          <p className="mt-0.5 text-xs text-gray-500">Complaints, low-confidence AI chats, and hot leads waiting for human review.</p>
         </div>
         <Button variant="secondary" onClick={load} disabled={loading}>
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}

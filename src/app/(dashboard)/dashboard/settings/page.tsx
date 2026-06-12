@@ -595,7 +595,7 @@ export default function SettingsPage() {
           <p className="font-semibold text-gray-950">
             Mode: {whatsappStatus?.send_enabled ? 'Live sending enabled' : 'Draft mode'}
           </p>
-          <p className="mt-1 text-sm text-gray-600">
+          <p className="mt-0.5 text-xs text-gray-500">
             Provider: {whatsappStatus?.provider || 'draft'} · Status: {whatsappStatus?.status || 'draft'}
           </p>
           <p className="mt-3 text-sm text-gray-600">
