@@ -138,7 +138,7 @@ export default function ABTestingPage() {
   const totalTraffic = variants.filter(v => v.status === 'active').reduce((s, v) => s + v.traffic_percentage, 0);
 
   if (loading) {
-    return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>;
+    return <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>;
   }
 
   return (

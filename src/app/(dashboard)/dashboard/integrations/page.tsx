@@ -1574,6 +1574,23 @@ export default function IntegrationsPage() {
         ))}
       </div>
 
+      {/* ONE upgrade banner — locked cards sirf lock badge dikhate hain,
+          12 alag "Upgrade" buttons ka bazaar nahi */}
+      {(() => {
+        const lockedCount = catalog.filter((it) => !planAccess.canUse(featureForProvider(it.provider))).length;
+        if (lockedCount === 0) return null;
+        return (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-violet-200 bg-gradient-to-r from-violet-50 to-indigo-50 px-4 py-2.5">
+            <p className="text-sm text-violet-900">
+              <span className="font-bold">🔒 {lockedCount} integrations</span> aapke plan me locked hain — Starter se unlock karo
+            </p>
+            <a href="/dashboard/billing" className="shrink-0 rounded-lg bg-violet-600 px-4 py-1.5 text-xs font-bold text-white transition hover:bg-violet-700">
+              Upgrade Plan →
+            </a>
+          </div>
+        );
+      })()}
+
       {/* Catalog grid */}
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {catalogLoading && catalog.length === 0 && Array.from({ length: 8 }).map((_, i) => (
@@ -1635,10 +1652,16 @@ export default function IntegrationsPage() {
                   </div>
                 ))}
               </div>
-              <Button variant={item.connected ? 'secondary' : 'primary'} className="mt-4 w-full"
-                loading={loading === `${item.provider}:connect`} onClick={() => openSetup(item)}>
-                <Plug className="h-4 w-4" />{!available ? 'Upgrade to Connect' : item.connected ? 'Reconnect / Update' : 'Connect'}
-              </Button>
+              {available ? (
+                <Button variant={item.connected ? 'secondary' : 'primary'} className="mt-4 w-full"
+                  loading={loading === `${item.provider}:connect`} onClick={() => openSetup(item)}>
+                  <Plug className="h-4 w-4" />{item.connected ? 'Reconnect / Update' : 'Connect'}
+                </Button>
+              ) : (
+                <div className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-gray-300 bg-gray-50 py-2 text-xs font-semibold text-gray-400">
+                  🔒 Starter plan required
+                </div>
+              )}
             </Card>
           );
         })}

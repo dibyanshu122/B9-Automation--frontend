@@ -182,7 +182,7 @@ export default function BillingClient({ initialPlan, initialInvoices }: BillingC
     <div className="space-y-8">
       {/* Page header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Billing & Plans</h1>
+        <h1 className="text-xl font-bold text-gray-900">Billing & Plans</h1>
         <p className="mt-1 text-sm text-gray-500">Manage your subscription, view invoices and upgrade your plan.</p>
       </div>
 

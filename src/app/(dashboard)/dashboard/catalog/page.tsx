@@ -241,7 +241,7 @@ export default function CatalogPage() {
             {[1, 2, 3].map(i => <div key={i} className="h-48 rounded-xl bg-gray-100 animate-pulse" />)}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="flex flex-col items-center justify-center py-10 text-center">
             <Package className="h-12 w-12 text-gray-300 mb-3" />
             <p className="text-gray-500 font-medium">No products yet</p>
             <p className="text-gray-400 text-sm mt-1">Add your first product to start sending catalogs via WhatsApp</p>

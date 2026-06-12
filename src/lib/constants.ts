@@ -91,7 +91,7 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
       { name: 'Team', href: '/dashboard/team', icon: 'UserCog' },
       { name: 'Billing', href: '/dashboard/billing', icon: 'CreditCard' },
       { name: 'API Keys', href: '/dashboard/api', icon: 'Key' },
-      { name: 'Settings', href: '/dashboard/settings', icon: 'Settings' },
+      { name: 'General', href: '/dashboard/settings', icon: 'Settings' },
     ],
   },
 

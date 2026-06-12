@@ -221,7 +221,7 @@ export default function AnalyticsPage() {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-medium text-gray-500">{stat.label}</p>
-                  <p className="mt-2 text-3xl font-bold text-gray-950">{stat.value}</p>
+                  <p className="mt-1 text-xl font-bold text-gray-950">{stat.value}</p>
                 </div>
                 <div className={`rounded-lg p-3 ${stat.color}`}>
                   <Icon className="h-5 w-5" />

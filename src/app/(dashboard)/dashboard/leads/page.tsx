@@ -1033,7 +1033,7 @@ export default function LeadsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-500">{stat.label}</p>
-                <p className="mt-2 text-3xl font-bold text-gray-950">{stat.value}</p>
+                <p className="mt-1 text-xl font-bold text-gray-950">{stat.value}</p>
                 {isHandover && stat.value > 0 && <p className="mt-1 text-xs text-sky-600 font-semibold">Click to open inbox →</p>}
               </div>
               <div className={`rounded-lg p-3 ${stat.style}`}>
