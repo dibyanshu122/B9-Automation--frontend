@@ -429,7 +429,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <section className="relative overflow-hidden rounded-2xl border border-white/10 bg-slate-950/90 p-5 text-white shadow-xl shadow-black/30 lg:p-6">
+      <section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white/70 p-5 text-slate-900 shadow-[0_10px_15px_-3px_rgba(15,23,42,0.04)] backdrop-blur-[12px] dark:border-white/10 dark:bg-slate-950/90 dark:text-white dark:shadow-black/30 lg:p-6">
         <div className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-cyan-500/20 blur-3xl" />
         <div className="absolute bottom-0 right-28 h-40 w-40 rounded-full bg-sky-500/10 blur-3xl" />
         <div className="relative grid gap-5 lg:grid-cols-[1.28fr_0.72fr]">
@@ -437,17 +437,17 @@ export default function DashboardPage() {
             <h1 className="max-w-4xl text-3xl font-bold tracking-tight sm:text-4xl">
               Manage customer conversations, leads, and follow-ups from one AI command center.
             </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-300">
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 dark:text-gray-300">
               Welcome back, {user?.name || 'there'}. Your B9 workspace is ready to answer customers, capture leads, and prepare next actions.
             </p>
 
-            <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/10 p-2.5 backdrop-blur md:flex-row">
-              <label className="group flex min-w-0 flex-1 cursor-text items-center gap-3 rounded-xl border border-white/10 bg-slate-950/90 px-4 py-3 text-white shadow-inner shadow-black/30 transition-all hover:border-white/20 focus-within:border-white/20 focus-within:bg-slate-950">
-                <Search className="h-5 w-5 shrink-0 text-cyan-300 transition-transform group-focus-within:scale-105" />
+            <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-2.5 backdrop-blur dark:border-white/10 dark:bg-white/10 md:flex-row">
+              <label className="group flex min-w-0 flex-1 cursor-text items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 shadow-sm transition-all hover:border-primary-300 focus-within:border-primary-400 dark:border-white/10 dark:bg-slate-950/90 dark:text-white dark:focus-within:bg-slate-950">
+                <Search className="h-5 w-5 shrink-0 text-primary-500 dark:text-cyan-300 transition-transform group-focus-within:scale-105" />
                 <input
                   value={command}
                   onChange={(e) => setCommand(e.target.value)}
-                  className="b9-command-input block min-w-0 flex-1 bg-transparent text-sm text-white caret-cyan-300 outline-none ring-0 selection:bg-cyan-500/20 selection:text-white placeholder:text-slate-500 focus:outline-none focus:ring-0"
+                  className="b9-command-input block min-w-0 flex-1 bg-transparent text-sm text-slate-900 caret-primary-500 dark:text-white dark:caret-cyan-300 outline-none ring-0 selection:bg-cyan-500/20 selection:text-white placeholder:text-slate-500 focus:outline-none focus:ring-0"
                   placeholder="Ask B9 to draft follow-ups, create a proposal, summarize leads, or test WhatsApp..."
                   autoComplete="off"
                   spellCheck={false}
@@ -462,10 +462,10 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-white/10 p-5 backdrop-blur">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-white/10 dark:bg-white/10">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm text-gray-300">Launch readiness</p>
+                <p className="text-sm text-slate-500 dark:text-gray-300">Launch readiness</p>
                 <p className="mt-1 text-5xl font-black">
                   {readiness === null ? <span className="text-3xl text-gray-400">-</span> : `${readinessScore}%`}
                 </p>
@@ -522,7 +522,7 @@ export default function DashboardPage() {
           <p className="mt-2 text-sm text-gray-600">
             Upgrade only when your AI starts generating leads. Top-ups help when one usage metric spikes without changing plan.
           </p>
-          <div className="mt-4 rounded-xl bg-slate-950 p-4 text-sm text-white">
+          <div className="mt-4 rounded-xl border border-slate-200 bg-slate-100 p-4 text-sm text-slate-900 dark:border-0 dark:bg-slate-950 dark:text-white">
             <p className="font-bold">WhatsApp note</p>
             <p className="mt-1 text-slate-300">Meta conversation charges are not included and are paid directly to Meta.</p>
           </div>
@@ -698,7 +698,7 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
-          <div className="mt-4 flex items-center justify-between rounded-xl bg-slate-950 px-4 py-3 text-white">
+          <div className="mt-4 flex items-center justify-between rounded-xl border border-slate-200 bg-slate-100 px-4 py-3 text-slate-900 dark:border-0 dark:bg-slate-950 dark:text-white">
             <div className="flex items-center gap-4 text-sm">
               <span className="font-semibold text-red-300">🔥 {automationStats.hot_leads} hot</span>
               <span className="font-semibold text-amber-300">~ {automationStats.warm_leads} warm</span>

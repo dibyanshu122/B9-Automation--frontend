@@ -312,7 +312,7 @@ export default function DocumentsPage() {
                   />
                 </div>
                 {uploadMode === 'url' && (
-                  <label className="flex items-center gap-3 cursor-pointer rounded-lg border border-orange-300/20 bg-slate-900/60 px-4 py-2.5">
+                  <label className="flex items-center gap-3 cursor-pointer rounded-lg border border-slate-200 bg-slate-50 dark:border-orange-300/20 dark:bg-slate-900/60 px-4 py-2.5">
                     <div
                       onClick={() => setUrlCrawl(v => !v)}
                       className={`relative h-5 w-9 rounded-full transition-colors shrink-0 ${urlCrawl ? 'bg-sky-500' : 'bg-slate-600'}`}
@@ -342,7 +342,7 @@ export default function DocumentsPage() {
             </div>
 
             {loading && (
-              <div className="relative overflow-hidden rounded-xl border border-orange-300/20 bg-slate-950/85 p-5 text-white shadow-2xl shadow-orange-500/10">
+              <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white/70 p-5 text-slate-900 shadow-[0_10px_15px_-3px_rgba(15,23,42,0.04)] backdrop-blur-[12px] dark:border-orange-300/20 dark:bg-slate-950/85 dark:text-white dark:shadow-orange-500/10">
                 <div className="absolute inset-0 bg-[linear-gradient(110deg,transparent,rgba(249,115,22,0.12),transparent)] animate-[b9Scan_1.8s_ease-in-out_infinite]" />
                 <div className="relative grid gap-5 lg:grid-cols-[220px_1fr]">
                   <div className="relative mx-auto flex h-44 w-36 items-center justify-center rounded-2xl border border-white/10 bg-white/8 shadow-inner shadow-black/30">
