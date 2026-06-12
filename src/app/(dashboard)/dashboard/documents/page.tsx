@@ -370,7 +370,7 @@ export default function DocumentsPage() {
                     </div>
                     <div className="h-2 overflow-hidden rounded-full bg-white/10">
                       <div
-                        className="h-full rounded-full bg-gradient-to-r from-orange-400 via-amber-300 to-sky-300 transition-all duration-300"
+                        className="h-full rounded-full bg-gradient-to-r from-primary-400 via-amber-300 to-sky-300 transition-all duration-300"
                         style={{ width: `${uploadProgress}%` }}
                       />
                     </div>

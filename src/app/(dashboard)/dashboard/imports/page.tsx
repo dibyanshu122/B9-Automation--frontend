@@ -376,7 +376,7 @@ export default function ImportsPage() {
                 {[
                   { icon: FileSpreadsheet, color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30', name: 'CSV (.csv)', desc: 'Comma-separated values' },
                   { icon: FileSpreadsheet, color: 'text-blue-600 bg-blue-50 dark:bg-blue-900/30', name: 'Excel (.xlsx, .xls)', desc: 'First sheet is used' },
-                  { icon: Link2, color: 'text-orange-500 bg-sky-50 dark:bg-orange-900/30', name: 'Google Sheets', desc: 'Share publicly first' },
+                  { icon: Link2, color: 'text-primary-500 bg-sky-50 dark:bg-orange-900/30', name: 'Google Sheets', desc: 'Share publicly first' },
                 ].map(({ icon: Icon, color, name, desc }) => (
                   <div key={name} className="flex items-center gap-3 rounded-xl border border-gray-100 dark:border-slate-700 px-3 py-2.5">
                     <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${color}`}>

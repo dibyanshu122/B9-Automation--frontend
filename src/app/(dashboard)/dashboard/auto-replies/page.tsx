@@ -272,7 +272,7 @@ function RuleForm({ ruleType, existing, onClose, onSaved }: {
                     ))}
                   </select>
                   {approvedTemplates.length === 0 && (
-                    <p className="text-[11px] text-gray-400 mt-0.5">No approved templates yet. <a href="/dashboard/templates" className="text-orange-500 underline">Create one →</a></p>
+                    <p className="text-[11px] text-gray-400 mt-0.5">No approved templates yet. <a href="/dashboard/templates" className="text-primary-500 underline">Create one →</a></p>
                   )}
                 </div>
 
@@ -656,7 +656,7 @@ export default function AutoRepliesPage() {
       <div className="flex gap-1 overflow-x-auto scrollbar-none border-b border-gray-200 pb-0">
         {TABS.map(t => (
           <button key={t.key} onClick={() => setActiveTab(t.key)}
-            className={`flex items-center gap-1.5 px-3.5 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition -mb-px ${activeTab === t.key ? 'border-orange-500 text-sky-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+            className={`flex items-center gap-1.5 px-3.5 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition -mb-px ${activeTab === t.key ? 'border-primary-500 text-sky-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
             {t.icon}{t.label}
             {rules.filter(r => r.rule_type === t.key).length > 0 && (
               <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${activeTab === t.key ? 'bg-sky-100 text-sky-700' : 'bg-gray-100 text-gray-500'}`}>
@@ -815,7 +815,7 @@ export default function AutoRepliesPage() {
             <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-gray-400" /></div>
           ) : qrs.length === 0 ? (
             <div className="flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-gray-200 py-14 text-center">
-              <div className="w-12 h-12 rounded-full bg-sky-50 flex items-center justify-center text-orange-500">
+              <div className="w-12 h-12 rounded-full bg-sky-50 flex items-center justify-center text-primary-500">
                 <Zap className="w-5 h-5" />
               </div>
               <p className="font-semibold text-gray-500">No quick replies yet</p>
@@ -859,7 +859,7 @@ export default function AutoRepliesPage() {
           <div className="flex justify-center py-12"><Loader2 className="w-5 h-5 animate-spin text-gray-400" /></div>
         ) : tabRules.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-gray-200 py-16 text-center">
-            <div className="w-12 h-12 rounded-full bg-sky-50 flex items-center justify-center text-orange-500">{tab.icon}</div>
+            <div className="w-12 h-12 rounded-full bg-sky-50 flex items-center justify-center text-primary-500">{tab.icon}</div>
             <p className="font-semibold text-gray-500">No {tab.label} rules yet</p>
             <p className="text-sm text-gray-400">{tab.desc}</p>
             <Button onClick={() => { setEditingRule(null); setShowForm(true); }} className="mt-2 flex items-center gap-2">

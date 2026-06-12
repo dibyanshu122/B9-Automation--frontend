@@ -1042,3 +1042,12 @@ select:focus-visible {
 .dark .text-red-700 { color: #fca5a5 !important; }
 .dark .text-violet-700 { color: #c4b5fd !important; }
 .dark .text-blue-700 { color: #93c5fd !important; }
+
+
+/* ── Dark: WhatsApp chat surfaces (real WA-dark palette) ── */
+.dark .bg-\[\#d9fdd3\] { background-color: #005c4b !important; }   /* outgoing bubble */
+.dark .text-\[\#d9fdd3\] { color: #005c4b !important; }            /* bubble tail */
+.dark .bg-\[\#e5ddd5\] { background-color: #0b141a !important; }   /* wallpaper */
+.dark .border-green-200 { border-color: rgba(0,92,75,0.8) !important; }
+.dark .bg-green-100 { background-color: rgba(0,92,75,0.5) !important; }
+.dark .bg-green-50 { background-color: rgba(5,46,22,0.4) !important; }

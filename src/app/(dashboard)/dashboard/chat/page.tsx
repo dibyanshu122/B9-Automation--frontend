@@ -437,7 +437,7 @@ export default function ChatPage() {
               </button>
             </div>
             {chatMode === 'automation' && (
-              <div className="rounded-xl border border-orange-300/20 bg-orange-400/10 px-4 py-3 text-sm text-slate-300">
+              <div className="rounded-xl border border-orange-300/20 bg-primary-400/10 px-4 py-3 text-sm text-slate-300">
                 <p className="font-bold text-orange-100">Automation Mode runs business tasks.</p>
                 <p className="mt-1">Use it for leads, follow-ups, proposals, FAQs, tasks, and owner alerts.</p>
               </div>
@@ -490,7 +490,7 @@ export default function ChatPage() {
                           className="b9-tilt-card rounded-2xl p-4"
                         >
                           <div className="flex items-center gap-3">
-                            <div className="rounded-xl bg-orange-400/10 p-2 text-orange-200">
+                            <div className="rounded-xl bg-primary-400/10 p-2 text-orange-200">
                               <Icon className="h-5 w-5" />
                             </div>
                             <div>
@@ -572,7 +572,7 @@ export default function ChatPage() {
             </div>
           )}
           {chatMode === 'automation' && automationTimeline.length > 0 && (
-            <div className="rounded-lg border border-orange-300/20 bg-orange-400/10 p-4">
+            <div className="rounded-lg border border-orange-300/20 bg-primary-400/10 p-4">
               <p className="mb-3 text-sm font-bold text-orange-100">Automation run</p>
               <div className="space-y-2">
                 {automationTimeline.map((item, index) => (

@@ -729,7 +729,7 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
                           { v: 'ZERO_TAP', label: 'Zero-tap', desc: 'No button needed' },
                         ] as const).map(({ v, label, desc }) => (
                           <button key={v} onClick={() => setField('authOtpType', v)}
-                            className={`text-left px-3 py-2 rounded-lg border text-xs transition ${form.authOtpType === v ? 'border-orange-500 bg-sky-100' : 'border-gray-200 hover:border-gray-300 bg-white'}`}>
+                            className={`text-left px-3 py-2 rounded-lg border text-xs transition ${form.authOtpType === v ? 'border-primary-500 bg-sky-100' : 'border-gray-200 hover:border-gray-300 bg-white'}`}>
                             <p className="font-semibold">{label}</p>
                             <p className="text-gray-400">{desc}</p>
                           </button>
@@ -807,7 +807,7 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
                                   e.target.value = '';
                                 }} />
                               {cardUploading[ci] ? (
-                                <><span className="h-4 w-4 flex-shrink-0 animate-spin rounded-full border-2 border-orange-500 border-t-transparent" />
+                                <><span className="h-4 w-4 flex-shrink-0 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" />
                                 <span className="text-sm text-sky-600">Uploading to Meta...</span></>
                               ) : card.headerHandle ? (
                                 <><CheckCircle2 className="h-5 w-5 text-green-600" />
@@ -868,7 +868,7 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
                             e.target.value = '';
                           }} />
                         {uploading ? (
-                          <><span className="h-4 w-4 flex-shrink-0 animate-spin rounded-full border-2 border-orange-500 border-t-transparent" />
+                          <><span className="h-4 w-4 flex-shrink-0 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" />
                           <span className="text-sm text-sky-600">Uploading to Meta...</span></>
                         ) : form.headerMediaHandle ? (
                           <><CheckCircle2 className="h-5 w-5 text-green-600" />
@@ -957,7 +957,7 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
                               disabled={uploading}
                             />
                             {uploading ? (
-                              <><span className="w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                              <><span className="w-4 h-4 border-2 border-primary-500 border-t-transparent rounded-full animate-spin flex-shrink-0" />
                               <span className="text-sm text-sky-600">Uploading…</span></>
                             ) : form.headerMediaUrl && !form.headerMediaUrl.startsWith('blob:') ? (
                               <><span className="text-lg">✅</span>
@@ -1765,7 +1765,7 @@ export default function TemplatesPage() {
                     'Choose the correct category — MARKETING vs UTILITY',
                   ].map((tip, i) => (
                     <li key={i} className="flex items-start gap-2 text-xs text-gray-600">
-                      <span className="text-orange-400 mt-0.5 flex-shrink-0">→</span>
+                      <span className="text-primary-400 mt-0.5 flex-shrink-0">→</span>
                       {tip}
                     </li>
                   ))}
@@ -1843,7 +1843,7 @@ export default function TemplatesPage() {
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center text-white text-sm font-bold">✨</div>
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-amber-600 flex items-center justify-center text-white text-sm font-bold">✨</div>
                 <div>
                   <p className="font-bold text-gray-900 text-sm">AI Template Generator</p>
                   <p className="text-[10px] text-gray-400">Describe → AI generates → Submit to Meta for approval</p>

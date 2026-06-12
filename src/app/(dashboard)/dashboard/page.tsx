@@ -263,7 +263,7 @@ export default function DashboardPage() {
             <X className="h-4 w-4" />
           </button>
           <div className="flex items-center gap-2 mb-4">
-            <Rocket className="h-5 w-5 text-orange-500" />
+            <Rocket className="h-5 w-5 text-primary-500" />
             <h2 className="text-base font-bold text-gray-900">Launch your WhatsApp automation in minutes</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

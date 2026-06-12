@@ -962,7 +962,7 @@ function NewCampaignPanel({ onClose, onSent }: { onClose: () => void; onSent: ()
           ].map(tab => (
             <button key={tab.key}
               onClick={() => { if (tab.key === 'send' && !canProceed) { toast.error('Fill campaign name, select template, fill variables'); return; } if (tab.key === 'send') handlePreview(); setActiveTab(tab.key as any); }}
-              className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors -mb-px ${activeTab === tab.key ? 'border-orange-500 text-sky-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>
+              className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors -mb-px ${activeTab === tab.key ? 'border-primary-500 text-sky-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>
               {tab.label}
             </button>
           ))}
@@ -1513,7 +1513,7 @@ export default function CampaignsPage() {
             className="border border-gray-200 rounded-lg pl-2.5 pr-8 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-sky-400 bg-white [&::-webkit-calendar-picker-indicator]:opacity-0" />
           <button type="button" aria-label="Open start date picker"
             onClick={() => { dateFromRef.current?.focus(); dateFromRef.current?.showPicker?.(); }}
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-500">
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary-500">
             <Calendar className="h-3.5 w-3.5" />
           </button>
         </div>
@@ -1523,13 +1523,13 @@ export default function CampaignsPage() {
             className="border border-gray-200 rounded-lg pl-2.5 pr-8 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-sky-400 bg-white [&::-webkit-calendar-picker-indicator]:opacity-0" />
           <button type="button" aria-label="Open end date picker"
             onClick={() => { dateToRef.current?.focus(); dateToRef.current?.showPicker?.(); }}
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-500">
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary-500">
             <Calendar className="h-3.5 w-3.5" />
           </button>
         </div>
         {(nameSearch || templateFilter !== 'all' || dateFrom || dateTo) && (
           <button onClick={() => { setNameSearch(''); setTemplateFilter('all'); setDateFrom(''); setDateTo(''); }}
-            className="text-xs text-orange-500 hover:text-sky-700 font-medium flex items-center gap-1">
+            className="text-xs text-primary-500 hover:text-sky-700 font-medium flex items-center gap-1">
             <X className="w-3 h-3" /> Clear filters
           </button>
         )}
@@ -1545,7 +1545,7 @@ export default function CampaignsPage() {
           const count = t.key === 'all' ? campaigns.length : tabCounts[t.key] || 0;
           return (
             <button key={t.key} onClick={() => setTab(t.key)}
-              className={`flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition -mb-px ${tab === t.key ? 'border-orange-500 text-sky-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+              className={`flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition -mb-px ${tab === t.key ? 'border-primary-500 text-sky-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
               {t.label}
               {count > 0 && <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${tab === t.key ? 'bg-sky-100 text-sky-700' : 'bg-gray-100 text-gray-500'}`}>{count}</span>}
             </button>

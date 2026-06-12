@@ -940,7 +940,7 @@ export default function LeadsPage() {
           </label>
           {(leadDateFrom || leadDateTo) && (
             <button onClick={() => { setLeadDateFrom(''); setLeadDateTo(''); }}
-              className="text-xs text-orange-500 hover:text-sky-700 font-medium flex items-center gap-1">
+              className="text-xs text-primary-500 hover:text-sky-700 font-medium flex items-center gap-1">
               <X className="h-3 w-3" />
               Clear
             </button>
@@ -2152,7 +2152,7 @@ export default function LeadsPage() {
               <button
                 onClick={mergeDuplicates}
                 disabled={!selectedDupGroup || !primaryLeadId || merging}
-                className="flex-1 rounded-xl bg-orange-600 px-4 py-2 text-sm font-bold text-white hover:bg-orange-700 disabled:opacity-40 transition"
+                className="flex-1 rounded-xl bg-primary-600 px-4 py-2 text-sm font-bold text-white hover:bg-primary-700 disabled:opacity-40 transition"
               >
                 {merging ? 'Merging...' : 'Merge into Primary'}
               </button>
@@ -2183,7 +2183,7 @@ export default function LeadsPage() {
                 </div>
                 {scoringRulesLoading ? (
                   <div className="flex items-center justify-center py-6">
-                    <Loader2 className="h-5 w-5 animate-spin text-orange-400" />
+                    <Loader2 className="h-5 w-5 animate-spin text-primary-400" />
                     <span className="ml-2 text-sm text-gray-400">Loading rules…</span>
                   </div>
                 ) : null}
@@ -2237,7 +2237,7 @@ export default function LeadsPage() {
                 <button
                   onClick={saveScoringRulesBackend}
                   disabled={scoringRulesSaving}
-                  className="flex-1 rounded-xl bg-sky-500 py-2 text-xs font-bold text-white hover:bg-orange-600 transition disabled:opacity-50 flex items-center justify-center gap-1.5"
+                  className="flex-1 rounded-xl bg-sky-500 py-2 text-xs font-bold text-white hover:bg-primary-600 transition disabled:opacity-50 flex items-center justify-center gap-1.5"
                 >
                   {scoringRulesSaving ? (
                     <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Saving…</>
@@ -2287,7 +2287,7 @@ export default function LeadsPage() {
               {editingStages.length < 10 && (
                 <button
                   onClick={() => setEditingStages(prev => [...prev, { key: `stage_${Date.now()}`, label: 'New Stage', color: '#6366f1' }])}
-                  className="w-full rounded-xl border-2 border-dashed border-gray-200 py-2 text-xs font-semibold text-gray-400 hover:border-orange-300 hover:text-orange-500 transition">
+                  className="w-full rounded-xl border-2 border-dashed border-gray-200 py-2 text-xs font-semibold text-gray-400 hover:border-orange-300 hover:text-primary-500 transition">
                   + Add Stage
                 </button>
               )}
@@ -2307,7 +2307,7 @@ export default function LeadsPage() {
                   } catch { toast.error('Could not save stages'); }
                   finally { setSavingStages(false); }
                 }}
-                className="flex-1 rounded-xl bg-sky-500 py-2 text-sm font-bold text-white hover:bg-orange-600 transition disabled:opacity-50">
+                className="flex-1 rounded-xl bg-sky-500 py-2 text-sm font-bold text-white hover:bg-primary-600 transition disabled:opacity-50">
                 {savingStages ? 'Saving…' : 'Save Stages'}
               </button>
             </div>

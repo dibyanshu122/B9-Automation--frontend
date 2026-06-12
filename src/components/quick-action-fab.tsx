@@ -10,7 +10,7 @@ type ActionItem = { label: string; icon: React.FC<{ className?: string }>; href:
 const ACTIONS: ActionItem[] = [
   { label: 'Add Lead', icon: Users, href: '/dashboard/leads', color: 'bg-blue-500 hover:bg-blue-600' },
   { label: 'New Automation', icon: Zap, href: '/dashboard/automations', color: 'bg-violet-500 hover:bg-violet-600' },
-  { label: 'Send Campaign', icon: Send, href: '/dashboard/campaigns', color: 'bg-orange-500 hover:bg-orange-600' },
+  { label: 'Send Campaign', icon: Send, href: '/dashboard/campaigns', color: 'bg-primary-500 hover:bg-primary-600' },
   { label: 'New Template', icon: FileText, href: '/dashboard/templates', color: 'bg-emerald-500 hover:bg-emerald-600' },
   { label: 'Open Inbox', icon: MessageSquare, href: '/dashboard/messages', color: 'bg-green-500 hover:bg-green-600' },
 ];
@@ -19,10 +19,10 @@ const PAGE_ACTIONS: Record<string, ActionItem[]> = {
   '/dashboard/leads': [
     { label: 'Add Lead', icon: Users, href: '/dashboard/leads', color: 'bg-blue-500 hover:bg-blue-600' },
     { label: 'New Task', icon: CheckSquare, href: '/dashboard/tasks', color: 'bg-indigo-500 hover:bg-indigo-600' },
-    { label: 'Send Campaign', icon: Send, href: '/dashboard/campaigns', color: 'bg-orange-500 hover:bg-orange-600' },
+    { label: 'Send Campaign', icon: Send, href: '/dashboard/campaigns', color: 'bg-primary-500 hover:bg-primary-600' },
   ],
   '/dashboard/campaigns': [
-    { label: 'New Campaign', icon: Send, href: '/dashboard/campaigns', color: 'bg-orange-500 hover:bg-orange-600' },
+    { label: 'New Campaign', icon: Send, href: '/dashboard/campaigns', color: 'bg-primary-500 hover:bg-primary-600' },
     { label: 'New Template', icon: FileText, href: '/dashboard/templates', color: 'bg-emerald-500 hover:bg-emerald-600' },
     { label: 'Add Lead', icon: Users, href: '/dashboard/leads', color: 'bg-blue-500 hover:bg-blue-600' },
   ],
@@ -33,7 +33,7 @@ const PAGE_ACTIONS: Record<string, ActionItem[]> = {
   '/dashboard/messages': [
     { label: 'Open Inbox', icon: MessageSquare, href: '/dashboard/messages', color: 'bg-green-500 hover:bg-green-600' },
     { label: 'Add Lead', icon: Users, href: '/dashboard/leads', color: 'bg-blue-500 hover:bg-blue-600' },
-    { label: 'Send Campaign', icon: Send, href: '/dashboard/campaigns', color: 'bg-orange-500 hover:bg-orange-600' },
+    { label: 'Send Campaign', icon: Send, href: '/dashboard/campaigns', color: 'bg-primary-500 hover:bg-primary-600' },
   ],
   '/dashboard/tasks': [
     { label: 'New Task', icon: CheckSquare, href: '/dashboard/tasks', color: 'bg-indigo-500 hover:bg-indigo-600' },
@@ -86,7 +86,7 @@ export function QuickActionFAB() {
           className={`flex h-14 w-14 items-center justify-center rounded-full shadow-xl transition-all duration-200 ${
             open
               ? 'bg-gray-800 rotate-45 scale-95 hover:bg-gray-700'
-              : 'bg-orange-500 hover:bg-orange-600 hover:scale-110'
+              : 'bg-primary-500 hover:bg-primary-600 hover:scale-110'
           }`}
           title="Quick actions"
           aria-label="Quick actions"

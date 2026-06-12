@@ -1498,7 +1498,7 @@ export default function IntegrationsPage() {
     if (key.includes('shopify') || key.includes('ecommerce')) return { bar: 'from-green-600 to-lime-400', icon: 'bg-green-50 text-green-700 ring-green-100', hover: 'hover:border-green-200 hover:shadow-green-500/10' };
     if (key.includes('indiamart')) return { bar: 'from-amber-500 to-orange-400', icon: 'bg-amber-50 text-amber-700 ring-amber-100', hover: 'hover:border-amber-200 hover:shadow-amber-500/10' };
     if (key.includes('slack')) return { bar: 'from-purple-600 to-violet-400', icon: 'bg-purple-50 text-purple-700 ring-purple-100', hover: 'hover:border-purple-200 hover:shadow-purple-500/10' };
-    if (key.includes('hubspot')) return { bar: 'from-orange-500 to-amber-400', icon: 'bg-sky-50 text-sky-700 ring-sky-100', hover: 'hover:border-sky-200 hover:shadow-orange-500/10' };
+    if (key.includes('hubspot')) return { bar: 'from-primary-500 to-amber-400', icon: 'bg-sky-50 text-sky-700 ring-sky-100', hover: 'hover:border-sky-200 hover:shadow-orange-500/10' };
     if (key.includes('zoho')) return { bar: 'from-red-600 to-rose-400', icon: 'bg-red-50 text-red-700 ring-red-100', hover: 'hover:border-red-200 hover:shadow-red-500/10' };
     if (key.includes('twilio') || key.includes('sms')) return { bar: 'from-red-500 to-pink-400', icon: 'bg-red-50 text-red-700 ring-red-100', hover: 'hover:border-red-200 hover:shadow-red-500/10' };
     if (key.includes('calendly')) return { bar: 'from-blue-500 to-indigo-400', icon: 'bg-blue-50 text-blue-700 ring-blue-100', hover: 'hover:border-blue-200 hover:shadow-blue-500/10' };

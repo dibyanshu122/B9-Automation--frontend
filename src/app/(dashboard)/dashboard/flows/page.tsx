@@ -777,7 +777,7 @@ function FlowDesigner({
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center py-24 gap-3">
-      <Loader2 className="w-7 h-7 animate-spin text-orange-500" />
+      <Loader2 className="w-7 h-7 animate-spin text-primary-500" />
       <p className="text-sm text-gray-500">Loading flow...</p>
     </div>
   );

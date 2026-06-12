@@ -36,7 +36,7 @@ function EventIcon({ type }: { type: string }) {
   if (type === 'new_lead') return <Users className="h-4 w-4 text-blue-500" />;
   if (type === 'whatsapp_inbound') return <MessageCircle className="h-4 w-4 text-green-500" />;
   if (type === 'handover') return <BellRing className="h-4 w-4 text-amber-500" />;
-  if (type === 'low_credit') return <CreditCard className="h-4 w-4 text-orange-500" />;
+  if (type === 'low_credit') return <CreditCard className="h-4 w-4 text-primary-500" />;
   if (type === 'integration_health') return <HeartPulse className="h-4 w-4 text-red-500" />;
   if (type === 'campaign') return <Megaphone className="h-4 w-4 text-sky-500" />;
   return <MessageCircle className="h-4 w-4 text-emerald-500" />;
@@ -85,7 +85,7 @@ export default function NotificationsPage() {
           <span>{unread} unread notification{unread > 1 ? 's' : ''} need your attention.</span>
           <button
             onClick={() => { localStorage.setItem('notif_seen_at', new Date().toISOString()); setUnread(0); }}
-            className="shrink-0 rounded-lg bg-orange-600 px-3 py-1 text-xs font-bold text-white hover:bg-orange-700 transition"
+            className="shrink-0 rounded-lg bg-primary-600 px-3 py-1 text-xs font-bold text-white hover:bg-primary-700 transition"
           >
             ✓ Mark all read
           </button>
