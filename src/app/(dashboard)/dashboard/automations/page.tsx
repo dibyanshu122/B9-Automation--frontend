@@ -14,6 +14,7 @@ import {
   MiniMap,
   Node,
   NodeProps,
+  Panel,
   Position,
   ReactFlow,
   ReactFlowProvider,
@@ -63,6 +64,7 @@ import {
   Workflow,
   Zap,
 } from 'lucide-react';
+import dagre from '@dagrejs/dagre';
 import { Button } from '@/components/button';
 import { UpgradeModal } from '@/components/upgrade-modal';
 import { useApi } from '@/hooks/useApi';
@@ -173,6 +175,20 @@ const baseLibrary: LibraryBlock[] = [
   { type: 'action', title: 'Request Approval', description: 'Pause and send approval link to owner via Telegram/Email/WhatsApp.', config: { tool: 'request_approval', channel: 'telegram' } },
   { type: 'action', title: 'GST Invoice', description: 'Generate GST-compliant invoice draft from lead data (India).', config: { tool: 'generate_gst_invoice', gst_rate: '18' } },
   { type: 'condition', title: 'AI Condition', description: 'Ask AI a yes/no question to decide the next step.', config: { tool: 'ai_condition', condition_prompt: '' } },
+  { type: 'condition', title: 'Button Router', description: 'One node, many paths — route by which button was tapped (replaces a chain of IF nodes).', config: { tool: 'button_router', field: 'message.interactive_reply.id', match: 'contains', cases: 'opt_shop, opt_offers, opt_support' } },
+  // ── Previously backend-only tools — now exposed on the canvas ──────────────
+  { type: 'action', title: 'Send Poll', description: 'Send a WhatsApp poll with a question and 2-12 options.', config: { tool: 'send_whatsapp_poll', recipient: '{{lead.phone}}', question: 'What is your preference?', options: 'Option 1, Option 2, Option 3', send_mode: 'live' } },
+  { type: 'action', title: 'Send Sticker', description: 'Send a WhatsApp sticker (WebP URL, max 512KB).', config: { tool: 'send_whatsapp_sticker', recipient: '{{lead.phone}}', sticker_url: '', send_mode: 'live' } },
+  { type: 'action', title: 'Smart Assign Lead', description: 'Auto-assign this lead to the least-busy team member.', config: { tool: 'smart_assign_lead', skill_tag: '' } },
+  { type: 'action', title: 'Update Lead Status', description: 'Change lead status (contacted, hot, won, lost...).', config: { tool: 'update_lead', status: 'contacted' } },
+  { type: 'action', title: 'Save Lead', description: 'Create or update a lead record from workflow data.', config: { tool: 'save_lead', name: '{{lead.name}}', phone: '{{lead.phone}}', email: '{{lead.email}}' } },
+  { type: 'action', title: 'Generate PDF', description: 'Create a PDF (proposal/quote) from workflow content.', config: { tool: 'generate_pdf', pdf_type: 'proposal', content: '{{ai.response}}' } },
+  { type: 'ai', title: 'Detect Intent', description: 'Classify the message intent (buy, support, pricing...).', config: { tool: 'classify_intent', message: '{{whatsapp.text}}' } },
+  { type: 'ai', title: 'Write Follow-up', description: 'AI writes a personalised follow-up message for this lead.', config: { tool: 'generate_followup_message', status: 'new', limit: '5' } },
+  { type: 'ai', title: 'Create Proposal', description: 'AI drafts a client proposal from documents and lead context.', config: { tool: 'create_proposal' } },
+  { type: 'ai', title: 'Summarize Document', description: 'AI creates a short summary of an uploaded document.', config: { tool: 'summarize_document' } },
+  { type: 'ai', title: 'Generate FAQs', description: 'AI generates FAQ list from your documents.', config: { tool: 'generate_faq' } },
+  { type: 'ai', title: 'Generate Content', description: 'AI writes marketing content (post, caption, ad copy).', config: { tool: 'generate_content', content_type: 'instagram_post' } },
 ];
 
 // Simplified Phase-1 node library — friendly names, same backend tool configs.
@@ -199,8 +215,12 @@ const visibleLibrary: LibraryBlock[] = [
   { type: 'condition', title: 'If Flow: Handover', description: 'Branch YES when AI decides human agent is needed.', config: { field: 'flow.intent', operator: 'equals', value: 'handover' } },
   { type: 'condition', title: 'If Hot Lead', description: 'Branch YES if AI scored this lead as HOT.', config: { field: 'lead_score', operator: 'greater_than', value: '7', then_action: 'notify_owner', else_action: 'create_task' } },
   { type: 'condition', title: 'Decide Next Step', description: 'Ask AI a Yes/No question to choose the next path.', config: { tool: 'ai_condition', condition_prompt: 'Does this lead want to book a demo or meeting?' } },
+  { type: 'condition', title: 'Button Router', description: 'One node, many paths — route by which button was tapped (replaces a chain of IF nodes).', config: { tool: 'button_router', field: 'message.interactive_reply.id', match: 'contains', cases: 'opt_shop, opt_offers, opt_support' } },
   { type: 'action', title: 'Schedule Reminder', description: 'Schedule a WhatsApp follow-up reminder to send automatically after X hours or days.', config: { tool: 'schedule_followup', hours: '24', days: '0', message: 'Hi {{lead.name}}, just checking in! Do you need any help?' } },
   { type: 'action', title: 'Wait 1 Hour', description: 'Pause the flow for 1 hour before the next step.', config: { tool: 'wait_node', delay_minutes: 60 } },
+  { type: 'action', title: 'Wait for Reply', description: 'Pause here until the customer replies — flow resumes from the next node (real chatbot sessions).', config: { tool: 'wait_for_reply', timeout_hours: '24' } },
+  { type: 'action', title: '📝 Sticky Note', description: 'Canvas note for documentation — sections label karo, kuch execute nahi hota.', config: { tool: 'sticky_note', text: 'Section: yahan likho is hisse me kya hota hai' } },
+  { type: 'action', title: 'Drip Sequence', description: 'Day 1 → Day 3 → Day 7 message series, scheduled automatically for this lead.', config: { tool: 'drip_sequence', recipient: '{{lead.phone}}', steps: '[{"after_days":1,"message":"Hi {{lead.name}}! Kal aapne interest dikhaya tha — koi sawaal ho to batayein."},{"after_days":3,"message":"Hi {{lead.name}}, sirf yaad dilane ke liye — offer abhi bhi available hai!"},{"after_days":7,"message":"Hi {{lead.name}}, last chance — is hafte ke baad offer khatam. Reply karein!"}]' } },
   // ── Actions ───────────────────────────────────────────────────────────────
   { type: 'action', title: 'Send WhatsApp', description: 'Send WhatsApp message or approved template to the lead.', config: { tool: 'send_whatsapp_message', recipient: '{{lead.phone}}', message_body: '{{ai.response}}', message_mode: 'text', send_mode: 'live', language_code: 'en_US' } },
   { type: 'action', title: 'Send Image', description: 'Send a JPG/PNG image to customer via WhatsApp. Use for product photos, flyers, brochure covers.', config: { tool: 'send_whatsapp_media', recipient: '{{lead.phone}}', media_type: 'image', media_url: '', caption: '', send_mode: 'live' } },
@@ -439,89 +459,57 @@ export default function AutomationsPage() {
         : n
     );
 
+  // Dagre-powered DAG layout (n8n-style): handles multi-parent nodes and
+  // branch merges without crossing edges — the old tree walk could not.
   const arrangeNodes = (items: BuilderBlock[], edgeItems: BuilderEdge[]): BuilderBlock[] => {
     if (items.length === 0) return items;
 
     const nodeIds = new Set(items.map((n) => n.id));
     const valid = edgeItems.filter((e) => nodeIds.has(e.source) && nodeIds.has(e.target));
 
-    // Build child map — ordered: yes first (top), then (middle), no last (bottom)
-    const childMap = new Map<string, Array<{ id: string; label: string }>>();
-    const indegree = new Map<string, number>();
-    items.forEach((n) => { childMap.set(n.id, []); indegree.set(n.id, 0); });
+    // Sticky notes keep their manual position — they're annotations, not flow
+    const notes = items.filter((n) => n.config?.tool === 'sticky_note');
+    const flowItems = items.filter((n) => n.config?.tool !== 'sticky_note');
+    if (flowItems.length === 0) return items;
+    items = flowItems;
 
-    const edgesBySource = new Map<string, BuilderEdge[]>();
-    valid.forEach((e) => {
-      if (!edgesBySource.has(e.source)) edgesBySource.set(e.source, []);
-      edgesBySource.get(e.source)!.push(e);
-      indegree.set(e.target, (indegree.get(e.target) ?? 0) + 1);
+    const g = new dagre.graphlib.Graph();
+    g.setGraph({ rankdir: 'LR', nodesep: 60, ranksep: 110, marginx: FLOW_START_X, marginy: 80 });
+    g.setDefaultEdgeLabel(() => ({}));
+
+    const NODE_W = 220;
+    items.forEach((n) => {
+      // Router nodes grow with their output count — reserve matching height
+      const cases = n.config?.tool === 'button_router'
+        ? String(n.config?.cases || '').split(',').filter((c: string) => c.trim()).length + 1
+        : 0;
+      const height = Math.max(150, 110 + cases * 26);
+      g.setNode(n.id, { width: NODE_W, height });
     });
-    edgesBySource.forEach((edges, src) => {
-      const sorted = [...edges].sort((a, b) => {
-        const rank = (e: BuilderEdge) => (e.label === 'yes' || e.sourceHandle === 'yes') ? 0 : (e.label === 'no' || e.sourceHandle === 'no') ? 2 : 1;
-        return rank(a) - rank(b);
-      });
-      sorted.forEach((e) => childMap.get(src)!.push({ id: e.target, label: e.label || 'then' }));
-    });
+    valid.forEach((e) => g.setEdge(e.source, e.target));
 
-    // Find root
-    const roots = items.filter((n) => n.type === 'trigger' || (indegree.get(n.id) ?? 0) === 0);
-    const root = (roots.length ? roots : [items[0]])[0];
+    dagre.layout(g);
 
-    // Count leaf nodes in each subtree (used to space vertically)
-    const leafCount = new Map<string, number>();
-    const visited1 = new Set<string>();
-    const countLeaves = (id: string): number => {
-      if (visited1.has(id)) return leafCount.get(id) ?? 1;
-      visited1.add(id);
-      const ch = childMap.get(id) ?? [];
-      const total = ch.length === 0 ? 1 : ch.reduce((s, c) => s + countLeaves(c.id), 0);
-      leafCount.set(id, total);
-      return total;
-    };
-    countLeaves(root.id);
-
-    // Assign positions: each node centered over its subtree
-    const positions = new Map<string, { x: number; y: number }>();
-    const visited2 = new Set<string>();
-    const assignPos = (id: string, col: number, leafStart: number) => {
-      if (visited2.has(id)) return;
-      visited2.add(id);
-      const myLeaves = leafCount.get(id) ?? 1;
-      const centerLeaf = leafStart + (myLeaves - 1) / 2;
-      positions.set(id, {
-        x: FLOW_START_X + col * FLOW_GAP_X,
-        y: centerLeaf * BRANCH_OFFSET_Y,
-      });
-      let offset = leafStart;
-      for (const child of (childMap.get(id) ?? [])) {
-        assignPos(child.id, col + 1, offset);
-        offset += leafCount.get(child.id) ?? 1;
-      }
-    };
-
-    const totalLeaves = leafCount.get(root.id) ?? 1;
-    assignPos(root.id, 0, -(totalLeaves - 1) / 2);
-
-    // Dynamic center Y: ensure no node goes above y=100 (top margin)
-    // rawY_min = -(totalLeaves-1)/2 * BRANCH_OFFSET_Y
-    const rawYMin = -(totalLeaves - 1) / 2 * BRANCH_OFFSET_Y;
-    const dynamicCenterY = Math.max(FLOW_CENTER_Y, -rawYMin + 100);
-
-    // Convert relative y → absolute
     const result = new Map<string, { x: number; y: number }>();
-    positions.forEach((pos, id) => result.set(id, { x: pos.x, y: pos.y + dynamicCenterY }));
+    items.forEach((n) => {
+      const pos = g.node(n.id);
+      if (pos) {
+        // dagre returns centers; ReactFlow wants top-left
+        result.set(n.id, { x: pos.x - NODE_W / 2, y: pos.y - (pos.height ?? 150) / 2 });
+      }
+    });
 
-    // Place any disconnected nodes to the right
-    let maxCol = result.size ? Math.max(...[...result.values()].map((p) => Math.round((p.x - FLOW_START_X) / FLOW_GAP_X))) : 0;
+    // Disconnected nodes: park them in a column to the right of the graph
+    const maxX = result.size ? Math.max(...[...result.values()].map((p) => p.x)) : FLOW_START_X;
+    let parked = 0;
     items.forEach((n) => {
       if (!result.has(n.id)) {
-        maxCol++;
-        result.set(n.id, { x: FLOW_START_X + maxCol * FLOW_GAP_X, y: dynamicCenterY });
+        result.set(n.id, { x: maxX + FLOW_GAP_X, y: 80 + parked * BRANCH_OFFSET_Y });
+        parked++;
       }
     });
 
-    return items.map((n) => ({ ...n, ...result.get(n.id) }));
+    return [...items.map((n) => ({ ...n, ...result.get(n.id) })), ...notes];
   };
 
   // Nodes are stored with their real positions — no auto-rearrange on every render.
@@ -1310,6 +1298,29 @@ export default function AutomationsPage() {
           }}
           onToggleStatus={async (id, currentStatus) => {
             const newStatus = currentStatus === 'active' ? 'draft' : 'active';
+            // Pre-activation safety: warn if the flow has unreachable nodes
+            if (newStatus === 'active') {
+              const wf: any = workflows.find(w => w.id === id);
+              const cfgNodes = wf?.config?.nodes || [];
+              const cfgEdges = wf?.config?.edges || [];
+              if (cfgNodes.length) {
+                const orphans = findOrphanNodeIds(
+                  cfgNodes.map((n: any) => ({ ...n, type: n.type })) as BuilderBlock[],
+                  cfgEdges as BuilderEdge[],
+                );
+                if (orphans.size > 0) {
+                  const names = cfgNodes
+                    .filter((n: any) => orphans.has(n.id))
+                    .map((n: any) => n.title || n.id)
+                    .slice(0, 5)
+                    .join(', ');
+                  const ok = confirm(
+                    `⚠️ ${orphans.size} node(s) connected nahi hain aur kabhi run nahi honge:\n\n${names}\n\nPhir bhi activate karna hai? (Editor me kholke red-badge nodes ko jodna better hai)`
+                  );
+                  if (!ok) return;
+                }
+              }
+            }
             const prevWorkflows = workflows;
             // Optimistic update immediately
             setWorkflows(prev => prev.map(w => w.id === id ? { ...w, status: newStatus } : w));
@@ -1384,18 +1395,41 @@ export default function AutomationsPage() {
                     <Icon className="h-3 w-3" />{labels[sectionType]}
                   </div>
                   <div className="space-y-1">
-                    {sectionBlocks.map((block) => (
-                      <button
-                        key={`${block.type}-${block.title}`}
-                        type="button"
-                        draggable
-                        onDragStart={(e) => startDragLibrary(e, block)}
-                        className={`w-full cursor-grab rounded-xl border px-3 py-2 text-left shadow-sm transition active:cursor-grabbing hover:-translate-y-0.5 hover:shadow-lg ${blockStyles[block.type]}`}
-                      >
-                        <span className="block text-xs font-bold leading-tight">{block.title}</span>
-                        <span className="mt-0.5 block text-[10px] leading-tight opacity-65">{block.description}</span>
-                      </button>
-                    ))}
+                    {sectionBlocks.map((block) => {
+                      // Integration-aware palette: grey out blocks whose provider
+                      // isn't connected yet, with a direct "Connect" link.
+                      const provider = block.config?.tool ? defaultProviderForTool(block.config.tool) : '';
+                      const needsIntegration = ['gmail', 'google_sheets', 'whatsapp', 'instagram', 'facebook', 'razorpay'].includes(provider);
+                      const provStatus = needsIntegration ? integrationStatusFor(provider) : '';
+                      const disconnected = needsIntegration && provStatus.includes('not connected');
+                      return (
+                        <div key={`${block.type}-${block.title}`} className="relative">
+                          <button
+                            type="button"
+                            draggable
+                            onDragStart={(e) => startDragLibrary(e, block)}
+                            className={`w-full cursor-grab rounded-xl border px-3 py-2 text-left shadow-sm transition active:cursor-grabbing hover:-translate-y-0.5 hover:shadow-lg ${blockStyles[block.type]} ${disconnected ? 'opacity-45 grayscale' : ''}`}
+                          >
+                            <span className="flex items-center gap-1.5 text-xs font-bold leading-tight">
+                              {needsIntegration && (
+                                <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${disconnected ? 'bg-red-400' : 'bg-emerald-400'}`} />
+                              )}
+                              {block.title}
+                            </span>
+                            <span className="mt-0.5 block text-[10px] leading-tight opacity-65">{block.description}</span>
+                            {disconnected && (
+                              <a
+                                href="/dashboard/integrations"
+                                onClick={(e) => e.stopPropagation()}
+                                className="mt-1 inline-block rounded bg-red-500/20 px-1.5 py-0.5 text-[9px] font-bold text-red-300 hover:bg-red-500/30"
+                              >
+                                Connect {provider.replace('_', ' ')} first →
+                              </a>
+                            )}
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               );
@@ -1600,7 +1634,62 @@ export default function AutomationsPage() {
                   </div>
                 )}
 
-                {selectedNode.type === 'condition' && selectedNode.config.tool !== 'ai_condition' && (
+                {selectedNode.type === 'condition' && selectedNode.config.tool === 'button_router' && (
+                  <div className="space-y-2 rounded-xl border border-cyan-200 bg-cyan-50 p-3">
+                    <div className="flex items-center gap-2">
+                      <GitBranch className="h-4 w-4 text-cyan-600" />
+                      <p className="text-[10px] font-black uppercase tracking-widest text-cyan-700">Button Router — Multi-path</p>
+                    </div>
+                    <label className="block text-xs font-semibold text-cyan-900">
+                      Field to check
+                      <input value={selectedNode.config.field || 'message.interactive_reply.id'} onChange={(e) => updateSelectedConfig('field', e.target.value)} className="input-field mt-1" placeholder="message.interactive_reply.id" />
+                    </label>
+                    <div className="flex flex-wrap gap-1 -mt-1">
+                      {[
+                        { label: '🔘 Button ID', value: 'message.interactive_reply.id' },
+                        { label: '📝 Button text', value: 'message.interactive_reply.title' },
+                        { label: '💬 Message text', value: 'message.text' },
+                        { label: '🤖 AI intent', value: 'flow.intent' },
+                      ].map(s => (
+                        <button key={s.value} type="button"
+                          onClick={() => updateSelectedConfig('field', s.value)}
+                          className={`rounded px-1.5 py-0.5 text-[9px] transition border ${selectedNode.config.field === s.value ? 'bg-cyan-600 text-white border-cyan-600' : 'bg-white text-cyan-700 border-cyan-200 hover:bg-cyan-100'}`}>
+                          {s.label}
+                        </button>
+                      ))}
+                    </div>
+                    <label className="block text-xs font-semibold text-cyan-900">
+                      Match type
+                      <select value={selectedNode.config.match || 'contains'} onChange={(e) => updateSelectedConfig('match', e.target.value)} className="input-field mt-1">
+                        <option value="contains">contains (buy_ matches buy_blackoud)</option>
+                        <option value="starts_with">starts with</option>
+                        <option value="equals">equals (exact)</option>
+                      </select>
+                    </label>
+                    <label className="block text-xs font-semibold text-cyan-900">
+                      Paths — comma separated, one output per value
+                      <textarea value={selectedNode.config.cases || ''} onChange={(e) => updateSelectedConfig('cases', e.target.value)} rows={2} className="input-field mt-1 resize-none font-mono text-xs" placeholder="opt_shop, opt_offers, opt_support, buy_" />
+                    </label>
+                    {/* Live preview of output paths */}
+                    <div className="space-y-1 pt-1">
+                      <p className="text-[9px] font-bold uppercase tracking-wide text-cyan-700">Output paths (right side of node):</p>
+                      {String(selectedNode.config.cases || '').split(',').map(c => c.trim()).filter(Boolean).slice(0, 6).map((c, i) => (
+                        <div key={c} className="flex items-center gap-1.5 text-[11px]">
+                          <span className={`h-2 w-2 rounded-full ${['bg-cyan-500','bg-violet-500','bg-emerald-500','bg-amber-500','bg-pink-500','bg-sky-500'][i % 6]}`} />
+                          <code className="font-mono text-cyan-900">{c}</code>
+                        </div>
+                      ))}
+                      <div className="flex items-center gap-1.5 text-[11px]">
+                        <span className="h-2 w-2 rounded-full bg-slate-400" />
+                        <code className="font-mono text-slate-500">default</code>
+                        <span className="text-[9px] text-slate-400">— jab kuch match na ho</span>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-cyan-600">Ek node = saare buttons handle. IF-conditions ki lambi chain ki zaroorat nahi.</p>
+                  </div>
+                )}
+
+                {selectedNode.type === 'condition' && selectedNode.config.tool !== 'ai_condition' && selectedNode.config.tool !== 'button_router' && (
                   <div className="space-y-2 rounded-xl border border-amber-200 bg-amber-50 p-3">
                     <p className="text-[10px] font-black uppercase tracking-widest text-amber-600">IF / ELSE</p>
                     <label className="block text-xs font-semibold text-amber-900">
@@ -1630,9 +1719,17 @@ export default function AutomationsPage() {
                       Operator
                       <select value={selectedNode.config.operator || 'exists'} onChange={(e) => updateSelectedConfig('operator', e.target.value)} className="input-field mt-1">
                         <option value="exists">exists (not empty)</option>
+                        <option value="not_exists">does not exist</option>
                         <option value="contains">contains</option>
+                        <option value="not_contains">does not contain</option>
                         <option value="equals">equals</option>
+                        <option value="not_equals">not equals</option>
+                        <option value="starts_with">starts with</option>
+                        <option value="ends_with">ends with</option>
+                        <option value="in_list">in list (a, b, c)</option>
+                        <option value="regex">regex match</option>
                         <option value="greater_than">greater than</option>
+                        <option value="less_than">less than</option>
                         <option value="confidence_below">AI confidence below</option>
                       </select>
                     </label>
@@ -1743,7 +1840,16 @@ export default function AutomationsPage() {
                 </div>
               )}
               {(timeline.length > 0 || runs.length > 0) && (
-                <ExecutionLog timeline={timeline} runs={runs} />
+                <ExecutionLog
+                  timeline={timeline}
+                  runs={runs}
+                  onReplay={(run) => {
+                    const visited: string[] = run.run_metadata?.visited_nodes || run.visited_nodes || [];
+                    setCompletedNodeIds(new Set(visited));
+                    setFailedNodeIds(new Set(run.status === 'failed' && visited.length ? [visited[visited.length - 1]] : []));
+                    toast.success(`Path highlighted — ${visited.length} nodes is run me chale the`);
+                  }}
+                />
               )}
               {/* Variable inspector — shows output of each completed node */}
               {Object.keys(nodeOutputs).length > 0 && (
@@ -2423,14 +2529,30 @@ type FlowNodeData = {
   active: boolean;
   completed: boolean;
   failed: boolean;
+  orphan: boolean;
   onSelect: (id: string) => void;
   onOpenAddMenu: (sourceId: string, label: string) => void;
   onTestNode: (nodeId: string) => void;
 };
 
+// Nodes with no incoming edge (and not triggers) will never execute —
+// exactly the silent bug that broke the Perfume Dash flow.
+// Sticky notes are annotations: they are MEANT to be unconnected.
+function findOrphanNodeIds(items: BuilderBlock[], edgeItems: BuilderEdge[]): Set<string> {
+  const targets = new Set(edgeItems.map((e) => e.target));
+  const orphans = new Set<string>();
+  items.forEach((n) => {
+    if (n.type !== 'trigger' && n.config?.tool !== 'sticky_note' && !targets.has(n.id)) orphans.add(n.id);
+  });
+  return orphans;
+}
+
 function edgeVisualFor(type?: BlockType, label?: string) {
   if (label === 'yes') return { stroke: '#10b981', label: '#bbf7d0' };
   if (label === 'no') return { stroke: '#ef4444', label: '#fecaca' };
+  if (label === 'default') return { stroke: '#94a3b8', label: '#e2e8f0' };
+  // Router case edges — any custom label from a Button Router output
+  if (label && label !== 'then' && type === 'condition') return { stroke: '#22d3ee', label: '#a5f3fc' };
   if (type === 'trigger') return { stroke: '#f97316', label: '#fed7aa' };
   if (type === 'ai') return { stroke: '#8b5cf6', label: '#ddd6fe' };
   if (type === 'condition') return { stroke: '#f59e0b', label: '#fde68a' };
@@ -2487,6 +2609,8 @@ function WorkflowCanvas({
     action: ['Save to Google Sheet', 'Send Payment Link', 'Collect Order Form', 'Generate GST Invoice', 'Auto Handover', 'Notify Owner', 'Create Task', 'Wait 1 Hour'],
   };
 
+  const orphanNodeIds = useMemo(() => findOrphanNodeIds(nodes, edges), [nodes, edges]);
+
   const flowNodes = useMemo<Node<FlowNodeData>[]>(
     () =>
       nodes.map((node, index) => ({
@@ -2500,12 +2624,13 @@ function WorkflowCanvas({
           active: activeNodeIds?.has(node.id) ?? false,
           completed: completedNodeIds?.has(node.id) ?? false,
           failed: failedNodeIds?.has(node.id) ?? false,
+          orphan: orphanNodeIds.has(node.id),
           onSelect: onSelectNode,
           onOpenAddMenu: handleOpenAddMenu,
           onTestNode,
         },
       })),
-    [nodes, onSelectNode, selectedNodeId, onTestNode, activeNodeIds, completedNodeIds, failedNodeIds]
+    [nodes, edges, onSelectNode, selectedNodeId, onTestNode, activeNodeIds, completedNodeIds, failedNodeIds, orphanNodeIds]
   );
 
   const flowEdges = useMemo<Edge[]>(
@@ -2608,6 +2733,16 @@ function WorkflowCanvas({
           className="b9-react-flow"
         >
           <Background color="rgba(148, 163, 184, 0.34)" gap={22} size={1.2} />
+          {orphanNodeIds.size > 0 && (
+            <Panel position="top-center">
+              <div className="flex items-center gap-2 rounded-xl border border-red-500/40 bg-red-950/90 px-4 py-2 shadow-xl backdrop-blur">
+                <span className="text-sm">⚠️</span>
+                <p className="text-xs font-bold text-red-200">
+                  {orphanNodeIds.size} node{orphanNodeIds.size > 1 ? 's' : ''} connected nahi {orphanNodeIds.size > 1 ? 'hain' : 'hai'} — yeh kabhi run nahi {orphanNodeIds.size > 1 ? 'honge' : 'hoga'}. Red badge wale nodes ko flow se jodo.
+                </p>
+              </div>
+            </Panel>
+          )}
           <Controls position="bottom-right" showInteractive={false} />
           <MiniMap
             pannable
@@ -2844,10 +2979,50 @@ function getNodeIcon(block: BuilderBlock): NodeIconDef {
   return { icon: Send, bg: 'bg-emerald-600', fg: 'text-white' };
 }
 
+// Button Router — output handles come from config.cases ("a, b, c") + a default
+function routerCases(block: BuilderBlock): string[] {
+  if (block.config?.tool !== 'button_router') return [];
+  const raw = String(block.config?.cases || '');
+  const cases = raw.split(',').map((c) => c.trim()).filter(Boolean).slice(0, 6);
+  return [...cases, 'default'];
+}
+
+const ROUTER_HANDLE_COLORS = [
+  '!border-cyan-400 !bg-cyan-700 hover:!bg-cyan-600',
+  '!border-violet-400 !bg-violet-700 hover:!bg-violet-600',
+  '!border-emerald-400 !bg-emerald-700 hover:!bg-emerald-600',
+  '!border-amber-400 !bg-amber-700 hover:!bg-amber-600',
+  '!border-pink-400 !bg-pink-700 hover:!bg-pink-600',
+  '!border-sky-400 !bg-sky-700 hover:!bg-sky-600',
+];
+const routerHandleColor = (label: string, index: number) =>
+  label === 'default'
+    ? '!border-slate-400 !bg-slate-700 hover:!bg-slate-600'
+    : ROUTER_HANDLE_COLORS[index % ROUTER_HANDLE_COLORS.length];
+
 function WorkflowNode({ data }: NodeProps<Node<FlowNodeData>>) {
-  const { block, stepIndex, selected, active, completed, failed, onSelect, onOpenAddMenu, onTestNode } = data;
+  const { block, stepIndex, selected, active, completed, failed, orphan, onSelect, onOpenAddMenu, onTestNode } = data;
   const Icon = blockIcons[block.type];
-  const isCondition = block.type === 'condition';
+  const rCases = routerCases(block);
+  const isRouter = rCases.length > 0;
+  const isCondition = block.type === 'condition' && !isRouter;
+
+  // Sticky note — pure annotation: yellow card, no handles, no execution
+  if (block.config?.tool === 'sticky_note') {
+    return (
+      <div
+        data-workflow-node
+        onClick={() => onSelect(block.id)}
+        className={`relative w-[240px] cursor-pointer rounded-lg border border-yellow-500/40 bg-yellow-200/95 p-3 shadow-[0_8px_24px_rgba(0,0,0,0.25)] transition-all ${selected ? 'ring-2 ring-yellow-400' : 'hover:ring-1 hover:ring-yellow-400/60'}`}
+        style={{ transform: 'rotate(-0.5deg)' }}
+      >
+        <p className="mb-1 text-[9px] font-black uppercase tracking-widest text-yellow-700/70">📝 Note</p>
+        <p className="whitespace-pre-wrap text-[12px] font-medium leading-snug text-yellow-950">
+          {block.config?.text || 'Click karke settings me text likho…'}
+        </p>
+      </div>
+    );
+  }
   const meta = NODE_TYPE_META[block.type];
   const { zoom } = useViewport();
   const compact = zoom < 0.70;
@@ -2879,7 +3054,15 @@ function WorkflowNode({ data }: NodeProps<Node<FlowNodeData>>) {
         <Handle id="in" type="target" position={Position.Left}
           className="!-left-2 !h-4 !w-4 !rounded-full !border !border-slate-600 !bg-slate-800 !cursor-crosshair" />
         <span className={`absolute bottom-0.5 right-0.5 h-2 w-2 rounded-full border border-slate-900 ${isNodeConfigured(block) ? 'bg-emerald-400' : 'bg-amber-400'}`} />
-        {isCondition ? (
+        {isRouter ? (
+          rCases.map((caseLabel, i) => (
+            <Handle key={caseLabel} id={caseLabel} type="source" position={Position.Right}
+              onMouseDown={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, caseLabel); }}
+              title={caseLabel}
+              className={`!-right-1.5 !h-3.5 !w-3.5 !rounded-full !border !cursor-pointer ${routerHandleColor(caseLabel, i)}`}
+              style={{ top: `${((i + 1) / (rCases.length + 1)) * 100}%` }} />
+          ))
+        ) : isCondition ? (
           <>
             <Handle id="yes" type="source" position={Position.Right}
               onMouseDown={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'yes'); }}
@@ -2915,6 +3098,15 @@ function WorkflowNode({ data }: NodeProps<Node<FlowNodeData>>) {
           : 'hover:ring-1 hover:ring-white/20'
         }`}
     >
+      {/* Orphan warning — this node will never run */}
+      {orphan && (
+        <span
+          className="absolute -top-3 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-full border border-red-400 bg-red-950 px-2 py-0.5 text-[9px] font-black text-red-300 shadow-lg"
+          title="Is node me koi connection nahi aata — yeh kabhi run nahi hoga. Kisi node se isse jodo."
+        >
+          ⚠ NOT CONNECTED
+        </span>
+      )}
       {/* Step number badge */}
       {!active && !completed && !failed && (
         <span className="absolute left-2 top-2 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-slate-700 text-[9px] font-black text-slate-300 leading-none">
@@ -2932,7 +3124,17 @@ function WorkflowNode({ data }: NodeProps<Node<FlowNodeData>>) {
       {/* Handles — onMouseDown to open add menu (fires before ReactFlow absorbs click) + drag still works */}
       <Handle id="in" type="target" position={Position.Left}
         className="!-left-2 !h-5 !w-5 !rounded-full !border-2 !border-slate-600 !bg-slate-800 hover:!bg-slate-700 hover:!border-slate-400 !cursor-crosshair" />
-      {isCondition ? (
+      {isRouter ? (
+        rCases.map((caseLabel, i) => (
+          <Handle key={caseLabel} id={caseLabel} type="source" position={Position.Right}
+            onMouseDown={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, caseLabel); }}
+            title={`Path: ${caseLabel}`}
+            className={`!-right-3 !h-6 !w-6 !flex !items-center !justify-center !rounded-full !border-2 !bg-slate-800 !text-[10px] !font-black !text-white !cursor-pointer !transition-all !duration-150 ${routerHandleColor(caseLabel, i)}`}
+            style={{ top: `${((i + 1) / (rCases.length + 1)) * 100}%` }}>
+            <span className="pointer-events-none select-none">+</span>
+          </Handle>
+        ))
+      ) : isCondition ? (
         <>
           <Handle id="yes" type="source" position={Position.Right}
             onMouseDown={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'yes'); }}
@@ -2996,6 +3198,18 @@ function WorkflowNode({ data }: NodeProps<Node<FlowNodeData>>) {
             <div className="mt-2 flex gap-3 text-[10px] font-bold">
               <span className="text-emerald-400">✓ YES</span>
               <span className="text-amber-400">✗ NO</span>
+            </div>
+          )}
+
+          {/* Router case list — one row per output path, aligned with handles */}
+          {isRouter && (
+            <div className="mt-2 space-y-1">
+              {rCases.map((caseLabel, i) => (
+                <div key={caseLabel} className="flex items-center gap-1.5 text-[10px] font-bold">
+                  <span className={`h-2 w-2 shrink-0 rounded-full ${caseLabel === 'default' ? 'bg-slate-400' : ['bg-cyan-400','bg-violet-400','bg-emerald-400','bg-amber-400','bg-pink-400','bg-sky-400'][i % 6]}`} />
+                  <span className={`truncate font-mono ${caseLabel === 'default' ? 'text-slate-400' : 'text-slate-200'}`}>{caseLabel}</span>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -4250,10 +4464,109 @@ function AiBlockSettings({ config, onChange }: { config: Record<string, any>; on
   );
 }
 
+// ── Variable Picker — insert {{placeholders}} without typing them by hand ──
+const VARIABLE_CATALOG: Array<{ group: string; vars: Array<{ token: string; hint: string }> }> = [
+  {
+    group: '👤 Lead',
+    vars: [
+      { token: '{{lead.name}}', hint: 'Customer name' },
+      { token: '{{lead.phone}}', hint: 'Phone number' },
+      { token: '{{lead.email}}', hint: 'Email' },
+      { token: '{{lead.message}}', hint: 'First message' },
+      { token: '{{lead.status}}', hint: 'Status (new/hot/won...)' },
+      { token: '{{lead.source}}', hint: 'Source (whatsapp/fb...)' },
+    ],
+  },
+  {
+    group: '💬 WhatsApp Message',
+    vars: [
+      { token: '{{whatsapp.text}}', hint: 'Incoming message text' },
+      { token: '{{message.interactive_reply.id}}', hint: 'Tapped button ID' },
+      { token: '{{message.interactive_reply.title}}', hint: 'Tapped button text' },
+      { token: '{{whatsapp.fromNumber}}', hint: 'Sender number' },
+    ],
+  },
+  {
+    group: '🤖 AI Output',
+    vars: [
+      { token: '{{ai.response}}', hint: 'AI reply text' },
+      { token: '{{flow.flowResponse}}', hint: 'Flow AI response' },
+      { token: '{{flow.intent}}', hint: 'Detected intent' },
+      { token: '{{extraction.fields.budget}}', hint: 'Extracted budget' },
+      { token: '{{extraction.fields.requirement}}', hint: 'Extracted requirement' },
+    ],
+  },
+  {
+    group: '📋 Form / Order',
+    vars: [
+      { token: '{{order_form.product_choice}}', hint: 'Form: selected product' },
+      { token: '{{order_form.quantity}}', hint: 'Form: quantity' },
+      { token: '{{order_form.address}}', hint: 'Form: address' },
+    ],
+  },
+  {
+    group: '💳 Payment & More',
+    vars: [
+      { token: '{{payment.amount}}', hint: 'Paid amount' },
+      { token: '{{payment.link_url}}', hint: 'Payment link' },
+      { token: '{{email.subject}}', hint: 'Gmail subject' },
+      { token: '{{loop.item}}', hint: 'Current loop item' },
+    ],
+  },
+];
+
+function VariablePickerButton({ onInsert }: { onInsert: (token: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as globalThis.Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        title="Insert variable — lead, message, AI output, form data"
+        className={`rounded-md border px-1.5 py-0.5 font-mono text-[10px] font-bold transition ${open ? 'border-cyan-500 bg-cyan-500/20 text-cyan-600' : 'border-gray-300 bg-white text-gray-500 hover:border-cyan-400 hover:text-cyan-600'}`}
+      >
+        {'{x}'}
+      </button>
+      {open && (
+        <div className="absolute right-0 top-7 z-50 max-h-72 w-72 overflow-y-auto rounded-xl border border-gray-200 bg-white p-2 shadow-2xl">
+          {VARIABLE_CATALOG.map((grp) => (
+            <div key={grp.group} className="mb-1">
+              <p className="px-2 py-1 text-[9px] font-black uppercase tracking-widest text-gray-400">{grp.group}</p>
+              {grp.vars.map((v) => (
+                <button
+                  key={v.token}
+                  type="button"
+                  onClick={() => { onInsert(v.token); setOpen(false); }}
+                  className="flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-cyan-50"
+                >
+                  <code className="font-mono text-[11px] font-semibold text-cyan-700">{v.token}</code>
+                  <span className="shrink-0 text-[9px] text-gray-400">{v.hint}</span>
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function InputField({ label, value, placeholder, onChange }: { label: string; value: string; placeholder: string; onChange: (value: string) => void }) {
   return (
     <label className="block text-sm font-semibold text-gray-700">
-      {label}
+      <span className="flex items-center justify-between">
+        {label}
+        <VariablePickerButton onInsert={(token) => onChange(`${value || ''}${token}`)} />
+      </span>
       <input value={value} onChange={(event) => onChange(event.target.value)} className="input-field mt-2" placeholder={placeholder} />
     </label>
   );
@@ -4849,7 +5162,7 @@ function ScheduleTriggerPanel({ workflowId, nodeConfig, onConfigChange }: { work
   );
 }
 
-function ExecutionLog({ timeline, runs }: { timeline: any[]; runs: any[] }) {
+function ExecutionLog({ timeline, runs, onReplay }: { timeline: any[]; runs: any[]; onReplay?: (run: any) => void }) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const items = timeline.length ? timeline : runs.slice(0, 5);
 
@@ -4881,6 +5194,17 @@ function ExecutionLog({ timeline, runs }: { timeline: any[]; runs: any[] }) {
             >
               <span className="flex-1 truncate font-semibold text-gray-800">{label}</span>
               {tool && <span className="shrink-0 font-mono text-[10px] text-gray-400">{tool}</span>}
+              {/* Replay this run's path on the canvas — visited nodes glow green */}
+              {onReplay && (item.run_metadata?.visited_nodes?.length || item.visited_nodes?.length) ? (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); onReplay(item); }}
+                  title="Canvas pe is run ka path highlight karo"
+                  className="shrink-0 rounded-md border border-cyan-200 bg-cyan-50 px-1.5 py-0.5 text-[10px] font-bold text-cyan-700 hover:bg-cyan-100"
+                >
+                  🔁 Path
+                </button>
+              ) : null}
               <span className={`shrink-0 rounded-full px-2 py-0.5 font-bold ${statusColor(status)}`}>{status}</span>
               {hasData && (
                 <ChevronRight className={`h-3 w-3 shrink-0 text-gray-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
