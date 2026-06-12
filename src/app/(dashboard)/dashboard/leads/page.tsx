@@ -103,6 +103,12 @@ export default function LeadsPage() {
   const [paymentDesc, setPaymentDesc] = useState('');
   const [creatingLink, setCreatingLink] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  // Server-side search — poora DB search hota hai, sirf loaded page nahi (debounced)
+  useEffect(() => {
+    const t = setTimeout(() => { goToPage(1); }, 400);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery]);
   const [statusFilter, setStatusFilter] = useState('all');
   const [leadDateFrom, setLeadDateFrom] = useState('');
   const [leadDateTo, setLeadDateTo] = useState('');
@@ -313,7 +319,7 @@ export default function LeadsPage() {
     const page = Math.min(Math.max(1, requestedPage), requestedTotalPages);
     const offset = (page - 1) * requestedPageSize;
     setLoading(true);
-    get(`/api/leads?limit=${requestedPageSize}&offset=${offset}`)
+    get(`/api/leads?limit=${requestedPageSize}&offset=${offset}${searchQuery.trim() ? `&q=${encodeURIComponent(searchQuery.trim())}` : ''}`)
       .then(r => {
         setLeads(r.data?.leads || r.data || []);
         const total = parseInt(r.headers?.['x-total-count'] || r.headers?.['X-Total-Count'] || '0');
