@@ -639,55 +639,55 @@ select:focus-visible {
   box-shadow: var(--shadow-card-hover);
 }
 
-.b9-command-shell .text-gray-950,
-.b9-command-shell .text-gray-900,
-.b9-command-shell .text-gray-800,
-.b9-command-shell .text-gray-700 {
+.b9-command-shell:not(.dark) .text-gray-950,
+.b9-command-shell:not(.dark) .text-gray-900,
+.b9-command-shell:not(.dark) .text-gray-800,
+.b9-command-shell:not(.dark) .text-gray-700 {
   color: #0f172a !important;
 }
 
-.b9-command-shell .text-gray-600,
-.b9-command-shell .text-gray-500 {
+.b9-command-shell:not(.dark) .text-gray-600,
+.b9-command-shell:not(.dark) .text-gray-500 {
   color: #64748b !important;
 }
 
-.b9-command-shell .border-gray-200,
-.b9-command-shell .border-gray-100,
-.b9-command-shell .border-orange-100 {
+.b9-command-shell:not(.dark) .border-gray-200,
+.b9-command-shell:not(.dark) .border-gray-100,
+.b9-command-shell:not(.dark) .border-orange-100 {
   border-color: #e2e8f0 !important;
 }
 
-.b9-command-shell .bg-orange-50,
-.b9-command-shell .bg-gray-50 {
+.b9-command-shell:not(.dark) .bg-orange-50,
+.b9-command-shell:not(.dark) .bg-gray-50 {
   background-color: #f8fafc !important;
 }
 
-.b9-command-shell .hover\:bg-orange-50:hover,
-.b9-command-shell .hover\:bg-orange-50\/40:hover,
-.b9-command-shell .hover\:bg-orange-50\/50:hover,
-.b9-command-shell .hover\:bg-gray-50:hover {
+.b9-command-shell:not(.dark) .hover\:bg-orange-50:hover,
+.b9-command-shell:not(.dark) .hover\:bg-orange-50\/40:hover,
+.b9-command-shell:not(.dark) .hover\:bg-orange-50\/50:hover,
+.b9-command-shell:not(.dark) .hover\:bg-gray-50:hover {
   background-color: #eff6ff !important;
 }
 
-.b9-command-shell .bg-gray-100 {
+.b9-command-shell:not(.dark) .bg-gray-100 {
   background-color: #f1f5f9 !important;
 }
 
-.b9-command-shell .hover\:bg-gray-100:hover,
-.b9-command-shell .hover\:bg-gray-200:hover {
+.b9-command-shell:not(.dark) .hover\:bg-gray-100:hover,
+.b9-command-shell:not(.dark) .hover\:bg-gray-200:hover {
   background-color: #e2e8f0 !important;
 }
 
-.b9-command-shell .input-field,
-.b9-command-shell input,
-.b9-command-shell textarea,
-.b9-command-shell select {
+.b9-command-shell:not(.dark) .input-field,
+.b9-command-shell:not(.dark) input,
+.b9-command-shell:not(.dark) textarea,
+.b9-command-shell:not(.dark) select {
   border-color: #cbd5e1;
   background-color: rgba(255, 255, 255, 0.92);
   color: #0f172a;
 }
 
-.b9-command-shell table {
+.b9-command-shell:not(.dark) table {
   color: #0f172a;
 }
 
@@ -716,26 +716,26 @@ select:focus-visible {
   }
 }
 
-.b9-command-shell .input-field::placeholder,
-.b9-command-shell input::placeholder,
-.b9-command-shell textarea::placeholder {
+.b9-command-shell:not(.dark) .input-field::placeholder,
+.b9-command-shell:not(.dark) input::placeholder,
+.b9-command-shell:not(.dark) textarea::placeholder {
   color: #94a3b8;
 }
 
-.b9-command-shell .b9-dark-surface input,
-.b9-command-shell .b9-dark-surface textarea,
-.b9-command-shell .b9-dark-surface select {
+.b9-command-shell:not(.dark) .b9-dark-surface input,
+.b9-command-shell:not(.dark) .b9-dark-surface textarea,
+.b9-command-shell:not(.dark) .b9-dark-surface select {
   border-color: rgba(51, 65, 85, 0.95) !important;
   background-color: rgba(15, 23, 42, 0.92) !important;
   color: #f8fafc !important;
 }
 
-.b9-command-shell .b9-dark-surface input::placeholder,
-.b9-command-shell .b9-dark-surface textarea::placeholder {
+.b9-command-shell:not(.dark) .b9-dark-surface input::placeholder,
+.b9-command-shell:not(.dark) .b9-dark-surface textarea::placeholder {
   color: #64748b !important;
 }
 
-.b9-command-shell input.b9-command-input {
+.b9-command-shell:not(.dark) input.b9-command-input {
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
@@ -744,7 +744,7 @@ select:focus-visible {
   padding: 0 !important;
 }
 
-.b9-command-shell input.b9-command-input::placeholder {
+.b9-command-shell:not(.dark) input.b9-command-input::placeholder {
   color: #64748b !important;
 }
 
@@ -1013,8 +1013,8 @@ select:focus-visible {
 .dark .recharts-legend-item-text { color: #94a3b8 !important; }
 
 /* ── Light theme: zebra table rows (Gemini Option-B spec) ── */
-html:not(.dark) main table tbody tr:nth-child(even) { background-color: #F1F5F9; }
-html:not(.dark) main table tbody tr:hover { background-color: #E2E8F0; }
+.b9-command-shell:not(.dark) main table tbody tr:nth-child(even) { background-color: #F1F5F9; }
+.b9-command-shell:not(.dark) main table tbody tr:hover { background-color: #E2E8F0; }
 
 
 /* ── PART 2: Premium Black refinements (Gemini dark spec) ── */
@@ -1024,8 +1024,8 @@ html:not(.dark) main table tbody tr:hover { background-color: #E2E8F0; }
 .dark .bg-primary-500, .dark .bg-primary-600 { box-shadow: 0 4px 14px rgba(0,211,238,0.35) !important; }
 .dark .bg-primary-500:hover, .dark .bg-primary-600:hover { box-shadow: 0 4px 20px rgba(0,211,238,0.5) !important; }
 /* Dark zebra tables: #111827 / #1F2937 */
-html.dark main table tbody tr:nth-child(even) { background-color: #1F2937 !important; }
-html.dark main table tbody tr:hover { background-color: #374151 !important; }
+.dark main table tbody tr:nth-child(even) { background-color: #1F2937 !important; }
+.dark main table tbody tr:hover { background-color: #374151 !important; }
 
 
 /* ── Dark: brand/sky text legibility on near-black surfaces ── */
