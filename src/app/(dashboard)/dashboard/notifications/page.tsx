@@ -52,8 +52,10 @@ export default function NotificationsPage() {
     setLoading(true);
     get('/api/automation/notifications')
       .then((res) => {
-        setEvents(res.data?.events || []);
-        setUnread(res.data?.unread_count || 0);
+        const evts = res.data?.events || [];
+        setEvents(evts);
+        const seenAt = typeof window !== 'undefined' ? localStorage.getItem('notif_seen_at') : null;
+        setUnread(seenAt ? evts.filter((e: NotificationEvent) => e.created_at > seenAt).length : (res.data?.unread_count || 0));
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -79,8 +81,14 @@ export default function NotificationsPage() {
       </div>
 
       {unread > 0 && (
-        <div className="rounded-xl border border-orange-100 bg-orange-50 px-4 py-3 text-sm text-orange-700 font-medium">
-          {unread} unread notification{unread > 1 ? 's' : ''} need your attention.
+        <div className="flex items-center justify-between rounded-xl border border-orange-100 bg-orange-50 px-4 py-3 text-sm text-orange-700 font-medium">
+          <span>{unread} unread notification{unread > 1 ? 's' : ''} need your attention.</span>
+          <button
+            onClick={() => { localStorage.setItem('notif_seen_at', new Date().toISOString()); setUnread(0); }}
+            className="shrink-0 rounded-lg bg-orange-600 px-3 py-1 text-xs font-bold text-white hover:bg-orange-700 transition"
+          >
+            ✓ Mark all read
+          </button>
         </div>
       )}
 

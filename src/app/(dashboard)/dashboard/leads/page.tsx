@@ -69,6 +69,12 @@ export default function LeadsPage() {
   const api = getApiClient();
   const { invalidateLeads } = useInvalidate();
   const { user: currentUser } = useAuthStore();
+  const [globalCounts, setGlobalCounts] = useState<any>(null);
+  // Global stats from DB (loaded page nahi) — Codex finding fix
+  useEffect(() => {
+    get('/api/analytics/dashboard').then(r => setGlobalCounts(r.data)).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [leads, setLeads] = useState<Lead[]>([]);
   // Custom pipeline stages — loaded from API, fallback to defaults
   const [stages, setStages] = useState(DEFAULT_STAGES);
@@ -1030,9 +1036,9 @@ export default function LeadsPage() {
 
       <section className="grid gap-4 md:grid-cols-4">
         {[
-          { label: 'Total Leads', value: leads.length, icon: Users, style: 'bg-orange-50 text-primary-700' },
-          { label: 'Hot Leads', value: groupedByScore.hot.length, icon: Flame, style: 'bg-red-50 text-red-700' },
-          { label: 'Warm Leads', value: groupedByScore.warm.length, icon: Star, style: 'bg-amber-50 text-amber-700' },
+          { label: 'Total Leads', value: globalCounts?.leads_captured ?? leads.length, icon: Users, style: 'bg-orange-50 text-primary-700' },
+          { label: 'Hot Leads', value: globalCounts?.hot_leads ?? groupedByScore.hot.length, icon: Flame, style: 'bg-red-50 text-red-700' },
+          { label: 'Warm Leads', value: globalCounts?.warm_leads ?? groupedByScore.warm.length, icon: Star, style: 'bg-amber-50 text-amber-700' },
           { label: 'Handover Queue', value: inbox.filter((item) => item.handover_status === 'requested').length, icon: AlertTriangle, style: 'bg-sky-50 text-sky-700' },
         ].map((stat) => {
           const Icon = stat.icon;
