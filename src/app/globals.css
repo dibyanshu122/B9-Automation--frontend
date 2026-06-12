@@ -1068,7 +1068,7 @@ html.mk-light .text-zinc-300:not(.b9-command-shell *) { color: #334155 !importan
 html.mk-light .text-zinc-400:not(.b9-command-shell *) { color: #475569 !important; }
 html.mk-light .text-zinc-500:not(.b9-command-shell *) { color: #64748b !important; }
 html.mk-light .text-zinc-600:not(.b9-command-shell *),
-html.mk-light .text-zinc-700:not(.b9-command-shell *) { color: #94a3b8 !important; }
+html.mk-light .text-zinc-700:not(.b9-command-shell *) { color: #64748b !important; }
 html.mk-light .text-gray-400:not(.b9-command-shell *) { color: #475569 !important; }
 html.mk-light .text-gray-300:not(.b9-command-shell *) { color: #334155 !important; }
 html.mk-light [class*="border-white/"]:not(.b9-command-shell *) { border-color: #E2E8F0 !important; }
@@ -1116,3 +1116,16 @@ html.mk-light .via-\[\#030712\]\/80:not(.b9-command-shell *) {
 /* 5) zinc-950/900 jaise extra-dark texts (kahin ho to) */
 html.mk-light .text-zinc-100:not(.b9-command-shell *),
 html.mk-light .text-zinc-50:not(.b9-command-shell *) { color: #0F172A !important; }
+
+
+/* ── Aurora Light: round 3 fixes ── */
+/* Black smudge band: via-[#030712]/80 fade — Tailwind via needs full stops override */
+html.mk-light [class*="via-\[\#030712\]"]:not(.b9-command-shell *) {
+  background-image: linear-gradient(to top, #FAFBFF, rgba(250,251,255,0.85), transparent) !important;
+}
+/* Homepage Features dropdown panel was still dark (95 opacity variant unmapped) */
+html.mk-light .bg-\[\#030712\]\/95:not(.b9-command-shell *) {
+  background-color: rgba(255,255,255,0.97) !important;
+  border-color: #E2E8F0 !important;
+  box-shadow: 0 20px 50px rgba(15,23,42,0.12) !important;
+}
