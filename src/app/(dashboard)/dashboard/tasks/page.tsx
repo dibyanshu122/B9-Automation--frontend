@@ -107,7 +107,7 @@ export default function TasksPage() {
         <p className="mt-2 text-gray-600">Business follow-ups, calls, demos, and automation-created tasks.</p>
       </div>
 
-      <Card className="border-orange-100 shadow-sm" hoverable={false}>
+      <Card className="border-slate-200 shadow-sm" hoverable={false}>
         <form onSubmit={createTask} className="grid gap-3 lg:grid-cols-[1fr_1fr_160px_180px_140px_auto]">
           <input
             value={form.title}
@@ -174,7 +174,7 @@ export default function TasksPage() {
             <button
               type="button"
               onClick={() => setSortByPriority((p) => !p)}
-              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${sortByPriority ? 'bg-orange-100 text-primary-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${sortByPriority ? 'bg-sky-100 text-primary-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
             >
               {sortByPriority ? '⬆ Sorted by priority' : 'Sort by priority'}
             </button>
@@ -199,8 +199,8 @@ export default function TasksPage() {
               const isToday = dateStr === today.toISOString().split('T')[0];
               const dayTasks = tasks.filter((t: any) => t.due_at && t.due_at.startsWith(dateStr));
               return (
-                <div key={i} className={`rounded-xl border p-2 min-h-24 ${isToday ? 'border-orange-400 bg-orange-50' : 'border-gray-200 bg-white'}`}>
-                  <p className={`text-xs font-bold mb-1 ${isToday ? 'text-orange-600' : 'text-gray-500'}`}>{DAY_NAMES[i]} {day.getDate()}</p>
+                <div key={i} className={`rounded-xl border p-2 min-h-24 ${isToday ? 'border-orange-400 bg-sky-50' : 'border-gray-200 bg-white'}`}>
+                  <p className={`text-xs font-bold mb-1 ${isToday ? 'text-sky-600' : 'text-gray-500'}`}>{DAY_NAMES[i]} {day.getDate()}</p>
                   {dayTasks.map((t: any) => (
                     <div key={t.id} className="rounded bg-indigo-50 px-1.5 py-0.5 text-[10px] text-indigo-700 font-medium mb-0.5 truncate">{t.title}</div>
                   ))}
@@ -228,7 +228,7 @@ export default function TasksPage() {
               : () => 0
             )
             .map((task) => (
-            <Card key={task.id} className="border-orange-100 shadow-sm" hoverable={false}>
+            <Card key={task.id} className="border-slate-200 shadow-sm" hoverable={false}>
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div>
                   <div className="flex flex-wrap items-center gap-2">

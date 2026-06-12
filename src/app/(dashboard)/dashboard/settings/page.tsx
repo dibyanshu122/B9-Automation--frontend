@@ -591,7 +591,7 @@ export default function SettingsPage() {
 
       <Card id="settings-whatsapp">
         <h2 className="mb-4 text-xl font-bold text-gray-900">WhatsApp Integration</h2>
-        <div className="rounded-lg border border-orange-100 bg-orange-50 p-4">
+        <div className="rounded-lg border border-slate-200 bg-sky-50 p-4">
           <p className="font-semibold text-gray-950">
             Mode: {whatsappStatus?.send_enabled ? 'Live sending enabled' : 'Draft mode'}
           </p>
@@ -1327,7 +1327,7 @@ function CustomLeadFieldsSection() {
               value={f.label}
               onChange={e => updateField(i, { label: e.target.value })}
               placeholder="Field label (e.g. Budget)"
-              className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
             />
             <select
               value={f.type}
@@ -1341,7 +1341,7 @@ function CustomLeadFieldsSection() {
                 value={f.options || ''}
                 onChange={e => updateField(i, { options: e.target.value })}
                 placeholder="Options (comma-separated)"
-                className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
               />
             )}
             <button onClick={() => removeField(i)} className="text-gray-300 hover:text-red-500 transition text-lg leading-none">×</button>
@@ -1384,7 +1384,7 @@ function CsatSettingsSection() {
             <p className="text-xs text-gray-400">Sends a WhatsApp message asking for a 1-5 star rating</p>
           </div>
           <button type="button" onClick={() => setSettings(s => ({ ...s, enabled: !s.enabled }))}
-            className={`relative h-6 w-11 rounded-full transition-colors ${settings.enabled ? 'bg-orange-500' : 'bg-gray-300'}`}>
+            className={`relative h-6 w-11 rounded-full transition-colors ${settings.enabled ? 'bg-sky-500' : 'bg-gray-300'}`}>
             <span className={`absolute left-0 top-1 h-4 w-4 rounded-full bg-white shadow transition-transform ${settings.enabled ? 'translate-x-6' : 'translate-x-1'}`} />
           </button>
         </div>
@@ -1393,19 +1393,19 @@ function CsatSettingsSection() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Survey question</label>
               <input value={settings.question} onChange={e => setSettings(s => ({ ...s, question: e.target.value }))}
-                className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Send after (minutes of inactivity)</label>
               <input type="number" min={5} max={1440} value={settings.delay_minutes}
                 onChange={e => setSettings(s => ({ ...s, delay_minutes: parseInt(e.target.value) || 30 }))}
-                className="w-32 rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                className="w-32 rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Approved template fallback <span className="font-normal text-gray-400">(optional)</span></label>
               <input value={settings.template_name || ''} onChange={e => setSettings(s => ({ ...s, template_name: e.target.value }))}
                 placeholder="Required when the 24-hour window is closed"
-                className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />
             </div>
           </>
         )}

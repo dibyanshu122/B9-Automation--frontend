@@ -1011,3 +1011,7 @@ select:focus-visible {
 .dark .recharts-default-tooltip { background: #1e293b !important; border-color: #334155 !important; }
 .dark .recharts-tooltip-item, .dark .recharts-tooltip-label { color: #e2e8f0 !important; }
 .dark .recharts-legend-item-text { color: #94a3b8 !important; }
+
+/* ── Light theme: zebra table rows (Gemini Option-B spec) ── */
+html:not(.dark) main table tbody tr:nth-child(even) { background-color: #F1F5F9; }
+html:not(.dark) main table tbody tr:hover { background-color: #E2E8F0; }

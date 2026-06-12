@@ -515,7 +515,7 @@ function ComponentEditor({ c, screens, screenId, onChange, onDelete }: {
   c: FlowComponent; screens: FlowScreen[]; screenId: string;
   onChange: (updated: FlowComponent) => void; onDelete: () => void;
 }) {
-  const inp = 'w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-orange-400';
+  const inp = 'w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-sky-400';
 
   return (
     <div className="border border-gray-200 rounded-xl bg-white p-3 space-y-2">
@@ -569,7 +569,7 @@ function ComponentEditor({ c, screens, screenId, onChange, onDelete }: {
               </div>
             ))}
             <button onClick={() => onChange({ ...c, options: [...(c.options || []), { id: uid(), title: '' }] })}
-              className="text-[10px] text-orange-600 font-semibold hover:underline flex items-center gap-1">
+              className="text-[10px] text-sky-600 font-semibold hover:underline flex items-center gap-1">
               <Plus className="w-3 h-3" /> Add option
             </button>
           </div>
@@ -808,7 +808,7 @@ function FlowDesigner({
             </button>
           )}
           <button onClick={() => setShowPreview(v => !v)}
-            className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border transition ${showPreview ? 'bg-orange-50 border-orange-300 text-orange-700' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+            className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border transition ${showPreview ? 'bg-sky-50 border-orange-300 text-sky-700' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
             <Eye className="w-3.5 h-3.5" /> Preview
           </button>
           <Button variant="secondary" onClick={save} disabled={saving || flow.status === 'PUBLISHED'} className="flex items-center gap-1.5 text-sm py-1.5 px-3">
@@ -860,9 +860,9 @@ function FlowDesigner({
             <div className="space-y-1">
               {screens.map((s, idx) => (
                 <div key={s._id}
-                  className={`flex items-center gap-1.5 rounded-lg px-2.5 py-2 cursor-pointer group transition ${activeScreen === idx ? 'bg-orange-100 text-orange-800' : 'hover:bg-gray-200 text-gray-700'}`}
+                  className={`flex items-center gap-1.5 rounded-lg px-2.5 py-2 cursor-pointer group transition ${activeScreen === idx ? 'bg-sky-100 text-orange-800' : 'hover:bg-gray-200 text-gray-700'}`}
                   onClick={() => setActiveScreen(idx)}>
-                  <span className={`w-5 h-5 rounded shrink-0 flex items-center justify-center text-[9px] font-bold ${activeScreen === idx ? 'bg-orange-500 text-white' : 'bg-gray-300 text-gray-600'}`}>{idx + 1}</span>
+                  <span className={`w-5 h-5 rounded shrink-0 flex items-center justify-center text-[9px] font-bold ${activeScreen === idx ? 'bg-sky-500 text-white' : 'bg-gray-300 text-gray-600'}`}>{idx + 1}</span>
                   <span className="text-xs truncate flex-1 font-medium">{s.title || s.id}</span>
                   {screens.length > 1 && (
                     <button onClick={e => { e.stopPropagation(); deleteScreen(idx); }}
@@ -905,7 +905,7 @@ function FlowDesigner({
                 <input
                   value={screen.title}
                   onChange={e => updateScreen(activeScreen, { ...screen, title: e.target.value })}
-                  className="text-sm font-bold text-gray-900 border-b border-transparent focus:border-orange-400 focus:outline-none bg-transparent flex-1"
+                  className="text-sm font-bold text-gray-900 border-b border-transparent focus:border-sky-400 focus:outline-none bg-transparent flex-1"
                   placeholder="Screen title"
                   disabled={flow.status === 'PUBLISHED'}
                 />
@@ -1110,7 +1110,7 @@ export default function FlowsPage() {
           <button onClick={load} className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
             Retry
           </button>
-          <a href="/dashboard/integrations" className="mt-1 text-sm font-semibold text-orange-600 hover:underline">
+          <a href="/dashboard/integrations" className="mt-1 text-sm font-semibold text-sky-600 hover:underline">
             Go to Integrations →
           </a>
         </div>

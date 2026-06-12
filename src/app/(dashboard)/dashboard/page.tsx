@@ -255,10 +255,10 @@ export default function DashboardPage() {
 
       {/* Get Started card — shown to new users with no data, dismissable */}
       {hasNoBusinessData && !getStartedDismissed && (
-        <div className="relative rounded-2xl border border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50 p-5">
+        <div className="relative rounded-2xl border border-sky-200 bg-gradient-to-br from-orange-50 to-amber-50 p-5">
           <button
             onClick={() => { setGetStartedDismissed(true); if(typeof window!=='undefined') localStorage.setItem('get_started_dismissed','true'); }}
-            className="absolute right-3 top-3 rounded-lg p-1.5 text-gray-400 hover:bg-orange-100 hover:text-gray-600 transition"
+            className="absolute right-3 top-3 rounded-lg p-1.5 text-gray-400 hover:bg-sky-100 hover:text-gray-600 transition"
           >
             <X className="h-4 w-4" />
           </button>
@@ -273,12 +273,12 @@ export default function DashboardPage() {
               { step: '3', title: 'Test It', desc: 'Send a test message to your number', href: '/dashboard/messages', cta: 'Test Now' },
             ].map(s => (
               <Link key={s.step} href={s.href}
-                className="flex items-start gap-3 rounded-xl bg-white border border-orange-100 p-3.5 hover:border-orange-300 hover:shadow-sm transition group">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-orange-500 text-[11px] font-black text-white">{s.step}</span>
+                className="flex items-start gap-3 rounded-xl bg-white border border-slate-200 p-3.5 hover:border-orange-300 hover:shadow-sm transition group">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sky-500 text-[11px] font-black text-white">{s.step}</span>
                 <div className="min-w-0">
                   <p className="text-sm font-bold text-gray-900">{s.title}</p>
                   <p className="text-xs text-gray-500 mt-0.5">{s.desc}</p>
-                  <p className="text-xs font-semibold text-orange-600 mt-1.5 group-hover:underline">{s.cta} &rarr;</p>
+                  <p className="text-xs font-semibold text-sky-600 mt-1.5 group-hover:underline">{s.cta} &rarr;</p>
                 </div>
               </Link>
             ))}
@@ -692,7 +692,7 @@ export default function DashboardPage() {
                 </div>
                 <p className="mt-3 font-bold text-gray-950">WhatsApp Bot</p>
                 <p className="mt-1 text-sm text-gray-500">Connect your WhatsApp Business number to enable live messaging and see Meta Status here.</p>
-                <Link href="/dashboard/integrations" className="mt-3 block w-full rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-center text-xs font-bold text-orange-700 hover:bg-orange-100 transition">
+                <Link href="/dashboard/integrations" className="mt-3 block w-full rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-center text-xs font-bold text-sky-700 hover:bg-sky-100 transition">
                   Connect WhatsApp →
                 </Link>
               </div>

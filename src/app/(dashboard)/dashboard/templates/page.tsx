@@ -28,12 +28,12 @@ const STATUS_ICONS: Record<string, React.ReactNode> = {
 const CAT_STYLE: Record<string, string> = {
   MARKETING:      'bg-violet-50 text-violet-700',
   UTILITY:        'bg-blue-50 text-blue-700',
-  AUTHENTICATION: 'bg-orange-50 text-orange-700',
+  AUTHENTICATION: 'bg-sky-50 text-sky-700',
 };
 const CAT_ACTIVE: Record<string, string> = {
   MARKETING:      'bg-violet-600 text-white',
   UTILITY:        'bg-blue-600 text-white',
-  AUTHENTICATION: 'bg-orange-500 text-white',
+  AUTHENTICATION: 'bg-sky-500 text-white',
 };
 const LANGUAGES = [
   { code: 'en_US', label: 'English' },
@@ -249,8 +249,8 @@ function WaPreview({ form }: { form: FormState }) {
             {form.headerMediaUrl && <img src={form.headerMediaUrl} alt="" className="block h-28 w-full max-w-full object-cover" onError={() => {}} />}
             {body && <p className="px-3 py-2 text-sm text-gray-800">{body}</p>}
             {form.ltoHasExpiration && (
-              <div className="px-3 py-2 border-t border-dashed border-orange-200 bg-orange-50">
-                <p className="text-xs text-orange-600 font-semibold">🕐 {form.ltoText || 'Offer expires in'}</p>
+              <div className="px-3 py-2 border-t border-dashed border-sky-200 bg-sky-50">
+                <p className="text-xs text-sky-600 font-semibold">🕐 {form.ltoText || 'Offer expires in'}</p>
                 {form.ltoPromoExample && <p className="text-sm font-mono font-bold text-gray-800 mt-0.5">{form.ltoPromoExample}</p>}
               </div>
             )}
@@ -381,11 +381,11 @@ function CreatePicker({
           {mode === 'choose' && (
             <div className="p-5 space-y-3">
               <button onClick={onScratch}
-                className="w-full text-left p-4 rounded-xl border-2 border-gray-200 hover:border-orange-400 hover:bg-orange-50 transition group">
+                className="w-full text-left p-4 rounded-xl border-2 border-gray-200 hover:border-orange-400 hover:bg-sky-50 transition group">
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">✏️</span>
                   <div>
-                    <p className="font-semibold text-gray-900 group-hover:text-orange-700">Create from Scratch</p>
+                    <p className="font-semibold text-gray-900 group-hover:text-sky-700">Create from Scratch</p>
                     <p className="text-xs text-gray-500 mt-0.5">Build a brand new template</p>
                   </div>
                 </div>
@@ -409,7 +409,7 @@ function CreatePicker({
               {existingTemplates.length === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-gray-400 text-sm">No templates created yet.</p>
-                  <button onClick={onScratch} className="mt-3 text-sm text-orange-600 font-semibold underline">
+                  <button onClick={onScratch} className="mt-3 text-sm text-sky-600 font-semibold underline">
                     Create your first template →
                   </button>
                 </div>
@@ -622,7 +622,7 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
     }
   };
 
-  const inputCls = (err?: string) => `w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 ${err ? 'border-red-400' : 'border-gray-200'}`;
+  const inputCls = (err?: string) => `w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 ${err ? 'border-red-400' : 'border-gray-200'}`;
 
   return (
     <AnimatePresence>
@@ -656,7 +656,7 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
                     <label className="block text-sm font-semibold text-gray-700">Template Type</label>
                     <div className="flex rounded-lg border border-gray-200 bg-gray-50 p-0.5 text-xs font-semibold">
                       <button type="button" onClick={() => setEditorMode('beginner')}
-                        className={`rounded-md px-2.5 py-1 ${editorMode === 'beginner' ? 'bg-white text-orange-700 shadow-sm' : 'text-gray-500'}`}>
+                        className={`rounded-md px-2.5 py-1 ${editorMode === 'beginner' ? 'bg-white text-sky-700 shadow-sm' : 'text-gray-500'}`}>
                         Beginner
                       </button>
                       <button type="button" onClick={() => setEditorMode('advanced')}
@@ -666,7 +666,7 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
                     </div>
                   </div>
                   {editorMode === 'beginner' && (
-                    <div className="mb-3 rounded-xl border border-orange-100 bg-orange-50 px-3 py-2 text-xs text-orange-800">
+                    <div className="mb-3 rounded-xl border border-slate-200 bg-sky-50 px-3 py-2 text-xs text-orange-800">
                       Fill name, category, language and body. Advanced controls stay available, but AI draft is recommended for fastest setup.
                     </div>
                   )}
@@ -710,7 +710,7 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Language</label>
                     <select value={form.language} onChange={e => setField('language', e.target.value)}
-                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white">
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white">
                       {LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
                     </select>
                   </div>
@@ -718,7 +718,7 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
 
                 {/* ── AUTHENTICATION form ── */}
                 {form.templateType === 'authentication' && (
-                  <div className="space-y-4 p-4 bg-orange-50 rounded-xl border border-orange-200">
+                  <div className="space-y-4 p-4 bg-sky-50 rounded-xl border border-sky-200">
                     <p className="text-sm font-semibold text-orange-800">🔐 Authentication Template</p>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">OTP Button Type</label>
@@ -729,7 +729,7 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
                           { v: 'ZERO_TAP', label: 'Zero-tap', desc: 'No button needed' },
                         ] as const).map(({ v, label, desc }) => (
                           <button key={v} onClick={() => setField('authOtpType', v)}
-                            className={`text-left px-3 py-2 rounded-lg border text-xs transition ${form.authOtpType === v ? 'border-orange-500 bg-orange-100' : 'border-gray-200 hover:border-gray-300 bg-white'}`}>
+                            className={`text-left px-3 py-2 rounded-lg border text-xs transition ${form.authOtpType === v ? 'border-orange-500 bg-sky-100' : 'border-gray-200 hover:border-gray-300 bg-white'}`}>
                             <p className="font-semibold">{label}</p>
                             <p className="text-gray-400">{desc}</p>
                           </button>
@@ -744,7 +744,7 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
                       <label className="block text-sm font-medium text-gray-700 mb-1">Code expiry (minutes) <span className="text-gray-400 font-normal">— 0 = don't show</span></label>
                       <input type="number" min={0} max={60} value={form.authExpiryMins}
                         onChange={e => setField('authExpiryMins', parseInt(e.target.value) || 0)}
-                        className="w-32 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+                        className="w-32 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />
                     </div>
                     {form.authOtpType === 'ONE_TAP' && (
                       <div className="space-y-2">
@@ -770,7 +770,7 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
                       <div className="flex items-center justify-between mb-3">
                         <label className="text-sm font-semibold text-gray-700">Cards ({form.carouselCards.length}/10) <span className="text-red-500">*</span></label>
                         {form.carouselCards.length < 10 && (
-                          <button onClick={addCard} className="text-xs text-orange-600 hover:text-orange-700 font-semibold flex items-center gap-1">
+                          <button onClick={addCard} className="text-xs text-sky-600 hover:text-sky-700 font-semibold flex items-center gap-1">
                             <Plus className="w-3.5 h-3.5" /> Add Card
                           </button>
                         )}
@@ -793,9 +793,9 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
                               ))}
                             </div>
                             <label className={`flex cursor-pointer items-center gap-3 rounded-xl border-2 border-dashed px-4 py-3 transition ${
-                              cardUploading[ci] ? 'border-orange-300 bg-orange-50' :
+                              cardUploading[ci] ? 'border-orange-300 bg-sky-50' :
                               card.headerHandle ? 'border-green-400 bg-green-50' :
-                              'border-gray-200 hover:border-orange-400 hover:bg-orange-50/30'
+                              'border-gray-200 hover:border-orange-400 hover:bg-sky-50/30'
                             }`}>
                               <input type="file"
                                 accept={card.headerFormat === 'VIDEO' ? 'video/mp4,video/3gpp' : 'image/jpeg,image/png,image/webp'}
@@ -808,7 +808,7 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
                                 }} />
                               {cardUploading[ci] ? (
                                 <><span className="h-4 w-4 flex-shrink-0 animate-spin rounded-full border-2 border-orange-500 border-t-transparent" />
-                                <span className="text-sm text-orange-600">Uploading to Meta...</span></>
+                                <span className="text-sm text-sky-600">Uploading to Meta...</span></>
                               ) : card.headerHandle ? (
                                 <><CheckCircle2 className="h-5 w-5 text-green-600" />
                                 <div><p className="text-sm font-semibold text-green-700">Uploaded to Meta</p>
@@ -831,10 +831,10 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
                             {card.buttons.map((btn, bi) => (
                               <div key={bi} className="flex gap-2 items-center">
                                 <input value={btn.text} onChange={e => updCardBtn(ci, bi, { text: e.target.value })}
-                                  placeholder="Button label" className="flex-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-orange-400" />
+                                  placeholder="Button label" className="flex-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-sky-400" />
                                 {btn.type === 'URL' && (
                                   <input value={btn.url} onChange={e => updCardBtn(ci, bi, { url: e.target.value })}
-                                    placeholder="https://" className="flex-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-orange-400" />
+                                    placeholder="https://" className="flex-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-sky-400" />
                                 )}
                                 <button onClick={() => delCardBtn(ci, bi)} className="p-1 text-gray-400 hover:text-red-500"><Trash2 className="w-3.5 h-3.5" /></button>
                               </div>
@@ -853,9 +853,9 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
                     <div>
                       <label className="mb-1 block text-sm font-medium text-gray-700">Offer banner <span className="text-gray-400">(optional)</span></label>
                       <label className={`flex cursor-pointer items-center gap-3 rounded-xl border-2 border-dashed px-4 py-3 transition ${
-                        uploading ? 'border-orange-300 bg-orange-50' :
+                        uploading ? 'border-orange-300 bg-sky-50' :
                         form.headerMediaHandle ? 'border-green-400 bg-green-50' :
-                        'border-gray-200 bg-white hover:border-orange-400 hover:bg-orange-50/30'
+                        'border-gray-200 bg-white hover:border-orange-400 hover:bg-sky-50/30'
                       }`}>
                         <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden"
                           disabled={uploading}
@@ -869,7 +869,7 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
                           }} />
                         {uploading ? (
                           <><span className="h-4 w-4 flex-shrink-0 animate-spin rounded-full border-2 border-orange-500 border-t-transparent" />
-                          <span className="text-sm text-orange-600">Uploading to Meta...</span></>
+                          <span className="text-sm text-sky-600">Uploading to Meta...</span></>
                         ) : form.headerMediaHandle ? (
                           <><CheckCircle2 className="h-5 w-5 text-green-600" />
                           <div><p className="text-sm font-semibold text-green-700">Banner uploaded to Meta</p>
@@ -949,7 +949,7 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
                             {form.headerType === 'DOCUMENT' && <><strong>Document:</strong> PDF only — max 100MB</>}
                           </div>
                           {/* Upload button */}
-                          <label className={`flex items-center gap-3 border-2 border-dashed rounded-xl px-4 py-3 cursor-pointer transition ${uploading ? 'border-orange-300 bg-orange-50' : form.headerMediaHandle ? 'border-green-400 bg-green-50' : 'border-gray-200 hover:border-orange-400 hover:bg-orange-50/30'}`}>
+                          <label className={`flex items-center gap-3 border-2 border-dashed rounded-xl px-4 py-3 cursor-pointer transition ${uploading ? 'border-orange-300 bg-sky-50' : form.headerMediaHandle ? 'border-green-400 bg-green-50' : 'border-gray-200 hover:border-orange-400 hover:bg-sky-50/30'}`}>
                             <input type="file"
                               accept={form.headerType === 'IMAGE' ? 'image/jpeg,image/png,image/webp' : form.headerType === 'VIDEO' ? 'video/mp4,video/3gpp' : 'application/pdf'}
                               className="hidden"
@@ -958,14 +958,14 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
                             />
                             {uploading ? (
                               <><span className="w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin flex-shrink-0" />
-                              <span className="text-sm text-orange-600">Uploading…</span></>
+                              <span className="text-sm text-sky-600">Uploading…</span></>
                             ) : form.headerMediaUrl && !form.headerMediaUrl.startsWith('blob:') ? (
                               <><span className="text-lg">✅</span>
                               <div><p className="text-sm font-semibold text-green-700">Uploaded successfully</p>
                               <p className="text-xs text-green-600">Ready for Meta approval</p></div></>
                             ) : form.headerMediaUrl ? (
                               <><span className="text-lg">🔄</span>
-                              <div><p className="text-sm font-semibold text-orange-600">Preview loaded — uploading…</p></div></>
+                              <div><p className="text-sm font-semibold text-sky-600">Preview loaded — uploading…</p></div></>
                             ) : (
                               <><span className="text-lg">{form.headerType === 'IMAGE' ? '🖼️' : form.headerType === 'VIDEO' ? '🎬' : '📄'}</span>
                               <div><p className="text-sm font-semibold text-gray-700">Click to upload {form.headerType.toLowerCase()}</p>
@@ -1024,7 +1024,7 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
                         <div className="space-y-2">
                           {form.examples.map((val, idx) => (
                             <div key={idx} className="flex items-center gap-2">
-                              <span className="text-xs font-mono bg-orange-50 text-orange-700 border border-orange-200 px-2 py-1 rounded w-14 text-center flex-shrink-0">{`{{${idx+1}}}`}</span>
+                              <span className="text-xs font-mono bg-sky-50 text-sky-700 border border-sky-200 px-2 py-1 rounded w-14 text-center flex-shrink-0">{`{{${idx+1}}}`}</span>
                               <input value={val}
                                 onChange={e => setField('examples', form.examples.map((x, i) => i === idx ? e.target.value : x))}
                                 placeholder={['Rahul Sharma', 'ORD-12345', '₹999', 'Delhi', '25 Dec'][idx] || `Sample value ${idx+1}`}
@@ -1076,10 +1076,10 @@ function CreateTemplateModal({ isOpen, onClose, onSuccess, prefill }: {
                           <button onClick={() => addBtn('QUICK_REPLY')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-blue-200 bg-blue-50 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition">
                             <Plus className="w-3.5 h-3.5" /> Custom Reply
                           </button>
-                          <button onClick={() => addBtn('URL')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-orange-200 bg-orange-50 text-xs font-semibold text-orange-700 hover:bg-orange-100 transition">
+                          <button onClick={() => addBtn('URL')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-sky-200 bg-sky-50 text-xs font-semibold text-sky-700 hover:bg-sky-100 transition">
                             <Plus className="w-3.5 h-3.5" /> Visit Website
                           </button>
-                          <button onClick={() => addBtn('PHONE_NUMBER')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-orange-200 bg-orange-50 text-xs font-semibold text-orange-700 hover:bg-orange-100 transition">
+                          <button onClick={() => addBtn('PHONE_NUMBER')} className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-sky-200 bg-sky-50 text-xs font-semibold text-sky-700 hover:bg-sky-100 transition">
                             <Plus className="w-3.5 h-3.5" /> Call Phone
                           </button>
                           {!hasQR && !hasCTA && (
@@ -1380,7 +1380,7 @@ function TemplateLibraryTab({ onUse }: { onUse: (tpl: any) => void }) {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search templates…"
-            className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+            className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />
         </div>
         <div className="flex gap-1.5">
           {['ALL', 'MARKETING', 'UTILITY', 'AUTHENTICATION'].map(c => (
@@ -1419,7 +1419,7 @@ function TemplateLibraryTab({ onUse }: { onUse: (tpl: any) => void }) {
             {/* CTA */}
             <div className="px-4 pb-4">
               <button onClick={() => onUse(tpl)}
-                className="w-full py-2 text-xs font-bold text-orange-600 bg-orange-50 border border-orange-200 rounded-xl hover:bg-orange-100 transition">
+                className="w-full py-2 text-xs font-bold text-sky-600 bg-sky-50 border border-sky-200 rounded-xl hover:bg-sky-100 transition">
                 Use Template →
               </button>
             </div>
@@ -1570,9 +1570,9 @@ export default function TemplatesPage() {
         </div>
       </div>
 
-      <div className="rounded-xl border border-orange-200 bg-orange-50 px-4 py-3">
+      <div className="rounded-xl border border-sky-200 bg-sky-50 px-4 py-3">
         <p className="text-sm font-bold text-orange-950">Recommended path: AI draft -&gt; preview -&gt; submit to Meta</p>
-        <p className="mt-1 text-xs text-orange-700">Advanced options like carousel, auth OTP, LTO, media headers, and library templates are still available in manual mode.</p>
+        <p className="mt-1 text-xs text-sky-700">Advanced options like carousel, auth OTP, LTO, media headers, and library templates are still available in manual mode.</p>
       </div>
 
       <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
@@ -1619,7 +1619,7 @@ export default function TemplatesPage() {
                   value={nameSearch}
                   onChange={e => setNameSearch(e.target.value)}
                   placeholder="Search by name…"
-                  className="border border-gray-200 rounded-lg pl-8 pr-8 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white w-48"
+                  className="border border-gray-200 rounded-lg pl-8 pr-8 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-sky-400 bg-white w-48"
                 />
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-gray-400 pointer-events-none" />
                 {nameSearch && <button onClick={() => setNameSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"><X className="h-3 w-3" /></button>}
@@ -1864,7 +1864,7 @@ export default function TemplatesPage() {
                   rows={3}
                   disabled={aiGenerating}
                   placeholder="Example: Diwali sale — 30% off, valid until Oct 31. Add an image header and a Shop Now button."
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 resize-none disabled:bg-gray-50"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400 resize-none disabled:bg-gray-50"
                 />
                 <p className="text-[10px] text-gray-400 mt-1">
                   Tips: "image header", "video header", "carousel 3 products", "OTP template", "offer expires" write → AI can choose the right template type
@@ -1923,7 +1923,7 @@ export default function TemplatesPage() {
                       className="text-gray-400 hover:text-red-500 transition p-1">✕</button>
                   </div>
                 ) : (
-                  <label className="flex items-center gap-2 border-2 border-dashed border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-500 hover:border-orange-300 hover:text-orange-600 transition cursor-pointer">
+                  <label className="flex items-center gap-2 border-2 border-dashed border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-500 hover:border-orange-300 hover:text-sky-600 transition cursor-pointer">
                     <span>📎</span>
                     <span>Upload image / video / document</span>
                     <input type="file" className="hidden" accept="image/jpeg,image/png,image/webp,video/mp4,application/pdf"

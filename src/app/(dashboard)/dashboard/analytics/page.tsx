@@ -122,13 +122,13 @@ export default function AnalyticsPage() {
             <a href="/dashboard/billing" className="shrink-0 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-amber-600 transition">Upgrade &rarr;</a>
           </div>
         )}
-        <div className="relative overflow-hidden rounded-xl border border-orange-100 bg-white p-6 shadow-sm">
+        <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <h1 className="text-2xl font-bold text-gray-950">Analytics</h1>
           <p className="mt-2 text-gray-600">Track conversations, leads, automations, saved time, and launch readiness.</p>
         </div>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           {[1,2,3,4,5,6,7,8].map(i => (
-            <div key={i} className="rounded-xl border border-orange-100 bg-white p-5 shadow-sm animate-pulse">
+            <div key={i} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm animate-pulse">
               <div className="h-4 w-24 bg-gray-200 rounded mb-3" />
               <div className="h-8 w-16 bg-gray-100 rounded" />
             </div>
@@ -142,10 +142,10 @@ export default function AnalyticsPage() {
     { label: 'Total Conversations', value: dashboard?.total_sessions || 0, icon: MessageCircle, color: 'text-sky-600 bg-sky-50' },
     { label: 'Leads Generated', value: dashboard?.leads_captured || 0, icon: Users, color: 'text-emerald-600 bg-emerald-50' },
     { label: 'Hot Leads', value: dashboard?.hot_leads || 0, icon: Target, color: 'text-red-600 bg-red-50' },
-    { label: 'Conversion Rate', value: `${dashboard?.lead_conversion_rate || 0}%`, icon: Activity, color: 'text-primary-600 bg-orange-50' },
+    { label: 'Conversion Rate', value: `${dashboard?.lead_conversion_rate || 0}%`, icon: Activity, color: 'text-primary-600 bg-sky-50' },
     { label: 'Hours Saved', value: `${dashboard?.hours_saved || 0}h`, icon: Clock, color: 'text-violet-600 bg-violet-50' },
     { label: 'Revenue Potential', value: `Rs ${Number(dashboard?.estimated_revenue_potential || 0).toLocaleString('en-IN')}`, icon: IndianRupee, color: 'text-amber-700 bg-amber-50' },
-    { label: 'Automations Run', value: dashboard?.automations_run || 0, icon: Zap, color: 'text-primary-600 bg-orange-50' },
+    { label: 'Automations Run', value: dashboard?.automations_run || 0, icon: Zap, color: 'text-primary-600 bg-sky-50' },
     { label: 'Bot Accuracy', value: dashboard?.bot_accuracy_score == null ? 'No data' : `${dashboard.bot_accuracy_score}%`, icon: Bot, color: 'text-green-700 bg-green-50' },
   ];
 
@@ -170,8 +170,8 @@ export default function AnalyticsPage() {
           </a>
         </div>
       )}
-      <div className="relative overflow-hidden rounded-xl border border-orange-100 bg-white p-6 shadow-sm">
-        <div className="absolute right-6 top-6 h-20 w-20 rounded-full bg-orange-100 blur-2xl" />
+      <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="absolute right-6 top-6 h-20 w-20 rounded-full bg-sky-100 blur-2xl" />
         <div className="relative flex items-start justify-between gap-4 flex-wrap">
           <div>
             <h1 className="text-2xl font-bold text-gray-950">Analytics</h1>
@@ -197,7 +197,7 @@ export default function AnalyticsPage() {
               <input
                 type="date"
                 max={new Date().toISOString().split('T')[0]}
-                className="border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white"
+                className="border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-sky-300 bg-white"
                 onChange={e => {
                   if (e.target.value) {
                     const from = new Date(e.target.value);
@@ -217,7 +217,7 @@ export default function AnalyticsPage() {
         {impactCards.map((stat) => {
           const Icon = stat.icon;
           return (
-            <Card key={stat.label} className="border-orange-100 shadow-sm" hoverable={false}>
+            <Card key={stat.label} className="border-slate-200 shadow-sm" hoverable={false}>
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-medium text-gray-500">{stat.label}</p>
@@ -284,7 +284,7 @@ export default function AnalyticsPage() {
       )}
 
       <section className="grid gap-6 lg:grid-cols-1">
-        <Card className="border-orange-100 shadow-sm" hoverable={false}>
+        <Card className="border-slate-200 shadow-sm" hoverable={false}>
           <h2 className="mb-6 text-xl font-bold text-gray-950">Conversation Trend</h2>
           {trends.length === 0 ? (
             <div className="flex h-[260px] items-center justify-center rounded-xl bg-gray-50 dark:bg-slate-900">
@@ -298,7 +298,7 @@ export default function AnalyticsPage() {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="queries" stroke="#f97316" strokeWidth={3} />
+                <Line type="monotone" dataKey="queries" stroke="#0EA5E9" strokeWidth={3} />
               </LineChart>
             </ResponsiveContainer>
           )}
@@ -306,7 +306,7 @@ export default function AnalyticsPage() {
       </section>
 
       <section className="grid gap-6 lg:grid-cols-2">
-        <Card className="border-orange-100 shadow-sm" hoverable={false}>
+        <Card className="border-slate-200 shadow-sm" hoverable={false}>
           <h2 className="mb-6 text-xl font-bold text-gray-950">Lead Quality</h2>
           {leadScoreData.every((d: any) => d.value === 0) ? (
             <div className="flex h-[260px] items-center justify-center rounded-xl bg-gray-50">
@@ -322,13 +322,13 @@ export default function AnalyticsPage() {
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="value" fill="#f97316" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="value" fill="#0EA5E9" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
         </Card>
 
-        <Card className="border-orange-100 shadow-sm" hoverable={false}>
+        <Card className="border-slate-200 shadow-sm" hoverable={false}>
           <h2 className="text-xl font-bold text-gray-950">AI Insights</h2>
           <div className="mt-5 space-y-3">
             {(impact?.insights || []).map((insight: string) => (
@@ -345,7 +345,7 @@ export default function AnalyticsPage() {
               impact.top_questions.map((item: any) => (
                 <div key={item.question} className="flex items-center justify-between gap-3 rounded-lg border border-gray-100 px-3 py-2">
                   <p className="line-clamp-1 text-sm text-gray-700">{item.question}</p>
-                  <span className="rounded-full bg-orange-50 px-2 py-1 text-xs font-bold text-primary-700">{item.count}</span>
+                  <span className="rounded-full bg-sky-50 px-2 py-1 text-xs font-bold text-primary-700">{item.count}</span>
                 </div>
               ))
             )}
@@ -395,7 +395,7 @@ export default function AnalyticsPage() {
                     <XAxis dataKey="source" tick={{ fontSize: 11 }} />
                     <YAxis tick={{ fontSize: 11 }} />
                     <Tooltip />
-                    <Bar dataKey="count" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="count" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               )}
@@ -450,7 +450,7 @@ export default function AnalyticsPage() {
             { label: 'Messages Sent', value: waStats?.total_sent ?? '—', icon: Send, color: 'text-blue-600 bg-blue-50' },
             { label: 'Delivery Rate', value: waStats ? `${waStats.delivery_rate}%` : '—', icon: CheckCheck, color: 'text-green-600 bg-green-50' },
             { label: 'Read Rate', value: waStats ? `${waStats.read_rate}%` : '—', icon: TrendingUp, color: 'text-purple-600 bg-purple-50' },
-            { label: 'Messages Received', value: waStats?.total_inbound ?? '—', icon: MessageCircle, color: 'text-orange-600 bg-orange-50' },
+            { label: 'Messages Received', value: waStats?.total_inbound ?? '—', icon: MessageCircle, color: 'text-sky-600 bg-sky-50' },
           ].map(kpi => {
             const Icon = kpi.icon;
             return (
@@ -502,7 +502,7 @@ export default function AnalyticsPage() {
             ) : (
               <div className="space-y-3 mt-2">
                 {[
-                  { label: 'Sent', count: waStats.total_sent, color: '#3b82f6', pct: 100 },
+                  { label: 'Sent', count: waStats.total_sent, color: '#0EA5E9', pct: 100 },
                   { label: 'Delivered', count: waStats.delivered, color: '#22c55e', pct: waStats.delivery_rate },
                   { label: 'Read', count: waStats.read, color: '#a855f7', pct: waStats.read_rate },
                   { label: 'Failed', count: waStats.failed, color: '#ef4444', pct: waStats.fail_rate },

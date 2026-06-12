@@ -160,7 +160,7 @@ export default function LaunchCenterPage() {
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-        <Card className="border-orange-100 shadow-sm" hoverable={false}>
+        <Card className="border-slate-200 shadow-sm" hoverable={false}>
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-bold text-gray-950">One-click Demo Test</h2>
             <HelpTip text="Creates demo records so you can verify the owner flow from lead capture to follow-up task." />
@@ -175,7 +175,7 @@ export default function LaunchCenterPage() {
                 type="button"
                 onClick={() => setIndustry(item.key)}
                 className={`rounded-xl border px-3 py-2.5 text-left text-xs font-bold transition ${
-                  industry === item.key ? 'border-primary-300 bg-orange-50 text-primary-700' : 'border-gray-100 bg-white text-gray-700 hover:border-orange-200'
+                  industry === item.key ? 'border-primary-300 bg-sky-50 text-primary-700' : 'border-gray-100 bg-white text-gray-700 hover:border-sky-200'
                 }`}
               >
                 {item.label}
@@ -203,7 +203,7 @@ export default function LaunchCenterPage() {
         </Card>
 
 
-        <Card className="border-orange-100 shadow-sm" hoverable={false}>
+        <Card className="border-slate-200 shadow-sm" hoverable={false}>
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-bold text-gray-950">Top Launch Blockers</h2>
             <HelpTip text="Fix these first. They are the highest impact issues before paid customers use the product." />
@@ -233,7 +233,7 @@ export default function LaunchCenterPage() {
       <section className="grid gap-6 lg:grid-cols-3">
         <ChecklistCard title="Business Value" icon={FlaskConical} checks={valueChecks} />
         <ChecklistCard title="Security" icon={ShieldCheck} checks={securityChecks} />
-        <Card className="border-orange-100 shadow-sm" hoverable={false}>
+        <Card className="border-slate-200 shadow-sm" hoverable={false}>
           <div className="flex items-center gap-2">
             <KeyRound className="h-5 w-5 text-primary-600" />
             <h2 className="text-xl font-bold text-gray-950">Live Connections</h2>
@@ -254,7 +254,7 @@ export default function LaunchCenterPage() {
         </Card>
       </section>
 
-      <Card className="border-orange-100 bg-orange-50 shadow-sm" hoverable={false}>
+      <Card className="border-slate-200 bg-sky-50 shadow-sm" hoverable={false}>
         <h2 className="text-lg font-bold text-gray-950">Production readiness summary</h2>
         <p className="mt-2 text-sm text-gray-700">
           Live provider connections are required before WhatsApp, email, and lead-ad automations can send real messages.
@@ -266,7 +266,7 @@ export default function LaunchCenterPage() {
             ['Agentic test', 'Question, buy, complaint, and opt-out route correctly.'],
             ['Browser QA', 'No console crash on key dashboard routes.'],
           ].map(([title, body]) => (
-            <div key={title} className="rounded-lg border border-orange-100 bg-white p-3">
+            <div key={title} className="rounded-lg border border-slate-200 bg-white p-3">
               <p className="text-sm font-bold text-gray-950">{title}</p>
               <p className="mt-1 text-xs text-gray-600">{body}</p>
             </div>
@@ -279,7 +279,7 @@ export default function LaunchCenterPage() {
 
 function ChecklistCard({ title, icon: Icon, checks }: { title: string; icon: any; checks: any[] }) {
   return (
-    <Card className="border-orange-100 shadow-sm" hoverable={false}>
+    <Card className="border-slate-200 shadow-sm" hoverable={false}>
       <div className="flex items-center gap-2">
         <Icon className="h-5 w-5 text-primary-600" />
         <h2 className="text-xl font-bold text-gray-950">{title}</h2>

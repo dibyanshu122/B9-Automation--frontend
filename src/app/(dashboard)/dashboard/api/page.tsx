@@ -462,7 +462,7 @@ export default function ApiKeysPage() {
             <p className="text-sm text-gray-600 mb-4">Pass your API key in the <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs font-mono">Authorization</code> header on every request:</p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
-                { lang: 'cURL', color: 'from-orange-500/10 to-orange-500/5 border-orange-200', labelColor: 'text-orange-600 bg-orange-50 border-orange-200', textColor: 'text-orange-900',
+                { lang: 'cURL', color: 'from-orange-500/10 to-orange-500/5 border-sky-200', labelColor: 'text-sky-600 bg-sky-50 border-sky-200', textColor: 'text-orange-900',
                   code: `curl ${API_BASE}/api/v1/leads \\\n  -H "Authorization: Bearer YOUR_API_KEY"` },
                 { lang: 'JavaScript', color: 'from-yellow-500/10 to-yellow-500/5 border-yellow-200', labelColor: 'text-yellow-700 bg-yellow-50 border-yellow-200', textColor: 'text-yellow-900',
                   code: `const res = await fetch(\n  '${API_BASE}/api/v1/leads',\n  { headers: { Authorization:\n    'Bearer YOUR_API_KEY' } }\n);\nconst data = await res.json();` },

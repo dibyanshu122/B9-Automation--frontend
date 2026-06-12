@@ -126,7 +126,7 @@ export default function QrCodesPage() {
         <div className="flex flex-col items-center gap-3 rounded-xl border-2 border-dashed border-gray-200 py-14 text-center">
           <AlertCircle className="w-10 h-10 text-amber-400" />
           <p className="font-semibold text-gray-700">WhatsApp not connected</p>
-          <a href="/dashboard/integrations" className="text-sm font-semibold text-orange-600 hover:underline">Go to Integrations</a>
+          <a href="/dashboard/integrations" className="text-sm font-semibold text-sky-600 hover:underline">Go to Integrations</a>
         </div>
       )}
 
@@ -229,7 +229,7 @@ export default function QrCodesPage() {
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Pre-filled Message *</label>
                   <textarea value={message} onChange={e => setMessage(e.target.value)} rows={3}
                     placeholder="Message that appears in WhatsApp when customer scans the QR code"
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none" />
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 resize-none" />
                   <p className="text-xs text-gray-400 mt-1">Customer can edit this message before sending.</p>
                 </div>
                 <div>
@@ -239,7 +239,7 @@ export default function QrCodesPage() {
                     onChange={e => setSourceTag(e.target.value)}
                     maxLength={80}
                     placeholder="Store Poster, Website Banner, Event Stall"
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
                   />
                   <p className="text-xs text-gray-400 mt-1">This is appended to the WhatsApp message so leads can be attributed later.</p>
                 </div>

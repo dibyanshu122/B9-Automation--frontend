@@ -756,14 +756,14 @@ export default function LeadsPage() {
               <button
                 onClick={() => setViewMode('list')}
                 title="List view"
-                className={`rounded-md p-1.5 transition ${viewMode === 'list' ? 'bg-orange-50 text-primary-700' : 'text-gray-400 hover:text-gray-600'}`}
+                className={`rounded-md p-1.5 transition ${viewMode === 'list' ? 'bg-sky-50 text-primary-700' : 'text-gray-400 hover:text-gray-600'}`}
               >
                 <List className="h-4 w-4" />
               </button>
               <button
                 onClick={() => setViewMode('kanban')}
                 title="Kanban board"
-                className={`rounded-md p-1.5 transition ${viewMode === 'kanban' ? 'bg-orange-50 text-primary-700' : 'text-gray-400 hover:text-gray-600'}`}
+                className={`rounded-md p-1.5 transition ${viewMode === 'kanban' ? 'bg-sky-50 text-primary-700' : 'text-gray-400 hover:text-gray-600'}`}
               >
                 <Kanban className="h-4 w-4" />
               </button>
@@ -778,7 +778,7 @@ export default function LeadsPage() {
               )}
             </div>
           )}
-          <div className="grid grid-cols-3 gap-2 rounded-lg border border-orange-100 bg-white p-2">
+          <div className="grid grid-cols-3 gap-2 rounded-lg border border-slate-200 bg-white p-2">
             {[
               ['pipeline', 'Pipeline'],
               ['qualified', 'Qualified'],
@@ -789,7 +789,7 @@ export default function LeadsPage() {
                 type="button"
                 onClick={() => setActiveTab(key as any)}
                 className={`rounded-md px-3 py-2 text-sm font-semibold ${
-                  activeTab === key ? 'bg-orange-50 text-primary-700' : 'text-gray-600 hover:bg-gray-50'
+                  activeTab === key ? 'bg-sky-50 text-primary-700' : 'text-gray-600 hover:bg-gray-50'
                 }`}
               >
                 {label}
@@ -827,7 +827,7 @@ export default function LeadsPage() {
         </Card>
       )}
 
-      <Card className="border-orange-100 shadow-sm" hoverable={false}>
+      <Card className="border-slate-200 shadow-sm" hoverable={false}>
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(260px,1fr)_160px_160px_auto_auto_auto_auto_auto] xl:items-center">
           <label className="relative min-w-0">
             <input
@@ -853,7 +853,7 @@ export default function LeadsPage() {
           <button
             type="button"
             onClick={openMergeModal}
-            className="inline-flex h-11 items-center justify-center gap-1.5 rounded-lg border border-orange-200 bg-orange-50 px-3 text-xs font-semibold text-orange-700 transition hover:bg-orange-100"
+            className="inline-flex h-11 items-center justify-center gap-1.5 rounded-lg border border-sky-200 bg-sky-50 px-3 text-xs font-semibold text-sky-700 transition hover:bg-sky-100"
           >
             <GitMerge className="h-3.5 w-3.5" />
             Merge Duplicates
@@ -923,24 +923,24 @@ export default function LeadsPage() {
           </span>
           <label className="relative">
             <input ref={leadDateFromRef} type="date" value={leadDateFrom} onChange={e => setLeadDateFrom(e.target.value)}
-              className="h-9 rounded-lg border border-gray-200 bg-white px-2.5 pr-8 text-xs focus:outline-none focus:ring-2 focus:ring-orange-300" />
+              className="h-9 rounded-lg border border-gray-200 bg-white px-2.5 pr-8 text-xs focus:outline-none focus:ring-2 focus:ring-sky-300" />
             <button type="button" aria-label="Open start date picker" onClick={() => { leadDateFromRef.current?.focus(); leadDateFromRef.current?.showPicker?.(); }}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 transition hover:text-orange-600">
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 transition hover:text-sky-600">
               <CalendarDays className="h-3.5 w-3.5" />
             </button>
           </label>
           <span className="text-xs text-gray-400">to</span>
           <label className="relative">
             <input ref={leadDateToRef} type="date" value={leadDateTo} onChange={e => setLeadDateTo(e.target.value)}
-              className="h-9 rounded-lg border border-gray-200 bg-white px-2.5 pr-8 text-xs focus:outline-none focus:ring-2 focus:ring-orange-300" />
+              className="h-9 rounded-lg border border-gray-200 bg-white px-2.5 pr-8 text-xs focus:outline-none focus:ring-2 focus:ring-sky-300" />
             <button type="button" aria-label="Open end date picker" onClick={() => { leadDateToRef.current?.focus(); leadDateToRef.current?.showPicker?.(); }}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 transition hover:text-orange-600">
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 transition hover:text-sky-600">
               <CalendarDays className="h-3.5 w-3.5" />
             </button>
           </label>
           {(leadDateFrom || leadDateTo) && (
             <button onClick={() => { setLeadDateFrom(''); setLeadDateTo(''); }}
-              className="text-xs text-orange-500 hover:text-orange-700 font-medium flex items-center gap-1">
+              className="text-xs text-orange-500 hover:text-sky-700 font-medium flex items-center gap-1">
               <X className="h-3 w-3" />
               Clear
             </button>
@@ -1042,7 +1042,7 @@ export default function LeadsPage() {
 
       <section className="grid gap-4 md:grid-cols-4">
         {[
-          { label: 'Total Leads', value: globalCounts?.leads_captured ?? leads.length, icon: Users, style: 'bg-orange-50 text-primary-700' },
+          { label: 'Total Leads', value: globalCounts?.leads_captured ?? leads.length, icon: Users, style: 'bg-sky-50 text-primary-700' },
           { label: 'Hot Leads', value: globalCounts?.hot_leads ?? groupedByScore.hot.length, icon: Flame, style: 'bg-red-50 text-red-700' },
           { label: 'Warm Leads', value: globalCounts?.warm_leads ?? groupedByScore.warm.length, icon: Star, style: 'bg-amber-50 text-amber-700' },
           { label: 'Handover Queue', value: inbox.filter((item) => item.handover_status === 'requested').length, icon: AlertTriangle, style: 'bg-sky-50 text-sky-700' },
@@ -1052,7 +1052,7 @@ export default function LeadsPage() {
           return (
           <Card
             key={stat.label}
-            className={`border-orange-100 shadow-sm ${isHandover && stat.value > 0 ? 'cursor-pointer hover:border-sky-300' : ''}`}
+            className={`border-slate-200 shadow-sm ${isHandover && stat.value > 0 ? 'cursor-pointer hover:border-sky-300' : ''}`}
             hoverable={false}
             onClick={isHandover && stat.value > 0 ? () => setActiveTab('inbox') : undefined}
           >
@@ -1074,7 +1074,7 @@ export default function LeadsPage() {
       {loading ? (
         <div className="space-y-3">
           {[1, 2, 3, 4].map((i) => (
-            <Card key={i} className="border-orange-100" hoverable={false}>
+            <Card key={i} className="border-slate-200" hoverable={false}>
               <div className="flex items-center gap-4 animate-pulse">
                 <div className="h-8 w-8 rounded-full bg-gray-200 shrink-0" />
                 <div className="flex-1 space-y-2">
@@ -1110,7 +1110,7 @@ export default function LeadsPage() {
                   { label: 'Win Rate', value: `${dealAnalytics.winRate}%`, color: 'text-violet-700', bg: 'bg-violet-50 border-violet-100' },
                   { label: 'Avg Deal', value: `₹${dealAnalytics.avgDeal.toLocaleString('en-IN')}`, color: 'text-amber-700', bg: 'bg-amber-50 border-amber-100' },
                   { label: 'Open Deals', value: dealAnalytics.openDeals, color: 'text-gray-700', bg: 'bg-gray-50 border-gray-100' },
-                  { label: 'Closing Month', value: dealAnalytics.closingThisMonth, color: 'text-orange-700', bg: 'bg-orange-50 border-orange-100' },
+                  { label: 'Closing Month', value: dealAnalytics.closingThisMonth, color: 'text-sky-700', bg: 'bg-sky-50 border-slate-200' },
                   { label: '🎯 Forecast', value: `₹${dealAnalytics.forecast.toLocaleString('en-IN')}`, color: 'text-indigo-700', bg: 'bg-indigo-50 border-indigo-200' },
                 ].map(m => (
                   <div key={m.label} className={`rounded-xl border px-3 py-2 ${m.bg}`}>
@@ -1236,7 +1236,7 @@ export default function LeadsPage() {
         ) : (
           /* ── LIST VIEW ─────────────────────────────────────────────────── */
           <section className="space-y-4">
-            <Card className="border-orange-100 shadow-sm overflow-x-auto" hoverable={false}>
+            <Card className="border-slate-200 shadow-sm overflow-x-auto" hoverable={false}>
               <div className="min-w-[700px]">
               <div className="hidden grid-cols-[24px_1.1fr_1fr_1fr_0.8fr_0.6fr_0.9fr_90px] gap-3 rounded-xl px-3 py-3 mb-1 text-xs font-bold uppercase tracking-wide text-white md:grid" style={{background:'linear-gradient(135deg,#1e293b 0%,#0f172a 50%,#1e1b4b 100%)'}}>
                 <input type="checkbox" className="rounded"
@@ -1344,7 +1344,7 @@ export default function LeadsPage() {
       ) : activeTab === 'qualified' ? (
         <section className="grid gap-4 lg:grid-cols-3">
           {(['hot', 'warm', 'cold'] as const).map((label) => (
-            <Card key={label} className="border-orange-100 shadow-sm" hoverable={false}>
+            <Card key={label} className="border-slate-200 shadow-sm" hoverable={false}>
               <h2 className="mb-4 flex items-center gap-2 font-bold capitalize text-gray-950">
                 <span className={`rounded-full px-2 py-1 text-xs ring-1 ${scoreStyles[label]}`}>{label}</span>
                 {groupedByScore[label].length} leads
@@ -1383,7 +1383,7 @@ export default function LeadsPage() {
             </Card>
           ) : (
             inbox.map((item) => (
-              <Card key={item.id} className="border-orange-100 shadow-sm" hoverable={false}>
+              <Card key={item.id} className="border-slate-200 shadow-sm" hoverable={false}>
                 <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
@@ -1435,7 +1435,7 @@ export default function LeadsPage() {
 
       {conversation && (
         <DetailCard title="Conversation inbox detail" onClose={() => setConversation(null)}>
-          <div className="mb-4 rounded-lg bg-orange-50 p-4 text-sm text-gray-700">
+          <div className="mb-4 rounded-lg bg-sky-50 p-4 text-sm text-gray-700">
             <p className="font-semibold text-gray-950">Handover status: {conversation.session.handover_status}</p>
             {conversation.lead?.score_reason && <p className="mt-1">AI qualification: {conversation.lead.score_reason}</p>}
           </div>
@@ -2123,7 +2123,7 @@ export default function LeadsPage() {
               ) : (
                 <div className="space-y-3 max-h-96 overflow-y-auto">
                   {duplicateGroups.map((group, gi) => (
-                    <div key={gi} className={`rounded-xl border p-3 cursor-pointer transition ${selectedDupGroup === group ? 'border-orange-400 bg-orange-50' : 'border-gray-200 hover:border-orange-300'}`}
+                    <div key={gi} className={`rounded-xl border p-3 cursor-pointer transition ${selectedDupGroup === group ? 'border-orange-400 bg-sky-50' : 'border-gray-200 hover:border-orange-300'}`}
                       onClick={() => { setSelectedDupGroup(group); setPrimaryLeadId(group.leads[0]?.id || ''); }}>
                       <p className="text-xs font-bold text-gray-700 mb-2">Phone: {group.phone} · {group.count} duplicates</p>
                       <div className="space-y-1">
@@ -2136,9 +2136,9 @@ export default function LeadsPage() {
                               onChange={() => { setSelectedDupGroup(group); setPrimaryLeadId(lead.id); }}
                               onClick={e => e.stopPropagation()}
                             />
-                            <span className={`font-semibold ${primaryLeadId === lead.id && selectedDupGroup === group ? 'text-orange-700' : 'text-gray-700'}`}>
+                            <span className={`font-semibold ${primaryLeadId === lead.id && selectedDupGroup === group ? 'text-sky-700' : 'text-gray-700'}`}>
                               {lead.name || 'Unnamed'} — {new Date(lead.created_at).toLocaleDateString()}
-                              {primaryLeadId === lead.id && selectedDupGroup === group && <span className="ml-1 text-[10px] bg-orange-100 text-orange-700 rounded px-1">Keep (primary)</span>}
+                              {primaryLeadId === lead.id && selectedDupGroup === group && <span className="ml-1 text-[10px] bg-sky-100 text-sky-700 rounded px-1">Keep (primary)</span>}
                             </span>
                           </label>
                         ))}
@@ -2193,7 +2193,7 @@ export default function LeadsPage() {
                       <select
                         value={rule.condition}
                         onChange={e => setScoringRules(prev => prev.map((r, ri) => ri === i ? { ...r, condition: e.target.value } : r))}
-                        className="rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-orange-300"
+                        className="rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-sky-300"
                       >
                         <option value="source">Source</option>
                         <option value="status">Status</option>
@@ -2202,7 +2202,7 @@ export default function LeadsPage() {
                       <select
                         value={rule.value}
                         onChange={e => setScoringRules(prev => prev.map((r, ri) => ri === i ? { ...r, value: e.target.value } : r))}
-                        className="rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-orange-300"
+                        className="rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-sky-300"
                       >
                         {rule.condition === 'source' && ['whatsapp', 'facebook', 'instagram', 'website_widget', 'manual'].map(v => <option key={v} value={v}>{v}</option>)}
                         {rule.condition === 'status' && ['new', 'contacted', 'qualified', 'won', 'lost'].map(v => <option key={v} value={v}>{v}</option>)}
@@ -2214,7 +2214,7 @@ export default function LeadsPage() {
                           type="number" min={1} max={10}
                           value={rule.points}
                           onChange={e => setScoringRules(prev => prev.map((r, ri) => ri === i ? { ...r, points: Number(e.target.value) } : r))}
-                          className="w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-center focus:outline-none focus:ring-1 focus:ring-orange-300"
+                          className="w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-center focus:outline-none focus:ring-1 focus:ring-sky-300"
                         />
                       </div>
                     </div>
@@ -2228,7 +2228,7 @@ export default function LeadsPage() {
                 ))}
                 <button
                   onClick={() => setScoringRules(prev => [...prev, { id: Date.now().toString(), condition: 'source', operator: 'equals', value: 'whatsapp', points: 2 }])}
-                  className="w-full rounded-xl border-2 border-dashed border-gray-200 py-2 text-xs font-semibold text-gray-400 hover:border-orange-300 hover:text-orange-600 transition"
+                  className="w-full rounded-xl border-2 border-dashed border-gray-200 py-2 text-xs font-semibold text-gray-400 hover:border-orange-300 hover:text-sky-600 transition"
                 >
                   + Add Rule
                 </button>
@@ -2237,7 +2237,7 @@ export default function LeadsPage() {
                 <button
                   onClick={saveScoringRulesBackend}
                   disabled={scoringRulesSaving}
-                  className="flex-1 rounded-xl bg-orange-500 py-2 text-xs font-bold text-white hover:bg-orange-600 transition disabled:opacity-50 flex items-center justify-center gap-1.5"
+                  className="flex-1 rounded-xl bg-sky-500 py-2 text-xs font-bold text-white hover:bg-orange-600 transition disabled:opacity-50 flex items-center justify-center gap-1.5"
                 >
                   {scoringRulesSaving ? (
                     <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Saving…</>
@@ -2307,7 +2307,7 @@ export default function LeadsPage() {
                   } catch { toast.error('Could not save stages'); }
                   finally { setSavingStages(false); }
                 }}
-                className="flex-1 rounded-xl bg-orange-500 py-2 text-sm font-bold text-white hover:bg-orange-600 transition disabled:opacity-50">
+                className="flex-1 rounded-xl bg-sky-500 py-2 text-sm font-bold text-white hover:bg-orange-600 transition disabled:opacity-50">
                 {savingStages ? 'Saving…' : 'Save Stages'}
               </button>
             </div>
@@ -2536,7 +2536,7 @@ function DetailRow({ label, value }: { label: string; value: string }) {
 
 function DetailCard({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
   return (
-    <Card className="border-orange-100 shadow-sm" hoverable={false}>
+    <Card className="border-slate-200 shadow-sm" hoverable={false}>
       <div className="mb-4 flex items-start justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-gray-950">{title}</h2>
@@ -2616,7 +2616,7 @@ function ConversationMessages({
         <div
           key={message.id}
           className={`rounded-lg p-4 text-sm ${
-            message.role === 'user' ? 'bg-orange-50 text-gray-800' : 'bg-gray-50 text-gray-700'
+            message.role === 'user' ? 'bg-sky-50 text-gray-800' : 'bg-gray-50 text-gray-700'
           }`}
         >
           <p className="mb-1 text-xs font-semibold uppercase text-gray-500">{message.role}</p>

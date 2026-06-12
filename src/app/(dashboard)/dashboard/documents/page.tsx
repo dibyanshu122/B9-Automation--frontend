@@ -315,7 +315,7 @@ export default function DocumentsPage() {
                   <label className="flex items-center gap-3 cursor-pointer rounded-lg border border-orange-300/20 bg-slate-900/60 px-4 py-2.5">
                     <div
                       onClick={() => setUrlCrawl(v => !v)}
-                      className={`relative h-5 w-9 rounded-full transition-colors shrink-0 ${urlCrawl ? 'bg-orange-500' : 'bg-slate-600'}`}
+                      className={`relative h-5 w-9 rounded-full transition-colors shrink-0 ${urlCrawl ? 'bg-sky-500' : 'bg-slate-600'}`}
                     >
                       <span className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white transition-transform ${urlCrawl ? 'translate-x-4' : ''}`} />
                     </div>
@@ -505,7 +505,7 @@ export default function DocumentsPage() {
           <Card className="w-full max-w-xl" hoverable={false}>
             <div className="mb-5 flex items-start justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-500/15 text-orange-300">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-500/15 text-orange-300">
                   <FileText className="h-6 w-6" />
                 </div>
                 <div>
@@ -542,7 +542,7 @@ export default function DocumentsPage() {
               </div>
             </div>
 
-            <div className="mt-5 rounded-xl border border-orange-300/20 bg-orange-500/10 p-4">
+            <div className="mt-5 rounded-xl border border-orange-300/20 bg-sky-500/10 p-4">
               <p className="flex items-center gap-2 text-sm font-semibold text-gray-900">
                 {previewDocument.is_indexed
                   ? <><CheckCircle2 className="h-4 w-4 text-emerald-400" /> Ready for chat</>

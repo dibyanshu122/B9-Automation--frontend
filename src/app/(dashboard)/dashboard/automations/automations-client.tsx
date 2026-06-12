@@ -1918,8 +1918,8 @@ export default function AutomationsPage() {
                         setSelectedNodeId(arranged[0]?.id || '');
                       }
                     }}
-                    className={`w-full rounded-lg border px-3 py-2 text-left text-xs transition hover:border-orange-200 hover:bg-orange-50 ${
-                      activeWorkflowId === wf.id ? 'border-primary-300 bg-orange-50' : 'border-gray-100'
+                    className={`w-full rounded-lg border px-3 py-2 text-left text-xs transition hover:border-sky-200 hover:bg-sky-50 ${
+                      activeWorkflowId === wf.id ? 'border-primary-300 bg-sky-50' : 'border-gray-100'
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2">
@@ -3076,7 +3076,7 @@ function WorkflowNode({ data }: NodeProps<Node<FlowNodeData>>) {
         ) : (
           <Handle id="then" type="source" position={Position.Right}
             onMouseDown={(e) => { e.stopPropagation(); onOpenAddMenu(block.id, 'then'); }}
-            className="!-right-1.5 !h-4 !w-4 !rounded-full !border !border-orange-400 !bg-orange-500 !cursor-pointer" />
+            className="!-right-1.5 !h-4 !w-4 !rounded-full !border !border-orange-400 !bg-sky-500 !cursor-pointer" />
         )}
       </div>
     );
@@ -3264,7 +3264,7 @@ function ActionBlockSettings({
   };
 
   return (
-    <div className="space-y-3 rounded-xl bg-orange-50 p-3">
+    <div className="space-y-3 rounded-xl bg-sky-50 p-3">
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-sm font-bold text-gray-950">Action setup</p>
@@ -3723,18 +3723,18 @@ function ActionBlockSettings({
 
       {/* ── Send Single Product ───────────────────────────────────────────── */}
       {tool === 'send_whatsapp_single_product' && (
-        <div className="space-y-3 rounded-xl border border-orange-200 bg-orange-50 p-3">
+        <div className="space-y-3 rounded-xl border border-sky-200 bg-sky-50 p-3">
           <div className="flex items-center justify-between">
             <p className="text-sm font-bold text-orange-950">Send Single Product 🛍️</p>
-            <span className="rounded-full bg-white px-2 py-1 text-[10px] font-bold uppercase text-orange-700">{integrationStatusFor('meta')}</span>
+            <span className="rounded-full bg-white px-2 py-1 text-[10px] font-bold uppercase text-sky-700">{integrationStatusFor('meta')}</span>
           </div>
-          <p className="text-xs text-orange-700">Sends a single product card from your Meta catalog with an image, name, price, and Buy Now button.</p>
+          <p className="text-xs text-sky-700">Sends a single product card from your Meta catalog with an image, name, price, and Buy Now button.</p>
           <InputField label="Catalog ID" value={config.catalog_id || ''} placeholder="From Meta Commerce Manager" onChange={(v) => onChange('catalog_id', v)} />
           <InputField label="Product Retailer ID" value={config.product_retailer_id || ''} placeholder="Your product SKU / ID in catalog" onChange={(v) => onChange('product_retailer_id', v)} />
           <InputField label="Message body" value={config.body_text || 'Check out this product:'} placeholder="Check out this product:" onChange={(v) => onChange('body_text', v)} />
           <InputField label="Send to" value={config.recipient || '{{lead.phone}}'} placeholder="{{lead.phone}}" onChange={(v) => onChange('recipient', v)} />
           <SelectField label="Send mode" value={config.send_mode || 'draft'} options={['draft', 'live']} onChange={(v) => onChange('send_mode', v)} />
-          <div className="rounded-lg bg-orange-100 p-2 text-xs text-orange-800">
+          <div className="rounded-lg bg-sky-100 p-2 text-xs text-orange-800">
             <p>Find your Catalog ID and Product IDs in <strong>Meta Commerce Manager → Catalog</strong>.</p>
           </div>
         </div>
@@ -3781,9 +3781,9 @@ function ActionBlockSettings({
 
       {/* ── Collect Order Form ────────────────────────────────────────────── */}
       {tool === 'collect_order_form' && (
-        <div className="space-y-3 rounded-xl border border-orange-200 bg-orange-50 p-3">
+        <div className="space-y-3 rounded-xl border border-sky-200 bg-sky-50 p-3">
           <p className="text-sm font-bold text-orange-950">Collect Order Details 📋</p>
-          <p className="text-xs text-orange-700">AI asks the customer step-by-step questions. Each reply advances the form. Collected data goes into <code className="font-mono text-orange-800">{'{{order_form.name}}'}</code>, <code className="font-mono text-orange-800">{'{{order_form.product_choice}}'}</code>, etc.</p>
+          <p className="text-xs text-sky-700">AI asks the customer step-by-step questions. Each reply advances the form. Collected data goes into <code className="font-mono text-orange-800">{'{{order_form.name}}'}</code>, <code className="font-mono text-orange-800">{'{{order_form.product_choice}}'}</code>, etc.</p>
           <div>
             <p className="mb-1 text-xs font-bold text-gray-700">Fields to collect <span className="font-normal text-gray-400">(comma separated)</span></p>
             <input value={config.fields || 'name, phone, product_choice, quantity, address'} onChange={(e) => onChange('fields', e.target.value)} className="input-field text-sm" placeholder="name, phone, product_choice, quantity, address" />
@@ -3791,7 +3791,7 @@ function ActionBlockSettings({
           <div className="rounded-lg bg-white p-2 text-[10px] text-gray-500 space-y-0.5">
             <p className="font-semibold text-gray-700">Available after this node:</p>
             {['order_form.name', 'order_form.phone', 'order_form.product_choice', 'order_form.quantity', 'order_form.address'].map(v => (
-              <code key={v} className="mr-1 rounded bg-orange-50 px-1">{`{{${v}}}`}</code>
+              <code key={v} className="mr-1 rounded bg-sky-50 px-1">{`{{${v}}}`}</code>
             ))}
           </div>
         </div>
@@ -4052,7 +4052,7 @@ function ActionBlockSettings({
             { group: 'Facebook', color: 'bg-blue-50 text-blue-800 border-blue-200', vars: ['{{facebook.senderId}}','{{facebook.text}}'] },
             { group: 'Email', color: 'bg-sky-50 text-sky-800 border-sky-200', vars: ['{{email.subject}}','{{email.bodyText}}','{{email.gmailMessageId}}'] },
             { group: 'Extraction', color: 'bg-amber-50 text-amber-800 border-amber-200', vars: ['{{extraction.fields.name}}','{{extraction.fields.phone}}','{{extraction.fields.budget}}','{{extraction.confidence}}'] },
-            { group: 'Orders', color: 'bg-orange-50 text-orange-800 border-orange-200', vars: ['{{order_form.name}}','{{order_form.product_choice}}','{{order_form.quantity}}','{{order_form.address}}'] },
+            { group: 'Orders', color: 'bg-sky-50 text-orange-800 border-sky-200', vars: ['{{order_form.name}}','{{order_form.product_choice}}','{{order_form.quantity}}','{{order_form.address}}'] },
             { group: 'Payment', color: 'bg-green-50 text-green-800 border-green-200', vars: ['{{payment.link_url}}','{{payment.amount}}','{{payment.status}}'] },
             { group: 'Media', color: 'bg-purple-50 text-purple-800 border-purple-200', vars: ['{{get_whatsapp_media_url.url}}','{{get_whatsapp_media_url.mime_type}}'] },
             { group: 'Loop', color: 'bg-slate-50 text-slate-800 border-slate-200', vars: ['{{loop.item}}','{{loop.index}}','{{loop.total}}'] },
@@ -4987,7 +4987,7 @@ function VersionHistoryButton({ workflowId, onRollback }: { workflowId: string; 
                     <p className="text-xs font-bold text-gray-800">v{v.version_number} — {v.name || 'Workflow'}</p>
                     <p className="text-[10px] text-gray-400">{v.note} · {new Date(v.created_at).toLocaleDateString('en-IN')}</p>
                   </div>
-                  <button type="button" onClick={() => rollback(v.id, v.version_number)} className="ml-2 shrink-0 rounded-md bg-orange-50 px-2 py-1 text-[10px] font-bold text-primary-700 hover:bg-orange-100">
+                  <button type="button" onClick={() => rollback(v.id, v.version_number)} className="ml-2 shrink-0 rounded-md bg-sky-50 px-2 py-1 text-[10px] font-bold text-primary-700 hover:bg-sky-100">
                     Restore
                   </button>
                 </div>
@@ -5173,7 +5173,7 @@ function ExecutionLog({ timeline, runs, onReplay }: { timeline: any[]; runs: any
     if (status === 'failed') return 'bg-red-100 text-red-700';
     if (status === 'running') return 'bg-sky-100 text-sky-700';
     if (status === 'skipped') return 'bg-gray-100 text-gray-500';
-    return 'bg-orange-50 text-primary-700';
+    return 'bg-sky-50 text-primary-700';
   };
 
   return (
@@ -5342,7 +5342,7 @@ function TemplateGallery({ onClose, onSelect }: { onClose: () => void; onSelect:
         <div className="flex gap-1.5 px-5 pt-3 flex-shrink-0">
           {['all', 'beginner', 'intermediate', 'advanced'].map((f) => (
             <button key={f} type="button" onClick={() => setFilter(f)}
-              className={`rounded-full px-3 py-1 text-xs font-bold capitalize transition ${filter === f ? 'bg-orange-100 text-primary-700' : 'text-gray-500 hover:bg-gray-100'}`}>
+              className={`rounded-full px-3 py-1 text-xs font-bold capitalize transition ${filter === f ? 'bg-sky-100 text-primary-700' : 'text-gray-500 hover:bg-gray-100'}`}>
               {f}
             </button>
           ))}
@@ -5351,7 +5351,7 @@ function TemplateGallery({ onClose, onSelect }: { onClose: () => void; onSelect:
         <div className="max-h-96 overflow-y-auto p-4 grid grid-cols-2 gap-3">
           {filtered.map((tpl) => (
             <button key={tpl.key} type="button" onClick={() => onSelect(tpl.key)}
-              className="rounded-xl border border-gray-200 p-3 text-left hover:border-orange-300 hover:bg-orange-50 transition">
+              className="rounded-xl border border-gray-200 p-3 text-left hover:border-orange-300 hover:bg-sky-50 transition">
               <div className="flex items-start justify-between gap-2">
                 <p className="text-sm font-bold text-gray-900 leading-tight">{tpl.title}</p>
                 <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${diffColor[tpl.difficulty] || 'bg-gray-100 text-gray-500'}`}>

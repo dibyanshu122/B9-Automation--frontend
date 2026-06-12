@@ -1498,12 +1498,12 @@ export default function IntegrationsPage() {
     if (key.includes('shopify') || key.includes('ecommerce')) return { bar: 'from-green-600 to-lime-400', icon: 'bg-green-50 text-green-700 ring-green-100', hover: 'hover:border-green-200 hover:shadow-green-500/10' };
     if (key.includes('indiamart')) return { bar: 'from-amber-500 to-orange-400', icon: 'bg-amber-50 text-amber-700 ring-amber-100', hover: 'hover:border-amber-200 hover:shadow-amber-500/10' };
     if (key.includes('slack')) return { bar: 'from-purple-600 to-violet-400', icon: 'bg-purple-50 text-purple-700 ring-purple-100', hover: 'hover:border-purple-200 hover:shadow-purple-500/10' };
-    if (key.includes('hubspot')) return { bar: 'from-orange-500 to-amber-400', icon: 'bg-orange-50 text-orange-700 ring-orange-100', hover: 'hover:border-orange-200 hover:shadow-orange-500/10' };
+    if (key.includes('hubspot')) return { bar: 'from-orange-500 to-amber-400', icon: 'bg-sky-50 text-sky-700 ring-sky-100', hover: 'hover:border-sky-200 hover:shadow-orange-500/10' };
     if (key.includes('zoho')) return { bar: 'from-red-600 to-rose-400', icon: 'bg-red-50 text-red-700 ring-red-100', hover: 'hover:border-red-200 hover:shadow-red-500/10' };
     if (key.includes('twilio') || key.includes('sms')) return { bar: 'from-red-500 to-pink-400', icon: 'bg-red-50 text-red-700 ring-red-100', hover: 'hover:border-red-200 hover:shadow-red-500/10' };
     if (key.includes('calendly')) return { bar: 'from-blue-500 to-indigo-400', icon: 'bg-blue-50 text-blue-700 ring-blue-100', hover: 'hover:border-blue-200 hover:shadow-blue-500/10' };
     if (key.includes('calendar')) return { bar: 'from-blue-400 to-sky-300', icon: 'bg-sky-50 text-sky-700 ring-sky-100', hover: 'hover:border-sky-200 hover:shadow-sky-500/10' };
-    if (key.includes('zapier')) return { bar: 'from-orange-600 to-red-400', icon: 'bg-orange-50 text-orange-700 ring-orange-100', hover: 'hover:border-orange-200 hover:shadow-orange-500/10' };
+    if (key.includes('zapier')) return { bar: 'from-orange-600 to-red-400', icon: 'bg-sky-50 text-sky-700 ring-sky-100', hover: 'hover:border-sky-200 hover:shadow-orange-500/10' };
     if (key.includes('catalog')) return { bar: 'from-sky-500 to-cyan-400', icon: 'bg-sky-50 text-sky-700 ring-sky-100', hover: 'hover:border-sky-200 hover:shadow-sky-500/10' };
     return { bar: 'from-cyan-500 to-sky-400', icon: 'bg-cyan-50 text-cyan-700 ring-cyan-100', hover: 'hover:border-cyan-200 hover:shadow-cyan-500/10' };
   };
@@ -1768,7 +1768,7 @@ export default function IntegrationsPage() {
                   <div className="mt-3 grid grid-cols-3 gap-3">
                     {GS_OPERATION_OPTIONS.map((op) => (
                       <button key={op.value} type="button" onClick={() => setGsOperation(op.value)}
-                        className={`rounded-lg border p-3 text-left transition ${gsOperation === op.value ? 'border-primary-500 bg-orange-50 text-primary-700' : 'border-gray-200 hover:border-gray-300'}`}>
+                        className={`rounded-lg border p-3 text-left transition ${gsOperation === op.value ? 'border-primary-500 bg-sky-50 text-primary-700' : 'border-gray-200 hover:border-gray-300'}`}>
                         <p className="text-sm font-semibold">{op.label}</p>
                         <p className="mt-0.5 text-xs text-gray-500">{op.desc}</p>
                       </button>
@@ -1801,7 +1801,7 @@ export default function IntegrationsPage() {
                         ? <p className="p-4 text-sm text-gray-500">No spreadsheets found.</p>
                         : gsFiles.map((file) => (
                           <button key={file.id} type="button"
-                            className="flex w-full items-center gap-3 border-b border-gray-100 px-4 py-2.5 text-left hover:bg-orange-50 last:border-0"
+                            className="flex w-full items-center gap-3 border-b border-gray-100 px-4 py-2.5 text-left hover:bg-sky-50 last:border-0"
                             onClick={() => { setGsSheetId(file.id); setGsSheetName(file.name); setGsShowFilePicker(false); fetchTabs(file.id); }}>
                             <Sheet className="h-4 w-4 shrink-0 text-emerald-600" />
                             <span className="truncate text-sm text-gray-900">{file.name}</span>
@@ -1964,7 +1964,7 @@ export default function IntegrationsPage() {
                     {GMAIL_RESOURCES.map((r) => (
                       <button key={r.value} type="button"
                         onClick={() => { setGmailResource(r.value); setGmailOperation(GMAIL_OPERATIONS[r.value][0].value); }}
-                        className={`rounded-lg border p-3 text-left transition ${gmailResource === r.value ? 'border-primary-500 bg-orange-50 text-primary-700' : 'border-gray-200 hover:border-gray-300'}`}>
+                        className={`rounded-lg border p-3 text-left transition ${gmailResource === r.value ? 'border-primary-500 bg-sky-50 text-primary-700' : 'border-gray-200 hover:border-gray-300'}`}>
                         <p className="text-sm font-semibold">{r.label}</p>
                         <p className="mt-0.5 text-xs text-gray-500">{r.desc}</p>
                       </button>
@@ -1978,7 +1978,7 @@ export default function IntegrationsPage() {
                   <div className="mt-3 flex flex-wrap gap-2">
                     {(GMAIL_OPERATIONS[gmailResource] || []).map((op) => (
                       <button key={op.value} type="button" onClick={() => setGmailOperation(op.value)}
-                        className={`rounded-full border px-4 py-1.5 text-sm font-semibold transition ${gmailOperation === op.value ? 'border-primary-500 bg-orange-50 text-primary-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
+                        className={`rounded-full border px-4 py-1.5 text-sm font-semibold transition ${gmailOperation === op.value ? 'border-primary-500 bg-sky-50 text-primary-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
                         {op.label}
                       </button>
                     ))}

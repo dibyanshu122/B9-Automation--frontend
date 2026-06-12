@@ -189,7 +189,7 @@ function RuleForm({ ruleType, existing, onClose, onSaved }: {
     finally { setSaving(false); }
   };
 
-  const inputCls = 'w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500';
+  const inputCls = 'w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500';
 
   return (
     <AnimatePresence>
@@ -299,7 +299,7 @@ function RuleForm({ ruleType, existing, onClose, onSaved }: {
 
                     {mediaInputMode === 'file' ? (
                       <div className="space-y-2">
-                        <label className={`flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-300 rounded-xl p-4 cursor-pointer hover:border-primary-400 hover:bg-orange-50 transition ${mediaUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                        <label className={`flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-300 rounded-xl p-4 cursor-pointer hover:border-primary-400 hover:bg-sky-50 transition ${mediaUploading ? 'opacity-50 pointer-events-none' : ''}`}>
                           {mediaUploading
                             ? <><Loader2 className="w-6 h-6 animate-spin text-primary-500" /><span className="text-xs text-gray-500">Uploading to WhatsApp...</span></>
                             : mediaUrl
@@ -406,7 +406,7 @@ function RuleForm({ ruleType, existing, onClose, onSaved }: {
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Working Hours</label>
                 <div className="mb-3">
                   <label className="block text-xs font-medium text-gray-600 mb-1">Timezone</label>
-                  <select value={timezone} onChange={e => setTimezone(e.target.value)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500">
+                  <select value={timezone} onChange={e => setTimezone(e.target.value)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
                     <option value="Asia/Kolkata">India (IST) — Asia/Kolkata</option>
                     <option value="Asia/Dubai">Dubai (GST) — Asia/Dubai</option>
                     <option value="Asia/Singapore">Singapore (SGT) — Asia/Singapore</option>
@@ -503,9 +503,9 @@ function IcebreakerPanel() {
                 className="p-1 text-gray-400 hover:text-red-500 transition"><Trash2 className="w-3.5 h-3.5" /></button>
             </div>
             <input value={ib.header} onChange={e => setIcebreakers(prev => prev.map((x, idx) => idx === i ? {...x, header: e.target.value} : x))}
-              placeholder="Button label (e.g. What is your pricing?)" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+              placeholder="Button label (e.g. What is your pricing?)" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />
             <input value={ib.text} onChange={e => setIcebreakers(prev => prev.map((x, idx) => idx === i ? {...x, text: e.target.value} : x))}
-              placeholder="Full message sent when customer taps this" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+              placeholder="Full message sent when customer taps this" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />
           </div>
         ))}
       </div>
@@ -656,10 +656,10 @@ export default function AutoRepliesPage() {
       <div className="flex gap-1 overflow-x-auto scrollbar-none border-b border-gray-200 pb-0">
         {TABS.map(t => (
           <button key={t.key} onClick={() => setActiveTab(t.key)}
-            className={`flex items-center gap-1.5 px-3.5 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition -mb-px ${activeTab === t.key ? 'border-orange-500 text-orange-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+            className={`flex items-center gap-1.5 px-3.5 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition -mb-px ${activeTab === t.key ? 'border-orange-500 text-sky-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
             {t.icon}{t.label}
             {rules.filter(r => r.rule_type === t.key).length > 0 && (
-              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${activeTab === t.key ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-500'}`}>
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${activeTab === t.key ? 'bg-sky-100 text-sky-700' : 'bg-gray-100 text-gray-500'}`}>
                 {rules.filter(r => r.rule_type === t.key).length}
               </span>
             )}
@@ -674,7 +674,7 @@ export default function AutoRepliesPage() {
           {TAB_INFO[activeTab] && !dismissedInfoTabs.has(activeTab) && (() => {
             const info = TAB_INFO[activeTab];
             const colors: Record<string, string> = {
-              orange: 'bg-orange-50 border-orange-200 text-orange-900',
+              orange: 'bg-sky-50 border-sky-200 text-orange-900',
               blue:   'bg-blue-50 border-blue-200 text-blue-900',
               purple: 'bg-purple-50 border-purple-200 text-purple-900',
               red:    'bg-red-50 border-red-200 text-red-900',
@@ -682,7 +682,7 @@ export default function AutoRepliesPage() {
               green:  'bg-green-50 border-green-200 text-green-900',
             };
             const tipColors: Record<string, string> = {
-              orange: 'text-orange-700', blue: 'text-blue-700', purple: 'text-purple-700',
+              orange: 'text-sky-700', blue: 'text-blue-700', purple: 'text-purple-700',
               red: 'text-red-600 font-semibold', yellow: 'text-yellow-700', green: 'text-green-700',
             };
             return (
@@ -747,7 +747,7 @@ export default function AutoRepliesPage() {
       {activeTab === 'quick_replies' && (
         <div className="space-y-4">
           {/* Info box */}
-          <div className="rounded-xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-900">
+          <div className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm text-orange-900">
             <div className="flex items-start gap-2.5">
               <Info className="w-4 h-4 mt-0.5 shrink-0" />
               <div>
@@ -779,7 +779,7 @@ export default function AutoRepliesPage() {
 
           {/* Add / Edit form */}
           {showQrForm && (
-            <div className="rounded-2xl border border-orange-200 bg-orange-50 p-5 space-y-3">
+            <div className="rounded-2xl border border-sky-200 bg-sky-50 p-5 space-y-3">
               <div className="flex items-center justify-between">
                 <p className="font-semibold text-gray-800">{editingQr ? 'Edit Quick Reply' : 'New Quick Reply'}</p>
                 <button onClick={() => setShowQrForm(false)} className="text-gray-400 hover:text-gray-700"><X className="w-4 h-4" /></button>
@@ -815,7 +815,7 @@ export default function AutoRepliesPage() {
             <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-gray-400" /></div>
           ) : qrs.length === 0 ? (
             <div className="flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-gray-200 py-14 text-center">
-              <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center text-orange-500">
+              <div className="w-12 h-12 rounded-full bg-sky-50 flex items-center justify-center text-orange-500">
                 <Zap className="w-5 h-5" />
               </div>
               <p className="font-semibold text-gray-500">No quick replies yet</p>
@@ -859,7 +859,7 @@ export default function AutoRepliesPage() {
           <div className="flex justify-center py-12"><Loader2 className="w-5 h-5 animate-spin text-gray-400" /></div>
         ) : tabRules.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-gray-200 py-16 text-center">
-            <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center text-orange-500">{tab.icon}</div>
+            <div className="w-12 h-12 rounded-full bg-sky-50 flex items-center justify-center text-orange-500">{tab.icon}</div>
             <p className="font-semibold text-gray-500">No {tab.label} rules yet</p>
             <p className="text-sm text-gray-400">{tab.desc}</p>
             <Button onClick={() => { setEditingRule(null); setShowForm(true); }} className="mt-2 flex items-center gap-2">
@@ -887,7 +887,7 @@ export default function AutoRepliesPage() {
                     {rule.trigger_keywords?.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-2">
                         {rule.trigger_keywords.map((kw, i) => (
-                          <span key={i} className="text-[10px] bg-orange-50 text-orange-700 border border-orange-200 px-2 py-0.5 rounded-full font-medium">{kw}</span>
+                          <span key={i} className="text-[10px] bg-sky-50 text-sky-700 border border-sky-200 px-2 py-0.5 rounded-full font-medium">{kw}</span>
                         ))}
                       </div>
                     )}

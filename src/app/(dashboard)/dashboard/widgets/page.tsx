@@ -333,13 +333,13 @@ export default function WidgetsPage() {
                   onKeyDown={(event) => {
                     if (event.key === 'Enter' || event.key === ' ') setSelectedAssistantId(assistant.id);
                   }}
-                  className={`rounded-2xl border bg-white p-4 text-left shadow-sm transition hover:border-orange-200 hover:bg-orange-50/50 ${
-                    isSelected ? 'border-primary-500 ring-4 ring-orange-100' : 'border-gray-200'
+                  className={`rounded-2xl border bg-white p-4 text-left shadow-sm transition hover:border-sky-200 hover:bg-sky-50/50 ${
+                    isSelected ? 'border-primary-500 ring-4 ring-sky-100' : 'border-gray-200'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className={`rounded-xl p-3 ${isSelected ? 'bg-orange-50 text-primary-700' : 'bg-gray-50 text-gray-600'}`}>
+                      <div className={`rounded-xl p-3 ${isSelected ? 'bg-sky-50 text-primary-700' : 'bg-gray-50 text-gray-600'}`}>
                         <Bot className="h-5 w-5" />
                       </div>
                       <div>
@@ -596,7 +596,7 @@ export default function WidgetsPage() {
                     />
                   </div>
                 </div>
-                <label className="flex items-center justify-between gap-4 rounded-lg border border-orange-100 bg-orange-50 px-4 py-3">
+                <label className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-sky-50 px-4 py-3">
                   <span>
                     <span className="block text-sm font-semibold text-gray-900">Lead capture</span>
                     <span className="block text-xs text-gray-600">When a visitor shares phone/email, B9 saves the lead and prepares a WhatsApp draft.</span>

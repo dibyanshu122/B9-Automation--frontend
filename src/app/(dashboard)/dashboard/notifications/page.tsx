@@ -81,7 +81,7 @@ export default function NotificationsPage() {
       </div>
 
       {unread > 0 && (
-        <div className="flex items-center justify-between rounded-xl border border-orange-100 bg-orange-50 px-4 py-3 text-sm text-orange-700 font-medium">
+        <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-sky-50 px-4 py-3 text-sm text-sky-700 font-medium">
           <span>{unread} unread notification{unread > 1 ? 's' : ''} need your attention.</span>
           <button
             onClick={() => { localStorage.setItem('notif_seen_at', new Date().toISOString()); setUnread(0); }}
