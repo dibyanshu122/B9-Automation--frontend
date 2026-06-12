@@ -1004,3 +1004,10 @@ select:focus-visible {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ── Dark mode: recharts (analytics graphs) ── */
+.dark .recharts-text, .dark .recharts-cartesian-axis-tick-value { fill: #94a3b8 !important; }
+.dark .recharts-cartesian-grid line { stroke: #334155 !important; }
+.dark .recharts-default-tooltip { background: #1e293b !important; border-color: #334155 !important; }
+.dark .recharts-tooltip-item, .dark .recharts-tooltip-label { color: #e2e8f0 !important; }
+.dark .recharts-legend-item-text { color: #94a3b8 !important; }

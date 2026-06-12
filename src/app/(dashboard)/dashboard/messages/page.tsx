@@ -389,6 +389,7 @@ function UnifiedInbox() {
   const [selected, setSelected] = useState<Contact | null>(null);
   const [thread, setThread] = useState<any[]>([]);
   const [threadLoading, setThreadLoading] = useState(false);
+  const [threadSearch, setThreadSearch] = useState('');
   const [agentStatus, setAgentStatus] = useState<string | null>(null);
   const agentSseRef = useRef<EventSource | null>(null);
   const [reply, setReply] = useState('');
@@ -481,7 +482,7 @@ function UnifiedInbox() {
           const lastRead = getLastRead(item.channel, item.sender_id);
           // WhatsApp: server-side read state (synced across devices/team).
           // IG/FB: localStorage fallback until those channels track read_at.
-          const isUnread = item.channel === 'whatsapp'
+          const isUnread = (item.channel === 'whatsapp' || item.channel === 'instagram')
             ? !item.read_at
             : (!lastRead || item.created_at > lastRead);
 
@@ -807,7 +808,7 @@ function UnifiedInbox() {
       return false; // reactions render as badges on the target message, not as rows
     }
     return true;
-  });
+  }).filter(m => !threadSearch.trim() || (m.text || '').toLowerCase().includes(threadSearch.toLowerCase()));
 
   const filtered = contacts
     .filter(c => filter === 'all' || c.channel === filter)
@@ -1108,7 +1109,11 @@ function UnifiedInbox() {
               >
                 <Phone className="h-5 w-5" />
               </button>
-              {/* Search in-thread — coming soon */}
+              <div className="relative hidden md:block">
+                <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+                <input value={threadSearch} onChange={e => setThreadSearch(e.target.value)} placeholder="Search in chat"
+                  className="w-40 rounded-full border border-gray-200 bg-gray-50 py-1.5 pl-8 pr-3 text-xs focus:outline-none focus:ring-2 focus:ring-green-300" />
+              </div>
               {/* 3-dot menu */}
               <div className="relative">
                 <button onClick={e => { e.stopPropagation(); setMenuOpen(o => !o); }}
