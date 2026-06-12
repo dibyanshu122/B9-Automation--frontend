@@ -29,8 +29,9 @@ const ICONS = {
   FlaskConical, Bot, UserCog, UserX, Target, Filter, Inbox, Reply,
 };
 
-// Dark sidebar
-const BG = '#0F172A';
+// Sidebar background follows the theme: light = white, dark = deep slate
+const BG_DARK = '#0F172A';
+const BG_LIGHT = '#FFFFFF';
 
 // Per-icon hover animation — EVERY icon has its own signature motion (see globals.css)
 const ICON_ANIM: Record<string, string> = {
@@ -157,8 +158,9 @@ export const Sidebar = () => {
   const {
     sidebarOpen, setSidebarOpen, toggleSidebar,
     sidebarPinned, toggleSidebarPinned,
-    openGroups, toggleGroup,
+    openGroups, toggleGroup, darkMode,
   } = useUIStore();
+  const BG = darkMode ? BG_DARK : BG_LIGHT;
   const unreadCount = useUnreadCount();
 
   const handleLogout = () => {
@@ -223,16 +225,16 @@ export const Sidebar = () => {
       : 'gap-3 px-3 py-3',                                    // expanded: py-3 + gap-3
     active
       ? mini
-        ? 'bg-indigo-500/25 text-white'
-        : 'bg-indigo-500/20 text-indigo-200 font-semibold'
-      : 'text-slate-400 hover:bg-white/[0.08] hover:text-slate-100'
+        ? (darkMode ? 'bg-indigo-500/25 text-white' : 'bg-sky-100 text-sky-700')
+        : (darkMode ? 'bg-indigo-500/20 text-indigo-200 font-semibold' : 'bg-sky-50 text-sky-700 font-semibold')
+      : (darkMode ? 'text-slate-400 hover:bg-white/[0.08] hover:text-slate-100' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900')
   );
   const child = (active: boolean) => clsx(
     'nav-item flex w-full items-center gap-3 rounded-lg transition-all duration-150 text-sm font-medium',
     'px-3 py-2.5',                                            // tighter child items
     active
-      ? 'bg-indigo-500/20 text-indigo-300 font-semibold'
-      : 'text-slate-400 hover:bg-white/[0.08] hover:text-slate-100'
+      ? (darkMode ? 'bg-indigo-500/20 text-indigo-300 font-semibold' : 'bg-sky-50 text-sky-700 font-semibold')
+      : (darkMode ? 'text-slate-400 hover:bg-white/[0.08] hover:text-slate-100' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900')
   );
 
   const lbl = clsx(
@@ -265,7 +267,7 @@ export const Sidebar = () => {
         className={clsx(
           'hidden md:flex flex-col fixed left-0 top-16 z-40',
           'h-[calc(100vh-64px)]',
-          'border-r border-white/10',
+          darkMode ? 'border-r border-white/10' : 'border-r border-slate-200',
           'overflow-hidden',
           'transition-[width] duration-300 ease-in-out',
           expanded ? 'w-64' : 'w-16',
@@ -364,7 +366,7 @@ export const Sidebar = () => {
         </nav>
 
         <div className={clsx(
-          'shrink-0 border-t border-white/[0.08] py-2',
+          darkMode ? 'shrink-0 border-t border-white/[0.08] py-2' : 'shrink-0 border-t border-slate-200 py-2',
           expanded ? 'px-3' : 'px-1.5'
         )}>
           {bottomGroups.map((group) => {
@@ -417,7 +419,7 @@ export const Sidebar = () => {
         style={{ backgroundColor: BG }}
         className={clsx(
           'md:hidden fixed left-0 top-16 h-[calc(100vh-64px)] w-64 z-40',
-          'border-r border-white/10 backdrop-blur-xl overflow-y-auto',
+          darkMode ? 'border-r border-white/10 backdrop-blur-xl overflow-y-auto' : 'border-r border-slate-200 backdrop-blur-xl overflow-y-auto',
           'transition-transform duration-300 ease-in-out',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}

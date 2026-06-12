@@ -119,7 +119,7 @@ export default function DashboardLayout({
         {/* Single scroll container; body never scrolls. */}
         <main
           ref={mainRef}
-          className={`min-w-0 flex-1 overflow-hidden transition-[margin] duration-300 ease-in-out bg-white dark:bg-gray-950 dark:text-gray-100 ${sidebarPinned ? 'md:ml-72' : 'md:ml-16'}`}
+          className={`min-w-0 flex-1 overflow-hidden transition-[margin] duration-300 ease-in-out bg-[#F8FAFC] dark:bg-gray-950 dark:text-gray-100 ${sidebarPinned ? 'md:ml-72' : 'md:ml-16'}`}
           style={{ scrollbarGutter: 'stable' }}
         >
           <AnimatePresence mode="wait">
