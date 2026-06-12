@@ -856,14 +856,28 @@ export default function LeadsPage() {
             Scoring Rules
           </button>
           {/* Export CSV */}
-          <a
-            href={`/api/leads/export?format=csv${statusFilter !== 'all' ? `&status=${statusFilter}` : ''}${labelFilter !== 'all' ? `&tag=${labelFilter}` : ''}`}
-            download="leads.csv"
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                const base = process.env.NEXT_PUBLIC_API_URL || '';
+                const token = useAuthStore.getState().token;
+                const qs = `format=csv${statusFilter !== 'all' ? `&status=${statusFilter}` : ''}${labelFilter !== 'all' ? `&tag=${labelFilter}` : ''}`;
+                const res = await fetch(`${base}/api/leads/export?${qs}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+                if (!res.ok) throw new Error('fail');
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = 'leads.csv'; a.click();
+                URL.revokeObjectURL(url);
+                toast.success('Leads exported');
+              } catch { toast.error('Export failed — try again'); }
+            }}
             className="inline-flex h-11 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-emerald-200 bg-emerald-50 px-3 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
           >
             <Download className="h-3.5 w-3.5" />
             Export CSV
-          </a>
+          </button>
           <button
             type="button"
             onClick={() => setDirectoryOpen(true)}
