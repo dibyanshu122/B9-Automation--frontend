@@ -1075,8 +1075,7 @@ html.mk-light [class*="border-white/"]:not(.b9-command-shell *) { border-color: 
 html.mk-light [class*="bg-white/[0.0"]:not(.b9-command-shell *) { background-color: rgba(255,255,255,0.78) !important; backdrop-filter: blur(12px); box-shadow: 0 10px 15px -3px rgba(15,23,42,0.04); }
 html.mk-light .bg-white\/10:not(.b9-command-shell *) { background-color: rgba(15,23,42,0.05) !important; }
 /* Aurora wash: the Automation gradient as soft background atmosphere */
-html.mk-light section.bg-\[\#030712\]:not(.b9-command-shell *),
-html.mk-light div.bg-\[\#030712\]:not(.b9-command-shell *) {
+html.mk-light section.bg-\[\#030712\]:not(.b9-command-shell *) {
   background-image:
     radial-gradient(900px 480px at 12% 0%, rgba(0,242,254,0.10), transparent 60%),
     radial-gradient(800px 520px at 88% 18%, rgba(139,92,246,0.10), transparent 60%),
@@ -1129,3 +1128,18 @@ html.mk-light .bg-\[\#030712\]\/95:not(.b9-command-shell *) {
   border-color: #E2E8F0 !important;
   box-shadow: 0 20px 50px rgba(15,23,42,0.12) !important;
 }
+
+
+/* ── Aurora Light r4: robot section polish ── */
+/* Utility divs (Spline watermark patch etc.) — plain light, no aurora rectangle */
+html.mk-light div.bg-\[\#030712\]:not(.b9-command-shell *) {
+  background-color: #FAFBFF !important;
+  background-image: none !important;
+}
+/* Robot ke edge-fades (left w-40 / bottom h-24) dark-blend ke liye the —
+   light me haath kaat rahe the; hata do */
+html.mk-light .pointer-events-none[class*="from-\[\#030712\]"]:not(.b9-command-shell *) {
+  opacity: 0 !important;
+}
+/* Right edge ki patli dark strip: body bhi light */
+html.mk-light body { background-color: #FAFBFF !important; }
