@@ -177,6 +177,8 @@ export default function LeadsPage() {
   // Multi-tag segmentation map: leadId → tags[]
   const [leadTagsMap, setLeadTagsMap] = useState<Record<string, string[]>>({});
   const [tagFilterActive, setTagFilterActive] = useState<string>('');
+  // Re-fetch from server when filters change so pagination reflects true total
+  useEffect(() => { goToPage(1); }, [statusFilter, labelFilter, tagFilterActive, leadDateFrom, leadDateTo]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadScoringRules = async () => {
     setScoringRulesLoading(true);
@@ -319,7 +321,14 @@ export default function LeadsPage() {
     const page = Math.min(Math.max(1, requestedPage), requestedTotalPages);
     const offset = (page - 1) * requestedPageSize;
     setLoading(true);
-    get(`/api/leads?limit=${requestedPageSize}&offset=${offset}${searchQuery.trim() ? `&q=${encodeURIComponent(searchQuery.trim())}` : ''}`)
+    const params = new URLSearchParams({ limit: String(requestedPageSize), offset: String(offset) });
+    if (searchQuery.trim()) params.set('q', searchQuery.trim());
+    if (statusFilter && statusFilter !== 'all') params.set('status', statusFilter);
+    if (labelFilter && labelFilter !== 'all') params.set('tag', labelFilter);
+    if (tagFilterActive) params.set('tag', tagFilterActive);
+    if (leadDateFrom) params.set('created_after', leadDateFrom);
+    if (leadDateTo) params.set('created_before', leadDateTo);
+    get(`/api/leads?${params.toString()}`)
       .then(r => {
         setLeads(r.data?.leads || r.data || []);
         const total = parseInt(r.headers?.['x-total-count'] || r.headers?.['X-Total-Count'] || '0');
