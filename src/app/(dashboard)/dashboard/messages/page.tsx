@@ -394,9 +394,11 @@ function UnifiedInbox() {
   const agentSseRef = useRef<EventSource | null>(null);
   const [reply, setReply] = useState('');
   const [sending, setSending] = useState(false);
+  const sendingRef = useRef(false); // synchronous guard against rapid double-clicks
   // Typing indicator — show "typing…" to the customer while agent composes.
   // Meta's indicator lasts ~25s, so re-fire at most every 20s while typing.
   const lastTypingSentRef = useRef(0);
+  const fetchSeqRef = useRef(0); // sequence counter to discard stale poll results
   const notifyTyping = (c: Contact | null) => {
     if (!c || c.channel !== 'whatsapp') return;
     const now = Date.now();
@@ -698,13 +700,16 @@ function UnifiedInbox() {
 
   const fetchThread = (s: typeof selected) => {
     if (!s) return Promise.resolve();
+    const seq = ++fetchSeqRef.current;
     return get(`/api/automation/inbox/conversation?sender_id=${encodeURIComponent(s.sender_id)}&channel=${s.channel}`)
-      .then(res => setThread(prev => {
+      .then(res => {
+        if (seq !== fetchSeqRef.current) return; // discard stale response
         const server = res.data?.messages || [];
-        // Keep optimistic messages that failed to send so the user can retry them
-        const failedTemps = prev.filter(m => String(m.id).startsWith('temp-') && m.status === 'failed');
-        return [...server, ...failedTemps];
-      }))
+        setThread(prev => {
+          const failedTemps = prev.filter(m => String(m.id).startsWith('temp-') && m.status === 'failed');
+          return [...server, ...failedTemps];
+        });
+      })
       .catch(() => {});
   };
 
@@ -725,7 +730,8 @@ function UnifiedInbox() {
   }, [thread]);
 
   const sendReply = async () => {
-    if (!reply.trim() || !selected) return;
+    if (!reply.trim() || !selected || sendingRef.current) return;
+    sendingRef.current = true;
     setSending(true);
     const msgText = reply.trim();
     setReply('');
@@ -763,7 +769,7 @@ function UnifiedInbox() {
         toast.error('Message failed to send — tap it to retry');
       }
     }
-    finally { setSending(false); }
+    finally { setSending(false); sendingRef.current = false; }
   };
 
   const retryFailedMessage = (msg: any) => {

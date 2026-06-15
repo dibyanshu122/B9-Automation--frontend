@@ -1271,7 +1271,7 @@ export default function LeadsPage() {
                           setSelectedLeadIds(next);
                         }}
                       />
-                      <span className="font-semibold text-gray-950">{lead.name || 'Unnamed lead'}</span>
+                      <span className="font-semibold text-gray-950">{lead.name || lead.phone || 'Unnamed lead'}</span>
                       <span className="text-gray-600">{lead.phone || '-'}</span>
                       <span className="text-gray-600 truncate">{lead.email || '-'}</span>
                       {/* Multi-tag chips in list row */}
