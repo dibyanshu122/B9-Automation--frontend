@@ -30,8 +30,8 @@ const dashboardCSP = [
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  eslint: { ignoreDuringBuilds: true },
-  typescript: { ignoreBuildErrors: true },
+  eslint: { ignoreDuringBuilds: false },
+  typescript: { ignoreBuildErrors: false },
 
   images: {
     // Next.js 15.5.x LRUCache bug — disable optimization in dev to avoid cache errors
