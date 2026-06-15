@@ -7,7 +7,7 @@ import { useAnalyticsDashboard } from '@/hooks/useQueryCache';
 import { useAuthStore } from '@/store/authStore';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import toast from 'react-hot-toast';
-import { Activity, Bot, CheckCheck, Clock, IndianRupee, MessageCircle, MessageSquare, Send, Target, TrendingUp, Users, Zap, Lock } from 'lucide-react';
+import { Activity, AlertTriangle, Bot, CheckCheck, Clock, IndianRupee, MessageCircle, MessageSquare, Send, Target, TrendingUp, Users, Zap, Lock } from 'lucide-react';
 import { EmptyState } from '@/components/empty-state';
 
 type UsageTrend = {
@@ -30,6 +30,8 @@ export default function AnalyticsPage() {
   const [waLoading, setWaLoading] = useState(false);
   const [waQuality, setWaQuality] = useState<{score: string; rating: string; display_phone: string} | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const [campaignRevenue, setCampaignRevenue] = useState<any>(null);
   const [botDeflection, setBotDeflection] = useState<any>(null);
   const [teamPerf, setTeamPerf] = useState<any>(null);
@@ -72,15 +74,17 @@ export default function AnalyticsPage() {
         const locked = [trendsRes, impactRes, funnelRes, campaignRevRes, deflectionRes, teamRes].some((r: any) => r?._plan_locked);
         setAnyLocked(locked);
       } catch {
+        setFetchError(true);
         toast.error('Failed to load analytics — check your connection');
       } finally {
         setLoading(false);
       }
     };
 
+    setFetchError(false);
     fetchAnalytics();
     return () => {};
-  }, [globalDays]); // eslint-disable-line
+  }, [globalDays, retryCount]); // eslint-disable-line
 
   // Sync loading state with React Query
   useEffect(() => {
@@ -153,6 +157,23 @@ export default function AnalyticsPage() {
 
   return (
     <div className="space-y-8">
+      {/* Connection error banner — persistent, retryable */}
+      {fetchError && (
+        <div className="flex items-center justify-between gap-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-100">
+              <AlertTriangle className="h-4 w-4 text-red-600" />
+            </div>
+            <p className="text-sm font-semibold text-red-900">Could not load analytics — check your connection</p>
+          </div>
+          <button
+            onClick={() => setRetryCount(c => c + 1)}
+            className="shrink-0 rounded-lg bg-red-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-600 transition"
+          >
+            Retry
+          </button>
+        </div>
+      )}
       {/* Plan gate banner — shown for FREE/STARTER or when data was locked */}
       {(isStarterOrFree || anyLocked) && (
         <div className="flex items-center justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">

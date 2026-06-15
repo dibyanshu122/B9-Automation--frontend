@@ -397,6 +397,7 @@ export default function SettingsPage() {
     { id: 'security', label: 'Security' },
     { id: 'sessions', label: 'Sessions' },
     { id: 'notifications', label: 'Notifications' },
+    ...(canManageSensitiveSettings ? [{ id: 'website', label: 'Website' }] : []),
   ];
 
   return (
@@ -1059,9 +1060,27 @@ export default function SettingsPage() {
             </Button>
           )}
         </div>
-        {sessionsLoading && <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-12 rounded-lg bg-gray-100 animate-pulse" />)}</div>}
+        {sessionsLoading && (
+          <div className="space-y-2">
+            {[1,2,3].map(i => (
+              <div key={i} className="flex items-center gap-3 py-2 animate-pulse">
+                <div className="h-9 w-9 shrink-0 rounded-full bg-gray-100" />
+                <div className="flex-1 space-y-1.5">
+                  <div className="h-3.5 w-40 rounded bg-gray-100" />
+                  <div className="h-3 w-56 rounded bg-gray-100" />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
         {sessionsLoaded && sessions.length === 0 && (
-          <p className="text-sm text-gray-400 text-center py-4">No active sessions found</p>
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl border border-gray-100 bg-gray-50">
+              <Activity className="h-5 w-5 text-gray-400" />
+            </div>
+            <p className="text-sm font-medium text-gray-600">No other active sessions</p>
+            <p className="mt-1 text-xs text-gray-400">You are only logged in from this device</p>
+          </div>
         )}
         {sessionsLoaded && sessions.length > 0 && (
           <div className="divide-y divide-gray-100">
@@ -1097,7 +1116,17 @@ export default function SettingsPage() {
         <h2 className="text-xl font-bold text-gray-900 mb-1">Notification Preferences</h2>
         <p className="text-sm text-gray-500 mb-4">Choose which events trigger email and in-app notifications</p>
         {notifLoading ? (
-          <div className="space-y-2">{[1,2,3,4].map(i => <div key={i} className="h-8 rounded bg-gray-100 animate-pulse" />)}</div>
+          <div className="space-y-3">
+            {[1,2,3,4,5].map(i => (
+              <div key={i} className="flex items-center justify-between py-1 animate-pulse">
+                <div className="space-y-1.5">
+                  <div className="h-4 w-44 rounded bg-gray-100" />
+                  <div className="h-3 w-64 rounded bg-gray-100" />
+                </div>
+                <div className="h-6 w-11 shrink-0 rounded-full bg-gray-100" />
+              </div>
+            ))}
+          </div>
         ) : (
           <div className="space-y-3">
             {[
@@ -1269,6 +1298,9 @@ export default function SettingsPage() {
 
       {/* CSAT Survey */}
       <CsatSettingsSection />
+
+      {/* Website Theme */}
+      {canManageSensitiveSettings && <div id="settings-website"><WebsiteThemeSection /></div>}
     </div>
   );
 }
@@ -1353,6 +1385,52 @@ function CustomLeadFieldsSection() {
           {saving ? 'Saving…' : 'Save Custom Fields'}
         </Button>
       )}
+    </section>
+  );
+}
+
+function WebsiteThemeSection() {
+  const { put, get } = useApi();
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    get('/api/automation/website-theme').then(r => { if (r.data?.website_theme) setTheme(r.data.website_theme); }).catch(() => {});
+  }, []); // eslint-disable-line
+
+  const toggle = async () => {
+    const next: 'light' | 'dark' = theme === 'dark' ? 'light' : 'dark';
+    setSaving(true);
+    try {
+      await put('/api/automation/website-theme', { website_theme: next });
+      setTheme(next);
+      toast.success(`Website theme set to ${next}`);
+    } catch { toast.error('Failed to save theme'); }
+    finally { setSaving(false); }
+  };
+
+  return (
+    <section className="mt-8">
+      <h2 className="text-xl font-bold text-gray-900 mb-1">Website Theme</h2>
+      <p className="text-sm text-gray-500 mb-4">Control the look of your public-facing marketing website for all visitors.</p>
+      <div className="rounded-xl border border-gray-200 bg-white p-5">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="font-semibold text-gray-800">Light Mode</p>
+            <p className="text-xs text-gray-400">
+              {theme === 'light' ? 'Visitors see the Aurora Light theme' : 'Visitors see the default dark theme'}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={toggle}
+            disabled={saving}
+            className={`relative h-6 w-11 rounded-full transition-colors disabled:opacity-50 ${theme === 'light' ? 'bg-sky-500' : 'bg-gray-300'}`}
+          >
+            <span className={`absolute left-0 top-1 h-4 w-4 rounded-full bg-white shadow transition-transform ${theme === 'light' ? 'translate-x-6' : 'translate-x-1'}`} />
+          </button>
+        </div>
+      </div>
     </section>
   );
 }

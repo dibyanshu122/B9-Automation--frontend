@@ -7,7 +7,6 @@ import Link from 'next/link';
 import { HeroAnimation } from '@/components/hero-animation';
 import { SplineViewer } from '@/components/spline-viewer';
 import { TiltCard, CountUp, MagneticButton } from '@/components/premium-motion';
-import { MarketingThemeToggle } from '@/components/marketing-theme-toggle';
 import { Logo } from '@/components/logo';
 import { featureHighlights, workflowSteps, trustPoints, blogPosts, allFeatures } from '@/lib/marketing';
 import {
@@ -272,7 +271,6 @@ export default function HomePage() {
 
           {/* CTAs */}
           <div className="flex items-center gap-4">
-            <MarketingThemeToggle />
             <MagneticButton strength={0.3}>
               <Link href="/login" className="hidden sm:block text-sm font-medium text-zinc-400 hover:text-white transition-colors duration-300">Log In</Link>
             </MagneticButton>

@@ -960,8 +960,19 @@ function UnifiedInbox() {
           {/* Contact rows */}
           <div className="flex-1 overflow-y-auto bg-white">
             {loading ? (
-              <div className="space-y-0 p-2">
-                {[1,2,3,4,5].map(i => <div key={i} className="h-[72px] mx-2 my-1 rounded-lg bg-gray-100 animate-pulse" />)}
+              <div className="p-2 space-y-0.5">
+                {[1,2,3,4,5,6].map(i => (
+                  <div key={i} className="flex items-center gap-3 px-3 py-2.5 animate-pulse">
+                    <div className="h-12 w-12 shrink-0 rounded-full bg-gray-100" />
+                    <div className="flex-1 min-w-0 space-y-1.5">
+                      <div className="h-3.5 w-28 rounded bg-gray-100" />
+                      <div className="h-3 w-40 rounded bg-gray-100" />
+                    </div>
+                    <div className="flex flex-col items-end gap-1.5 shrink-0">
+                      <div className="h-3 w-8 rounded bg-gray-100" />
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : filtered.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-48 gap-3">

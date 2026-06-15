@@ -76,13 +76,26 @@ export const viewport = {
   viewportFit: 'cover',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Fetch owner-configured website theme server-side to avoid flash
+  let websiteTheme = 'dark';
+  try {
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    const res = await fetch(`${apiBase}/api/public/website-theme`, {
+      next: { revalidate: 60 },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      websiteTheme = data.website_theme || 'dark';
+    }
+  } catch {}
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={websiteTheme === 'light' ? 'mk-light' : ''} suppressHydrationWarning>
       <head>
         {/* Favicon */}
         <link rel="icon" href="/brand-logo.svg" type="image/svg+xml" />
@@ -92,7 +105,7 @@ export default function RootLayout({
         <meta name="theme-color" content="#060608" />
         <meta name="color-scheme" content="dark" />
 
-        {/* Prevent dark mode flash — read persisted preference before React hydrates */}
+        {/* Prevent dashboard dark mode flash — read persisted preference before React hydrates */}
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var s=JSON.parse(localStorage.getItem('ui-store-v2')||'{}');if(s.state&&s.state.darkMode===true){document.documentElement.classList.add('dark');}}catch(e){}})();`,
@@ -103,7 +116,6 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://b9-automation-backend.onrender.com" />
       </head>
       <body className={`${inter.className} ${spaceGrotesk.variable} font-sans`} suppressHydrationWarning>
-        <script dangerouslySetInnerHTML={{ __html: `try{if(localStorage.getItem('marketing-theme')==='light')document.documentElement.classList.add('mk-light')}catch(e){}` }} />
         <Providers>{children}</Providers>
         <MarketingWidget />
         <PWAInstaller />

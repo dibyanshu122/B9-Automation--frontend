@@ -96,6 +96,7 @@ export default function ImportsPage() {
   const [sheetsUrl, setSheetsUrl] = useState('');
   const [sheetsLoading, setSheetsLoading] = useState(false);
   const [history, setHistory] = useState<ImportRecord[]>([]);
+  const [countryCode, setCountryCode] = useState('91');
 
   useEffect(() => {
     setHistory(getHistory());
@@ -176,7 +177,7 @@ export default function ImportsPage() {
       const formData = new FormData();
       formData.append('file', uploadFile);
       formData.append('mapping', JSON.stringify(mapping));
-      const res = await post(`/api/leads/import/csv?source=${encodeURIComponent(source)}`, formData);
+      const res = await post(`/api/leads/import/csv?source=${encodeURIComponent(source)}&country_code=${encodeURIComponent(countryCode)}`, formData);
       setResult(res.data);
       setStep(3);
       // Save to history
@@ -233,12 +234,12 @@ export default function ImportsPage() {
   };
 
   const reset = () => {
-    setStep(0); setFile(null); setParsed(null); setMapping({}); setResult(null); setSource('import');
+    setStep(0); setFile(null); setParsed(null); setMapping({}); setResult(null); setSource('import'); setCountryCode('91');
     if (inputRef.current) inputRef.current.value = '';
   };
 
   const downloadTemplate = () => {
-    const csv = 'phone,name,email,message,tag,source\n+91XXXXXXXXXX,Rahul Sharma,rahul@example.com,Interested in demo,hot,webinar\n+91XXXXXXXXXX,Priya Singh,,Follow up needed,warm,trade-show';
+    const csv = `phone,name,email,message,tag,source\n9876543210,Rahul Sharma,rahul@example.com,Interested in demo,hot,webinar\n+919876543211,Priya Singh,,Follow up needed,warm,trade-show\n+971501234567,Ahmed Al Farsi,,UAE client,hot,expo`;
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -344,8 +345,30 @@ export default function ImportsPage() {
                   <input ref={inputRef} type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={handleInputChange} />
                 </div>
 
-                {/* Source + Next */}
-                <div className="mt-5 grid grid-cols-[1fr_auto] gap-3 items-end">
+                {/* Country code + Source + Next */}
+                <div className="mt-5 grid grid-cols-[auto_1fr_auto] gap-3 items-end">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">Country</label>
+                    <select
+                      value={countryCode}
+                      onChange={e => setCountryCode(e.target.value)}
+                      className="input-field pr-8 min-w-[140px]"
+                    >
+                      <option value="91">🇮🇳 India (+91)</option>
+                      <option value="971">🇦🇪 UAE (+971)</option>
+                      <option value="966">🇸🇦 Saudi Arabia (+966)</option>
+                      <option value="1">🇺🇸 USA/Canada (+1)</option>
+                      <option value="44">🇬🇧 UK (+44)</option>
+                      <option value="65">🇸🇬 Singapore (+65)</option>
+                      <option value="60">🇲🇾 Malaysia (+60)</option>
+                      <option value="61">🇦🇺 Australia (+61)</option>
+                      <option value="49">🇩🇪 Germany (+49)</option>
+                      <option value="92">🇵🇰 Pakistan (+92)</option>
+                      <option value="880">🇧🇩 Bangladesh (+880)</option>
+                      <option value="94">🇱🇰 Sri Lanka (+94)</option>
+                      <option value="977">🇳🇵 Nepal (+977)</option>
+                    </select>
+                  </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">Source label</label>
                     <input type="text" value={source} onChange={e => setSource(e.target.value)}
@@ -357,6 +380,9 @@ export default function ImportsPage() {
                     Next <ArrowRight className="h-4 w-4" />
                   </Button>
                 </div>
+                <p className="mt-2 text-xs text-gray-400">
+                  Numbers without country code will get <strong className="text-gray-600">+{countryCode}</strong> added automatically.
+                </p>
 
                 {file && !hasPhoneCol && (
                   <div className="mt-3 flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2">
@@ -396,10 +422,12 @@ export default function ImportsPage() {
               <div className="rounded-xl bg-gray-950 px-4 py-3 font-mono text-xs text-emerald-400 overflow-x-auto mb-3">
                 <p className="text-gray-600"># phone is mandatory</p>
                 <p className="text-white">phone,name,email,tag</p>
-                <p>+91XXXXXXXXXX,Rahul,r@ex.com,hot</p>
+                <p>9876543210,Rahul,r@ex.com,hot</p>
+                <p className="text-gray-500">+919876543210,Priya,,warm</p>
               </div>
               <ul className="space-y-1.5 text-xs text-gray-500 dark:text-slate-400">
-                <li className="flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" /><strong className="text-gray-700 dark:text-slate-300">phone</strong> — required (+91 format)</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" /><strong className="text-gray-700 dark:text-slate-300">phone</strong> — required (10-digit or with country code)</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-sky-400 shrink-0" />Select your country — missing codes added automatically</li>
                 <li className="flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-gray-300 shrink-0" /><strong className="text-gray-600 dark:text-slate-400">name, email, tag, source</strong> — optional</li>
                 <li className="flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-indigo-400 shrink-0" />Headers auto-detected from column names</li>
               </ul>
@@ -489,7 +517,7 @@ export default function ImportsPage() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2"><Eye className="h-5 w-5 text-primary-500" /> Preview Import</h2>
-              <p className="text-sm text-gray-500 mt-0.5">First 5 rows shown. Duplicates (same phone) will be skipped automatically.</p>
+              <p className="text-sm text-gray-500 mt-0.5">First 5 rows shown. Duplicates skipped. Numbers without country code → <strong>+{countryCode}</strong> added.</p>
             </div>
             <Button variant="secondary" size="sm" onClick={() => setStep(1)}>
               <ArrowLeft className="h-4 w-4" /> Back
