@@ -324,8 +324,8 @@ export default function LeadsPage() {
     const params = new URLSearchParams({ limit: String(requestedPageSize), offset: String(offset) });
     if (searchQuery.trim()) params.set('q', searchQuery.trim());
     if (statusFilter && statusFilter !== 'all') params.set('status', statusFilter);
-    if (labelFilter && labelFilter !== 'all') params.set('tag', labelFilter);
     if (tagFilterActive) params.set('tag', tagFilterActive);
+    else if (labelFilter && labelFilter !== 'all') params.set('tag', labelFilter);
     if (leadDateFrom) params.set('created_after', leadDateFrom);
     if (leadDateTo) params.set('created_before', leadDateTo);
     get(`/api/leads?${params.toString()}`)
@@ -1287,7 +1287,7 @@ export default function LeadsPage() {
                         )) : <span className="text-gray-400 text-xs">—</span>}
                       </div>
                       <span className="capitalize text-gray-600">{lead.status}</span>
-                      <span className="text-gray-500">{new Date(lead.created_at).toLocaleDateString()}</span>
+                      <span className="text-gray-500">{lead.created_at ? new Date(lead.created_at.endsWith('Z') ? lead.created_at : lead.created_at + 'Z').toLocaleDateString() : '—'}</span>
                       <Button variant="ghost" size="sm" onClick={() => openLeadDetail(lead)} loading={busyAction === `view-${lead.id}`}>
                         <Eye className="h-4 w-4" />View
                       </Button>
@@ -1297,7 +1297,7 @@ export default function LeadsPage() {
                 {filteredLeads.length === 0 && <p className="py-6 text-center text-sm text-gray-500">No leads match this search.</p>}
               </div>
               {/* Pagination bar */}
-              {totalPages > 1 && !searchQuery && statusFilter === 'all' && labelFilter === 'all' && !leadDateFrom && !leadDateTo && (
+              {totalPages > 1 && (
                 <div className="mt-3 border-t border-gray-100 dark:border-slate-700 pt-3 flex flex-wrap items-center justify-between gap-3">
                   {/* Page controls */}
                   <div className="flex items-center gap-1">

@@ -116,7 +116,8 @@ export default function SettingsPage() {
       get('/api/automation/whatsapp/status').catch(() => ({ data: null })),
       get('/api/team/me').catch(() => ({ data: null })),
       get('/api/settings/ai-keys').catch(() => ({ data: null })),
-    ]).then(([bpRes, waRes, teamRes, aiRes]) => {
+      get('/api/auth/2fa/setup').catch(() => ({ data: null })),
+    ]).then(([bpRes, waRes, teamRes, aiRes, twoFARes]) => {
       if (bpRes.data) setBusinessProfile(bpRes.data);
       if (waRes.data) setWhatsappStatus(waRes.data);
       if (teamRes.data) {
@@ -131,6 +132,7 @@ export default function SettingsPage() {
         setPreferredModel(aiRes.data.preferred_model ?? 'auto');
         setAgenticMaxSteps(aiRes.data.agentic_max_steps ?? 4);
       }
+      if (twoFARes.data?.already_enabled) setTwoFAEnabled(true);
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -625,7 +627,7 @@ export default function SettingsPage() {
           <Button variant="secondary" onClick={saveWhatsappDraftMode} disabled={savingWhatsapp}>
             {savingWhatsapp ? 'Saving...' : 'Keep Draft Mode'}
           </Button>
-          <Button onClick={() => window.location.href = '/dashboard/messages'}>
+          <Button onClick={() => window.location.href = '/dashboard/integrations'}>
             Connect WhatsApp
           </Button>
         </div>
@@ -1173,7 +1175,7 @@ export default function SettingsPage() {
           <div className="rounded-lg border border-gray-100 bg-gray-50 p-4">
             <p className="font-semibold text-gray-900 text-sm">Export Your Data</p>
             <p className="mt-1 text-xs text-gray-500">Download all your leads, conversations, documents and workflow history as a CSV / JSON export.</p>
-            <a href="/api/auth/me/export" target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-200 transition">
+            <a href={`${process.env.NEXT_PUBLIC_API_URL || ''}/api/auth/me/export`} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-200 transition">
               Download Export
             </a>
           </div>
