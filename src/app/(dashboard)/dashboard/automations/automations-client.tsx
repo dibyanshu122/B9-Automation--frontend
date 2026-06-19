@@ -930,6 +930,7 @@ export default function AutomationsPage() {
         if (otherActiveWorkflows + 1 > planAccess.limits.activeWorkflows) {
           toast.error(`Your plan allows max ${planAccess.limits.activeWorkflows} active workflow${planAccess.limits.activeWorkflows === 1 ? '' : 's'}.`);
           setLockedFeature('automation.create');
+          setSaving(false);
           return;
         }
       }

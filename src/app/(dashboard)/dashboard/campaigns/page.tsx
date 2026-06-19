@@ -366,7 +366,7 @@ function CampaignRow({ idx, c, onDetail, onRefresh }: { idx: number; c: Campaign
                     {abData.variants.map((v: any) => {
                       const deliveryRate = v.total ? Math.round((v.delivered / v.total) * 100) : 0;
                       const readRate = v.total ? Math.round((v.read / v.total) * 100) : 0;
-                      const isWinner = abData.variants.length === 2 &&
+                      const isWinner = abData.variants.length === 2 && v.read > 0 &&
                         v.read >= Math.max(...abData.variants.map((x: any) => x.read));
                       return (
                         <div key={v.variant_key}

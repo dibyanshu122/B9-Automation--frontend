@@ -86,10 +86,6 @@ export default function AnalyticsPage() {
     return () => {};
   }, [globalDays, retryCount]); // eslint-disable-line
 
-  // Sync loading state with React Query
-  useEffect(() => {
-    if (!dashLoading) setLoading(false);
-  }, [dashLoading]);
 
   // WA-specific reload (kept for backward compat with WA section filter)
   useEffect(() => {

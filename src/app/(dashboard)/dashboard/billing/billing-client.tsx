@@ -122,7 +122,14 @@ export default function BillingClient({ initialPlan, initialInvoices }: BillingC
         name: 'B9 Automation',
         description: `${plan.charAt(0) + plan.slice(1).toLowerCase()} Plan - ${pendingCycle === 'yearly' ? 'Annual' : 'Monthly'}`,
         image: '/brand-logo.svg',
-        handler: () => {
+        handler: async (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => {
+          try {
+            await post('/api/billing/verify-payment', {
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+          } catch { /* webhook will activate plan if verify-payment fails */ }
           toast.success('Payment confirmed! Activating your plan — this takes up to 3 minutes...');
           // Store pending plan in localStorage so page refresh can show a banner
           localStorage.setItem('b9_plan_activating', '1');
