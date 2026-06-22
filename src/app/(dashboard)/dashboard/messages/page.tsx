@@ -451,7 +451,7 @@ function UnifiedInbox() {
 
   // Fetch leads once to map phone → name
   useEffect(() => {
-    get('/api/leads?limit=200').then(r => {
+    get('/api/leads?limit=2000').then(r => {
       const map: Record<string, string> = {};
       (r.data?.leads || r.data || []).forEach((l: any) => {
         if (l.phone && l.name) {

@@ -847,6 +847,7 @@ export default function IntegrationsPage() {
       oauthPopupRef.current = popup;
       const handler = (e: MessageEvent) => {
         if (e.origin !== window.location.origin) return;
+        clearTimeout(gmailOAuthTimeout);
         window.removeEventListener('message', handler);
         setGmailOAuthLoading(false);
         if (e.data?.type === 'gmail_connected') {
@@ -861,6 +862,12 @@ export default function IntegrationsPage() {
         }
       };
       window.addEventListener('message', handler);
+      const gmailOAuthTimeout = setTimeout(() => {
+        window.removeEventListener('message', handler);
+        setGmailOAuthLoading(false);
+        if (popup && !popup.closed) popup.close();
+        toast.error('Gmail OAuth timed out. Please try again.');
+      }, 120000);
     } catch {
       setGmailOAuthLoading(false);
       setSetupError('Could not start Gmail OAuth. Please check the Gmail connection setup.');

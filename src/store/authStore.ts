@@ -41,10 +41,13 @@ export const useAuthStore = create<AuthState>()(
       logout: () => {
         setAuthCookie(null);
         set({ user: null, token: null });
+        // Clear in-memory chat so next user can't see previous session's messages
+        import('../store/chatStore').then(({ useChatStore }) => useChatStore.getState().clearChat()).catch(() => {});
       },
     }),
     {
       name: 'auth-store',
+      partialize: (state) => ({ user: state.user, token: state.token }),
       onRehydrateStorage: () => (state) => {
         setAuthCookie(state?.token || null);
         state?.setHasHydrated(true);

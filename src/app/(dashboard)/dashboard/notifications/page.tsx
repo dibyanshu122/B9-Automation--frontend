@@ -55,7 +55,7 @@ export default function NotificationsPage() {
         const evts = res.data?.events || [];
         setEvents(evts);
         const seenAt = typeof window !== 'undefined' ? localStorage.getItem('notif_seen_at') : null;
-        setUnread(seenAt ? evts.filter((e: NotificationEvent) => e.created_at > seenAt).length : (res.data?.unread_count || 0));
+        setUnread(seenAt ? evts.filter((e: NotificationEvent) => new Date(e.created_at).getTime() > new Date(seenAt).getTime()).length : (res.data?.unread_count || 0));
       })
       .catch(() => {})
       .finally(() => setLoading(false));
