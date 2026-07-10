@@ -24,13 +24,18 @@ export function SplineViewer({ scene, className = '', style }: SplineViewerProps
   const viewerRef = useRef<HTMLElement | null>(null);
   const [isMounted, setIsMounted] = useState(false);
 
-  // Load script once — guard against double-registration
+  // Load the Spline viewer script once — guarded against double-registration
+  // which happens in React StrictMode double-invoke or HMR.
   useEffect(() => {
+    if (typeof customElements === 'undefined') return;
+    // Already registered — script ran before. Nothing to do.
     if (customElements.get('spline-viewer')) return;
+    // Script already in DOM (HMR re-mount) — wait for it to register.
     if (document.querySelector(`script[src="${SPLINE_SCRIPT}"]`)) return;
     const script = document.createElement('script');
     script.type = 'module';
     script.src = SPLINE_SCRIPT;
+    script.onerror = () => console.warn('[SplineViewer] Failed to load script');
     document.head.appendChild(script);
   }, []);
 
@@ -89,17 +94,18 @@ export function SplineViewer({ scene, className = '', style }: SplineViewerProps
 
   const SplineTag = 'spline-viewer' as any;
 
-  if (!isMounted) {
-    return <div className={className} style={style} />;
-  }
-
+  // Render a placeholder div on server (SSR) so HTML is stable,
+  // then swap to spline-viewer on client after mount.
+  // suppressHydrationWarning prevents React from erroring on the tag swap.
   return (
-    <div className={className} style={style}>
-      <SplineTag
-        ref={viewerRef}
-        url={scene}
-        style={{ width: '100%', height: '100%', display: 'block' }}
-      />
+    <div className={className} style={style} suppressHydrationWarning>
+      {isMounted && (
+        <SplineTag
+          ref={viewerRef}
+          url={scene}
+          style={{ width: '100%', height: '100%', display: 'block' }}
+        />
+      )}
     </div>
   );
 }

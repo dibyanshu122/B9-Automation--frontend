@@ -12,8 +12,9 @@ import { useEffect, useRef, useState } from 'react';
 import { motion, useInView, useMotionValue, useSpring, useTransform } from 'framer-motion';
 
 function useFinePointer() {
-  const [fine, setFine] = useState(false);
+  const [fine, setFine] = useState(false); // false on SSR — no window
   useEffect(() => {
+    // Only runs on client — no hydration mismatch
     const mq = window.matchMedia('(pointer: fine) and (prefers-reduced-motion: no-preference)');
     setFine(mq.matches);
     const onChange = (e: MediaQueryListEvent) => setFine(e.matches);
@@ -154,7 +155,7 @@ export function CountUp({
   }, [inView, to, duration]);
 
   return (
-    <span ref={ref} className={className}>
+    <span ref={ref} className={className} suppressHydrationWarning>
       {prefix}{value.toLocaleString('en-IN')}{suffix}
     </span>
   );

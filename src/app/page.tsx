@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence, useAnimationFrame } from 'framer-motion';
@@ -173,7 +173,7 @@ export default function HomePage() {
 
   return (
     /* ①  Global Wrapper & Interactive Light Mesh */
-    <div className="min-h-screen bg-[#030712] text-white selection:bg-[#00F2FE]/30 selection:text-white overflow-x-hidden relative antialiased font-sans">
+    <div className="min-h-screen bg-[#030712] text-white selection:bg-[#00F2FE]/30 selection:text-white [overflow-x:clip] relative antialiased font-sans">
 
       {/* JSON-LD */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ '@context': 'https://schema.org', '@type': 'SoftwareApplication', name: 'B9 Automation', applicationCategory: 'BusinessApplication', operatingSystem: 'Web', description: 'AI-powered WhatsApp bot, lead capture, and business automation platform for Indian SMEs.', url: 'https://b9automation.com', offers: { '@type': 'Offer', price: '0', priceCurrency: 'INR' } }) }} />
@@ -775,7 +775,7 @@ export default function HomePage() {
                 <div className="flex items-center gap-2 text-xs text-zinc-700 mb-4">
                   <span className="rounded-full border border-[#00F2FE]/15 bg-[#00F2FE]/[0.05] px-2.5 py-0.5 font-medium text-[#00F2FE]/80">Automation</span>
                   <span>·</span>
-                  <span>{new Date(post.date).toLocaleDateString('en-US')}</span>
+                  <span suppressHydrationWarning>{new Date(post.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
                 </div>
                 <h3 className="text-lg font-semibold text-zinc-200 group-hover:text-white transition-colors mb-2 tracking-tight">{post.title}</h3>
                 <p className="text-zinc-600 text-sm leading-relaxed mb-5 flex-1">{post.description}</p>
@@ -836,12 +836,12 @@ export default function HomePage() {
       </section>
 
       {/* FOOTER */}
-      <footer className="border-t border-white/[0.04] bg-[#030712] pt-16 pb-8 relative z-10">
+      <footer className="border-t border-white/[0.06] bg-[#030712] pt-16 pb-8 relative z-10">
         <div className="mx-auto max-w-7xl px-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr] gap-12 pb-12 border-b border-white/[0.04]">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr] gap-12 pb-12 border-b border-white/[0.06]">
             <div>
               <div className="mb-5"><Logo variant="dark" /></div>
-              <p className="text-sm text-zinc-700 max-w-xs leading-relaxed">AI automation for Indian businesses. WhatsApp bots, lead capture, AI chat, and document intelligence — all in one platform.</p>
+              <p className="text-sm text-zinc-400 max-w-xs leading-relaxed">AI automation for Indian businesses. WhatsApp bots, lead capture, AI chat, and document intelligence — all in one platform.</p>
               <div className="flex gap-2.5 mt-6">
                 {[
                   { icon: <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>, label: 'Website', href: 'https://b9automation.com' },
@@ -850,7 +850,7 @@ export default function HomePage() {
                   { icon: <svg viewBox="0 0 24 24" className="h-4 w-4" fill="#FF0000"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>, label: 'YouTube', href: 'https://youtube.com/@b9automation' },
                 ].map((s) => (
                   <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.label}
-                    className="h-9 w-9 rounded-xl border border-white/[0.06] bg-white/[0.02] flex items-center justify-center text-zinc-600 hover:text-white hover:border-[#00F2FE]/25 hover:bg-[#00F2FE]/[0.06] transition-all duration-300">
+                    className="h-9 w-9 rounded-xl border border-white/[0.1] bg-white/[0.04] flex items-center justify-center text-zinc-400 hover:text-white hover:border-[#00F2FE]/30 hover:bg-[#00F2FE]/[0.08] transition-all duration-300">
                     {s.icon}
                   </a>
                 ))}
@@ -858,37 +858,37 @@ export default function HomePage() {
             </div>
 
             <div>
-              <h4 className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-600 mb-5">Product</h4>
-              <ul className="space-y-3 text-sm text-zinc-700">
+              <h4 className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-500 mb-5">Product</h4>
+              <ul className="space-y-3 text-sm text-zinc-400">
                 {Object.entries({ Features: '/features', Pricing: '/pricing', Blog: '/blog', Changelog: '/changelog', Integrations: '/integrations', 'API Docs': '/api-docs' }).map(([link, href]) => (
-                  <li key={link}><a href={href} className="hover:text-zinc-300 transition-colors duration-300">{link}</a></li>
+                  <li key={link}><a href={href} className="hover:text-zinc-100 transition-colors duration-200">{link}</a></li>
                 ))}
               </ul>
             </div>
 
             <div>
-              <h4 className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-600 mb-5">Company</h4>
-              <ul className="space-y-3 text-sm text-zinc-700">
+              <h4 className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-500 mb-5">Company</h4>
+              <ul className="space-y-3 text-sm text-zinc-400">
                 {[{ label: 'About Us', href: '/about' }, { label: 'Careers', href: '/about#careers' }, { label: 'Contact', href: 'mailto:hello@b9automation.com' }, { label: 'Privacy Policy', href: '/privacy' }, { label: 'Terms of Service', href: '/terms' }, { label: 'Cookie Policy', href: '/cookies' }].map(({ label, href }) => (
-                  <li key={label}><a href={href} className="hover:text-zinc-300 transition-colors duration-300">{label}</a></li>
+                  <li key={label}><a href={href} className="hover:text-zinc-100 transition-colors duration-200">{label}</a></li>
                 ))}
               </ul>
             </div>
 
             <div>
-              <h4 className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-600 mb-5">Support</h4>
-              <ul className="space-y-3 text-sm text-zinc-700 mb-6">
+              <h4 className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-500 mb-5">Support</h4>
+              <ul className="space-y-3 text-sm text-zinc-400 mb-6">
                 {[{ label: 'Help Center', href: 'mailto:hello@b9automation.com' }, { label: 'Book a Demo', href: '/signup?demo=1' }, { label: 'Community', href: 'https://wa.me/910000000000' }, { label: 'Status Page', href: 'https://b9automation.com' }, { label: 'Roadmap', href: '/blog' }].map(({ label, href }) => (
-                  <li key={label}><a href={href} className="hover:text-zinc-300 transition-colors duration-300">{label}</a></li>
+                  <li key={label}><a href={href} className="hover:text-zinc-100 transition-colors duration-200">{label}</a></li>
                 ))}
               </ul>
-              <a href="mailto:hello@b9automation.com" className="flex items-center gap-2 text-sm text-zinc-700 hover:text-zinc-300 transition-colors duration-300">
+              <a href="mailto:hello@b9automation.com" className="flex items-center gap-2 text-sm text-zinc-400 hover:text-zinc-100 transition-colors duration-200">
                 <Mail className="h-4 w-4" /> hello@b9automation.com
               </a>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 text-sm text-zinc-800">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 text-sm text-zinc-500">
             <p>© 2026 B9 Automation Pvt. Ltd. All rights reserved.</p>
             <p>Made with ♥ in India</p>
           </div>

@@ -68,10 +68,12 @@ export function HeroAnimation() {
       if (!reduceMotion && !mobile) {
         const Lenis = lenisModule.default;
         lenis = new Lenis({
-          duration: 0.72,
+          duration: 0.9,
+          easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
           smoothWheel: true,
-          wheelMultiplier: 1.25,
-          touchMultiplier: 0,
+          wheelMultiplier: 1.0,
+          touchMultiplier: 1.5,
+          infinite: false,
           prevent: (node: HTMLElement) =>
             node.hasAttribute('data-lenis-prevent') ||
             node.classList.contains('brainai-panel') ||
@@ -253,7 +255,10 @@ export function HeroAnimation() {
 
           <h1 className="relative z-20 mt-7 max-w-[680px] text-4xl font-bold leading-[0.98] tracking-[-0.04em] text-white sm:text-5xl lg:text-6xl xl:text-[4.9rem]">
             <span className="block text-white" style={{ WebkitTextFillColor: '#ffffff', textShadow: '0 0 1px rgba(255,255,255,0.35)' }}>Your AI sales team,</span>
-            <span className="block text-[#22F3DF] md:bg-gradient-to-r md:from-[#25D366] md:via-[#00F2FE] md:to-[#7BFFF8] md:bg-clip-text md:text-transparent" style={{ WebkitTextFillColor: 'currentColor', textShadow: '0 0 1px rgba(34,243,223,0.35)' }}>
+            <span
+              className="block bg-gradient-to-r from-[#25D366] via-[#00F2FE] to-[#7BFFF8] bg-clip-text text-transparent"
+              style={{ textShadow: '0 0 1px rgba(34,243,223,0.15)' }}
+            >
               running on WhatsApp.
             </span>
           </h1>
